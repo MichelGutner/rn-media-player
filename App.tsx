@@ -12,19 +12,28 @@ import {
   requireNativeComponent,
   useColorScheme,
   Button,
+  NativeModules,
+  Text,
+  ViewStyle,
+  Animated,
+  useWindowDimensions,
 } from 'react-native';
 const VPlayer = requireNativeComponent('RNVideoPlayer');
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 function App(): JSX.Element {
+  const {width} = useWindowDimensions();
   const isDarkMode = useColorScheme() === 'dark';
   const [pause, setPause] = useState(false);
   const [rate, setRate] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const backgroundStyle: ViewStyle = {
+    backgroundColor: 'black',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
   };
 
   return (
@@ -32,17 +41,21 @@ function App(): JSX.Element {
       <VPlayer
         style={{
           height: 300,
+          width,
         }}
-        source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4"
+        source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
         autoPlay={true}
         paused={pause}
         rate={rate}
         onLoaded={({nativeEvent: {loaded}}) => console.log(loaded)}
         seek={10}
         onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
-        getVideoDuration={data => setDuration(data.nativeEvent.duration)}
+        onVideoDuration={data => setDuration(data.nativeEvent.videoDuration)}
         onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
       />
+      <Text style={{color: 'red', fontSize: 50, position: 'absolute'}}>
+        Hello
+      </Text>
       <Button
         title={pause ? 'Play' : `Pause ${currentTime}`}
         onPress={() => setPause(!pause)}

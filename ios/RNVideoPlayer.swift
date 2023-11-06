@@ -4,11 +4,11 @@ import AVFoundation
 
 @objc(RNVideoPlayer)
 class RNVideoPlayer: RCTViewManager {
-    override func view() -> UIView {
+    @objc override func view() -> UIView {
         return RNVideoPlayerView()
     }
   
-    override static func requiresMainQueueSetup() -> Bool {
+    @objc override static func requiresMainQueueSetup() -> Bool {
         return true
     }
   
@@ -18,13 +18,12 @@ class RNVideoPlayerView: UIView {
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
-  @objc var getVideoDuration: RCTBubblingEventBlock?
+  @objc var onVideoDuration: RCTBubblingEventBlock?
   private var hasCalledSetup = false
   private var player: AVPlayer?
   private var hasAutoPlay = false
   private var currentRate: Float = 1.0
   private var timeObserver: Any?
-  private var videoDuration: TimeInterval = 0.0
   private var currentTime: TimeInterval = 0.0
   
   private func setupVideoPlayer(_ source: String) {
@@ -63,7 +62,6 @@ class RNVideoPlayerView: UIView {
         timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
           guard let self = self else { return }
           self.currentTime = time.seconds
-          self.videoDuration = self.player?.currentItem?.duration.seconds ?? 0.0
           self.onVideoProgress?(["progress": currentTime])
         }
     }
@@ -76,8 +74,9 @@ class RNVideoPlayerView: UIView {
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if object as? AVPlayerItem == player?.currentItem, keyPath == "status" {
-            if player?.currentItem?.status == .readyToPlay {
-              self.onLoaded?(["loaded": true])
+          if player?.currentItem?.status == .readyToPlay {
+            self.onLoaded?(["loaded": true])
+            self.onVideoDuration?(["videoDuration": player?.currentItem?.duration.seconds])
             }
         }
     }
