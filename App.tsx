@@ -7,15 +7,10 @@
 
 import React, {useState} from 'react';
 import {
-  SafeAreaView,
   StyleSheet,
   requireNativeComponent,
   useColorScheme,
-  Button,
-  NativeModules,
-  Text,
   ViewStyle,
-  Animated,
   useWindowDimensions,
 } from 'react-native';
 const VPlayer = requireNativeComponent('RNVideoPlayer');
@@ -30,44 +25,24 @@ function App(): JSX.Element {
   const [duration, setDuration] = useState(0);
 
   const backgroundStyle: ViewStyle = {
-    backgroundColor: 'green',
-    alignItems: 'center',
-    justifyContent: 'center',
     flex: 1,
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <VPlayer
-        style={{
-          height,
-          width,
-        }}
-        source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-        autoPlay={true}
-        paused={pause}
-        rate={rate}
-        onLoaded={({nativeEvent: {loaded}}) => console.log(loaded)}
-        seek={10}
-        onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
-        onVideoDuration={data => setDuration(data.nativeEvent.videoDuration)}
-        onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
-      />
-      {/* <Button
-        title={pause ? 'Play' : `Pause ${currentTime}`}
-        onPress={() => setPause(!pause)}
-      />
-      <Button
-        title={`Change Rate (currente: ${rate})`}
-        onPress={() => {
-          if (rate === 1) {
-            setRate(2);
-          } else {
-            setRate(1);
-          }
-        }}
-      /> */}
-    </SafeAreaView>
+    <VPlayer
+      style={{
+        height,
+        width,
+      }}
+      source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+      autoPlay={true}
+      paused={pause}
+      rate={rate}
+      onLoaded={({nativeEvent: {loaded}}) => console.log(loaded)}
+      onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
+      onVideoDuration={data => setDuration(data.nativeEvent.videoDuration)}
+      onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
+    />
   );
 }
 
