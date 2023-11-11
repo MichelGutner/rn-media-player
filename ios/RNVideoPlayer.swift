@@ -50,8 +50,6 @@ class RNVideoPlayerView: UIView {
   }
   
   private func addVideoPlayerSubview() {
-    let playButtonWidth:CGFloat = 100
-    let playButtonHeight:CGFloat = 45
     guard let avPlayer = player else { return }
     
     // player
@@ -61,24 +59,12 @@ class RNVideoPlayerView: UIView {
     
     layer.addSublayer(videoLayer)
     
-    // playButton native
-    playButton = UIButton(type: UIButton.ButtonType.system) as UIButton
-    let xPostion:CGFloat = (screenWidth - playButtonWidth) / 2
-    let yPostion:CGFloat = (screenHeight - playButtonHeight) / 2
-    
-    playButton!.frame = CGRect(x:xPostion, y:yPostion, width:playButtonWidth, height:playButtonHeight)
-    playButton!.backgroundColor = UIColor.clear
-    playButton!.setTitle("Play", for: UIControl.State.normal)
-    
-    playButton!.tintColor = UIColor.black
-    playButton!.addTarget(self, action: #selector(self.playButtonTapped(_:)), for: .touchUpInside)
-    
-    addSubview(playButton!)
-    
-    
+    // seek slider
     seekSlider.addTarget(self, action: #selector(self.seekIsliderValueChanged(_:)), for: .valueChanged)
-    seekSlider.tintColor = UIColor.blue
     seekSlider.thumbTintColor = UIColor.blue
+    seekSlider.minimumTrackTintColor = UIColor.blue
+    seekSlider.maximumTrackTintColor = UIColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 0.5)
+    seekSlider.thumbRect(forBounds: seekSlider.bounds, trackRect: seekSlider.trackRect(forBounds: seekSlider.bounds), value: seekSlider.value)
 
     addSubview(seekSlider!)
     configureSeekSliderLayout()
@@ -129,7 +115,7 @@ class RNVideoPlayerView: UIView {
   
   @objc private func itemDidFinishPlaying(_ notification: Notification) {
     self.onCompleted?(["completed": true])
-    removePeriodicTimeObserver()
+    self.removePeriodicTimeObserver()
   }
   
   @objc func setRate(_ rate: Float) {
@@ -142,27 +128,16 @@ class RNVideoPlayerView: UIView {
   }
   
   @objc func setPaused(_ paused: Bool) {
-    if paused {
-      player?.pause()
-    } else {
+    if player?.rate == 0
+    {
       player?.play()
+    } else {
+      player?.pause()
     }
   }
   
   @objc func setAutoPlay(_ autoPlay: Bool) {
     hasAutoPlay = autoPlay
-  }
-  
-  @objc func playButtonTapped(_ sender:UIButton)
-  {
-    if player?.rate == 0
-    {
-      player!.play()
-      playButton!.setTitle("Pause", for: UIControl.State.normal)
-    } else {
-      player!.pause()
-      playButton!.setTitle("Play", for: UIControl.State.normal)
-    }
   }
   
   private var isThumbSeek: Bool = false

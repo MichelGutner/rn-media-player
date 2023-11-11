@@ -12,6 +12,7 @@ import {
   useColorScheme,
   ViewStyle,
   useWindowDimensions,
+  View,
 } from 'react-native';
 const VPlayer = requireNativeComponent('RNVideoPlayer');
 import {Colors} from 'react-native/Libraries/NewAppScreen';
@@ -29,20 +30,22 @@ function App(): JSX.Element {
   };
 
   return (
-    <VPlayer
-      style={{
-        height,
-        width,
-      }}
-      source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-      autoPlay={true}
-      paused={pause}
-      rate={rate}
-      onLoaded={({nativeEvent: {loaded}}) => console.log(loaded)}
-      onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
-      onVideoDuration={data => setDuration(data.nativeEvent.videoDuration)}
-      onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
-    />
+    <View style={{width, height: 350}}>
+      <VPlayer
+        style={{
+          height: 350,
+          width,
+        }}
+        source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+        autoPlay={true}
+        paused={pause}
+        rate={rate}
+        onLoaded={({nativeEvent: {loaded}}) => console.log(loaded)}
+        onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
+        onVideoDuration={data => setDuration(data.nativeEvent.videoDuration)}
+        onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
+      />
+    </View>
   );
 }
 
