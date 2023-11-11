@@ -1,6 +1,7 @@
 import AVKit
 import React
 import AVFoundation
+import UIKit
 
 @objc(RNVideoPlayer)
 class RNVideoPlayer: RCTViewManager {
@@ -21,6 +22,7 @@ class RNVideoPlayerView: UIView {
   @objc var onVideoDuration: RCTBubblingEventBlock?
   private var hasCalledSetup = false
   private var player: AVPlayer?
+  var playButton:UIButton?
   private var hasAutoPlay = false
   private var currentRate: Float = 1.0
   private var timeObserver: Any?
@@ -42,13 +44,33 @@ class RNVideoPlayerView: UIView {
     }
     
     private func addVideoPlayerSubview() {
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+      let playButtonWidth:CGFloat = 100
+      let playButtonHeight:CGFloat = 45
         guard let avPlayer = player else { return }
-        
+      
+        // player
         let videoLayer = AVPlayerLayer(player: avPlayer)
         videoLayer.frame = bounds
         videoLayer.videoGravity = .resizeAspectFill
         
         layer.addSublayer(videoLayer)
+      
+      // playButton native
+      playButton = UIButton(type: UIButton.ButtonType.system) as UIButton
+      let xPostion:CGFloat = (screenWidth - playButtonWidth) / 2
+      let yPostion:CGFloat = (screenHeight - playButtonHeight) / 2
+              
+      playButton!.frame = CGRect(x:xPostion, y:yPostion, width:playButtonWidth, height:playButtonHeight)
+      playButton!.backgroundColor = UIColor.clear
+      playButton!.setTitle("Pause", for: UIControl.State.normal)
+      playButton!.tintColor = UIColor.black
+      playButton!.addTarget(self, action: #selector(self.playButtonTapped(_:)), for: .touchUpInside)
+      
+      addSubview(playButton!)
+      
+      // seek
         
         avPlayer.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: avPlayer.currentItem)
@@ -91,26 +113,31 @@ class RNVideoPlayerView: UIView {
         currentRate = rate
     }
     
-    @objc func setSeek(_ seek: Float) {
-        let time = CMTime(seconds: Double(seek), preferredTimescale: 1)
-        player?.seek(to: time)
-    }
-    
     @objc func setSource(_ source: String) {
         setupVideoPlayer(source)
     }
     
     @objc func setPaused(_ paused: Bool) {
         if paused {
-            player?.rate = 0.0
             player?.pause()
         } else {
             player?.play()
-            player?.rate = currentRate
         }
     }
     
     @objc func setAutoPlay(_ autoPlay: Bool) {
         hasAutoPlay = autoPlay
     }
+  
+  @objc func playButtonTapped(_ sender:UIButton)
+      {
+          if player?.rate == 0
+          {
+              player!.play()
+              playButton!.setTitle("Pause", for: UIControl.State.normal)
+          } else {
+              player!.pause()
+              playButton!.setTitle("Play", for: UIControl.State.normal)
+          }
+      }
 }

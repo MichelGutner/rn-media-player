@@ -22,7 +22,7 @@ const VPlayer = requireNativeComponent('RNVideoPlayer');
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 function App(): JSX.Element {
-  const {width} = useWindowDimensions();
+  const {width, height} = useWindowDimensions();
   const isDarkMode = useColorScheme() === 'dark';
   const [pause, setPause] = useState(false);
   const [rate, setRate] = useState(1);
@@ -30,7 +30,7 @@ function App(): JSX.Element {
   const [duration, setDuration] = useState(0);
 
   const backgroundStyle: ViewStyle = {
-    backgroundColor: 'black',
+    backgroundColor: 'green',
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
@@ -40,7 +40,7 @@ function App(): JSX.Element {
     <SafeAreaView style={backgroundStyle}>
       <VPlayer
         style={{
-          height: 300,
+          height,
           width,
         }}
         source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
@@ -53,10 +53,7 @@ function App(): JSX.Element {
         onVideoDuration={data => setDuration(data.nativeEvent.videoDuration)}
         onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
       />
-      <Text style={{color: 'red', fontSize: 50, position: 'absolute'}}>
-        Hello
-      </Text>
-      <Button
+      {/* <Button
         title={pause ? 'Play' : `Pause ${currentTime}`}
         onPress={() => setPause(!pause)}
       />
@@ -69,7 +66,7 @@ function App(): JSX.Element {
             setRate(1);
           }
         }}
-      />
+      /> */}
     </SafeAreaView>
   );
 }
