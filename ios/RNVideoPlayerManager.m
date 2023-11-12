@@ -17,6 +17,6 @@ RCT_EXPORT_VIEW_PROPERTY(rate, float)
 RCT_EXPORT_VIEW_PROPERTY(onVideoProgress, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onLoaded, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onCompleted, RCTBubblingEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(isFullScreen, BOOL)
+RCT_EXPORT_VIEW_PROPERTY(fullScreen, BOOL)
 
 @end

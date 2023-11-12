@@ -5,7 +5,7 @@ import UIKit
 
 @objc(RNVideoPlayer)
 class RNVideoPlayer: RCTViewManager {
-  @objc override func view() -> UIView {
+  @objc override func view() -> (RNVideoPlayerView) {
     return RNVideoPlayerView()
   }
   
@@ -15,18 +15,48 @@ class RNVideoPlayer: RCTViewManager {
   
 }
 
-class RNVideoPlayerView: UIView {
+class RNVideoPlayerView : UIView {
   let screenWidth = UIScreen.main.bounds.width
   let screenHeight = UIScreen.main.bounds.height
-  
+
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
+  @objc var onDeviceOrientation: RCTBubblingEventBlock?
+  
+  @objc var source: String = "" {
+    didSet {
+      setupVideoPlayer(source)
+    }
+  }
+  
+  @objc var autoPlay: Bool = false {
+    didSet {
+      self.hasAutoPlay = autoPlay
+    }
+  }
+  
+  @objc var fullScreen: Bool = false {
+    didSet {
+      self.onTapToggleOrientation(fullScreen)
+    }
+  }
+  
+  @objc var rate: Float = 0.0 {
+    didSet{
+      self.onChangeRate(rate)
+    }
+  }
+  
+  @objc var paused: Bool = false {
+    didSet {
+      self.onPaused(paused)
+    }
+  }
+
   private var hasCalledSetup = false
   private var player: AVPlayer?
-  var playButton:UIButton?
   private var hasAutoPlay = false
-  private var currentRate: Float = 5.0
   private var timeObserver: Any?
   private var currentTime: TimeInterval = 0.0
   private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height, width:UIScreen.main.bounds.width, height:10))
@@ -54,8 +84,7 @@ class RNVideoPlayerView: UIView {
     // player
     let videoLayer = AVPlayerLayer(player: avPlayer)
     videoLayer.frame = bounds
-    videoLayer.videoGravity = .resizeAspectFill
-    
+//    videoLayer.videoGravity = .resizeAspectFill
     layer.addSublayer(videoLayer)
     
     // seek slider
@@ -63,10 +92,10 @@ class RNVideoPlayerView: UIView {
     seekSlider.thumbTintColor = UIColor.blue
     seekSlider.minimumTrackTintColor = UIColor.blue
     seekSlider.maximumTrackTintColor = UIColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 0.5)
-
+    
     addSubview(seekSlider!)
     configureSeekSliderLayout()
-
+    
     
     avPlayer.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: avPlayer.currentItem)
@@ -115,26 +144,13 @@ class RNVideoPlayerView: UIView {
     self.removePeriodicTimeObserver()
   }
   
-  @objc func setRate(_ rate: Float) {
-    player?.rate = rate
-    currentRate = rate
-  }
-  
-  @objc func setSource(_ source: String) {
-    setupVideoPlayer(source)
-  }
-  
-  @objc func setPaused(_ paused: Bool) {
+  @objc private func onPaused(_ paused: Bool) {
     if player?.rate == 0
     {
       player?.play()
     } else {
       player?.pause()
     }
-  }
-  
-  @objc func setAutoPlay(_ autoPlay: Bool) {
-    hasAutoPlay = autoPlay
   }
   
   private var isThumbSeek: Bool = false
@@ -169,30 +185,29 @@ class RNVideoPlayerView: UIView {
       NSLayoutConstraint.activate([
         safeAreaLayoutGuide.topAnchor.constraint(equalToSystemSpacingBelow: safeAreaLayoutGuide.topAnchor, multiplier: 1.0),
         seekSlider.bottomAnchor.constraint(equalToSystemSpacingBelow: safeAreaLayoutGuide.bottomAnchor, multiplier: 1.0)
-       ])
+      ])
     } else {
-       let standardSpacing: CGFloat = 8.0
-       NSLayoutConstraint.activate([
+      let standardSpacing: CGFloat = 8.0
+      NSLayoutConstraint.activate([
         safeAreaLayoutGuide.topAnchor.constraint(equalTo: seekSlider.topAnchor, constant: standardSpacing),
         seekSlider.bottomAnchor.constraint(equalTo: seekSlider.bottomAnchor, constant: standardSpacing)
-       ])
+      ])
     }
   }
   
-  @objc func setIsFullScreen(_ isFullScreen: Bool) {
+  @objc private func onTapToggleOrientation(_ onFullScreen: Bool) {
     if #available(iOS 16.0, *) {
-        guard let windowSceen = window?.windowScene else { return }
-        if windowSceen.interfaceOrientation == .portrait && isFullScreen {
-            windowSceen.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
+        if onFullScreen {
+          window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
                 print(error.localizedDescription)
             }
         } else {
-            windowSceen.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
+          window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
                 print(error.localizedDescription)
             }
         }
     } else {
-        if UIDevice.current.orientation == .portrait && isFullScreen {
+        if onFullScreen {
             let orientation = UIInterfaceOrientation.landscapeRight.rawValue
             UIDevice.current.setValue(orientation, forKey: "orientation")
         } else {
@@ -201,4 +216,9 @@ class RNVideoPlayerView: UIView {
         }
     }
   }
+  
+  @objc private func onChangeRate(_ rate: Float) {
+    self.player?.rate = rate
+  }
+  
 }
