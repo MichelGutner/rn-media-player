@@ -22,7 +22,6 @@ class RNVideoPlayerView: UIView {
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
-  @objc var onVideoDuration: RCTBubblingEventBlock?
   private var hasCalledSetup = false
   private var player: AVPlayer?
   var playButton:UIButton?
@@ -39,8 +38,8 @@ class RNVideoPlayerView: UIView {
       player = AVPlayer(url: url)
       player?.actionAtItemEnd = .none
       hasCalledSetup = true
+      periodTimeObserver()
     }
-    periodTimeObserver()
   }
   
   override func layoutSubviews() {
@@ -64,7 +63,6 @@ class RNVideoPlayerView: UIView {
     seekSlider.thumbTintColor = UIColor.blue
     seekSlider.minimumTrackTintColor = UIColor.blue
     seekSlider.maximumTrackTintColor = UIColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 0.5)
-    seekSlider.thumbRect(forBounds: seekSlider.bounds, trackRect: seekSlider.trackRect(forBounds: seekSlider.bounds), value: seekSlider.value)
 
     addSubview(seekSlider!)
     configureSeekSliderLayout()
@@ -107,9 +105,8 @@ class RNVideoPlayerView: UIView {
   override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
     if object as? AVPlayerItem == player?.currentItem, keyPath == "status" {
       if player?.currentItem?.status == .readyToPlay {
-        self.onLoaded?(["loaded": true])
+        self.onLoaded?(["duration": player?.currentItem?.duration.seconds, "isReady": true])
       }
-      
     }
   }
   
@@ -169,7 +166,6 @@ class RNVideoPlayerView: UIView {
     ])
     
     if #available(iOS 11, *) {
-      let guide = safeAreaLayoutGuide
       NSLayoutConstraint.activate([
         safeAreaLayoutGuide.topAnchor.constraint(equalToSystemSpacingBelow: safeAreaLayoutGuide.topAnchor, multiplier: 1.0),
         seekSlider.bottomAnchor.constraint(equalToSystemSpacingBelow: safeAreaLayoutGuide.bottomAnchor, multiplier: 1.0)
@@ -183,4 +179,26 @@ class RNVideoPlayerView: UIView {
     }
   }
   
+  @objc func setIsFullScreen(_ isFullScreen: Bool) {
+    if #available(iOS 16.0, *) {
+        guard let windowSceen = window?.windowScene else { return }
+        if windowSceen.interfaceOrientation == .portrait && isFullScreen {
+            windowSceen.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
+                print(error.localizedDescription)
+            }
+        } else {
+            windowSceen.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
+                print(error.localizedDescription)
+            }
+        }
+    } else {
+        if UIDevice.current.orientation == .portrait && isFullScreen {
+            let orientation = UIInterfaceOrientation.landscapeRight.rawValue
+            UIDevice.current.setValue(orientation, forKey: "orientation")
+        } else {
+            let orientation = UIInterfaceOrientation.portrait.rawValue
+            UIDevice.current.setValue(orientation, forKey: "orientation")
+        }
+    }
+  }
 }
