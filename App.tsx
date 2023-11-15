@@ -5,13 +5,14 @@
  * @format
  */
 
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   requireNativeComponent,
   useWindowDimensions,
   View,
   Button,
   StyleSheet,
+  SafeAreaView,
 } from 'react-native';
 import {PlayPauseIcon} from './src/components/PlayButton';
 const VPlayer = requireNativeComponent('RNVideoPlayer');
@@ -26,36 +27,33 @@ function App(): JSX.Element {
   const test = secondsToHMS(loadData?.duration);
 
   const styles = {
-    width: width,
-    height: isFullScreen ? height : 350,
+    flex: 1,
     backgroundColor: '#000',
   };
   const currentSlider = secondsToHMS(currentTime);
 
   // useEffect(() => {
   //   setTimeout(() => {
-  //     setFullScreen(!fullScreen);
-  //   }, 10000);
-  // }, [fullScreen]);
+  //     setFullScreen(!isFullScreen);
+  //   }, 6000);
+  // }, [isFullScreen]);
 
   return (
     <>
-      <View style={{...styles}}>
-        <VPlayer
-          style={{...StyleSheet.absoluteFillObject}}
-          source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
-          autoPlay={true}
-          paused={false}
-          rate={rate}
-          resizeMode="contain"
-          onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
-          onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
-          onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
-          fullScreen={isFullScreen}
-        />
-      </View>
+      <VPlayer
+        style={{...StyleSheet.absoluteFillObject}}
+        source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+        // source="https://assets.mixkit.co/videos/download/mixkit-countryside-meadow-4075.mp4"
+        autoPlay={true}
+        paused={false}
+        rate={rate}
+        onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
+        onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
+        onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
+        fullScreen={isFullScreen}
+      />
       <View style={{flex: 1, position: 'absolute', top: 150, left: 150}}>
-        <Button title="TEST" onPress={() => setRate(12)} />
+        <Button title="TEST" onPress={() => setFullScreen(!isFullScreen)} />
       </View>
     </>
   );

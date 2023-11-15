@@ -1,7 +1,8 @@
 import AVKit
+import UIKit
 import React
 import AVFoundation
-import UIKit
+
 
 @objc(RNVideoPlayer)
 class RNVideoPlayer: RCTViewManager {
@@ -15,10 +16,22 @@ class RNVideoPlayer: RCTViewManager {
   
 }
 
+class RNVideoPlayerContainerView: UIView {
+  
+}
+
 class RNVideoPlayerView : UIView {
   let screenWidth = UIScreen.main.bounds.width
   let screenHeight = UIScreen.main.bounds.height
-
+  
+  private var hasCalledSetup = false
+  private var player: AVPlayer?
+  private var hasAutoPlay = false
+  private var timeObserver: Any?
+  private var currentTime: TimeInterval = 0.0
+  private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height, width:UIScreen.main.bounds.width, height:10))
+  private var playerContainerView: UIView!
+  
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
@@ -53,15 +66,6 @@ class RNVideoPlayerView : UIView {
       self.onPaused(paused)
     }
   }
-
-  private var hasCalledSetup = false
-  private var player: AVPlayer?
-  private var hasAutoPlay = false
-  private var timeObserver: Any?
-  private var currentTime: TimeInterval = 0.0
-  private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height, width:UIScreen.main.bounds.width, height:10))
-  
-  
   
   private func setupVideoPlayer(_ source: String) {
     if let url = URL(string: source) {
@@ -81,10 +85,28 @@ class RNVideoPlayerView : UIView {
   private func addVideoPlayerSubview() {
     guard let avPlayer = player else { return }
     
+    // View
+    playerContainerView = UIView()
+    playerContainerView.backgroundColor = .black
+    playerContainerView.frame = bounds
+    addSubview(playerContainerView)
+    
+    // player volume
+    player?.volume = 0
+    
     // player
     let videoLayer = AVPlayerLayer(player: avPlayer)
     videoLayer.frame = bounds
-//    videoLayer.videoGravity = .resizeAspectFill
+    if #available(iOS 16.0, *) {
+      if window?.windowScene?.isFullScreen == true {
+        videoLayer.videoGravity = .resizeAspectFill
+      }
+    } else {
+      if UIInterfaceOrientation.landscapeRight == .landscapeRight {
+        videoLayer.videoGravity = .resizeAspectFill
+      }
+    }
+        
     layer.addSublayer(videoLayer)
     
     // seek slider
@@ -92,6 +114,10 @@ class RNVideoPlayerView : UIView {
     seekSlider.thumbTintColor = UIColor.blue
     seekSlider.minimumTrackTintColor = UIColor.blue
     seekSlider.maximumTrackTintColor = UIColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 0.5)
+    let circleImage = makeCircle(size: CGSize(width: 20, height: 20),
+                                     backgroundColor: .blue)
+    seekSlider.setThumbImage(circleImage, for: .normal)
+    seekSlider.setThumbImage(circleImage, for: .highlighted)
     
     addSubview(seekSlider!)
     configureSeekSliderLayout()
@@ -183,8 +209,8 @@ class RNVideoPlayerView : UIView {
     
     if #available(iOS 11, *) {
       NSLayoutConstraint.activate([
-        safeAreaLayoutGuide.topAnchor.constraint(equalToSystemSpacingBelow: safeAreaLayoutGuide.topAnchor, multiplier: 1.0),
-        seekSlider.bottomAnchor.constraint(equalToSystemSpacingBelow: safeAreaLayoutGuide.bottomAnchor, multiplier: 1.0)
+        safeAreaLayoutGuide.topAnchor.constraint(equalToSystemSpacingBelow: safeAreaLayoutGuide.topAnchor, multiplier: -0.5),
+        seekSlider.bottomAnchor.constraint(equalToSystemSpacingBelow: safeAreaLayoutGuide.bottomAnchor, multiplier: -0.5)
       ])
     } else {
       let standardSpacing: CGFloat = 8.0
@@ -197,28 +223,40 @@ class RNVideoPlayerView : UIView {
   
   @objc private func onTapToggleOrientation(_ onFullScreen: Bool) {
     if #available(iOS 16.0, *) {
-        if onFullScreen {
-          window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
-                print(error.localizedDescription)
-            }
-        } else {
-          window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
-                print(error.localizedDescription)
-            }
+      if onFullScreen {
+        window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
+          print(error.localizedDescription)
         }
+      } else {
+        window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
+          print(error.localizedDescription)
+        }
+      }
     } else {
-        if onFullScreen {
-            let orientation = UIInterfaceOrientation.landscapeRight.rawValue
-            UIDevice.current.setValue(orientation, forKey: "orientation")
-        } else {
-            let orientation = UIInterfaceOrientation.portrait.rawValue
-            UIDevice.current.setValue(orientation, forKey: "orientation")
-        }
+      
+      if onFullScreen {
+        let orientation = UIInterfaceOrientation.landscapeRight.rawValue
+        UIDevice.current.setValue(orientation, forKey: "orientation")
+      } else {
+        let orientation = UIInterfaceOrientation.portrait.rawValue
+        UIDevice.current.setValue(orientation, forKey: "orientation")
+      }
     }
   }
   
   @objc private func onChangeRate(_ rate: Float) {
     self.player?.rate = rate
   }
-  
+  private func makeCircle(size: CGSize, backgroundColor: UIColor) -> UIImage? {
+      UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+      let context = UIGraphicsGetCurrentContext()
+      context?.setFillColor(backgroundColor.cgColor)
+      context?.setStrokeColor(UIColor.clear.cgColor)
+      let bounds = CGRect(origin: .zero, size: size)
+      context?.addEllipse(in: bounds)
+      context?.drawPath(using: .fill)
+      let image = UIGraphicsGetImageFromCurrentImageContext()
+      UIGraphicsEndImageContext()
+      return image
+  }
 }
