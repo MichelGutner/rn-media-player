@@ -3,6 +3,10 @@ import UIKit
 import React
 import AVFoundation
 
+struct SliderProperties {
+    var minimumColor: Any?
+    var maximumColor: Any?
+}
 
 @objc(RNVideoPlayer)
 class RNVideoPlayer: RCTViewManager {
@@ -29,13 +33,23 @@ class RNVideoPlayerView : UIView {
   private var hasAutoPlay = false
   private var timeObserver: Any?
   private var currentTime: TimeInterval = 0.0
-  private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height, width:UIScreen.main.bounds.width, height:10))
+  private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height - 60, width:UIScreen.main.bounds.width, height:10))
   private var playerContainerView: UIView!
+  
   
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
   @objc var onDeviceOrientation: RCTBubblingEventBlock?
+
+  @objc var sliderProps: NSDictionary? = [:] {
+    didSet {
+      let minimumColor = sliderProps?["minimumColor"] as? String
+      print(minimumColor)
+    }
+      
+  }
+  
   
   @objc var source: String = "" {
     didSet {
@@ -89,33 +103,30 @@ class RNVideoPlayerView : UIView {
     playerContainerView = UIView()
     playerContainerView.backgroundColor = .black
     playerContainerView.frame = bounds
-    addSubview(playerContainerView)
     
-    // player volume
-    player?.volume = 0
+    addSubview(playerContainerView)
     
     // player
     let videoLayer = AVPlayerLayer(player: avPlayer)
     videoLayer.frame = bounds
-    if #available(iOS 16.0, *) {
-      if window?.windowScene?.isFullScreen == true {
-        videoLayer.videoGravity = .resizeAspectFill
-      }
-    } else {
-      if UIInterfaceOrientation.landscapeRight == .landscapeRight {
-        videoLayer.videoGravity = .resizeAspectFill
-      }
+    if fullScreen  {
+      videoLayer.videoGravity = .resizeAspectFill
     }
-        
     layer.addSublayer(videoLayer)
+    
+    //     Add transition animation
+    //    let transition = CATransition()
+    //    transition.type = CATransitionType.fade
+    //    transition.duration = 1.0 // Set the duration of the animation (in seconds)
+    //    videoLayer.add(transition, forKey: nil)
+    
     
     // seek slider
     seekSlider.addTarget(self, action: #selector(self.seekIsliderValueChanged(_:)), for: .valueChanged)
     seekSlider.thumbTintColor = UIColor.blue
     seekSlider.minimumTrackTintColor = UIColor.blue
-    seekSlider.maximumTrackTintColor = UIColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 0.5)
-    let circleImage = makeCircle(size: CGSize(width: 20, height: 20),
-                                     backgroundColor: .blue)
+    seekSlider.maximumTrackTintColor = UIColor(red: 10/255, green: 15/255, blue: 255/255, alpha: 0.5)
+    let circleImage = makeCircle(size: CGSize(width: 20, height: 20), backgroundColor: .blue)
     seekSlider.setThumbImage(circleImage, for: .normal)
     seekSlider.setThumbImage(circleImage, for: .highlighted)
     
@@ -161,6 +172,7 @@ class RNVideoPlayerView : UIView {
     if object as? AVPlayerItem == player?.currentItem, keyPath == "status" {
       if player?.currentItem?.status == .readyToPlay {
         self.onLoaded?(["duration": player?.currentItem?.duration.seconds, "isReady": true])
+        self.enableAudioSession()
       }
     }
   }
@@ -205,20 +217,8 @@ class RNVideoPlayerView : UIView {
     NSLayoutConstraint.activate([
       seekSlider.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor),
       seekSlider.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
+      seekSlider.bottomAnchor.constraint(equalTo: layoutMarginsGuide.bottomAnchor),
     ])
-    
-    if #available(iOS 11, *) {
-      NSLayoutConstraint.activate([
-        safeAreaLayoutGuide.topAnchor.constraint(equalToSystemSpacingBelow: safeAreaLayoutGuide.topAnchor, multiplier: -0.5),
-        seekSlider.bottomAnchor.constraint(equalToSystemSpacingBelow: safeAreaLayoutGuide.bottomAnchor, multiplier: -0.5)
-      ])
-    } else {
-      let standardSpacing: CGFloat = 8.0
-      NSLayoutConstraint.activate([
-        safeAreaLayoutGuide.topAnchor.constraint(equalTo: seekSlider.topAnchor, constant: standardSpacing),
-        seekSlider.bottomAnchor.constraint(equalTo: seekSlider.bottomAnchor, constant: standardSpacing)
-      ])
-    }
   }
   
   @objc private func onTapToggleOrientation(_ onFullScreen: Bool) {
@@ -248,15 +248,42 @@ class RNVideoPlayerView : UIView {
     self.player?.rate = rate
   }
   private func makeCircle(size: CGSize, backgroundColor: UIColor) -> UIImage? {
-      UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
-      let context = UIGraphicsGetCurrentContext()
-      context?.setFillColor(backgroundColor.cgColor)
-      context?.setStrokeColor(UIColor.clear.cgColor)
-      let bounds = CGRect(origin: .zero, size: size)
-      context?.addEllipse(in: bounds)
-      context?.drawPath(using: .fill)
-      let image = UIGraphicsGetImageFromCurrentImageContext()
-      UIGraphicsEndImageContext()
-      return image
+    UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+    let context = UIGraphicsGetCurrentContext()
+    context?.setFillColor(backgroundColor.cgColor)
+    context?.setStrokeColor(UIColor.clear.cgColor)
+    let bounds = CGRect(origin: .zero, size: size)
+    context?.addEllipse(in: bounds)
+    context?.drawPath(using: .fill)
+    let image = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    return image
+  }
+  
+  private func enableAudioSession() {
+    do {
+      try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers, .allowAirPlay])
+      try AVAudioSession.sharedInstance().setActive(true)
+    } catch {
+      print(error)
+    }
+  }
+  
+  private func hexStringToUIColor(hexColor: String) -> UIColor {
+    let stringScanner = Scanner(string: hexColor)
+    
+    if(hexColor.hasPrefix("#")) {
+      stringScanner.scanLocation = 1
+    }
+    
+    var color: UInt32 = 0
+    stringScanner.scanHexInt32(&color)
+    
+    let r = CGFloat(Int(color >> 16) & 0x000000FF)
+    let g = CGFloat(Int(color >> 8) & 0x000000FF)
+    let b = CGFloat(Int(color) & 0x000000FF)
+    
+    return UIColor(red: r / 255.0, green: g / 255.0, blue: b / 255.0, alpha: 1)
+    
   }
 }
