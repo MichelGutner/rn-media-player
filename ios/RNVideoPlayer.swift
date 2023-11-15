@@ -4,8 +4,8 @@ import React
 import AVFoundation
 
 struct SliderProperties {
-    var minimumColor: Any?
-    var maximumColor: Any?
+  var minimumColor: Any?
+  var maximumColor: Any?
 }
 
 @objc(RNVideoPlayer)
@@ -35,19 +35,23 @@ class RNVideoPlayerView : UIView {
   private var currentTime: TimeInterval = 0.0
   private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height - 60, width:UIScreen.main.bounds.width, height:10))
   private var playerContainerView: UIView!
+  private var labelCurrentTime: UILabel! = UILabel(frame: UIScreen.main.bounds)
+  private var labelDuration: UILabel! = UILabel(frame: UIScreen.main.bounds)
+  
+  
   
   
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
   @objc var onDeviceOrientation: RCTBubblingEventBlock?
-
+  
   @objc var sliderProps: NSDictionary? = [:] {
     didSet {
       let minimumColor = sliderProps?["minimumColor"] as? String
       print(minimumColor)
     }
-      
+    
   }
   
   
@@ -104,6 +108,7 @@ class RNVideoPlayerView : UIView {
     playerContainerView.backgroundColor = .black
     playerContainerView.frame = bounds
     
+    
     addSubview(playerContainerView)
     
     // player
@@ -112,17 +117,24 @@ class RNVideoPlayerView : UIView {
     if fullScreen  {
       videoLayer.videoGravity = .resizeAspectFill
     }
-    layer.addSublayer(videoLayer)
+    playerContainerView.layer.addSublayer(videoLayer)
     
-    //     Add transition animation
+    
+    // seek slider monitoring label
     //    let transition = CATransition()
-    //    transition.type = CATransitionType.fade
+    //    transition.type = CATransitionType.moveIn
     //    transition.duration = 1.0 // Set the duration of the animation (in seconds)
-    //    videoLayer.add(transition, forKey: nil)
+    //    labelCurrentTime.layer.add(transition, forKey: nil)
+    print(seekSlider.frame.maxX)
+    labelDuration.textColor = .white
+    labelCurrentTime.textColor = .white
+    playerContainerView.addSubview(labelCurrentTime)
+    playerContainerView.addSubview(labelDuration)
     
     
     // seek slider
-    seekSlider.addTarget(self, action: #selector(self.seekIsliderValueChanged(_:)), for: .valueChanged)
+    seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
+    seekSlider.isContinuous = true
     seekSlider.thumbTintColor = UIColor.blue
     seekSlider.minimumTrackTintColor = UIColor.blue
     seekSlider.maximumTrackTintColor = UIColor(red: 10/255, green: 15/255, blue: 255/255, alpha: 0.5)
@@ -148,6 +160,8 @@ class RNVideoPlayerView : UIView {
       self.currentTime = time.seconds
       self.onVideoProgress?(["progress": currentTime])
       self.updatePlayerTime()
+      self.labelCurrentTime.frame = CGRect(x: seekSlider.frame.origin.x, y: seekSlider.frame.origin.y - 40, width: 80, height: 40)
+      self.labelDuration.frame = CGRect(x: seekSlider.frame.maxX - 80, y: seekSlider.frame.origin.y - 40, width: 80, height: 40)
     }
   }
   
@@ -156,6 +170,7 @@ class RNVideoPlayerView : UIView {
     guard let duration = self.player?.currentItem?.duration else {return}
     let currenTimeInSecond = CMTimeGetSeconds(currentTitme)
     let durationTimeInSecond = CMTimeGetSeconds(duration)
+    labelCurrentTime.text = self.stringFromTimeInterval(interval: currenTimeInSecond)
     if self.isThumbSeek == false {
       self.seekSlider.value = Float(currenTimeInSecond/durationTimeInSecond)
     }
@@ -173,6 +188,7 @@ class RNVideoPlayerView : UIView {
       if player?.currentItem?.status == .readyToPlay {
         self.onLoaded?(["duration": player?.currentItem?.duration.seconds, "isReady": true])
         self.enableAudioSession()
+        self.labelDuration.text = self.stringFromTimeInterval(interval: (player?.currentItem?.duration.seconds)!)
       }
     }
   }
@@ -192,7 +208,7 @@ class RNVideoPlayerView : UIView {
   }
   
   private var isThumbSeek: Bool = false
-  @objc func seekIsliderValueChanged(_ seekSlider: UISlider) {
+  @objc func seekSliderChanged(_ seekSlider: UISlider) {
     self.isThumbSeek = true
     guard let duration = self.player?.currentItem?.duration else { return }
     let seconds : Float64 = Double(self.seekSlider.value) * CMTimeGetSeconds(duration)
@@ -215,11 +231,19 @@ class RNVideoPlayerView : UIView {
   private func configureSeekSliderLayout() {
     seekSlider.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      seekSlider.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor),
-      seekSlider.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
+      seekSlider.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 20),
+      seekSlider.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -20),
       seekSlider.bottomAnchor.constraint(equalTo: layoutMarginsGuide.bottomAnchor),
     ])
   }
+  
+  //  private func configureLayoutLabelCurrentTime() {
+  //    labelCurrentTime.translatesAutoresizingMaskIntoConstraints = true
+  //    NSLayoutConstraint.activate([
+  //      labelCurrentTime.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 10),
+  //      labelCurrentTime.bottomAnchor.constraint(equalTo: layoutMarginsGuide.bottomAnchor, constant: -30)
+  //    ])
+  //  }
   
   @objc private func onTapToggleOrientation(_ onFullScreen: Bool) {
     if #available(iOS 16.0, *) {
@@ -285,5 +309,13 @@ class RNVideoPlayerView : UIView {
     
     return UIColor(red: r / 255.0, green: g / 255.0, blue: b / 255.0, alpha: 1)
     
+  }
+  
+  private func stringFromTimeInterval(interval: TimeInterval) -> String {
+    let interval = Int(interval)
+    let seconds = interval % 60
+    let minutes = (interval / 60) % 60
+    let hours = (interval / 3600)
+    return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
   }
 }
