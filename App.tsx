@@ -47,10 +47,17 @@ function App(): JSX.Element {
         autoPlay={true}
         paused={false}
         rate={rate}
+        resizeMode="contain"
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
         onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
         onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
         fullScreen={isFullScreen}
+        sliderProps={{
+          maximumTrackColor: '#ffffff',
+          minimumTrackColor: '#7b7777',
+          thumbSize: 20,
+          thumbColor: '#e10606',
+        }}
       />
       <View style={{flex: 1, position: 'absolute', top: 150, left: 150}}>
         <Button title="TEST" onPress={() => setFullScreen(!isFullScreen)} />

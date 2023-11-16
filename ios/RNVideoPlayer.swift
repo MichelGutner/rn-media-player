@@ -3,11 +3,6 @@ import UIKit
 import React
 import AVFoundation
 
-struct SliderProperties {
-  var minimumColor: Any?
-  var maximumColor: Any?
-}
-
 @objc(RNVideoPlayer)
 class RNVideoPlayer: RCTViewManager {
   @objc override func view() -> (RNVideoPlayerView) {
@@ -27,6 +22,7 @@ class RNVideoPlayerContainerView: UIView {
 class RNVideoPlayerView : UIView {
   let screenWidth = UIScreen.main.bounds.width
   let screenHeight = UIScreen.main.bounds.height
+  var circleImage: UIImage!
   
   private var hasCalledSetup = false
   private var player: AVPlayer?
@@ -39,19 +35,27 @@ class RNVideoPlayerView : UIView {
   private var labelDuration: UILabel! = UILabel(frame: UIScreen.main.bounds)
   
   
-  
+  //maximumTrackColor: '#f6f3f3',
+  //  minimumTrackColor: '#7b7777',
+  //  thumbSize: 20,
+  //  thumbColor: '#e10606',
   
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
   @objc var onDeviceOrientation: RCTBubblingEventBlock?
-  
   @objc var sliderProps: NSDictionary? = [:] {
     didSet {
-      let minimumColor = sliderProps?["minimumColor"] as? String
-      print(minimumColor)
+      if let sliderProps {
+        seekSlider.maximumTrackTintColor = hexStringToUIColor(hexColor: sliderProps["maximumTrackColor"] as! String)
+        seekSlider.minimumTrackTintColor = hexStringToUIColor(hexColor: sliderProps["minimumTrackColor"] as! String)
+        seekSlider.maximumTrackTintColor = hexStringToUIColor(hexColor: sliderProps["maximumTrackColor"] as! String)
+        seekSlider.maximumTrackTintColor = hexStringToUIColor(hexColor: sliderProps["maximumTrackColor"] as! String)
+        self.circleImage = self.makeCircle(size: CGSize(width: sliderProps["thumbSize"] as? CGFloat ?? 20, height: sliderProps["thumbSize"] as? CGFloat ?? 20), backgroundColor: hexStringToUIColor(hexColor: sliderProps["thumbColor"] as! String))
+      } else {
+        print("ERROR", "AQIO")
+      }
     }
-    
   }
   
   
@@ -69,7 +73,7 @@ class RNVideoPlayerView : UIView {
   
   @objc var fullScreen: Bool = false {
     didSet {
-      self.onTapToggleOrientation(fullScreen)
+      self.onToggleOrientation(fullScreen)
     }
   }
   
@@ -125,7 +129,6 @@ class RNVideoPlayerView : UIView {
     //    transition.type = CATransitionType.moveIn
     //    transition.duration = 1.0 // Set the duration of the animation (in seconds)
     //    labelCurrentTime.layer.add(transition, forKey: nil)
-    print(seekSlider.frame.maxX)
     labelDuration.textColor = .white
     labelCurrentTime.textColor = .white
     playerContainerView.addSubview(labelCurrentTime)
@@ -133,17 +136,9 @@ class RNVideoPlayerView : UIView {
     
     
     // seek slider
-    seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
-    seekSlider.isContinuous = true
-    seekSlider.thumbTintColor = UIColor.blue
-    seekSlider.minimumTrackTintColor = UIColor.blue
-    seekSlider.maximumTrackTintColor = UIColor(red: 10/255, green: 15/255, blue: 255/255, alpha: 0.5)
-    let circleImage = makeCircle(size: CGSize(width: 20, height: 20), backgroundColor: .blue)
-    seekSlider.setThumbImage(circleImage, for: .normal)
-    seekSlider.setThumbImage(circleImage, for: .highlighted)
-    
-    addSubview(seekSlider!)
-    configureSeekSliderLayout()
+    self.configureSliderProps()
+    playerContainerView.addSubview(seekSlider!)
+    self.configureSeekSliderLayout()
     
     
     avPlayer.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
@@ -161,7 +156,7 @@ class RNVideoPlayerView : UIView {
       self.onVideoProgress?(["progress": currentTime])
       self.updatePlayerTime()
       self.labelCurrentTime.frame = CGRect(x: seekSlider.frame.origin.x, y: seekSlider.frame.origin.y - 40, width: 80, height: 40)
-      self.labelDuration.frame = CGRect(x: seekSlider.frame.maxX - 80, y: seekSlider.frame.origin.y - 40, width: 80, height: 40)
+      self.labelDuration.frame = CGRect(x: seekSlider.frame.maxX - 70, y: seekSlider.frame.origin.y - 40, width: 80, height: 40)
     }
   }
   
@@ -237,15 +232,7 @@ class RNVideoPlayerView : UIView {
     ])
   }
   
-  //  private func configureLayoutLabelCurrentTime() {
-  //    labelCurrentTime.translatesAutoresizingMaskIntoConstraints = true
-  //    NSLayoutConstraint.activate([
-  //      labelCurrentTime.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 10),
-  //      labelCurrentTime.bottomAnchor.constraint(equalTo: layoutMarginsGuide.bottomAnchor, constant: -30)
-  //    ])
-  //  }
-  
-  @objc private func onTapToggleOrientation(_ onFullScreen: Bool) {
+  @objc private func onToggleOrientation(_ onFullScreen: Bool) {
     if #available(iOS 16.0, *) {
       if onFullScreen {
         window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
@@ -271,6 +258,13 @@ class RNVideoPlayerView : UIView {
   @objc private func onChangeRate(_ rate: Float) {
     self.player?.rate = rate
   }
+  
+  @objc private func configureSliderProps() {
+    seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
+    seekSlider.setThumbImage(circleImage, for: .normal)
+    seekSlider.setThumbImage(circleImage, for: .highlighted)
+  }
+  
   private func makeCircle(size: CGSize, backgroundColor: UIColor) -> UIImage? {
     UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
     let context = UIGraphicsGetCurrentContext()
@@ -292,6 +286,7 @@ class RNVideoPlayerView : UIView {
       print(error)
     }
   }
+  
   
   private func hexStringToUIColor(hexColor: String) -> UIColor {
     let stringScanner = Scanner(string: hexColor)
