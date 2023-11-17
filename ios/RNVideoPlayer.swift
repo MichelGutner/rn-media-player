@@ -23,22 +23,16 @@ class RNVideoPlayerView : UIView {
   let screenWidth = UIScreen.main.bounds.width
   let screenHeight = UIScreen.main.bounds.height
   var circleImage: UIImage!
+  var playButton = UIButton()
+  var playPauseSvg = CAShapeLayer()
   
   private var hasCalledSetup = false
   private var player: AVPlayer?
   private var hasAutoPlay = false
   private var timeObserver: Any?
-  private var currentTime: TimeInterval = 0.0
   private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height - 60, width:UIScreen.main.bounds.width, height:10))
   private var playerContainerView: UIView!
   private var labelCurrentTime: UILabel! = UILabel(frame: UIScreen.main.bounds)
-  private var labelDuration: UILabel! = UILabel(frame: UIScreen.main.bounds)
-  
-  
-  //maximumTrackColor: '#f6f3f3',
-  //  minimumTrackColor: '#7b7777',
-  //  thumbSize: 20,
-  //  thumbColor: '#e10606',
   
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
@@ -53,7 +47,7 @@ class RNVideoPlayerView : UIView {
         seekSlider.maximumTrackTintColor = hexStringToUIColor(hexColor: sliderProps["maximumTrackColor"] as! String)
         self.circleImage = self.makeCircle(size: CGSize(width: sliderProps["thumbSize"] as? CGFloat ?? 20, height: sliderProps["thumbSize"] as? CGFloat ?? 20), backgroundColor: hexStringToUIColor(hexColor: sliderProps["thumbColor"] as! String))
       } else {
-        print("ERROR", "AQIO")
+        print("ERROR")
       }
     }
   }
@@ -118,21 +112,31 @@ class RNVideoPlayerView : UIView {
     // player
     let videoLayer = AVPlayerLayer(player: avPlayer)
     videoLayer.frame = bounds
-    if fullScreen  {
-      videoLayer.videoGravity = .resizeAspectFill
+    if fullScreen {
+      if #available(iOS 13.0, *) {
+        if let windowScene = window?.windowScene, windowScene.isFullScreen {
+          videoLayer.videoGravity = .resizeAspectFill
+        }
+      } else {
+        if UIDevice.current.orientation.isLandscape {
+          videoLayer.videoGravity = .resizeAspectFill
+        }
+      }
     }
     playerContainerView.layer.addSublayer(videoLayer)
     
+    // add button
+    playButton.frame = CGRect(x: playerContainerView.frame.midX - 50, y: playerContainerView.frame.midY - 50, width: 100, height: 100)
+    playerContainerView.addSubview(playButton)
+    playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
+    if playPauseSvg.path == nil {
+      playButton.layer.addSublayer(pauseSvg())
+    }
     
     // seek slider monitoring label
-    //    let transition = CATransition()
-    //    transition.type = CATransitionType.moveIn
-    //    transition.duration = 1.0 // Set the duration of the animation (in seconds)
-    //    labelCurrentTime.layer.add(transition, forKey: nil)
-    labelDuration.textColor = .white
     labelCurrentTime.textColor = .white
+    labelCurrentTime.font = UIFont.systemFont(ofSize: 8)
     playerContainerView.addSubview(labelCurrentTime)
-    playerContainerView.addSubview(labelDuration)
     
     
     // seek slider
@@ -152,11 +156,9 @@ class RNVideoPlayerView : UIView {
     let interval = CMTime(value: 1, timescale: 2)
     timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
       guard let self = self else { return }
-      self.currentTime = time.seconds
-      self.onVideoProgress?(["progress": currentTime])
+      self.onVideoProgress?(["progress": time.seconds])
       self.updatePlayerTime()
       self.labelCurrentTime.frame = CGRect(x: seekSlider.frame.origin.x, y: seekSlider.frame.origin.y - 40, width: 80, height: 40)
-      self.labelDuration.frame = CGRect(x: seekSlider.frame.maxX - 70, y: seekSlider.frame.origin.y - 40, width: 80, height: 40)
     }
   }
   
@@ -165,7 +167,7 @@ class RNVideoPlayerView : UIView {
     guard let duration = self.player?.currentItem?.duration else {return}
     let currenTimeInSecond = CMTimeGetSeconds(currentTitme)
     let durationTimeInSecond = CMTimeGetSeconds(duration)
-    labelCurrentTime.text = self.stringFromTimeInterval(interval: currenTimeInSecond)
+    labelCurrentTime.text = (self.stringFromTimeInterval(interval: currenTimeInSecond) + "  " + self.stringFromTimeInterval(interval: (player?.currentItem?.duration.seconds)!))
     if self.isThumbSeek == false {
       self.seekSlider.value = Float(currenTimeInSecond/durationTimeInSecond)
     }
@@ -183,7 +185,6 @@ class RNVideoPlayerView : UIView {
       if player?.currentItem?.status == .readyToPlay {
         self.onLoaded?(["duration": player?.currentItem?.duration.seconds, "isReady": true])
         self.enableAudioSession()
-        self.labelDuration.text = self.stringFromTimeInterval(interval: (player?.currentItem?.duration.seconds)!)
       }
     }
   }
@@ -244,7 +245,6 @@ class RNVideoPlayerView : UIView {
         }
       }
     } else {
-      
       if onFullScreen {
         let orientation = UIInterfaceOrientation.landscapeRight.rawValue
         UIDevice.current.setValue(orientation, forKey: "orientation")
@@ -256,6 +256,7 @@ class RNVideoPlayerView : UIView {
   }
   
   @objc private func onChangeRate(_ rate: Float) {
+    print(rate)
     self.player?.rate = rate
   }
   
@@ -306,11 +307,68 @@ class RNVideoPlayerView : UIView {
     
   }
   
+  @objc private func playButtonTapped() {
+    if player?.rate == 0 {
+      player?.play()
+      playPauseSvg = self.pauseSvg()
+    } else {
+      player?.pause()
+      playPauseSvg = self.playSvg()
+    }
+    
+    let transition = CATransition()
+    transition.type = .reveal
+    transition.duration = 1.0
+    
+    
+    playButton.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
+    playButton.layer.addSublayer(playPauseSvg)
+    playButton.layer.sublayers?.forEach { $0.add(transition, forKey: nil)}
+  }
   private func stringFromTimeInterval(interval: TimeInterval) -> String {
     let interval = Int(interval)
     let seconds = interval % 60
     let minutes = (interval / 60) % 60
     let hours = (interval / 3600)
     return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+  }
+  
+  private func playSvg() -> CAShapeLayer {
+    let svgPath = UIBezierPath()
+    svgPath.move(to: CGPoint(x: 0, y: 0))
+    svgPath.addLine(to: CGPoint(x: 20, y: 17))
+    svgPath.addLine(to: CGPoint(x: 0, y: 34))
+    svgPath.close()
+    
+    let shapeLayer = CAShapeLayer()
+    shapeLayer.path = svgPath.cgPath
+    shapeLayer.fillColor = UIColor.white.cgColor
+    
+    shapeLayer.position = CGPoint(x: 80/2, y: 80/2)
+    
+    return shapeLayer
+  }
+  
+  private func pauseSvg() -> CAShapeLayer {
+    let svgPath = UIBezierPath()
+    
+    svgPath.move(to: CGPoint(x: -10, y: 0))
+    svgPath.addLine(to: CGPoint(x: 0, y: 0))
+    svgPath.addLine(to: CGPoint(x: 0, y: 32))
+    svgPath.addLine(to: CGPoint(x: -10, y: 32))
+    svgPath.close()
+    
+    svgPath.move(to: CGPoint(x: 10, y: 0))
+    svgPath.addLine(to: CGPoint(x: 20, y: 0))
+    svgPath.addLine(to: CGPoint(x: 20, y: 32))
+    svgPath.addLine(to: CGPoint(x: 10, y: 32))
+    svgPath.close()
+    
+    let shapeLayer = CAShapeLayer()
+    shapeLayer.path = svgPath.cgPath
+    shapeLayer.fillColor = UIColor.white.cgColor
+    shapeLayer.position = CGPoint(x: 80/2, y: 80/2)
+    
+    return shapeLayer
   }
 }
