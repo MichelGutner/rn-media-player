@@ -19,12 +19,11 @@ class RNVideoPlayerContainerView: UIView {
 }
 
 class RNVideoPlayerView : UIView {
-  let screenWidth = UIScreen.main.bounds.width
-  let screenHeight = UIScreen.main.bounds.height
   var circleImage: UIImage!
   var playButton = UIButton()
   var playPauseSvg = CAShapeLayer()
   var forwardButton = UIButton()
+  var backwardButton = UIButton()
   
   private var hasCalledSetup = false
   private var player: AVPlayer?
@@ -128,8 +127,8 @@ class RNVideoPlayerView : UIView {
     
     
     // add button
-    playButton.frame = CGRect(x: playerContainerView.bounds.midX - 30, y: playerContainerView.bounds.midY - 30, width: 60, height: 60)
     playerContainerView.addSubview(playButton)
+    playButton.frame = CGRect(x: playerContainerView.bounds.midX, y: playerContainerView.bounds.midY, width: 80, height: 80)
     playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
     
     if playPauseSvg.path == nil {
@@ -137,9 +136,14 @@ class RNVideoPlayerView : UIView {
     }
     
     // add forward button
-    forwardButton.frame = CGRect(origin: CGPoint(x: playButton.frame.maxX * 1.25, y: playButton.frame.minY), size: CGSize(width: playButton.frame.width, height: playButton.frame.height))
+    forwardButton.frame = CGRect(origin: CGPoint(x: playButton.frame.maxX + 30, y: playButton.frame.minY), size: CGSize(width: playButton.frame.width, height: playButton.frame.height))
     forwardButton.layer.addSublayer(forward())
     playerContainerView.addSubview(forwardButton)
+    
+    // add backward button
+    backwardButton.layer.addSublayer(backward())
+    backwardButton.frame = CGRect(origin: CGPoint(x: (playButton.frame.minX - playButton.frame.width) - 30, y: playButton.frame.minY), size: CGSize(width: playButton.frame.width, height: playButton.frame.height))
+    playerContainerView.addSubview(backwardButton)
     
     // seek slider monitoring label
     labelCurrentTime.textColor = .white
@@ -243,23 +247,23 @@ class RNVideoPlayerView : UIView {
   
   @objc private func onToggleOrientation(_ onFullScreen: Bool) {
     if #available(iOS 16.0, *) {
-      if onFullScreen {
-        window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
-          print(error.localizedDescription)
-        }
+    if onFullScreen {
+    window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
+    print(error.localizedDescription)
+    }
       } else {
-        window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
-          print(error.localizedDescription)
-        }
+    window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
+    print(error.localizedDescription)
+    }
       }
     } else {
       if onFullScreen {
         let orientation = UIInterfaceOrientation.landscapeRight.rawValue
-        UIDevice.current.setValue(orientation, forKey: "orientation")
-      } else {
-        let orientation = UIInterfaceOrientation.portrait.rawValue
-        UIDevice.current.setValue(orientation, forKey: "orientation")
-      }
+    UIDevice.current.setValue(orientation, forKey: "orientation")
+    } else {
+    let orientation = UIInterfaceOrientation.portrait.rawValue
+    UIDevice.current.setValue(orientation, forKey: "orientation")
+    }
     }
   }
   
@@ -315,6 +319,14 @@ class RNVideoPlayerView : UIView {
     
   }
   
+  private func stringFromTimeInterval(interval: TimeInterval) -> String {
+    let interval = Int(interval)
+    let seconds = interval % 60
+    let minutes = (interval / 60) % 60
+    let hours = (interval / 3600)
+    return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+  }
+  
   @objc private func playButtonTapped() {
     if player?.rate == 0 {
       player?.play()
@@ -333,13 +345,6 @@ class RNVideoPlayerView : UIView {
     playButton.layer.addSublayer(playPauseSvg)
     playButton.layer.sublayers?.forEach { $0.add(transition, forKey: nil)}
   }
-  private func stringFromTimeInterval(interval: TimeInterval) -> String {
-    let interval = Int(interval)
-    let seconds = interval % 60
-    let minutes = (interval / 60) % 60
-    let hours = (interval / 3600)
-    return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
-  }
   
   private func playSvg() -> CAShapeLayer {
     let svgPath = UIBezierPath()
@@ -352,7 +357,7 @@ class RNVideoPlayerView : UIView {
     shapeLayer.path = svgPath.cgPath
     shapeLayer.fillColor = UIColor.white.cgColor
     
-    shapeLayer.frame = CGRect(x: svgPath.bounds.width, y: svgPath.bounds.height / 2, width: svgPath.bounds.width, height: svgPath.bounds.height)
+    shapeLayer.frame = CGRect(x: playButton.bounds.midX - svgPath.bounds.width / 2, y: playButton.bounds.midY - svgPath.bounds.height / 2, width: svgPath.bounds.width, height: svgPath.bounds.height)
     return shapeLayer
   }
   
@@ -375,13 +380,12 @@ class RNVideoPlayerView : UIView {
     shapeLayer.path = svgPath.cgPath
     shapeLayer.fillColor = UIColor.white.cgColor
     
-    shapeLayer.frame = CGRect(x: svgPath.bounds.width, y: svgPath.bounds.height / 2, width: svgPath.bounds.width, height: svgPath.bounds.height)
+    shapeLayer.frame = CGRect(x: playButton.bounds.midX, y: playButton.bounds.midY - svgPath.bounds.height / 2, width: svgPath.bounds.width, height: svgPath.bounds.height)
     
     return shapeLayer
   }
   
   private func forward() -> CAShapeLayer {
-    print("bounds", forwardButton.bounds.midX, "frame", forwardButton.frame.midX)
     let svgPath = UIBezierPath()
     let circlePath = UIBezierPath(arcCenter: CGPoint(x: 0, y: 0), radius: 14, startAngle: 0, endAngle: 4.98, clockwise: true)
     svgPath.append(circlePath)
@@ -420,4 +424,44 @@ class RNVideoPlayerView : UIView {
     shapeLayer.position = CGPoint(x: forwardButton.bounds.midX + svgPath.bounds.width / 2, y: forwardButton.bounds.midY + svgPath.bounds.height / 2)
     return shapeLayer
   }
+  
+  private func backward() -> CAShapeLayer {
+    let svgPath = UIBezierPath()
+    let circlePath = UIBezierPath(arcCenter: CGPoint(x: 0, y: 0), radius: 14, startAngle: -1.8, endAngle: 3.1, clockwise: true)
+    svgPath.append(circlePath)
+    
+    let trianglePath = UIBezierPath()
+    trianglePath.move(to: CGPoint(x: 1.5, y: 0))
+    trianglePath.addLine(to: CGPoint(x: 9, y: 5))
+    trianglePath.addLine(to: CGPoint(x: 9, y: -5))
+    trianglePath.close()
+    
+    let numberLayer = CATextLayer()
+    numberLayer.string = "15"
+    numberLayer.foregroundColor = UIColor.white.cgColor
+    numberLayer.alignmentMode = .center
+    numberLayer.bounds = CGRect(x: 0, y: 0, width: 20, height: 20)
+    numberLayer.position = CGPoint(x: svgPath.bounds.midX, y: svgPath.bounds.midY)
+    numberLayer.fontSize = 16
+    
+    let triangleLayer = CAShapeLayer()
+    triangleLayer.path = trianglePath.cgPath
+    triangleLayer.fillColor = UIColor.white.cgColor
+    triangleLayer.position = CGPoint(x: svgPath.bounds.minX + trianglePath.bounds.width / 2, y: svgPath.bounds.minY)
+    
+    let shapeLayer = CAShapeLayer()
+    shapeLayer.path = svgPath.cgPath
+    shapeLayer.fillColor = UIColor.clear.cgColor
+    shapeLayer.strokeColor = UIColor.white.cgColor
+    shapeLayer.lineWidth = 4
+    
+    shapeLayer.addSublayer(numberLayer)
+    shapeLayer.addSublayer(triangleLayer)
+    
+    print("forward bounds", forwardButton.bounds)
+    shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
+    shapeLayer.position = CGPoint(x: forwardButton.bounds.midX + svgPath.bounds.width / 2, y: forwardButton.bounds.midY + svgPath.bounds.height / 2)
+    return shapeLayer
+  }
+  
 }
