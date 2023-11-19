@@ -12,7 +12,6 @@ class RNVideoPlayer: RCTViewManager {
   @objc override static func requiresMainQueueSetup() -> Bool {
     return true
   }
-  
 }
 
 class RNVideoPlayerContainerView: UIView {
@@ -25,6 +24,7 @@ class RNVideoPlayerView : UIView {
   var circleImage: UIImage!
   var playButton = UIButton()
   var playPauseSvg = CAShapeLayer()
+  var forwardButton = UIButton()
   
   private var hasCalledSetup = false
   private var player: AVPlayer?
@@ -38,6 +38,7 @@ class RNVideoPlayerView : UIView {
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
   @objc var onDeviceOrientation: RCTBubblingEventBlock?
+  
   @objc var sliderProps: NSDictionary? = [:] {
     didSet {
       if let sliderProps {
@@ -125,13 +126,20 @@ class RNVideoPlayerView : UIView {
     }
     playerContainerView.layer.addSublayer(videoLayer)
     
+    
     // add button
-    playButton.frame = CGRect(x: playerContainerView.frame.midX - 50, y: playerContainerView.frame.midY - 50, width: 100, height: 100)
+    playButton.frame = CGRect(x: playerContainerView.bounds.midX - 30, y: playerContainerView.bounds.midY - 30, width: 60, height: 60)
     playerContainerView.addSubview(playButton)
     playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
+    
     if playPauseSvg.path == nil {
       playButton.layer.addSublayer(pauseSvg())
     }
+    
+    // add forward button
+    forwardButton.frame = CGRect(origin: CGPoint(x: playButton.frame.maxX * 1.25, y: playButton.frame.minY), size: CGSize(width: playButton.frame.width, height: playButton.frame.height))
+    forwardButton.layer.addSublayer(forward())
+    playerContainerView.addSubview(forwardButton)
     
     // seek slider monitoring label
     labelCurrentTime.textColor = .white
@@ -336,39 +344,80 @@ class RNVideoPlayerView : UIView {
   private func playSvg() -> CAShapeLayer {
     let svgPath = UIBezierPath()
     svgPath.move(to: CGPoint(x: 0, y: 0))
-    svgPath.addLine(to: CGPoint(x: 20, y: 17))
-    svgPath.addLine(to: CGPoint(x: 0, y: 34))
+    svgPath.addLine(to: CGPoint(x: 20, y: 15))
+    svgPath.addLine(to: CGPoint(x: 0, y: 32))
     svgPath.close()
     
     let shapeLayer = CAShapeLayer()
     shapeLayer.path = svgPath.cgPath
     shapeLayer.fillColor = UIColor.white.cgColor
     
-    shapeLayer.position = CGPoint(x: 80/2, y: 80/2)
-    
+    shapeLayer.frame = CGRect(x: svgPath.bounds.width, y: svgPath.bounds.height / 2, width: svgPath.bounds.width, height: svgPath.bounds.height)
     return shapeLayer
   }
   
   private func pauseSvg() -> CAShapeLayer {
     let svgPath = UIBezierPath()
     
-    svgPath.move(to: CGPoint(x: -10, y: 0))
-    svgPath.addLine(to: CGPoint(x: 0, y: 0))
-    svgPath.addLine(to: CGPoint(x: 0, y: 32))
-    svgPath.addLine(to: CGPoint(x: -10, y: 32))
+    svgPath.move(to: CGPoint(x: -15, y: 0))
+    svgPath.addLine(to: CGPoint(x: -5, y: 0))
+    svgPath.addLine(to: CGPoint(x: -5, y: 32))
+    svgPath.addLine(to: CGPoint(x: -15, y: 32))
     svgPath.close()
     
-    svgPath.move(to: CGPoint(x: 10, y: 0))
-    svgPath.addLine(to: CGPoint(x: 20, y: 0))
-    svgPath.addLine(to: CGPoint(x: 20, y: 32))
-    svgPath.addLine(to: CGPoint(x: 10, y: 32))
+    svgPath.move(to: CGPoint(x: 5, y: 0))
+    svgPath.addLine(to: CGPoint(x: 15, y: 0))
+    svgPath.addLine(to: CGPoint(x: 15, y: 32))
+    svgPath.addLine(to: CGPoint(x: 5, y: 32))
     svgPath.close()
     
     let shapeLayer = CAShapeLayer()
     shapeLayer.path = svgPath.cgPath
     shapeLayer.fillColor = UIColor.white.cgColor
-    shapeLayer.position = CGPoint(x: 80/2, y: 80/2)
     
+    shapeLayer.frame = CGRect(x: svgPath.bounds.width, y: svgPath.bounds.height / 2, width: svgPath.bounds.width, height: svgPath.bounds.height)
+    
+    return shapeLayer
+  }
+  
+  private func forward() -> CAShapeLayer {
+    print("bounds", forwardButton.bounds.midX, "frame", forwardButton.frame.midX)
+    let svgPath = UIBezierPath()
+    let circlePath = UIBezierPath(arcCenter: CGPoint(x: 0, y: 0), radius: 14, startAngle: 0, endAngle: 4.98, clockwise: true)
+    svgPath.append(circlePath)
+    
+    let trianglePath = UIBezierPath()
+    trianglePath.move(to: CGPoint(x: 9, y: 0))
+    trianglePath.addLine(to: CGPoint(x: 1.5, y: 5))
+    trianglePath.addLine(to: CGPoint(x: 1.5, y: -5))
+    
+    trianglePath.close()
+    
+    let triangleLayer = CAShapeLayer()
+    triangleLayer.path = trianglePath.cgPath
+    triangleLayer.fillColor = UIColor.white.cgColor
+    triangleLayer.position = CGPoint(x: svgPath.bounds.midX, y: svgPath.bounds.minY)
+    
+    
+    let numberLayer = CATextLayer()
+    numberLayer.string = "15"
+    numberLayer.foregroundColor = UIColor.white.cgColor
+    numberLayer.alignmentMode = .center
+    numberLayer.bounds = CGRect(x: 0, y: 0, width: 20, height: 20)
+    numberLayer.position = CGPoint(x: svgPath.bounds.midX, y: svgPath.bounds.midY)
+    numberLayer.fontSize = 16
+    
+    let shapeLayer = CAShapeLayer()
+    shapeLayer.path = svgPath.cgPath
+    shapeLayer.fillColor = UIColor.clear.cgColor
+    shapeLayer.strokeColor = UIColor.white.cgColor
+    shapeLayer.lineWidth = 4
+    
+    shapeLayer.addSublayer(numberLayer)
+    shapeLayer.addSublayer(triangleLayer)
+    
+    shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
+    shapeLayer.position = CGPoint(x: forwardButton.bounds.midX + svgPath.bounds.width / 2, y: forwardButton.bounds.midY + svgPath.bounds.height / 2)
     return shapeLayer
   }
 }
