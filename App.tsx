@@ -46,6 +46,7 @@ function App(): JSX.Element {
         onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
         onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
         fullScreen={isFullScreen}
+        timeValueForChange={10}
         sliderProps={{
           maximumTrackColor: '#f2f2f2',
           minimumTrackColor: '#3939ae',

@@ -24,9 +24,9 @@ class RNVideoPlayerView : UIView {
   var playPauseSvg = CAShapeLayer()
   var forwardButton = UIButton()
   var backwardButton = UIButton()
-  
   // dimensions
   var playButtonSize = CGFloat(80)
+  var videoTimeForChange: Double?
   
   private var hasCalledSetup = false
   private var player: AVPlayer?
@@ -40,6 +40,8 @@ class RNVideoPlayerView : UIView {
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
   @objc var onDeviceOrientation: RCTBubblingEventBlock?
+  
+  @objc var timeValueForChange: NSNumber?
   
   @objc var sliderProps: NSDictionary? = [:] {
     didSet {
@@ -409,7 +411,7 @@ class RNVideoPlayerView : UIView {
     
     
     let numberLayer = CATextLayer()
-    numberLayer.string = "15"
+    numberLayer.string = timeValueForChange?.stringValue
     numberLayer.foregroundColor = UIColor.white.cgColor
     numberLayer.alignmentMode = .center
     numberLayer.bounds = CGRect(x: 0, y: 0, width: 20, height: 20)
@@ -442,7 +444,7 @@ class RNVideoPlayerView : UIView {
     trianglePath.close()
     
     let numberLayer = CATextLayer()
-    numberLayer.string = "15"
+    numberLayer.string = timeValueForChange?.stringValue
     numberLayer.foregroundColor = UIColor.white.cgColor
     numberLayer.alignmentMode = .center
     numberLayer.bounds = CGRect(x: 0, y: 0, width: 20, height: 20)
@@ -469,11 +471,11 @@ class RNVideoPlayerView : UIView {
   }
   
   @objc private func fowardTime() {
-    self.changeVideoTime(time: 15)
+    self.changeVideoTime(time: Double(timeValueForChange!))
   }
   
   @objc private func backwardTime() {
-    self.changeVideoTime(time: -15)
+    self.changeVideoTime(time: -Double(timeValueForChange!))
   }
   
   private func changeVideoTime(time: Double){
