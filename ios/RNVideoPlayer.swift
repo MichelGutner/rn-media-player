@@ -25,6 +25,9 @@ class RNVideoPlayerView : UIView {
   var forwardButton = UIButton()
   var backwardButton = UIButton()
   
+  // dimensions
+  var playButtonSize = CGFloat(80)
+  
   private var hasCalledSetup = false
   private var player: AVPlayer?
   private var hasAutoPlay = false
@@ -128,7 +131,7 @@ class RNVideoPlayerView : UIView {
     
     // add button
     playerContainerView.addSubview(playButton)
-    playButton.frame = CGRect(x: playerContainerView.bounds.midX, y: playerContainerView.bounds.midY, width: 80, height: 80)
+    playButton.frame = CGRect(x: playerContainerView.bounds.midX - (playButtonSize/2), y: playerContainerView.bounds.midY - (playButtonSize/2), width: playButtonSize, height: playButtonSize)
     playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
     
     if playPauseSvg.path == nil {
@@ -137,12 +140,14 @@ class RNVideoPlayerView : UIView {
     
     // add forward button
     forwardButton.frame = CGRect(origin: CGPoint(x: playButton.frame.maxX + 30, y: playButton.frame.minY), size: CGSize(width: playButton.frame.width, height: playButton.frame.height))
-    forwardButton.layer.addSublayer(forward())
+    forwardButton.layer.addSublayer(forwardSvg())
+    forwardButton.addTarget(self, action: #selector(fowardTime), for: .touchUpInside)
     playerContainerView.addSubview(forwardButton)
     
     // add backward button
-    backwardButton.layer.addSublayer(backward())
+    backwardButton.layer.addSublayer(backwardSvg())
     backwardButton.frame = CGRect(origin: CGPoint(x: (playButton.frame.minX - playButton.frame.width) - 30, y: playButton.frame.minY), size: CGSize(width: playButton.frame.width, height: playButton.frame.height))
+    backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
     playerContainerView.addSubview(backwardButton)
     
     // seek slider monitoring label
@@ -247,23 +252,23 @@ class RNVideoPlayerView : UIView {
   
   @objc private func onToggleOrientation(_ onFullScreen: Bool) {
     if #available(iOS 16.0, *) {
-    if onFullScreen {
-    window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
-    print(error.localizedDescription)
-    }
+      if onFullScreen {
+        window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
+          print(error.localizedDescription)
+        }
       } else {
-    window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
-    print(error.localizedDescription)
-    }
+        window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
+          print(error.localizedDescription)
+        }
       }
     } else {
       if onFullScreen {
         let orientation = UIInterfaceOrientation.landscapeRight.rawValue
-    UIDevice.current.setValue(orientation, forKey: "orientation")
-    } else {
-    let orientation = UIInterfaceOrientation.portrait.rawValue
-    UIDevice.current.setValue(orientation, forKey: "orientation")
-    }
+        UIDevice.current.setValue(orientation, forKey: "orientation")
+      } else {
+        let orientation = UIInterfaceOrientation.portrait.rawValue
+        UIDevice.current.setValue(orientation, forKey: "orientation")
+      }
     }
   }
   
@@ -385,7 +390,7 @@ class RNVideoPlayerView : UIView {
     return shapeLayer
   }
   
-  private func forward() -> CAShapeLayer {
+  private func forwardSvg() -> CAShapeLayer {
     let svgPath = UIBezierPath()
     let circlePath = UIBezierPath(arcCenter: CGPoint(x: 0, y: 0), radius: 14, startAngle: 0, endAngle: 4.98, clockwise: true)
     svgPath.append(circlePath)
@@ -425,7 +430,7 @@ class RNVideoPlayerView : UIView {
     return shapeLayer
   }
   
-  private func backward() -> CAShapeLayer {
+  private func backwardSvg() -> CAShapeLayer {
     let svgPath = UIBezierPath()
     let circlePath = UIBezierPath(arcCenter: CGPoint(x: 0, y: 0), radius: 14, startAngle: -1.8, endAngle: 3.1, clockwise: true)
     svgPath.append(circlePath)
@@ -458,10 +463,23 @@ class RNVideoPlayerView : UIView {
     shapeLayer.addSublayer(numberLayer)
     shapeLayer.addSublayer(triangleLayer)
     
-    print("forward bounds", forwardButton.bounds)
     shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
     shapeLayer.position = CGPoint(x: forwardButton.bounds.midX + svgPath.bounds.width / 2, y: forwardButton.bounds.midY + svgPath.bounds.height / 2)
     return shapeLayer
   }
   
+  @objc private func fowardTime() {
+    self.changeVideoTime(time: 15)
+  }
+  
+  @objc private func backwardTime() {
+    self.changeVideoTime(time: -15)
+  }
+  
+  private func changeVideoTime(time: Double){
+    guard let currentTime = self.player?.currentTime() else { return }
+    let seekTimeSec = CMTimeGetSeconds(currentTime).advanced(by: time)
+    let seekTime = CMTime(value: CMTimeValue(seekTimeSec), timescale: 1)
+    self.player?.seek(to: seekTime, completionHandler: {completed in})
+  }
 }
