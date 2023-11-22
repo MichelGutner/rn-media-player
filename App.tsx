@@ -33,7 +33,7 @@ function App(): JSX.Element {
   // }, [isFullScreen]);
 
   return (
-    <>
+    <View style={{flex: 1, backgroundColor: 'red'}}>
       <VPlayer
         style={{...StyleSheet.absoluteFillObject}}
         source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
@@ -48,7 +48,7 @@ function App(): JSX.Element {
         fullScreen={isFullScreen}
         timeValueForChange={10}
         sliderProps={{
-          maximumTrackColor: '#f2f2f2',
+          maximumTrackColor: '#fff2f2',
           minimumTrackColor: '#3939ae',
           thumbSize: 20,
           thumbColor: '#412cdf',
@@ -66,7 +66,7 @@ function App(): JSX.Element {
         hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
         <PlayPauseIcon />
       </View> */}
-    </>
+    </View>
   );
 }
 

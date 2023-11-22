@@ -14,19 +14,17 @@ class RNVideoPlayer: RCTViewManager {
   }
 }
 
-class RNVideoPlayerContainerView: UIView {
-  
-}
-
 class RNVideoPlayerView : UIView {
   var circleImage: UIImage!
-  var playButton = UIButton()
   var playPauseSvg = CAShapeLayer()
+  var playButton = UIButton()
   var forwardButton = UIButton()
   var backwardButton = UIButton()
+  var fullScreenButton = UIButton()
+  var videoTimeForChange: Double?
   // dimensions
   var playButtonSize = CGFloat(80)
-  var videoTimeForChange: Double?
+  
   
   private var hasCalledSetup = false
   private var player: AVPlayer?
@@ -72,7 +70,7 @@ class RNVideoPlayerView : UIView {
   
   @objc var fullScreen: Bool = false {
     didSet {
-      self.onToggleOrientation(fullScreen)
+      self.onToggleOrientation()
     }
   }
   
@@ -105,7 +103,6 @@ class RNVideoPlayerView : UIView {
   
   private func addVideoPlayerSubview() {
     guard let avPlayer = player else { return }
-    
     // View
     playerContainerView = UIView()
     playerContainerView.backgroundColor = .black
@@ -156,6 +153,11 @@ class RNVideoPlayerView : UIView {
     labelCurrentTime.textColor = .white
     labelCurrentTime.font = UIFont.systemFont(ofSize: 8)
     playerContainerView.addSubview(labelCurrentTime)
+    labelCurrentTime.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      labelCurrentTime.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 30),
+      labelCurrentTime.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor, constant: -35)
+    ])
     
     
     // seek slider
@@ -163,7 +165,16 @@ class RNVideoPlayerView : UIView {
     playerContainerView.addSubview(seekSlider!)
     self.configureSeekSliderLayout()
     
-    
+    // add fullScreen icon
+    fullScreenButton.layer.addSublayer(fullScreenSvg())
+    playerContainerView.addSubview(fullScreenButton)
+    fullScreenButton.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
+    fullScreenButton.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      fullScreenButton.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -30),
+      fullScreenButton.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor, constant: -30)
+    ])
+
     avPlayer.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: avPlayer.currentItem)
     if hasAutoPlay {
@@ -177,7 +188,6 @@ class RNVideoPlayerView : UIView {
       guard let self = self else { return }
       self.onVideoProgress?(["progress": time.seconds])
       self.updatePlayerTime()
-      self.labelCurrentTime.frame = CGRect(x: seekSlider.frame.origin.x, y: seekSlider.frame.origin.y - 40, width: 80, height: 40)
     }
   }
   
@@ -252,9 +262,9 @@ class RNVideoPlayerView : UIView {
     ])
   }
   
-  @objc private func onToggleOrientation(_ onFullScreen: Bool) {
+  @objc private func onToggleOrientation() {
     if #available(iOS 16.0, *) {
-      if onFullScreen {
+      if window?.windowScene?.interfaceOrientation.isPortrait == true {
         window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
           print(error.localizedDescription)
         }
@@ -264,7 +274,7 @@ class RNVideoPlayerView : UIView {
         }
       }
     } else {
-      if onFullScreen {
+      if UIInterfaceOrientation.portrait == .portrait {
         let orientation = UIInterfaceOrientation.landscapeRight.rawValue
         UIDevice.current.setValue(orientation, forKey: "orientation")
       } else {
@@ -470,12 +480,77 @@ class RNVideoPlayerView : UIView {
     return shapeLayer
   }
   
+  private func fullScreenSvg() -> CAShapeLayer {
+    let svgPath = UIBezierPath()
+    
+    // --- leftTop
+    svgPath.move(to: CGPoint(x: 8, y: 4))
+    svgPath.addLine(to: CGPoint(x: 11, y: 4))
+    svgPath.addLine(to: CGPoint(x: 11, y: 10))
+    svgPath.addLine(to: CGPoint(x: 8, y: 10))
+    svgPath.close()
+
+    svgPath.move(to: CGPoint(x: 4, y: 8))
+    svgPath.addLine(to: CGPoint(x: 11, y: 8))
+    svgPath.addLine(to: CGPoint(x: 11, y: 11))
+    svgPath.addLine(to: CGPoint(x: 4, y: 11))
+    svgPath.close()
+
+    //---- rightTop
+    svgPath.move(to: CGPoint(x: 17, y: 4))
+    svgPath.addLine(to: CGPoint(x: 20, y: 4))
+    svgPath.addLine(to: CGPoint(x: 20, y: 10))
+    svgPath.addLine(to: CGPoint(x: 17, y: 10))
+    svgPath.close()
+
+    svgPath.move(to: CGPoint(x: 17, y: 8))
+    svgPath.addLine(to: CGPoint(x: 24, y: 8))
+    svgPath.addLine(to: CGPoint(x: 24, y: 11))
+    svgPath.addLine(to: CGPoint(x: 17, y: 11))
+    svgPath.close()
+
+    // *----- leftBottom
+    svgPath.move(to: CGPoint(x: 8, y: 18))
+    svgPath.addLine(to: CGPoint(x: 11, y: 18))
+    svgPath.addLine(to: CGPoint(x: 11, y: 24))
+    svgPath.addLine(to: CGPoint(x: 8, y: 24))
+    svgPath.close()
+
+    svgPath.move(to: CGPoint(x: 4, y: 17))
+    svgPath.addLine(to: CGPoint(x: 10.5, y: 17))
+    svgPath.addLine(to: CGPoint(x: 10.5, y: 20))
+    svgPath.addLine(to: CGPoint(x: 4, y: 20))
+    svgPath.close()
+
+    //----- rightBottom
+    svgPath.move(to: CGPoint(x: 17, y: 17))
+    svgPath.addLine(to: CGPoint(x: 20, y: 17))
+    svgPath.addLine(to: CGPoint(x: 20, y: 24))
+    svgPath.addLine(to: CGPoint(x: 17, y: 24))
+    svgPath.close()
+
+    svgPath.move(to: CGPoint(x: 17, y: 17))
+    svgPath.addLine(to: CGPoint(x: 24, y: 17))
+    svgPath.addLine(to: CGPoint(x: 24, y: 20))
+    svgPath.addLine(to: CGPoint(x: 17, y: 20))
+    svgPath.close()
+    
+    svgPath.lineWidth = 0.1
+    let shapeLayer = CAShapeLayer()
+    shapeLayer.path = svgPath.cgPath
+    shapeLayer.fillColor = UIColor.white.cgColor
+    shapeLayer.lineWidth = 0.3
+    
+    return shapeLayer
+  }
+
+  
   @objc private func fowardTime() {
-    self.changeVideoTime(time: Double(timeValueForChange!))
+    self.changeVideoTime(time: Double(truncating: timeValueForChange!))
   }
   
   @objc private func backwardTime() {
-    self.changeVideoTime(time: -Double(timeValueForChange!))
+    self.changeVideoTime(time: -Double(truncating: timeValueForChange!))
   }
   
   private func changeVideoTime(time: Double){
