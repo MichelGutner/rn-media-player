@@ -108,15 +108,15 @@ class RNVideoPlayerView : UIView {
     playerContainerView.backgroundColor = .black
     playerContainerView.frame = bounds
     
-    
     addSubview(playerContainerView)
     
     // player
     let videoLayer = AVPlayerLayer(player: avPlayer)
-    videoLayer.frame = bounds
-    if fullScreen {
+    
+    DispatchQueue.main.asyncAfter(wallDeadline: .now() + 0.2, execute: { [self] in
+      videoLayer.frame = playerContainerView.bounds
       if #available(iOS 13.0, *) {
-        if let windowScene = window?.windowScene, windowScene.isFullScreen {
+        if window?.windowScene?.interfaceOrientation.isLandscape == true {
           videoLayer.videoGravity = .resizeAspectFill
         }
       } else {
@@ -124,7 +124,7 @@ class RNVideoPlayerView : UIView {
           videoLayer.videoGravity = .resizeAspectFill
         }
       }
-    }
+    })
     playerContainerView.layer.addSublayer(videoLayer)
     
     
@@ -156,7 +156,7 @@ class RNVideoPlayerView : UIView {
     labelCurrentTime.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       labelCurrentTime.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 30),
-      labelCurrentTime.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor, constant: -35)
+      labelCurrentTime.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: playerContainerView.layoutMarginsGuide.bottomAnchor, constant: -20)
     ])
     
     
@@ -172,7 +172,7 @@ class RNVideoPlayerView : UIView {
     fullScreenButton.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       fullScreenButton.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -30),
-      fullScreenButton.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor, constant: -30)
+      fullScreenButton.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: playerContainerView.layoutMarginsGuide.bottomAnchor, constant: -20)
     ])
 
     avPlayer.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
@@ -258,7 +258,7 @@ class RNVideoPlayerView : UIView {
     NSLayoutConstraint.activate([
       seekSlider.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 20),
       seekSlider.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -20),
-      seekSlider.bottomAnchor.constraint(equalTo: layoutMarginsGuide.bottomAnchor),
+      seekSlider.bottomAnchor.constraint(equalTo: playerContainerView.layoutMarginsGuide.bottomAnchor),
     ])
   }
   
