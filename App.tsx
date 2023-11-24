@@ -33,40 +33,26 @@ function App(): JSX.Element {
   // }, [isFullScreen]);
 
   return (
-    <View style={{flex: 1, backgroundColor: 'red'}}>
-      <VPlayer
-        style={{...StyleSheet.absoluteFillObject}}
-        source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
-        // source="https://assets.mixkit.co/videos/download/mixkit-countryside-meadow-4075.mp4"
-        autoPlay={true}
-        paused={pause}
-        rate={rate}
-        resizeMode="contain"
-        onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
-        onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
-        onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
-        fullScreen={isFullScreen}
-        timeValueForChange={10}
-        sliderProps={{
-          maximumTrackColor: '#fff2f2',
-          minimumTrackColor: '#3939ae',
-          thumbSize: 20,
-          thumbColor: '#412cdf',
-        }}
-      />
-      {/* <View
-        style={{
-          ...StyleSheet.absoluteFillObject,
-          backgroundColor: 'transparent',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        // onPress={() => setPause(!pause)}
-        // activeOpacity={0.8}
-        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-        <PlayPauseIcon />
-      </View> */}
-    </View>
+    <VPlayer
+      style={{flex: 1}}
+      source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+      // source="https://assets.mixkit.co/videos/download/mixkit-countryside-meadow-4075.mp4"
+      autoPlay={true}
+      paused={pause}
+      rate={rate}
+      resizeMode="contain"
+      onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
+      onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
+      onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
+      fullScreen={isFullScreen}
+      timeValueForChange={10}
+      sliderProps={{
+        maximumTrackColor: '#fff2f2',
+        minimumTrackColor: '#3939ae',
+        thumbSize: 20,
+        thumbColor: '#412cdf',
+      }}
+    />
   );
 }
 

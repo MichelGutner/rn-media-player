@@ -14,7 +14,7 @@ class RNVideoPlayer: RCTViewManager {
   }
 }
 
-class RNVideoPlayerView : UIView {
+class RNVideoPlayerView : UIView, UIGestureRecognizerDelegate {
   var circleImage: UIImage!
   var playPauseSvg = CAShapeLayer()
   var playButton = UIButton()
@@ -174,7 +174,7 @@ class RNVideoPlayerView : UIView {
       fullScreenButton.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -30),
       fullScreenButton.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: playerContainerView.layoutMarginsGuide.bottomAnchor, constant: -20)
     ])
-
+    
     avPlayer.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: avPlayer.currentItem)
     if hasAutoPlay {
@@ -188,6 +188,7 @@ class RNVideoPlayerView : UIView {
       guard let self = self else { return }
       self.onVideoProgress?(["progress": time.seconds])
       self.updatePlayerTime()
+      
     }
   }
   
@@ -359,8 +360,8 @@ class RNVideoPlayerView : UIView {
     
     
     playButton.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
-    playButton.layer.addSublayer(playPauseSvg)
     playButton.layer.sublayers?.forEach { $0.add(transition, forKey: nil)}
+    playButton.layer.addSublayer(playPauseSvg)
   }
   
   private func playSvg() -> CAShapeLayer {
@@ -489,46 +490,46 @@ class RNVideoPlayerView : UIView {
     svgPath.addLine(to: CGPoint(x: 11, y: 10))
     svgPath.addLine(to: CGPoint(x: 8, y: 10))
     svgPath.close()
-
+    
     svgPath.move(to: CGPoint(x: 4, y: 8))
     svgPath.addLine(to: CGPoint(x: 11, y: 8))
     svgPath.addLine(to: CGPoint(x: 11, y: 11))
     svgPath.addLine(to: CGPoint(x: 4, y: 11))
     svgPath.close()
-
+    
     //---- rightTop
     svgPath.move(to: CGPoint(x: 17, y: 4))
     svgPath.addLine(to: CGPoint(x: 20, y: 4))
     svgPath.addLine(to: CGPoint(x: 20, y: 10))
     svgPath.addLine(to: CGPoint(x: 17, y: 10))
     svgPath.close()
-
+    
     svgPath.move(to: CGPoint(x: 17, y: 8))
     svgPath.addLine(to: CGPoint(x: 24, y: 8))
     svgPath.addLine(to: CGPoint(x: 24, y: 11))
     svgPath.addLine(to: CGPoint(x: 17, y: 11))
     svgPath.close()
-
+    
     // *----- leftBottom
     svgPath.move(to: CGPoint(x: 8, y: 18))
     svgPath.addLine(to: CGPoint(x: 11, y: 18))
     svgPath.addLine(to: CGPoint(x: 11, y: 24))
     svgPath.addLine(to: CGPoint(x: 8, y: 24))
     svgPath.close()
-
+    
     svgPath.move(to: CGPoint(x: 4, y: 17))
     svgPath.addLine(to: CGPoint(x: 10.5, y: 17))
     svgPath.addLine(to: CGPoint(x: 10.5, y: 20))
     svgPath.addLine(to: CGPoint(x: 4, y: 20))
     svgPath.close()
-
+    
     //----- rightBottom
     svgPath.move(to: CGPoint(x: 17, y: 17))
     svgPath.addLine(to: CGPoint(x: 20, y: 17))
     svgPath.addLine(to: CGPoint(x: 20, y: 24))
     svgPath.addLine(to: CGPoint(x: 17, y: 24))
     svgPath.close()
-
+    
     svgPath.move(to: CGPoint(x: 17, y: 17))
     svgPath.addLine(to: CGPoint(x: 24, y: 17))
     svgPath.addLine(to: CGPoint(x: 24, y: 20))
@@ -543,7 +544,7 @@ class RNVideoPlayerView : UIView {
     
     return shapeLayer
   }
-
+  
   
   @objc private func fowardTime() {
     self.changeVideoTime(time: Double(truncating: timeValueForChange!))
@@ -558,5 +559,27 @@ class RNVideoPlayerView : UIView {
     let seekTimeSec = CMTimeGetSeconds(currentTime).advanced(by: time)
     let seekTime = CMTime(value: CMTimeValue(seekTimeSec), timescale: 1)
     self.player?.seek(to: seekTime, completionHandler: {completed in})
+  }
+  
+  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    if let touch = touches.first {
+      playButton.isHidden = false
+      forwardButton.isHidden = false
+      backwardButton.isHidden = false
+      seekSlider.isHidden = false
+      labelCurrentTime.isEnabled = false
+      fullScreenButton.isHidden = false
+    }
+  }
+  
+  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
+      playButton.isHidden = true
+      forwardButton.isHidden = true
+      backwardButton.isHidden = true
+      seekSlider.isHidden = true
+      labelCurrentTime.isEnabled = true
+      fullScreenButton.isHidden = true
+    })
   }
 }
