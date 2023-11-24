@@ -1,5 +1,6 @@
 package com.rnvideoplayer
 import android.util.Log
+import com.facebook.react.bridge.Callback
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
@@ -11,8 +12,9 @@ class RNVideoPlayer(reactContext: ReactApplicationContext) : ReactContextBaseJav
 
 
     @ReactMethod
-    fun createCalendarEvent(name: String, location: String) {
-        Log.d("CalendarModule", "Create event called with name: $name and location: $location")
+    fun createCalendarEvent(name: String, location: String, callback: Callback) {
+        val eventId = 123
+        callback.invoke(eventId)
     }
 }
 
