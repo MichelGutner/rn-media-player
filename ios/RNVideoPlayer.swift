@@ -17,20 +17,19 @@ class RNVideoPlayer: RCTViewManager {
 class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
   private var fullScreenButtonLayer = UIButton()
   private var fullScreenLayers = CAShapeLayer()
-  var circleImage: UIImage!
-  var playPauseSvg = CAShapeLayer()
-  var playButton = UIButton()
-  var forwardButton = UIButton()
-  var backwardButton = UIButton()
-  var fullScreenButton = UIButton()
-  var videoTimeForChange: Double?
-  // dimensions
-  var playButtonSize = CGFloat(80)
+  private var circleImage: UIImage!
+  private var playPauseSvg = CAShapeLayer()
+  private var playButton = UIButton()
+  private var forwardButton = UIButton()
+  private var backwardButton = UIButton()
+  private var fullScreenButton = UIButton()
+  private var videoTimeForChange: Double?
+  
+  private var controlSize = CGFloat(40)
   
   
   private var hasCalledSetup = false
   private var player: AVPlayer?
-  private var hasAutoPlay = false
   private var timeObserver: Any?
   private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height - 60, width:UIScreen.main.bounds.width, height:10))
   private var playerContainerView: UIView!
@@ -46,11 +45,15 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
   @objc var sliderProps: NSDictionary? = [:] {
     didSet {
       if let sliderProps {
-        seekSlider.maximumTrackTintColor = hexStringToUIColor(hexColor: sliderProps["maximumTrackColor"] as! String)
         seekSlider.minimumTrackTintColor = hexStringToUIColor(hexColor: sliderProps["minimumTrackColor"] as! String)
         seekSlider.maximumTrackTintColor = hexStringToUIColor(hexColor: sliderProps["maximumTrackColor"] as! String)
-        seekSlider.maximumTrackTintColor = hexStringToUIColor(hexColor: sliderProps["maximumTrackColor"] as! String)
-        self.circleImage = self.makeCircle(size: CGSize(width: sliderProps["thumbSize"] as? CGFloat ?? 20, height: sliderProps["thumbSize"] as? CGFloat ?? 20), backgroundColor: hexStringToUIColor(hexColor: sliderProps["thumbColor"] as! String))
+        self.circleImage = self.makeCircle(
+          size: CGSize(
+            width: sliderProps["thumbSize"] as? CGFloat ?? 20,
+            height: sliderProps["thumbSize"] as? CGFloat ?? 20
+          ),
+          backgroundColor: hexStringToUIColor(hexColor: sliderProps["thumbColor"] as! String)
+        )
       } else {
         print("ERROR")
       }
@@ -61,12 +64,6 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
   @objc var source: String = "" {
     didSet {
       setupVideoPlayer(source)
-    }
-  }
-  
-  @objc var autoPlay: Bool = false {
-    didSet {
-      self.hasAutoPlay = autoPlay
     }
   }
   
@@ -119,9 +116,16 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
     playerContainerView.layer.addSublayer(videoLayer)
     
     
+    print("status", player?.timeControlStatus.rawValue)
     // add button
     playerContainerView.addSubview(playButton)
-    playButton.frame = CGRect(x: playerContainerView.bounds.midX - (playButtonSize/2), y: playerContainerView.bounds.midY - (playButtonSize/2), width: playButtonSize, height: playButtonSize)
+    playButton.frame = CGRect(
+      x: playerContainerView.bounds.midX - (controlSize/2),
+      y: playerContainerView.bounds.midY - (controlSize/2),
+      width: controlSize,
+      height: controlSize
+    )
+    
     playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
     
     if playPauseSvg.path == nil {
@@ -129,18 +133,39 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
     }
     
     // add forward button
-    forwardButton.frame = CGRect(origin: CGPoint(x: playButton.frame.maxX + 30, y: playButton.frame.minY), size: CGSize(width: playButton.frame.width, height: playButton.frame.height))
+    forwardButton.frame = CGRect(
+      origin: CGPoint(
+        x: playerContainerView.frame.midX + (playerContainerView.frame.midX * 0.3),
+        y: playButton.frame.minY),
+      size: CGSize(width: playButton.frame.width, height: playButton.frame.height)
+    )
+    
     let forwardSvgLayer = forwardLayer(timeValueForChange!)
-    forwardSvgLayer.position = CGPoint(x: forwardButton.bounds.midX + forwardSvgLayer.bounds.width / 2, y: forwardButton.bounds.midY + forwardSvgLayer.bounds.height / 2)
+    forwardSvgLayer.position = CGPoint(
+      x: forwardButton.bounds.midX + forwardSvgLayer.bounds.width / 2,
+      y: forwardButton.bounds.midY + forwardSvgLayer.bounds.height / 2
+    )
+    
     forwardButton.layer.addSublayer(forwardSvgLayer)
     forwardButton.addTarget(self, action: #selector(fowardTime), for: .touchUpInside)
     
     playerContainerView.addSubview(forwardButton)
     
     // add backward button
-    backwardButton.frame = CGRect(origin: CGPoint(x: (playButton.frame.minX - playButton.frame.width) - 30, y: playButton.frame.minY), size: CGSize(width: playButton.frame.width, height: playButton.frame.height))
+    backwardButton.frame = CGRect(
+      origin: CGPoint(
+        x: (playerContainerView.frame.midX - playButton.frame.width) - (playerContainerView.frame.midX * 0.3),
+        y: playButton.frame.minY
+      ),
+      size: CGSize(width: playButton.frame.width, height: playButton.frame.height)
+    )
     let backwardSvgLayer = backwardLayer(timeValueForChange!)
-    backwardSvgLayer.position = CGPoint(x: forwardButton.bounds.midX + backwardSvgLayer.bounds.width / 2, y: forwardButton.bounds.midY + backwardSvgLayer.bounds.height / 2)
+    
+    backwardSvgLayer.position = CGPoint(
+      x: forwardButton.bounds.midX + backwardSvgLayer.bounds.width / 2,
+      y: forwardButton.bounds.midY + backwardSvgLayer.bounds.height / 2
+    )
+    
     backwardButton.layer.addSublayer(backwardSvgLayer)
     backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
     
@@ -162,9 +187,13 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
     playerContainerView.addSubview(seekSlider!)
     self.configureSeekSliderLayout()
     
-    // add fullScreen icon
-
-    fullScreenButtonLayer.frame = CGRect(x: playerContainerView.bounds.maxX - (playerContainerView.layoutMargins.right + playButtonSize), y: playerContainerView.bounds.maxY - (playerContainerView.layoutMargins.bottom + playButtonSize/2), width: playButtonSize, height: playButtonSize)
+    // add fullScreen
+    fullScreenButtonLayer.frame = CGRect(
+      x: playerContainerView.bounds.maxX - (playerContainerView.layoutMargins.right + controlSize),
+      y: playerContainerView.bounds.maxY - (playerContainerView.layoutMargins.bottom + controlSize),
+      width: 22,
+      height: 22
+    )
     if fullScreenLayers.path == nil {
       fullScreenButtonLayer.layer.addSublayer(fullScreenShapeLayer())
     }
@@ -172,11 +201,10 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
     playerContainerView.addSubview(fullScreenButtonLayer)
     
     avPlayer.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
-    NotificationCenter.default.addObserver(self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: avPlayer.currentItem)
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: avPlayer.currentItem
+    )
     //    NotificationCenter.default.addObserver(self, selector: #selector(nil), name: UIDevice.orientationDidChangeNotification, object: nil)
-    if hasAutoPlay {
-      avPlayer.play()
-    }
   }
   
   private func periodTimeObserver() {
@@ -194,7 +222,12 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
     guard let duration = self.player?.currentItem?.duration else {return}
     let currenTimeInSecond = CMTimeGetSeconds(currentTitme)
     let durationTimeInSecond = CMTimeGetSeconds(duration)
-    labelCurrentTime.text = (self.stringFromTimeInterval(interval: currenTimeInSecond) + "  " + self.stringFromTimeInterval(interval: (player?.currentItem?.duration.seconds)!))
+    labelCurrentTime.text = (
+      self.stringFromTimeInterval(
+        interval: currenTimeInSecond) + "  " + self.stringFromTimeInterval(
+          interval: (player?.currentItem?.duration.seconds)!
+        )
+    )
     if self.isThumbSeek == false {
       self.seekSlider.value = Float(currenTimeInSecond/durationTimeInSecond)
     }
@@ -254,9 +287,15 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
   private func configureSeekSliderLayout() {
     seekSlider.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      seekSlider.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 20),
-      seekSlider.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -20),
-      seekSlider.bottomAnchor.constraint(equalTo: playerContainerView.layoutMarginsGuide.bottomAnchor),
+      seekSlider.leadingAnchor.constraint(
+        equalTo: layoutMarginsGuide.leadingAnchor, constant: 20
+      ),
+      seekSlider.trailingAnchor.constraint(
+        equalTo: layoutMarginsGuide.trailingAnchor, constant: -20
+      ),
+      seekSlider.bottomAnchor.constraint(
+        equalTo: playerContainerView.layoutMarginsGuide.bottomAnchor
+      ),
     ])
   }
   
@@ -308,7 +347,6 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
     let b = CGFloat(Int(color) & 0x000000FF)
     
     return UIColor(red: r / 255.0, green: g / 255.0, blue: b / 255.0, alpha: 1)
-    
   }
   
   private func stringFromTimeInterval(interval: TimeInterval) -> String {
@@ -399,7 +437,6 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
         window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
           print(error.localizedDescription)
         }
-        
       } else {
         fullScreenLayers = self.fullScreenShapeLayer()
         window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in

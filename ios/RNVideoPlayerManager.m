@@ -12,12 +12,12 @@
 
 RCT_EXPORT_VIEW_PROPERTY(source, NSString);
 RCT_EXPORT_VIEW_PROPERTY(paused, BOOL);
-RCT_EXPORT_VIEW_PROPERTY(autoPlay, BOOL);
 RCT_EXPORT_VIEW_PROPERTY(rate, float)
 RCT_EXPORT_VIEW_PROPERTY(onVideoProgress, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onLoaded, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onCompleted, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(fullScreen, BOOL)
+RCT_EXPORT_VIEW_PROPERTY(onDeviceOrientation, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(sliderProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(timeValueForChange, NSNumber)
 

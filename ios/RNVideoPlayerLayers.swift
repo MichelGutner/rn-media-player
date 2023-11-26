@@ -147,15 +147,15 @@ class RNVideoPlayerLayers: UIView {
     numberLayer.string = label?.stringValue
     numberLayer.foregroundColor = UIColor.white.cgColor
     numberLayer.alignmentMode = .center
-    numberLayer.bounds = CGRect(x: 0, y: 0, width: 20, height: 20)
+    numberLayer.bounds.size = CGSize(width: 15, height: 15)
     numberLayer.position = CGPoint(x: svgPath.bounds.midX, y: svgPath.bounds.midY)
-    numberLayer.fontSize = 16
+    numberLayer.fontSize = 12
     
     let shapeLayer = CAShapeLayer()
     shapeLayer.path = svgPath.cgPath
     shapeLayer.fillColor = UIColor.clear.cgColor
     shapeLayer.strokeColor = UIColor.white.cgColor
-    shapeLayer.lineWidth = 4
+    shapeLayer.lineWidth = 2
     
     shapeLayer.addSublayer(numberLayer)
     shapeLayer.addSublayer(triangleLayer)
@@ -178,9 +178,9 @@ class RNVideoPlayerLayers: UIView {
     numberLayer.string = label?.stringValue
     numberLayer.foregroundColor = UIColor.white.cgColor
     numberLayer.alignmentMode = .center
-    numberLayer.bounds = CGRect(x: 0, y: 0, width: 20, height: 20)
+    numberLayer.bounds.size = CGSize(width: 15, height: 15)
     numberLayer.position = CGPoint(x: svgPath.bounds.midX, y: svgPath.bounds.midY)
-    numberLayer.fontSize = 16
+    numberLayer.fontSize = 12
     
     let triangleLayer = CAShapeLayer()
     triangleLayer.path = trianglePath.cgPath
@@ -191,7 +191,7 @@ class RNVideoPlayerLayers: UIView {
     shapeLayer.path = svgPath.cgPath
     shapeLayer.fillColor = UIColor.clear.cgColor
     shapeLayer.strokeColor = UIColor.white.cgColor
-    shapeLayer.lineWidth = 4
+    shapeLayer.lineWidth = 2
     
     shapeLayer.addSublayer(numberLayer)
     shapeLayer.addSublayer(triangleLayer)

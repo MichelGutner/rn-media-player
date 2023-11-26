@@ -33,26 +33,31 @@ function App(): JSX.Element {
   // }, [isFullScreen]);
 
   return (
-    <VPlayer
-      style={{height: 350}}
-      source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
-      // source="https://assets.mixkit.co/videos/download/mixkit-countryside-meadow-4075.mp4"
-      autoPlay={true}
-      paused={pause}
-      rate={rate}
-      resizeMode="contain"
-      onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
-      onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
-      onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
-      fullScreen={isFullScreen}
-      timeValueForChange={10}
-      sliderProps={{
-        maximumTrackColor: '#fff2f2',
-        minimumTrackColor: '#3939ae',
-        thumbSize: 20,
-        thumbColor: '#412cdf',
-      }}
-    />
+    <View style={{height: 350, backgroundColor: 'white'}}>
+      <VPlayer
+        style={{...StyleSheet.absoluteFillObject}}
+        source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+        // source="https://assets.mixkit.co/videos/download/mixkit-countryside-meadow-4075.mp4"
+        paused={pause}
+        rate={rate}
+        resizeMode="contain"
+        onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
+        onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
+        onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
+        onDeviceOrientation={({nativeEvent: {isPortrait}}) =>
+          console.log(isPortrait)
+        }
+        fullScreen={isFullScreen}
+        timeValueForChange={10}
+        sliderProps={{
+          maximumTrackColor: '#fff2f2',
+          minimumTrackColor: '#3939ae',
+          thumbSize: 10,
+          thumbColor: '#412cdf',
+        }}
+      />
+      <Button title="Pause" onPress={() => setPause(!pause)} />
+    </View>
   );
 }
 
