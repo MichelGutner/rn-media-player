@@ -14,7 +14,9 @@ class RNVideoPlayer: RCTViewManager {
   }
 }
 
-class RNVideoPlayerView : UIView, UIGestureRecognizerDelegate {
+class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
+  private var fullScreenButtonLayer = UIButton()
+  private var fullScreenLayers = CAShapeLayer()
   var circleImage: UIImage!
   var playPauseSvg = CAShapeLayer()
   var playButton = UIButton()
@@ -112,19 +114,8 @@ class RNVideoPlayerView : UIView, UIGestureRecognizerDelegate {
     
     // player
     let videoLayer = AVPlayerLayer(player: avPlayer)
+    willTransitionOrientation(videoLayer)
     
-    DispatchQueue.main.asyncAfter(wallDeadline: .now() + 0.2, execute: { [self] in
-      videoLayer.frame = playerContainerView.bounds
-      if #available(iOS 13.0, *) {
-        if window?.windowScene?.interfaceOrientation.isLandscape == true {
-          videoLayer.videoGravity = .resizeAspectFill
-        }
-      } else {
-        if UIDevice.current.orientation.isLandscape {
-          videoLayer.videoGravity = .resizeAspectFill
-        }
-      }
-    })
     playerContainerView.layer.addSublayer(videoLayer)
     
     
@@ -139,14 +130,20 @@ class RNVideoPlayerView : UIView, UIGestureRecognizerDelegate {
     
     // add forward button
     forwardButton.frame = CGRect(origin: CGPoint(x: playButton.frame.maxX + 30, y: playButton.frame.minY), size: CGSize(width: playButton.frame.width, height: playButton.frame.height))
-    forwardButton.layer.addSublayer(forwardSvg())
+    let forwardSvgLayer = forwardLayer(timeValueForChange!)
+    forwardSvgLayer.position = CGPoint(x: forwardButton.bounds.midX + forwardSvgLayer.bounds.width / 2, y: forwardButton.bounds.midY + forwardSvgLayer.bounds.height / 2)
+    forwardButton.layer.addSublayer(forwardSvgLayer)
     forwardButton.addTarget(self, action: #selector(fowardTime), for: .touchUpInside)
+    
     playerContainerView.addSubview(forwardButton)
     
     // add backward button
-    backwardButton.layer.addSublayer(backwardSvg())
     backwardButton.frame = CGRect(origin: CGPoint(x: (playButton.frame.minX - playButton.frame.width) - 30, y: playButton.frame.minY), size: CGSize(width: playButton.frame.width, height: playButton.frame.height))
+    let backwardSvgLayer = backwardLayer(timeValueForChange!)
+    backwardSvgLayer.position = CGPoint(x: forwardButton.bounds.midX + backwardSvgLayer.bounds.width / 2, y: forwardButton.bounds.midY + backwardSvgLayer.bounds.height / 2)
+    backwardButton.layer.addSublayer(backwardSvgLayer)
     backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
+    
     playerContainerView.addSubview(backwardButton)
     
     // seek slider monitoring label
@@ -166,17 +163,17 @@ class RNVideoPlayerView : UIView, UIGestureRecognizerDelegate {
     self.configureSeekSliderLayout()
     
     // add fullScreen icon
-    fullScreenButton.layer.addSublayer(fullScreenSvg())
-    playerContainerView.addSubview(fullScreenButton)
-    fullScreenButton.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
-    fullScreenButton.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      fullScreenButton.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -30),
-      fullScreenButton.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: playerContainerView.layoutMarginsGuide.bottomAnchor, constant: -20)
-    ])
+
+    fullScreenButtonLayer.frame = CGRect(x: playerContainerView.bounds.maxX - (playerContainerView.layoutMargins.right + playButtonSize), y: playerContainerView.bounds.maxY - (playerContainerView.layoutMargins.bottom + playButtonSize/2), width: playButtonSize, height: playButtonSize)
+    if fullScreenLayers.path == nil {
+      fullScreenButtonLayer.layer.addSublayer(fullScreenShapeLayer())
+    }
+    fullScreenButtonLayer.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
+    playerContainerView.addSubview(fullScreenButtonLayer)
     
     avPlayer.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: avPlayer.currentItem)
+    //    NotificationCenter.default.addObserver(self, selector: #selector(nil), name: UIDevice.orientationDidChangeNotification, object: nil)
     if hasAutoPlay {
       avPlayer.play()
     }
@@ -263,30 +260,7 @@ class RNVideoPlayerView : UIView, UIGestureRecognizerDelegate {
     ])
   }
   
-  @objc private func onToggleOrientation() {
-    if #available(iOS 16.0, *) {
-      if window?.windowScene?.interfaceOrientation.isPortrait == true {
-        window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
-          print(error.localizedDescription)
-        }
-      } else {
-        window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
-          print(error.localizedDescription)
-        }
-      }
-    } else {
-      if UIInterfaceOrientation.portrait == .portrait {
-        let orientation = UIInterfaceOrientation.landscapeRight.rawValue
-        UIDevice.current.setValue(orientation, forKey: "orientation")
-      } else {
-        let orientation = UIInterfaceOrientation.portrait.rawValue
-        UIDevice.current.setValue(orientation, forKey: "orientation")
-      }
-    }
-  }
-  
   @objc private func onChangeRate(_ rate: Float) {
-    print(rate)
     self.player?.rate = rate
   }
   
@@ -403,149 +377,6 @@ class RNVideoPlayerView : UIView, UIGestureRecognizerDelegate {
     return shapeLayer
   }
   
-  private func forwardSvg() -> CAShapeLayer {
-    let svgPath = UIBezierPath()
-    let circlePath = UIBezierPath(arcCenter: CGPoint(x: 0, y: 0), radius: 14, startAngle: 0, endAngle: 4.98, clockwise: true)
-    svgPath.append(circlePath)
-    
-    let trianglePath = UIBezierPath()
-    trianglePath.move(to: CGPoint(x: 9, y: 0))
-    trianglePath.addLine(to: CGPoint(x: 1.5, y: 5))
-    trianglePath.addLine(to: CGPoint(x: 1.5, y: -5))
-    
-    trianglePath.close()
-    
-    let triangleLayer = CAShapeLayer()
-    triangleLayer.path = trianglePath.cgPath
-    triangleLayer.fillColor = UIColor.white.cgColor
-    triangleLayer.position = CGPoint(x: svgPath.bounds.midX, y: svgPath.bounds.minY)
-    
-    
-    let numberLayer = CATextLayer()
-    numberLayer.string = timeValueForChange?.stringValue
-    numberLayer.foregroundColor = UIColor.white.cgColor
-    numberLayer.alignmentMode = .center
-    numberLayer.bounds = CGRect(x: 0, y: 0, width: 20, height: 20)
-    numberLayer.position = CGPoint(x: svgPath.bounds.midX, y: svgPath.bounds.midY)
-    numberLayer.fontSize = 16
-    
-    let shapeLayer = CAShapeLayer()
-    shapeLayer.path = svgPath.cgPath
-    shapeLayer.fillColor = UIColor.clear.cgColor
-    shapeLayer.strokeColor = UIColor.white.cgColor
-    shapeLayer.lineWidth = 4
-    
-    shapeLayer.addSublayer(numberLayer)
-    shapeLayer.addSublayer(triangleLayer)
-    
-    shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
-    shapeLayer.position = CGPoint(x: forwardButton.bounds.midX + svgPath.bounds.width / 2, y: forwardButton.bounds.midY + svgPath.bounds.height / 2)
-    return shapeLayer
-  }
-  
-  private func backwardSvg() -> CAShapeLayer {
-    let svgPath = UIBezierPath()
-    let circlePath = UIBezierPath(arcCenter: CGPoint(x: 0, y: 0), radius: 14, startAngle: -1.8, endAngle: 3.1, clockwise: true)
-    svgPath.append(circlePath)
-    
-    let trianglePath = UIBezierPath()
-    trianglePath.move(to: CGPoint(x: 1.5, y: 0))
-    trianglePath.addLine(to: CGPoint(x: 9, y: 5))
-    trianglePath.addLine(to: CGPoint(x: 9, y: -5))
-    trianglePath.close()
-    
-    let numberLayer = CATextLayer()
-    numberLayer.string = timeValueForChange?.stringValue
-    numberLayer.foregroundColor = UIColor.white.cgColor
-    numberLayer.alignmentMode = .center
-    numberLayer.bounds = CGRect(x: 0, y: 0, width: 20, height: 20)
-    numberLayer.position = CGPoint(x: svgPath.bounds.midX, y: svgPath.bounds.midY)
-    numberLayer.fontSize = 16
-    
-    let triangleLayer = CAShapeLayer()
-    triangleLayer.path = trianglePath.cgPath
-    triangleLayer.fillColor = UIColor.white.cgColor
-    triangleLayer.position = CGPoint(x: svgPath.bounds.minX + trianglePath.bounds.width / 2, y: svgPath.bounds.minY)
-    
-    let shapeLayer = CAShapeLayer()
-    shapeLayer.path = svgPath.cgPath
-    shapeLayer.fillColor = UIColor.clear.cgColor
-    shapeLayer.strokeColor = UIColor.white.cgColor
-    shapeLayer.lineWidth = 4
-    
-    shapeLayer.addSublayer(numberLayer)
-    shapeLayer.addSublayer(triangleLayer)
-    
-    shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
-    shapeLayer.position = CGPoint(x: forwardButton.bounds.midX + svgPath.bounds.width / 2, y: forwardButton.bounds.midY + svgPath.bounds.height / 2)
-    return shapeLayer
-  }
-  
-  private func fullScreenSvg() -> CAShapeLayer {
-    let svgPath = UIBezierPath()
-    
-    // --- leftTop
-    svgPath.move(to: CGPoint(x: 8, y: 4))
-    svgPath.addLine(to: CGPoint(x: 11, y: 4))
-    svgPath.addLine(to: CGPoint(x: 11, y: 10))
-    svgPath.addLine(to: CGPoint(x: 8, y: 10))
-    svgPath.close()
-    
-    svgPath.move(to: CGPoint(x: 4, y: 8))
-    svgPath.addLine(to: CGPoint(x: 11, y: 8))
-    svgPath.addLine(to: CGPoint(x: 11, y: 11))
-    svgPath.addLine(to: CGPoint(x: 4, y: 11))
-    svgPath.close()
-    
-    //---- rightTop
-    svgPath.move(to: CGPoint(x: 17, y: 4))
-    svgPath.addLine(to: CGPoint(x: 20, y: 4))
-    svgPath.addLine(to: CGPoint(x: 20, y: 10))
-    svgPath.addLine(to: CGPoint(x: 17, y: 10))
-    svgPath.close()
-    
-    svgPath.move(to: CGPoint(x: 17, y: 8))
-    svgPath.addLine(to: CGPoint(x: 24, y: 8))
-    svgPath.addLine(to: CGPoint(x: 24, y: 11))
-    svgPath.addLine(to: CGPoint(x: 17, y: 11))
-    svgPath.close()
-    
-    // *----- leftBottom
-    svgPath.move(to: CGPoint(x: 8, y: 18))
-    svgPath.addLine(to: CGPoint(x: 11, y: 18))
-    svgPath.addLine(to: CGPoint(x: 11, y: 24))
-    svgPath.addLine(to: CGPoint(x: 8, y: 24))
-    svgPath.close()
-    
-    svgPath.move(to: CGPoint(x: 4, y: 17))
-    svgPath.addLine(to: CGPoint(x: 10.5, y: 17))
-    svgPath.addLine(to: CGPoint(x: 10.5, y: 20))
-    svgPath.addLine(to: CGPoint(x: 4, y: 20))
-    svgPath.close()
-    
-    //----- rightBottom
-    svgPath.move(to: CGPoint(x: 17, y: 17))
-    svgPath.addLine(to: CGPoint(x: 20, y: 17))
-    svgPath.addLine(to: CGPoint(x: 20, y: 24))
-    svgPath.addLine(to: CGPoint(x: 17, y: 24))
-    svgPath.close()
-    
-    svgPath.move(to: CGPoint(x: 17, y: 17))
-    svgPath.addLine(to: CGPoint(x: 24, y: 17))
-    svgPath.addLine(to: CGPoint(x: 24, y: 20))
-    svgPath.addLine(to: CGPoint(x: 17, y: 20))
-    svgPath.close()
-    
-    svgPath.lineWidth = 0.1
-    let shapeLayer = CAShapeLayer()
-    shapeLayer.path = svgPath.cgPath
-    shapeLayer.fillColor = UIColor.white.cgColor
-    shapeLayer.lineWidth = 0.3
-    
-    return shapeLayer
-  }
-  
-  
   @objc private func fowardTime() {
     self.changeVideoTime(time: Double(truncating: timeValueForChange!))
   }
@@ -561,25 +392,66 @@ class RNVideoPlayerView : UIView, UIGestureRecognizerDelegate {
     self.player?.seek(to: seekTime, completionHandler: {completed in})
   }
   
+  @objc public func onToggleOrientation() {
+    if #available(iOS 16.0, *) {
+      if window?.windowScene?.interfaceOrientation.isPortrait == true {
+        fullScreenLayers = self.exitFullScreenShapeLayer()
+        window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
+          print(error.localizedDescription)
+        }
+        
+      } else {
+        fullScreenLayers = self.fullScreenShapeLayer()
+        window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
+          print(error.localizedDescription)
+        }
+        
+      }
+    } else {
+      if UIInterfaceOrientation.portrait == .portrait {
+        let orientation = UIInterfaceOrientation.landscapeRight.rawValue
+        fullScreenLayers = self.exitFullScreenShapeLayer()
+        UIDevice.current.setValue(orientation, forKey: "orientation")
+      } else {
+        fullScreenLayers = self.fullScreenShapeLayer()
+        let orientation = UIInterfaceOrientation.portrait.rawValue
+        UIDevice.current.setValue(orientation, forKey: "orientation")
+      }
+    }
+    let transition = CATransition()
+    transition.type = .reveal
+    transition.duration = 1.0
+    
+    fullScreenButtonLayer.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
+    fullScreenButtonLayer.layer.sublayers?.forEach{ $0.add(transition, forKey: nil)}
+    fullScreenButtonLayer.layer.addSublayer(fullScreenLayers)
+    
+  }
+  
   override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
     if let touch = touches.first {
-      playButton.isHidden = false
-      forwardButton.isHidden = false
-      backwardButton.isHidden = false
-      seekSlider.isHidden = false
-      labelCurrentTime.isEnabled = false
-      fullScreenButton.isHidden = false
+      playerContainerView.subviews.forEach {$0.isHidden = false}
     }
   }
   
   override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
     DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
-      playButton.isHidden = true
-      forwardButton.isHidden = true
-      backwardButton.isHidden = true
-      seekSlider.isHidden = true
-      labelCurrentTime.isEnabled = true
-      fullScreenButton.isHidden = true
+      playerContainerView.subviews.forEach {$0.isHidden = true}
+    })
+  }
+  
+  private func willTransitionOrientation(_ layer: AVPlayerLayer) {
+    DispatchQueue.main.asyncAfter(wallDeadline: .now() + 0.05, execute: { [self] in
+      layer.frame = playerContainerView.bounds
+      if #available(iOS 13.0, *) {
+        if window?.windowScene?.interfaceOrientation.isLandscape == true {
+          layer.videoGravity = .resizeAspectFill
+        }
+      } else {
+        if UIDevice.current.orientation.isLandscape {
+          layer.videoGravity = .resizeAspectFill
+        }
+      }
     })
   }
 }

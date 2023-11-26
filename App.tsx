@@ -34,7 +34,7 @@ function App(): JSX.Element {
 
   return (
     <VPlayer
-      style={{flex: 1}}
+      style={{height: 350}}
       source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
       // source="https://assets.mixkit.co/videos/download/mixkit-countryside-meadow-4075.mp4"
       autoPlay={true}
