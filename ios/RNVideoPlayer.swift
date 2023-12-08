@@ -14,17 +14,24 @@ class RNVideoPlayer: RCTViewManager {
   }
 }
 
-class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
+class RNVideoPlayerViewController: UIViewController {
+  
+}
+
+class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var fullScreenButtonLayer = UIButton()
   private var fullScreenLayers = CAShapeLayer()
   private var circleImage: UIImage!
-  private var playPauseSvg = CAShapeLayer()
+  
   private var playButton = UIButton()
   private var forwardButton = UIButton()
   private var backwardButton = UIButton()
   private var fullScreenButton = UIButton()
   private var videoTimeForChange: Double?
-  
+  private var playerLayer: AVPlayerLayer!
+  private var stringHandler = StringHandler()
+  private var _shapeLayer = CAShapeLayers()
+  private var playPauseCAShapeLayer = CAShapeLayer()
   private var controlSize = CGFloat(40)
   
   
@@ -45,14 +52,14 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
   @objc var sliderProps: NSDictionary? = [:] {
     didSet {
       if let sliderProps {
-        seekSlider.minimumTrackTintColor = hexStringToUIColor(hexColor: sliderProps["minimumTrackColor"] as! String)
-        seekSlider.maximumTrackTintColor = hexStringToUIColor(hexColor: sliderProps["maximumTrackColor"] as! String)
+        seekSlider.minimumTrackTintColor = stringHandler.hexStringToUIColor(hexColor: sliderProps["minimumTrackColor"] as! String)
+        seekSlider.maximumTrackTintColor = stringHandler.hexStringToUIColor(hexColor: sliderProps["maximumTrackColor"] as! String)
         self.circleImage = self.makeCircle(
           size: CGSize(
             width: sliderProps["thumbSize"] as? CGFloat ?? 20,
             height: sliderProps["thumbSize"] as? CGFloat ?? 20
           ),
-          backgroundColor: hexStringToUIColor(hexColor: sliderProps["thumbColor"] as! String)
+          backgroundColor: stringHandler.hexStringToUIColor(hexColor: sliderProps["thumbColor"] as! String)
         )
       } else {
         print("ERROR")
@@ -96,12 +103,15 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
   
   override func layoutSubviews() {
     if hasCalledSetup {
-      addVideoPlayerSubview()
+      videoPlayerSubView()
     }
   }
   
-  private func addVideoPlayerSubview() {
+  private func videoPlayerSubView() {
     guard let avPlayer = player else { return }
+    
+    playerLayer = AVPlayerLayer(player: avPlayer)
+    
     // View
     playerContainerView = UIView()
     playerContainerView.backgroundColor = .black
@@ -110,13 +120,10 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
     addSubview(playerContainerView)
     
     // player
-    let videoLayer = AVPlayerLayer(player: avPlayer)
-    willTransitionOrientation(videoLayer)
+    onChangeDeviceOrientation(playerLayer)
     
-    playerContainerView.layer.addSublayer(videoLayer)
+    playerContainerView.layer.addSublayer(playerLayer)
     
-    
-    print("status", player?.timeControlStatus.rawValue)
     // add button
     playerContainerView.addSubview(playButton)
     playButton.frame = CGRect(
@@ -126,11 +133,16 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
       height: controlSize
     )
     
-    playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
+    let svgPauseLayer = _shapeLayer.pause()
+    svgPauseLayer.frame.origin = CGPoint(x: playButton.bounds.midX, y: playButton.bounds.midY - svgPauseLayer.bounds.height / 2)
     
-    if playPauseSvg.path == nil {
-      playButton.layer.addSublayer(pauseSvg())
+    if playPauseCAShapeLayer.path == nil {
+      playButton.layer.addSublayer(svgPauseLayer)
+      playPauseCAShapeLayer = svgPauseLayer
     }
+    playButton.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
+    
+    
     
     // add forward button
     forwardButton.frame = CGRect(
@@ -140,7 +152,7 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
       size: CGSize(width: playButton.frame.width, height: playButton.frame.height)
     )
     
-    let forwardSvgLayer = forwardLayer(timeValueForChange!)
+    let forwardSvgLayer = _shapeLayer.forward(timeValueForChange!)
     forwardSvgLayer.position = CGPoint(
       x: forwardButton.bounds.midX + forwardSvgLayer.bounds.width / 2,
       y: forwardButton.bounds.midY + forwardSvgLayer.bounds.height / 2
@@ -159,7 +171,7 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
       ),
       size: CGSize(width: playButton.frame.width, height: playButton.frame.height)
     )
-    let backwardSvgLayer = backwardLayer(timeValueForChange!)
+    let backwardSvgLayer = _shapeLayer.backward(timeValueForChange!)
     
     backwardSvgLayer.position = CGPoint(
       x: forwardButton.bounds.midX + backwardSvgLayer.bounds.width / 2,
@@ -195,16 +207,15 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
       height: 22
     )
     if fullScreenLayers.path == nil {
-      fullScreenButtonLayer.layer.addSublayer(fullScreenShapeLayer())
+      fullScreenButtonLayer.layer.addSublayer(_shapeLayer.fullScreen())
     }
     fullScreenButtonLayer.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
     playerContainerView.addSubview(fullScreenButtonLayer)
     
-    avPlayer.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
+    player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
-      self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: avPlayer.currentItem
+      self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem
     )
-    //    NotificationCenter.default.addObserver(self, selector: #selector(nil), name: UIDevice.orientationDidChangeNotification, object: nil)
   }
   
   private func periodTimeObserver() {
@@ -223,8 +234,8 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
     let currenTimeInSecond = CMTimeGetSeconds(currentTitme)
     let durationTimeInSecond = CMTimeGetSeconds(duration)
     labelCurrentTime.text = (
-      self.stringFromTimeInterval(
-        interval: currenTimeInSecond) + "  " + self.stringFromTimeInterval(
+      self.stringHandler.stringFromTimeInterval(
+        interval: currenTimeInSecond) + "  " + self.stringHandler.stringFromTimeInterval(
           interval: (player?.currentItem?.duration.seconds)!
         )
     )
@@ -277,11 +288,6 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
         }
       })
     }
-    
-    if player!.rate == 0
-    {
-      player?.play()
-    }
   }
   
   private func configureSeekSliderLayout() {
@@ -331,90 +337,6 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
     }
   }
   
-  
-  private func hexStringToUIColor(hexColor: String) -> UIColor {
-    let stringScanner = Scanner(string: hexColor)
-    
-    if(hexColor.hasPrefix("#")) {
-      stringScanner.scanLocation = 1
-    }
-    
-    var color: UInt32 = 0
-    stringScanner.scanHexInt32(&color)
-    
-    let r = CGFloat(Int(color >> 16) & 0x000000FF)
-    let g = CGFloat(Int(color >> 8) & 0x000000FF)
-    let b = CGFloat(Int(color) & 0x000000FF)
-    
-    return UIColor(red: r / 255.0, green: g / 255.0, blue: b / 255.0, alpha: 1)
-  }
-  
-  private func stringFromTimeInterval(interval: TimeInterval) -> String {
-    let interval = Int(interval)
-    let seconds = interval % 60
-    let minutes = (interval / 60) % 60
-    let hours = (interval / 3600)
-    return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
-  }
-  
-  @objc private func playButtonTapped() {
-    if player?.rate == 0 {
-      player?.play()
-      playPauseSvg = self.pauseSvg()
-    } else {
-      player?.pause()
-      playPauseSvg = self.playSvg()
-    }
-    
-    let transition = CATransition()
-    transition.type = .reveal
-    transition.duration = 1.0
-    
-    
-    playButton.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
-    playButton.layer.sublayers?.forEach { $0.add(transition, forKey: nil)}
-    playButton.layer.addSublayer(playPauseSvg)
-  }
-  
-  private func playSvg() -> CAShapeLayer {
-    let svgPath = UIBezierPath()
-    svgPath.move(to: CGPoint(x: 0, y: 0))
-    svgPath.addLine(to: CGPoint(x: 20, y: 15))
-    svgPath.addLine(to: CGPoint(x: 0, y: 32))
-    svgPath.close()
-    
-    let shapeLayer = CAShapeLayer()
-    shapeLayer.path = svgPath.cgPath
-    shapeLayer.fillColor = UIColor.white.cgColor
-    
-    shapeLayer.frame = CGRect(x: playButton.bounds.midX - svgPath.bounds.width / 2, y: playButton.bounds.midY - svgPath.bounds.height / 2, width: svgPath.bounds.width, height: svgPath.bounds.height)
-    return shapeLayer
-  }
-  
-  private func pauseSvg() -> CAShapeLayer {
-    let svgPath = UIBezierPath()
-    
-    svgPath.move(to: CGPoint(x: -15, y: 0))
-    svgPath.addLine(to: CGPoint(x: -5, y: 0))
-    svgPath.addLine(to: CGPoint(x: -5, y: 32))
-    svgPath.addLine(to: CGPoint(x: -15, y: 32))
-    svgPath.close()
-    
-    svgPath.move(to: CGPoint(x: 5, y: 0))
-    svgPath.addLine(to: CGPoint(x: 15, y: 0))
-    svgPath.addLine(to: CGPoint(x: 15, y: 32))
-    svgPath.addLine(to: CGPoint(x: 5, y: 32))
-    svgPath.close()
-    
-    let shapeLayer = CAShapeLayer()
-    shapeLayer.path = svgPath.cgPath
-    shapeLayer.fillColor = UIColor.white.cgColor
-    
-    shapeLayer.frame = CGRect(x: playButton.bounds.midX, y: playButton.bounds.midY - svgPath.bounds.height / 2, width: svgPath.bounds.width, height: svgPath.bounds.height)
-    
-    return shapeLayer
-  }
-  
   @objc private func fowardTime() {
     self.changeVideoTime(time: Double(truncating: timeValueForChange!))
   }
@@ -433,12 +355,12 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
   @objc public func onToggleOrientation() {
     if #available(iOS 16.0, *) {
       if window?.windowScene?.interfaceOrientation.isPortrait == true {
-        fullScreenLayers = self.exitFullScreenShapeLayer()
+        fullScreenLayers = _shapeLayer.exitFullScreen()
         window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
           print(error.localizedDescription)
         }
       } else {
-        fullScreenLayers = self.fullScreenShapeLayer()
+        fullScreenLayers = _shapeLayer.fullScreen()
         window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
           print(error.localizedDescription)
         }
@@ -447,10 +369,10 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
     } else {
       if UIInterfaceOrientation.portrait == .portrait {
         let orientation = UIInterfaceOrientation.landscapeRight.rawValue
-        fullScreenLayers = self.exitFullScreenShapeLayer()
+        fullScreenLayers = _shapeLayer.exitFullScreen()
         UIDevice.current.setValue(orientation, forKey: "orientation")
       } else {
-        fullScreenLayers = self.fullScreenShapeLayer()
+        fullScreenLayers = _shapeLayer.fullScreen()
         let orientation = UIInterfaceOrientation.portrait.rawValue
         UIDevice.current.setValue(orientation, forKey: "orientation")
       }
@@ -465,30 +387,38 @@ class RNVideoPlayerView: RNVideoPlayerLayers, UIGestureRecognizerDelegate {
     
   }
   
-  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-    if let touch = touches.first {
-      playerContainerView.subviews.forEach {$0.isHidden = false}
+  //  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+  //    if let touch = touches.first {
+  //      playerContainerView.subviews.forEach {$0.isHidden = false}
+  //    }
+  //  }
+  //
+  //  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+  //    DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
+  //      playerContainerView.subviews.forEach {$0.isHidden = true}
+  //    })
+  //  }
+  
+  private func onChangeDeviceOrientation(_ layer: AVPlayerLayer) {
+    if #available(iOS 13.0, *) {
+      if window?.windowScene?.interfaceOrientation.isLandscape == true {
+        frame = UIScreen.main.bounds
+        layer.videoGravity = .resizeAspectFill
+        playerLayer.frame = UIScreen.main.bounds
+      } else {
+        frame = bounds
+        layer.videoGravity = .resizeAspect
+        playerLayer.frame = playerContainerView.bounds
+      }
+    } else {
+      if UIDevice.current.orientation.isLandscape {
+        layer.videoGravity = .resizeAspectFill
+      }
     }
   }
   
-  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-    DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
-      playerContainerView.subviews.forEach {$0.isHidden = true}
-    })
-  }
-  
-  private func willTransitionOrientation(_ layer: AVPlayerLayer) {
-    DispatchQueue.main.asyncAfter(wallDeadline: .now() + 0.05, execute: { [self] in
-      layer.frame = playerContainerView.bounds
-      if #available(iOS 13.0, *) {
-        if window?.windowScene?.interfaceOrientation.isLandscape == true {
-          layer.videoGravity = .resizeAspectFill
-        }
-      } else {
-        if UIDevice.current.orientation.isLandscape {
-          layer.videoGravity = .resizeAspectFill
-        }
-      }
-    })
+  @objc private func onTappedPlayPause() {
+    let playPause = PlayPauseButton(video: player, view: playButton, initialShapeLayer: playPauseCAShapeLayer)
+    playPause.button()
   }
 }

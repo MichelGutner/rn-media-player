@@ -29,13 +29,18 @@ function App(): JSX.Element {
   // useEffect(() => {
   //   setTimeout(() => {
   //     setFullScreen(!isFullScreen);
-  //   }, 6000);
+  //   }, 12000);
   // }, [isFullScreen]);
 
   return (
-    <View style={{height: 350, backgroundColor: 'white'}}>
+    <>
       <VPlayer
-        style={{...StyleSheet.absoluteFillObject}}
+        style={{
+          height: 350,
+          backgroundColor: 'white',
+          overflow: 'hidden',
+          zIndex: 2,
+        }}
         source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         // source="https://assets.mixkit.co/videos/download/mixkit-countryside-meadow-4075.mp4"
         paused={pause}
@@ -56,8 +61,10 @@ function App(): JSX.Element {
           thumbColor: '#412cdf',
         }}
       />
-      <Button title="Pause" onPress={() => setPause(!pause)} />
-    </View>
+      <View style={{flex: 1}}>
+        <Button title="Pause" onPress={() => setPause(!pause)} />
+      </View>
+    </>
   );
 }
 

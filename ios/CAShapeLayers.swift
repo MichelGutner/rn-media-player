@@ -7,8 +7,8 @@
 
 import UIKit
 
-class RNVideoPlayerLayers: UIView {
-  public func fullScreenShapeLayer() -> CAShapeLayer {
+class CAShapeLayers {
+  public func fullScreen() -> CAShapeLayer {
     let shapeLayer = CAShapeLayer()
     let svgPath = UIBezierPath()
     
@@ -64,7 +64,8 @@ class RNVideoPlayerLayers: UIView {
     
     return shapeLayer
   }
-  public func exitFullScreenShapeLayer() -> CAShapeLayer {
+  
+  public func exitFullScreen() -> CAShapeLayer {
     let svgPath = UIBezierPath()
     
     // --- leftTop
@@ -125,7 +126,8 @@ class RNVideoPlayerLayers: UIView {
     
     return shapeLayer
   }
-  public func forwardLayer(_ label: NSNumber?) -> CAShapeLayer {
+  
+  public func forward(_ label: NSNumber?) -> CAShapeLayer {
     let svgPath = UIBezierPath()
     let circlePath = UIBezierPath(arcCenter: CGPoint(x: 0, y: 0), radius: 14, startAngle: 0, endAngle: 4.98, clockwise: true)
     svgPath.append(circlePath)
@@ -163,7 +165,8 @@ class RNVideoPlayerLayers: UIView {
     shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
     return shapeLayer
   }
-  public func backwardLayer(_ label: NSNumber?) -> CAShapeLayer {
+  
+  public func backward(_ label: NSNumber?) -> CAShapeLayer {
     let svgPath = UIBezierPath()
     let circlePath = UIBezierPath(arcCenter: CGPoint(x: 0, y: 0), radius: 14, startAngle: -1.8, endAngle: 3.1, clockwise: true)
     svgPath.append(circlePath)
@@ -195,6 +198,45 @@ class RNVideoPlayerLayers: UIView {
     
     shapeLayer.addSublayer(numberLayer)
     shapeLayer.addSublayer(triangleLayer)
+    
+    shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
+    return shapeLayer
+  }
+  
+  public func pause() -> CAShapeLayer {
+    let svgPath = UIBezierPath()
+    
+    svgPath.move(to: CGPoint(x: -15, y: 0))
+    svgPath.addLine(to: CGPoint(x: -5, y: 0))
+    svgPath.addLine(to: CGPoint(x: -5, y: 32))
+    svgPath.addLine(to: CGPoint(x: -15, y: 32))
+    svgPath.close()
+    
+    svgPath.move(to: CGPoint(x: 5, y: 0))
+    svgPath.addLine(to: CGPoint(x: 15, y: 0))
+    svgPath.addLine(to: CGPoint(x: 15, y: 32))
+    svgPath.addLine(to: CGPoint(x: 5, y: 32))
+    svgPath.close()
+    
+    let shapeLayer = CAShapeLayer()
+    shapeLayer.path = svgPath.cgPath
+    shapeLayer.fillColor = UIColor.white.cgColor
+    
+    shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
+    
+    return shapeLayer
+  }
+  
+  public func play() -> CAShapeLayer {
+    let svgPath = UIBezierPath()
+    svgPath.move(to: CGPoint(x: 0, y: 0))
+    svgPath.addLine(to: CGPoint(x: 20, y: 15))
+    svgPath.addLine(to: CGPoint(x: 0, y: 32))
+    svgPath.close()
+    
+    let shapeLayer = CAShapeLayer()
+    shapeLayer.path = svgPath.cgPath
+    shapeLayer.fillColor = UIColor.white.cgColor
     
     shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
     return shapeLayer
