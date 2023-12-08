@@ -23,7 +23,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var fullScreenLayers = CAShapeLayer()
   private var circleImage: UIImage!
   
-  private var playButton = UIButton()
+  private var playPauseUIView = UIButton()
+  private var playPauseCAShapeLayer = CAShapeLayer()
+  
   private var forwardButton = UIButton()
   private var backwardButton = UIButton()
   private var fullScreenButton = UIButton()
@@ -31,8 +33,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var playerLayer: AVPlayerLayer!
   private var stringHandler = StringHandler()
   private var _shapeLayer = CAShapeLayers()
-  private var playPauseCAShapeLayer = CAShapeLayer()
-  private var controlSize = CGFloat(40)
+
+  private var controlSize = CGFloat(80)
   
   
   private var hasCalledSetup = false
@@ -109,7 +111,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private func videoPlayerSubView() {
     guard let avPlayer = player else { return }
-    
     playerLayer = AVPlayerLayer(player: avPlayer)
     
     // View
@@ -124,9 +125,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     playerContainerView.layer.addSublayer(playerLayer)
     
-    // add button
-    playerContainerView.addSubview(playButton)
-    playButton.frame = CGRect(
+    // PlayPause
+    playerContainerView.addSubview(playPauseUIView)
+    playPauseUIView.frame = CGRect(
       x: playerContainerView.bounds.midX - (controlSize/2),
       y: playerContainerView.bounds.midY - (controlSize/2),
       width: controlSize,
@@ -134,13 +135,14 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     )
     
     let svgPauseLayer = _shapeLayer.pause()
-    svgPauseLayer.frame.origin = CGPoint(x: playButton.bounds.midX, y: playButton.bounds.midY - svgPauseLayer.bounds.height / 2)
+    svgPauseLayer.frame.origin = CGPoint(x: playPauseUIView.bounds.midX, y: playPauseUIView.bounds.midY - svgPauseLayer.bounds.height / 2)
     
     if playPauseCAShapeLayer.path == nil {
-      playButton.layer.addSublayer(svgPauseLayer)
+      playPauseUIView.layer.addSublayer(svgPauseLayer)
       playPauseCAShapeLayer = svgPauseLayer
     }
-    playButton.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
+    
+    playPauseUIView.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
     
     
     
@@ -148,8 +150,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     forwardButton.frame = CGRect(
       origin: CGPoint(
         x: playerContainerView.frame.midX + (playerContainerView.frame.midX * 0.3),
-        y: playButton.frame.minY),
-      size: CGSize(width: playButton.frame.width, height: playButton.frame.height)
+        y: playPauseUIView.frame.minY),
+      size: CGSize(width: playPauseUIView.frame.width, height: playPauseUIView.frame.height)
     )
     
     let forwardSvgLayer = _shapeLayer.forward(timeValueForChange!)
@@ -166,10 +168,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     // add backward button
     backwardButton.frame = CGRect(
       origin: CGPoint(
-        x: (playerContainerView.frame.midX - playButton.frame.width) - (playerContainerView.frame.midX * 0.3),
-        y: playButton.frame.minY
+        x: (playerContainerView.frame.midX - playPauseUIView.frame.width) - (playerContainerView.frame.midX * 0.3),
+        y: playPauseUIView.frame.minY
       ),
-      size: CGSize(width: playButton.frame.width, height: playButton.frame.height)
+      size: CGSize(width: playPauseUIView.frame.width, height: playPauseUIView.frame.height)
     )
     let backwardSvgLayer = _shapeLayer.backward(timeValueForChange!)
     
@@ -201,8 +203,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     // add fullScreen
     fullScreenButtonLayer.frame = CGRect(
-      x: playerContainerView.bounds.maxX - (playerContainerView.layoutMargins.right + controlSize),
-      y: playerContainerView.bounds.maxY - (playerContainerView.layoutMargins.bottom + controlSize),
+      x: playerContainerView.bounds.maxX - (playerContainerView.layoutMargins.right + controlSize / 2),
+      y: playerContainerView.bounds.maxY - (playerContainerView.layoutMargins.bottom + controlSize / 2),
       width: 22,
       height: 22
     )
@@ -338,19 +340,15 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   @objc private func fowardTime() {
-    self.changeVideoTime(time: Double(truncating: timeValueForChange!))
+    let videoTimer = videoTimerManager(avPlayer: player!)
+    videoTimer.change(timeToChange: Double(truncating: timeValueForChange!))
   }
   
   @objc private func backwardTime() {
-    self.changeVideoTime(time: -Double(truncating: timeValueForChange!))
+    let videoTimer = videoTimerManager(avPlayer: player!)
+    videoTimer.change(timeToChange: -Double(truncating: timeValueForChange!))
   }
   
-  private func changeVideoTime(time: Double){
-    guard let currentTime = self.player?.currentTime() else { return }
-    let seekTimeSec = CMTimeGetSeconds(currentTime).advanced(by: time)
-    let seekTime = CMTime(value: CMTimeValue(seekTimeSec), timescale: 1)
-    self.player?.seek(to: seekTime, completionHandler: {completed in})
-  }
   
   @objc public func onToggleOrientation() {
     if #available(iOS 16.0, *) {
@@ -418,7 +416,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   @objc private func onTappedPlayPause() {
-    let playPause = PlayPauseButton(video: player, view: playButton, initialShapeLayer: playPauseCAShapeLayer)
+    let playPause = PlayPause(video: player, view: playPauseUIView, initialShapeLayer: playPauseCAShapeLayer)
     playPause.button()
   }
 }

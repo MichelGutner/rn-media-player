@@ -8,7 +8,7 @@
 import Foundation
 import AVKit
 
-class PlayPauseButton {
+class PlayPause {
   private weak var _player: AVPlayer?
   private weak var _view: UIView!
   private var _shapeLayer = CAShapeLayers()
