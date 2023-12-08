@@ -10,7 +10,7 @@ import AVKit
 
 class videoTimerManager {
   private weak var _player: AVPlayer?
-  private var _shapeLayer = CAShapeLayers()
+  private var _shapeLayer = CustomCAShapeLayers()
   
   init(avPlayer: AVPlayer?) {
     _player = avPlayer

@@ -7,7 +7,7 @@
 
 import UIKit
 
-class CAShapeLayers {
+class CustomCAShapeLayers {
   public func fullScreen() -> CAShapeLayer {
     let shapeLayer = CAShapeLayer()
     let svgPath = UIBezierPath()

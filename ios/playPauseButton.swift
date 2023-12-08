@@ -11,7 +11,7 @@ import AVKit
 class PlayPause {
   private weak var _player: AVPlayer?
   private weak var _view: UIView!
-  private var _shapeLayer = CAShapeLayers()
+  private var _shapeLayer = CustomCAShapeLayers()
   private var _initialShapeLayer = CAShapeLayer()
   
   init(video: AVPlayer!, view: UIView!, initialShapeLayer: CAShapeLayer!) {
