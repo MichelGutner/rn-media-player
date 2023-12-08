@@ -19,6 +19,8 @@
 		DB0C9DCD2B23AB6900B7D598 /* StringHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DCC2B23AB6900B7D598 /* StringHandler.swift */; };
 		DB0C9DD12B23B68100B7D598 /* playPauseButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DD02B23B68100B7D598 /* playPauseButton.swift */; };
 		DB0C9DD42B23C85300B7D598 /* videoTimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */; };
+		DB0C9DD72B23D88600B7D598 /* forwardButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DD62B23D88600B7D598 /* forwardButton.swift */; };
+		DB0C9DD92B23D9EA00B7D598 /* backwardButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DD82B23D9EA00B7D598 /* backwardButton.swift */; };
 		DB8C88AC2B12E369007746A4 /* CAShapeLayers.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8C88AB2B12E369007746A4 /* CAShapeLayers.swift */; };
 /* End PBXBuildFile section */
 
@@ -55,6 +57,8 @@
 		DB0C9DCC2B23AB6900B7D598 /* StringHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringHandler.swift; sourceTree = "<group>"; };
 		DB0C9DD02B23B68100B7D598 /* playPauseButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = playPauseButton.swift; sourceTree = "<group>"; };
 		DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = videoTimerManager.swift; sourceTree = "<group>"; };
+		DB0C9DD62B23D88600B7D598 /* forwardButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = forwardButton.swift; sourceTree = "<group>"; };
+		DB0C9DD82B23D9EA00B7D598 /* backwardButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = backwardButton.swift; sourceTree = "<group>"; };
 		DB8C88AB2B12E369007746A4 /* CAShapeLayers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CAShapeLayers.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -204,6 +208,8 @@
 			isa = PBXGroup;
 			children = (
 				DB0C9DD02B23B68100B7D598 /* playPauseButton.swift */,
+				DB0C9DD62B23D88600B7D598 /* forwardButton.swift */,
+				DB0C9DD82B23D9EA00B7D598 /* backwardButton.swift */,
 			);
 			name = CustomNativeControllers;
 			sourceTree = "<group>";
@@ -481,6 +487,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				D02E142F2AF08E73003D0472 /* RNVideoPlayerManager.m in Sources */,
+				DB0C9DD72B23D88600B7D598 /* forwardButton.swift in Sources */,
+				DB0C9DD92B23D9EA00B7D598 /* backwardButton.swift in Sources */,
 				DB0C9DCD2B23AB6900B7D598 /* StringHandler.swift in Sources */,
 				D02E142D2AF08CF6003D0472 /* RNVideoPlayer.swift in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,

@@ -340,13 +340,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   @objc private func fowardTime() {
-    let videoTimer = videoTimerManager(avPlayer: player!)
-    videoTimer.change(timeToChange: Double(truncating: timeValueForChange!))
+    let forward = Forward(player: player!, time: Double(truncating: timeValueForChange!))
+    forward.button()
   }
   
   @objc private func backwardTime() {
-    let videoTimer = videoTimerManager(avPlayer: player!)
-    videoTimer.change(timeToChange: -Double(truncating: timeValueForChange!))
+    let backward = Backward(player: player!, time: Double(truncating: timeValueForChange!))
+    backward.button()
   }
   
   
