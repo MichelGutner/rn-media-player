@@ -341,17 +341,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
 
-  //  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-  //    if let touch = touches.first {
-  //      playerContainerView.subviews.forEach {$0.isHidden = false}
-  //    }
-  //  }
-  //
-  //  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-  //    DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
-  //      playerContainerView.subviews.forEach {$0.isHidden = true}
-  //    })
-  //  }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+      if let touch = touches.first {
+        playerContainerView.subviews.forEach {$0.isHidden = false}
+      }
+    }
+  
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
+        playerContainerView.subviews.forEach {$0.isHidden = true}
+      })
+    }
   
   private func onChangeDeviceOrientation(_ layer: AVPlayerLayer) {
     if #available(iOS 13.0, *) {
