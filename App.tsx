@@ -49,9 +49,6 @@ function App(): JSX.Element {
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
         onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
         onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
-        onDeviceOrientation={({nativeEvent: {isPortrait}}) =>
-          console.log(isPortrait)
-        }
         fullScreen={isFullScreen}
         timeValueForChange={10}
         sliderProps={{

@@ -17,7 +17,6 @@ RCT_EXPORT_VIEW_PROPERTY(onVideoProgress, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onLoaded, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onCompleted, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(fullScreen, BOOL)
-RCT_EXPORT_VIEW_PROPERTY(onDeviceOrientation, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(sliderProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(timeValueForChange, NSNumber)
 
