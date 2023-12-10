@@ -33,6 +33,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var forwardButton = UIButton()
   private var backwardButton = UIButton()
   private var fullScreenUIButton = UIButton()
+  private var moreOptionsUIButton = UIButton()
   
   private var videoTimeForChange: Double?
   private var playerLayer: AVPlayerLayer!
@@ -51,6 +52,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
+  @objc var onMoreOptions: RCTDirectEventBlock?
   
   @objc var timeValueForChange: NSNumber?
   
@@ -119,22 +121,22 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   override func layoutSubviews() {
     if hasCalledSetup {
       videoPlayerSubView()
+      enableAudioSession()
     }
   }
   
   private func videoPlayerSubView() {
     guard let avPlayer = player else { return }
     playerLayer = AVPlayerLayer(player: avPlayer)
-    
+
     // View
     viewControlls = UIView()
     viewControlls.backgroundColor = .black
     viewControlls.frame = bounds
-    
     addSubview(viewControlls)
     addSubview(loadingView)
-    Loading(loadingView).showLoading()
     
+    Loading(loadingView).showLoading()
     loadingView.frame.origin =  viewControlls.center
     // player
     onChangeDeviceOrientation()
@@ -162,7 +164,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       size: playPauseUIView.frame.size
     )
     
-    let forwardSvgLayer = _shapeLayer.forward(timeValueForChange!)
+    let forwardSvgLayer = _shapeLayer.createForwardShapeLayer(timeValueForChange!)
     forwardSvgLayer.position = CGPoint(
       x: forwardButton.bounds.midX + forwardSvgLayer.bounds.width / 2,
       y: forwardButton.bounds.midY + forwardSvgLayer.bounds.height / 2
@@ -181,7 +183,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       ),
       size: playPauseUIView.frame.size
     )
-    let backwardSvgLayer = _shapeLayer.backward(timeValueForChange!)
+    let backwardSvgLayer = _shapeLayer.createBackwardShapeLayer(timeValueForChange!)
     
     backwardSvgLayer.position = CGPoint(
       x: backwardButton.bounds.midX + backwardSvgLayer.bounds.width / 2,
@@ -210,27 +212,37 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     self.configureSeekSliderLayout()
     
     // add fullScreen
-    print(safeAreaLayoutGuide.trailingAnchor)
     fullScreenUIButton.frame = CGRect(
-      x: viewControlls.bounds.maxX - (viewControlls.layoutMargins.right + 48),
-      y: viewControlls.bounds.maxY - (viewControlls.layoutMargins.bottom + 48),
+      x: viewControlls.bounds.maxX - (viewControlls.layoutMargins.right + 78),
+      y: viewControlls.bounds.maxY - (viewControlls.layoutMargins.bottom + 45),
       width: 30,
       height: 30
     )
-    print(fullScreenUIButton.center)
-    let fullScreenLayer = _shapeLayer.fullScreen()
-    
+    let fullScreenLayer = _shapeLayer.createFullScreenShapeLayer()
+    fullScreenLayer.position = CGPoint(x: fullScreenUIButton.bounds.minX + 10, y: fullScreenUIButton.bounds.minY + 10)
     if fullScreenCAShapeLayer.path == nil {
       fullScreenUIButton.layer.addSublayer(fullScreenLayer)
       fullScreenCAShapeLayer = fullScreenLayer
     }
     
-    fullScreenUIButton.layer.sublayers?.forEach { sublayer in
-      sublayer.position = CGPoint(x: fullScreenUIButton.bounds.minX + 3, y: fullScreenUIButton.bounds.minY + 3)
-    }
-    
     fullScreenUIButton.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
     viewControlls.addSubview(fullScreenUIButton)
+    
+    // add more options
+    moreOptionsUIButton.frame = CGRect(
+      x: viewControlls.bounds.maxX - (viewControlls.layoutMargins.right + 48),
+      y: viewControlls.bounds.maxY - (viewControlls.layoutMargins.bottom + 45),
+      width: 30,
+      height: 30
+    )
+    
+    let moreOptionsLayer = _shapeLayer.createMoreOptionsShapeLayer()
+    moreOptionsLayer.position = CGPoint(x: moreOptionsUIButton.bounds.minX + 15, y: moreOptionsUIButton.bounds.minY + 15)
+    moreOptionsUIButton.layer.addSublayer(moreOptionsLayer)
+    
+    moreOptionsUIButton.addTarget(self, action: #selector(onTappedOnMoreOptions), for: .touchUpInside)
+    viewControlls.addSubview(moreOptionsUIButton)
+    
     
     player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
@@ -275,18 +287,15 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     if keyPath == "status", let player = player {
       if player.status == .readyToPlay {
         self.onLoaded?(["duration": player.currentItem?.duration.seconds, "isReady": true])
-        self.enableAudioSession()
         loadingView.removeFromSuperview()
         Loading(loadingView).hideLoading()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: { [self] in
-          let svgPauseLayer = _shapeLayer.pause()
+          let svgPauseLayer = _shapeLayer.createPauseShapeLayer()
           svgPauseLayer.frame.origin = CGPoint(x: playPauseUIView.bounds.midX, y: playPauseUIView.bounds.midY - svgPauseLayer.bounds.height / 2)
           
           if playPauseCAShapeLayer.path == nil {
             playPauseUIView.layer.addSublayer(svgPauseLayer)
             playPauseCAShapeLayer = svgPauseLayer
           }
-        })
       } else if player.status == .failed {
         // Handle failure
         print("Failed to load video")
@@ -368,7 +377,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-  
   //    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
   //      if let touch = touches.first {
   //        playerContainerView.subviews.forEach {$0.isHidden = false}
@@ -415,10 +423,11 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
     
     frame = isLandscape ? UIScreen.main.bounds : bounds
-    playerLayer.videoGravity = isLandscape ? .resizeAspectFill : .resizeAspect
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
+      playerLayer.videoGravity = isLandscape ? .resizeAspectFill : .resizeAspect
+    })
     playerLayer.frame = isLandscape ? UIScreen.main.bounds : viewControlls.bounds
-    fullScreenCAShapeLayer = isLandscape ? _shapeLayer.exitFullScreen() : _shapeLayer.fullScreen()
-    
+    fullScreenCAShapeLayer = isLandscape ? _shapeLayer.createExitFullScreenShapeLayer() : _shapeLayer.createFullScreenShapeLayer()
     
     let transition = CATransition()
     transition.type = .reveal
@@ -429,4 +438,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     fullScreenUIButton.layer.addSublayer(fullScreenCAShapeLayer)
   }
   
+  @objc private func onTappedOnMoreOptions() {
+    self.onMoreOptions?(["tapped": true])
+  }
 }

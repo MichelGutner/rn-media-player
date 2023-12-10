@@ -14,6 +14,8 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
+  Modal,
+  Text,
 } from 'react-native';
 import {PlayPauseIcon} from './src/components/PlayButton';
 const VPlayer = requireNativeComponent('RNVideoPlayer');
@@ -57,6 +59,7 @@ function App(): JSX.Element {
           thumbSize: 10,
           thumbColor: '#412cdf',
         }}
+        onMoreOptions={data => console.log(data.nativeEvent.tapped)}
       />
       <View style={{flex: 1}}>
         <Button title="Pause" onPress={() => setPause(!pause)} />

@@ -17,7 +17,7 @@ class videoTimerManager {
   }
   
   public func change(timeToChange: Double) {
-    let svgShapeLayer = _shapeLayer.forward(timeToChange as NSNumber)
+    let svgShapeLayer = _shapeLayer.createForwardShapeLayer(timeToChange as NSNumber)
     guard let currentTime = _player?.currentTime() else { return }
     let seekTimeSec = CMTimeGetSeconds(currentTime).advanced(by: timeToChange)
     let seekTime = CMTime(value: CMTimeValue(seekTimeSec), timescale: 1)

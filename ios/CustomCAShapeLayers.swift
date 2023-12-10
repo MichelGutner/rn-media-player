@@ -8,8 +8,7 @@
 import UIKit
 
 class CustomCAShapeLayers {
-  public func fullScreen() -> CAShapeLayer {
-    let shapeLayer = CAShapeLayer()
+  public func createFullScreenShapeLayer() -> CAShapeLayer {
     let svgPath = UIBezierPath()
     
     // leftTop
@@ -57,15 +56,11 @@ class CustomCAShapeLayers {
     svgPath.addLine(to: CGPoint(x: 13, y: 19))
     svgPath.close()
     
-    
-    
-    shapeLayer.path = svgPath.cgPath
-    shapeLayer.fillColor = UIColor.white.cgColor
-    
+    let shapeLayer = createShapeLayerWithSvgPath(svgPath)
     return shapeLayer
   }
   
-  public func exitFullScreen() -> CAShapeLayer {
+  public func createExitFullScreenShapeLayer() -> CAShapeLayer {
     let svgPath = UIBezierPath()
     
     // --- leftTop
@@ -120,14 +115,11 @@ class CustomCAShapeLayers {
     svgPath.addLine(to: CGPoint(x: 15, y: 17))
     svgPath.close()
     
-    let shapeLayer = CAShapeLayer()
-    shapeLayer.path = svgPath.cgPath
-    shapeLayer.fillColor = UIColor.white.cgColor
-    
+    let shapeLayer = createShapeLayerWithSvgPath(svgPath)
     return shapeLayer
   }
   
-  public func forward(_ label: NSNumber?) -> CAShapeLayer {
+  public func createForwardShapeLayer(_ label: NSNumber?) -> CAShapeLayer {
     let svgPath = UIBezierPath()
     let circlePath = UIBezierPath(arcCenter: CGPoint(x: 0, y: 0), radius: 14, startAngle: 0, endAngle: 4.98, clockwise: true)
     svgPath.append(circlePath)
@@ -162,11 +154,11 @@ class CustomCAShapeLayers {
     shapeLayer.addSublayer(numberLayer)
     shapeLayer.addSublayer(triangleLayer)
     
-    shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
+    shapeLayer.frame.size = svgPath.getSize()
     return shapeLayer
   }
   
-  public func backward(_ label: NSNumber?) -> CAShapeLayer {
+  public func createBackwardShapeLayer(_ label: NSNumber?) -> CAShapeLayer {
     let svgPath = UIBezierPath()
     let circlePath = UIBezierPath(arcCenter: CGPoint(x: 0, y: 0), radius: 14, startAngle: -1.8, endAngle: 3.1, clockwise: true)
     svgPath.append(circlePath)
@@ -199,11 +191,11 @@ class CustomCAShapeLayers {
     shapeLayer.addSublayer(numberLayer)
     shapeLayer.addSublayer(triangleLayer)
     
-    shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
+    shapeLayer.frame.size = svgPath.getSize()
     return shapeLayer
   }
   
-  public func pause() -> CAShapeLayer {
+  public func createPauseShapeLayer() -> CAShapeLayer {
     let svgPath = UIBezierPath()
     
     svgPath.move(to: CGPoint(x: -15, y: 0))
@@ -218,27 +210,56 @@ class CustomCAShapeLayers {
     svgPath.addLine(to: CGPoint(x: 5, y: 32))
     svgPath.close()
     
-    let shapeLayer = CAShapeLayer()
-    shapeLayer.path = svgPath.cgPath
-    shapeLayer.fillColor = UIColor.white.cgColor
-    
-    shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
-    
+    let shapeLayer = createShapeLayerWithSvgPath(svgPath)
     return shapeLayer
   }
   
-  public func play() -> CAShapeLayer {
+  public func createPlayShapeLayer() -> CAShapeLayer {
     let svgPath = UIBezierPath()
     svgPath.move(to: CGPoint(x: 0, y: 0))
     svgPath.addLine(to: CGPoint(x: 20, y: 15))
     svgPath.addLine(to: CGPoint(x: 0, y: 32))
     svgPath.close()
     
+    let shapeLayer = createShapeLayerWithSvgPath(svgPath)
+    return shapeLayer
+  }
+  
+  public func createMoreOptionsShapeLayer() -> CAShapeLayer {
+    let svgPath = UIBezierPath()
+    let firstPoint = createMoreOptionsPoint(0)
+    let secondPoint = createMoreOptionsPoint(5)
+    let thirdPoint = createMoreOptionsPoint(10)
+    
+    svgPath.append(firstPoint)
+    svgPath.append(secondPoint)
+    svgPath.append(thirdPoint)
+    
+    svgPath.close()
+    
+    let shapeLayer = createShapeLayerWithSvgPath(svgPath)
+    return shapeLayer
+  }
+  
+  private func createShapeLayerWithSvgPath(_ svgPath: UIBezierPath) -> CAShapeLayer {
     let shapeLayer = CAShapeLayer()
     shapeLayer.path = svgPath.cgPath
     shapeLayer.fillColor = UIColor.white.cgColor
-    
-    shapeLayer.frame.size = CGSize(width: svgPath.bounds.width, height: svgPath.bounds.height)
+    shapeLayer.frame.size = svgPath.getSize()
     return shapeLayer
   }
+  
+  private func createMoreOptionsPoint(_ pointPosition: CGFloat!) -> UIBezierPath {
+    let point = UIBezierPath(arcCenter: CGPoint(x: pointPosition, y: 0), radius: 2, startAngle: 0, endAngle: 2 * .pi, clockwise: false)
+    return point
+  }
 }
+
+extension UIBezierPath {
+  func getSize() -> CGSize {
+    let boundingBox = self.cgPath.boundingBox
+    return CGSize(width: boundingBox.width, height: boundingBox.height)
+  }
+}
+
+

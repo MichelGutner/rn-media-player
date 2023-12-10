@@ -21,29 +21,23 @@ class FullScreen {
   
   public func toggleFullScreen() {
     if #available(iOS 16.0, *) {
-      if _window?.windowScene?.interfaceOrientation.isPortrait == true {
-        fullScreenLayer = _shapeLayer.exitFullScreen()
-        _window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape)) { error in
-          print(error.localizedDescription)
-        }
-      } else {
-        fullScreenLayer = _shapeLayer.fullScreen()
-        _window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
-          print(error.localizedDescription)
-        }
-        
+      let isPortrait = _window?.windowScene?.interfaceOrientation.isPortrait == true
+      fullScreenLayer = shapeLayerByOrientation(isPortrait)
+      let orientations: UIInterfaceOrientationMask = isPortrait ? .landscape : .portrait
+      _window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: orientations)) { error in
+        print(error.localizedDescription)
       }
     } else {
+      let orientation: UIInterfaceOrientation
       if UIInterfaceOrientation.portrait == .portrait {
-        let orientation = UIInterfaceOrientation.landscapeRight.rawValue
-        fullScreenLayer = _shapeLayer.exitFullScreen()
-        UIDevice.current.setValue(orientation, forKey: "orientation")
+        orientation = .landscapeRight
       } else {
-        fullScreenLayer = _shapeLayer.fullScreen()
-        let orientation = UIInterfaceOrientation.portrait.rawValue
-        UIDevice.current.setValue(orientation, forKey: "orientation")
+        orientation = .portrait
       }
+      fullScreenLayer = shapeLayerByOrientation(orientation == .portrait)
+      UIDevice.current.setValue(orientation.rawValue, forKey: "orientation")
     }
+    
     let transition = CATransition()
     transition.type = .reveal
     transition.duration = 1.0
@@ -51,6 +45,9 @@ class FullScreen {
     _view.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
     _view.layer.sublayers?.forEach { $0.add(transition, forKey: nil) }
     _view.layer.addSublayer(fullScreenLayer)
-    
+  }
+  
+  func shapeLayerByOrientation(_ isPortrait: Bool) -> CAShapeLayer {
+    return isPortrait ? _shapeLayer.createExitFullScreenShapeLayer() : _shapeLayer.createFullScreenShapeLayer()
   }
 }
