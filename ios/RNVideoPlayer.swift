@@ -28,12 +28,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private var forwardButton = UIButton()
   private var backwardButton = UIButton()
-  private var fullScreenButton = UIButton()
+  //  private var fullScreenButton = UIButton()
   private var videoTimeForChange: Double?
   private var playerLayer: AVPlayerLayer!
   private var stringHandler = StringHandler()
   private var _shapeLayer = CustomCAShapeLayers()
-
+  
   private var controlSize = CGFloat(80)
   
   
@@ -211,6 +211,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     let fullScreenLayer = _shapeLayer.fullScreen()
     if fullScreenLayers.path == nil {
       fullScreenButtonLayer.layer.addSublayer(fullScreenLayer)
+      fullScreenLayers = fullScreenLayer
     }
     fullScreenButtonLayer.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
     playerContainerView.addSubview(fullScreenButtonLayer)
@@ -340,35 +341,41 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-      if let touch = touches.first {
-        playerContainerView.subviews.forEach {$0.isHidden = false}
-      }
-    }
   
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
-        playerContainerView.subviews.forEach {$0.isHidden = true}
-      })
-    }
-  
+  //    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+  //      if let touch = touches.first {
+  //        playerContainerView.subviews.forEach {$0.isHidden = false}
+  //      }
+  //    }
+  //
+  //    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+  //      DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
+  //        playerContainerView.subviews.forEach {$0.isHidden = true}
+  //      })
+  //    }
+  //
   private func onChangeDeviceOrientation(_ layer: AVPlayerLayer) {
+    let isLandscape: Bool
+    
     if #available(iOS 13.0, *) {
-      if window?.windowScene?.interfaceOrientation.isLandscape == true {
-        frame = UIScreen.main.bounds
-        layer.videoGravity = .resizeAspectFill
-        playerLayer.frame = UIScreen.main.bounds
-      } else {
-        frame = bounds
-        layer.videoGravity = .resizeAspect
-        playerLayer.frame = playerContainerView.bounds
-      }
+      isLandscape = window?.windowScene?.interfaceOrientation.isLandscape == true
     } else {
-      if UIDevice.current.orientation.isLandscape {
-        layer.videoGravity = .resizeAspectFill
-      }
+      isLandscape = UIDevice.current.orientation.isLandscape
     }
+    
+    frame = isLandscape ? UIScreen.main.bounds : bounds
+    layer.videoGravity = isLandscape ? .resizeAspectFill : .resizeAspect
+    playerLayer.frame = isLandscape ? UIScreen.main.bounds : playerContainerView.bounds
+    fullScreenLayers = isLandscape ? _shapeLayer.exitFullScreen() : _shapeLayer.fullScreen()
+    
+    
+    let transition = CATransition()
+    transition.type = .reveal
+    transition.duration = 1.0
+    
+    fullScreenButtonLayer.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
+    fullScreenButtonLayer.layer.sublayers?.forEach { $0.add(transition, forKey: nil) }
+    fullScreenButtonLayer.layer.addSublayer(fullScreenLayers)
   }
   
   // controllers
@@ -389,8 +396,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   
   @objc public func onToggleOrientation() {
-    let fullsScreen = FullScreen(_window: window, parentView: fullScreenButton)
-    fullsScreen.button()
+    let fullsScreen = FullScreen(_window: window, parentView: fullScreenButtonLayer)
+    fullsScreen.toggleFullScreen()
   }
   
 }

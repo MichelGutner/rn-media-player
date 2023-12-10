@@ -19,8 +19,7 @@ class FullScreen {
     _view = parentView
   }
   
-  public func button() {
-    
+  public func toggleFullScreen() {
     if #available(iOS 16.0, *) {
       if _window?.windowScene?.interfaceOrientation.isPortrait == true {
         fullScreenLayer = _shapeLayer.exitFullScreen()
@@ -50,7 +49,7 @@ class FullScreen {
     transition.duration = 1.0
     
     _view.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
-    _view.layer.sublayers?.forEach{ $0.add(transition, forKey: nil)}
+    _view.layer.sublayers?.forEach { $0.add(transition, forKey: nil) }
     _view.layer.addSublayer(fullScreenLayer)
     
   }
