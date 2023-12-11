@@ -43,7 +43,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private var defaultControllerSize = CGFloat(80)
   
-  
   private var hasCalledSetup = false
   private var player: AVPlayer?
   private var timeObserver: Any?
@@ -153,6 +152,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     guard let avPlayer = player else { return }
     playerLayer = AVPlayerLayer(player: avPlayer)
     
+    if #available(iOS 14.0, *) {
+      moreOptionsUIButton.menu = MenuControlls().menu
+      moreOptionsUIButton.showsMenuAsPrimaryAction = true
+    } else {
+      // Fallback on earlier versions
+    }
     
     // View
     viewControlls = UIView()
