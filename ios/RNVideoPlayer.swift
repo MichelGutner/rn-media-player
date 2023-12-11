@@ -47,7 +47,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var hasCalledSetup = false
   private var player: AVPlayer?
   private var timeObserver: Any?
-
+  
   
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
@@ -82,7 +82,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     seekSlider.setThumbImage(circleImage, for: .highlighted)
   }
   
-// external controls
+  // external controls
   @objc var source: String = "" {
     didSet {
       setupVideoPlayer(source)
@@ -108,14 +108,38 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   private func setupVideoPlayer(_ source: String) {
-    guard let url = URL(string: source) else { return }
-    if player == nil {
-      player = AVPlayer(url: url)
-      
-      player?.actionAtItemEnd = .none
-      hasCalledSetup = true
-    }
-    periodTimeObserver()
+      do {
+          guard let url = try verifyIfIsValidURL(from: source) else {
+              // Handle the case when the URL is nil (invalid)
+              print("Invalid URL")
+              return
+          }
+
+          player = AVPlayer(url: url)
+        print("player 1", player?.currentItem?.status == .unknown)
+          player?.actionAtItemEnd = .none
+          hasCalledSetup = true
+
+          // Adicione um observador para o status do player
+        player?.addObserver(self, forKeyPath: "status", options: .new, context: nil)
+
+          periodTimeObserver()
+      } catch {
+          // Handle the error here
+          print("Error on verify url: \(error)")
+      }
+  }
+
+  // Função para criar uma URL e lançar um erro se for inválida
+  private func verifyIfIsValidURL(from source: String) throws -> URL? {
+      guard let url = URL(string: source) else {
+          throw VideoPlayerError.invalidURL
+      }
+      return url
+  }
+  
+  enum VideoPlayerError: Error {
+      case invalidURL
   }
   
   override func layoutSubviews() {
@@ -128,7 +152,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private func videoPlayerSubView() {
     guard let avPlayer = player else { return }
     playerLayer = AVPlayerLayer(player: avPlayer)
-
+    
+    
     // View
     viewControlls = UIView()
     viewControlls.backgroundColor = .black
@@ -285,17 +310,18 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
     if keyPath == "status", let player = player {
+      print("key", player.status.rawValue)
       if player.status == .readyToPlay {
         self.onLoaded?(["duration": player.currentItem?.duration.seconds, "isReady": true])
         loadingView.removeFromSuperview()
         Loading(loadingView).hideLoading()
-          let svgPauseLayer = _shapeLayer.createPauseShapeLayer()
-          svgPauseLayer.frame.origin = CGPoint(x: playPauseUIView.bounds.midX, y: playPauseUIView.bounds.midY - svgPauseLayer.bounds.height / 2)
-          
-          if playPauseCAShapeLayer.path == nil {
-            playPauseUIView.layer.addSublayer(svgPauseLayer)
-            playPauseCAShapeLayer = svgPauseLayer
-          }
+        let svgPauseLayer = _shapeLayer.createPauseShapeLayer()
+        svgPauseLayer.frame.origin = CGPoint(x: playPauseUIView.bounds.midX, y: playPauseUIView.bounds.midY - svgPauseLayer.bounds.height / 2)
+        
+        if playPauseCAShapeLayer.path == nil {
+          playPauseUIView.layer.addSublayer(svgPauseLayer)
+          playPauseCAShapeLayer = svgPauseLayer
+        }
       } else if player.status == .failed {
         // Handle failure
         print("Failed to load video")
@@ -395,7 +421,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     let fullsScreen = FullScreen(_window: window, parentView: fullScreenUIButton)
     fullsScreen.toggleFullScreen()
   }
-
+  
   // native controllers
   @objc private func onTappedPlayPause() {
     let playPause = PlayPause(video: player, view: playPauseUIView, initialShapeLayer: playPauseCAShapeLayer)
