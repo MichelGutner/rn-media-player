@@ -74,10 +74,6 @@ class MenuControlls {
   lazy var mainMenu = UIMenu(title: "Menu", options: .displayInline, children: [
     rateList,
     qualityList
-//    UIAction(title: "Qualidade", image: UIImage(systemName: "chart.bar.fill"), handler: { [weak self] _ in
-//      // Handle the action for "Qualidade" (openPhotos() is a placeholder)
-//      self?.openPhotos()
-//    })
   ])
   
 
