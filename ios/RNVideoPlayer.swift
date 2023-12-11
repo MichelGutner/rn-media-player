@@ -153,7 +153,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     playerLayer = AVPlayerLayer(player: avPlayer)
     
     if #available(iOS 14.0, *) {
-      moreOptionsUIButton.menu = MenuControlls().menu
+      // need move to function
+      let menuControllers = MenuControlls(player: player!)
+      moreOptionsUIButton.menu = menuControllers.showMenu
       moreOptionsUIButton.showsMenuAsPrimaryAction = true
     } else {
       // Fallback on earlier versions
