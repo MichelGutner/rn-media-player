@@ -53,6 +53,7 @@ function App(): JSX.Element {
         onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
         fullScreen={isFullScreen}
         timeValueForChange={10}
+        onError={e => console.log(e.nativeEvent.error)}
         sliderProps={{
           maximumTrackColor: '#fff2f2',
           minimumTrackColor: '#3939ae',

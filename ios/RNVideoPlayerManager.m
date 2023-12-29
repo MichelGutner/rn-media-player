@@ -20,5 +20,6 @@ RCT_EXPORT_VIEW_PROPERTY(fullScreen, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(sliderProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(timeValueForChange, NSNumber)
 RCT_EXPORT_VIEW_PROPERTY(onMoreOptions, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onError, RCTDirectEventBlock)
 
 @end

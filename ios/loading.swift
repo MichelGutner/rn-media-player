@@ -16,7 +16,6 @@ class Loading {
   }
   
   var indicator: UIActivityIndicatorView!
-  var loadingSize = CGSize(width: 40, height: 40)
   
   public func showLoading() {
     if #available(iOS 13.0, *) {
@@ -26,7 +25,7 @@ class Loading {
         // Fallback on earlier versions
         indicator = UIActivityIndicatorView(style: .whiteLarge)
       indicator.frame.origin = _view.bounds.origin
-      indicator.frame.size = loadingSize
+      indicator.frame.size = CGSize(width: 40, height: 40)
     }
     indicator.hidesWhenStopped = true
     _view.addSubview(indicator)

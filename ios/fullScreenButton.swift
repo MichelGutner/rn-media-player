@@ -10,8 +10,6 @@ import Foundation
 
 class FullScreen {
   private var _window: UIWindow?
-  private var fullScreenLayer = CAShapeLayer()
-  private var _shapeLayer = CustomCAShapeLayers()
   private var _view = UIView()
   
   init(_window: UIWindow?, parentView: UIView) {
@@ -22,7 +20,6 @@ class FullScreen {
   public func toggleFullScreen() {
     if #available(iOS 16.0, *) {
       let isPortrait = _window?.windowScene?.interfaceOrientation.isPortrait == true
-      fullScreenLayer = shapeLayerByOrientation(isPortrait)
       let orientations: UIInterfaceOrientationMask = isPortrait ? .landscape : .portrait
       _window?.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: orientations)) { error in
         print(error.localizedDescription)
@@ -34,20 +31,8 @@ class FullScreen {
       } else {
         orientation = .portrait
       }
-      fullScreenLayer = shapeLayerByOrientation(orientation == .portrait)
       UIDevice.current.setValue(orientation.rawValue, forKey: "orientation")
     }
-    
-    let transition = CATransition()
-    transition.type = .reveal
-    transition.duration = 1.0
-    
-    _view.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
-    _view.layer.sublayers?.forEach { $0.add(transition, forKey: nil) }
-    _view.layer.addSublayer(fullScreenLayer)
-  }
   
-  func shapeLayerByOrientation(_ isPortrait: Bool) -> CAShapeLayer {
-    return isPortrait ? _shapeLayer.createExitFullScreenShapeLayer() : _shapeLayer.createFullScreenShapeLayer()
   }
 }

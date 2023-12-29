@@ -3,6 +3,7 @@ import UIKit
 import React
 import AVFoundation
 
+@available(iOS 13.0, *)
 @objc(RNVideoPlayer)
 class RNVideoPlayer: RCTViewManager {
   @objc override func view() -> (RNVideoPlayerView) {
@@ -14,6 +15,7 @@ class RNVideoPlayer: RCTViewManager {
   }
 }
 
+@available(iOS 13.0, *)
 class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var viewControlls: UIView!
   private var loadingView = UIView()
@@ -22,7 +24,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private var url: URL?
   
-  private var labelCurrentTime: UILabel! = UILabel(frame: UIScreen.main.bounds)
+  private var labelCurrentTime: UILabel! = UILabel()
+  private var labelDuration: UILabel! = UILabel()
   
   private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height - 60, width:UIScreen.main.bounds.width, height:10))
   
@@ -41,7 +44,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var stringHandler = StringHandler()
   private var _shapeLayer = CustomCAShapeLayers()
   
-  private var defaultControllerSize = CGFloat(80)
+  private var defaultControllerSize = CGFloat(30)
   
   private var hasCalledSetup = false
   private var player: AVPlayer?
@@ -52,7 +55,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
   @objc var onMoreOptions: RCTDirectEventBlock?
-  
+  @objc var onError: RCTDirectEventBlock?
   @objc var timeValueForChange: NSNumber?
   
   @objc var sliderProps: NSDictionary? = [:] {
@@ -66,7 +69,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
           let maximumTrackColor = sliderProps["maximumTrackColor"] as? String,
           let thumbSize = sliderProps["thumbSize"] as? CGFloat,
           let thumbColor = sliderProps["thumbColor"] as? String else {
-      print("ERROR")
       return
     }
     
@@ -84,7 +86,23 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   // external controls
   @objc var source: String = "" {
     didSet {
-      setupVideoPlayer(source)
+      do {
+        if source == "" {
+          self.player?.replaceCurrentItem(with: nil)
+          return
+        }
+        
+        let verificatedUrlString = try verifyUrl(urlString: source)
+        player = AVPlayer(url: verificatedUrlString)
+        player?.actionAtItemEnd = .none
+        hasCalledSetup = true
+        
+        // Adicione um observador para o status do player
+        player?.addObserver(self, forKeyPath: "status", options: .new, context: nil)
+        periodTimeObserver()
+      } catch {
+        self.onError?(["error": "Error on get url: error type is \(error)"])
+      }
     }
   }
   
@@ -106,39 +124,19 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-  private func setupVideoPlayer(_ source: String) {
-      do {
-          guard let url = try verifyIfIsValidURL(from: source) else {
-              // Handle the case when the URL is nil (invalid)
-              print("Invalid URL")
-              return
-          }
-
-          player = AVPlayer(url: url)
-        print("player 1", player?.currentItem?.status == .unknown)
-          player?.actionAtItemEnd = .none
-          hasCalledSetup = true
-
-          // Adicione um observador para o status do player
-        player?.addObserver(self, forKeyPath: "status", options: .new, context: nil)
-
-          periodTimeObserver()
-      } catch {
-          // Handle the error here
-          print("Error on verify url: \(error)")
-      }
-  }
-
+  
   // Função para criar uma URL e lançar um erro se for inválida
-  private func verifyIfIsValidURL(from source: String) throws -> URL? {
-      guard let url = URL(string: source) else {
-          throw VideoPlayerError.invalidURL
-      }
+  func verifyUrl(urlString: String?) throws -> URL {
+    if let urlString = urlString, let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
       return url
+    } else {
+      throw VideoPlayerError.invalidURL
+    }
   }
   
   enum VideoPlayerError: Error {
-      case invalidURL
+    case invalidURL
+    case invalidPlayer
   }
   
   override func layoutSubviews() {
@@ -151,15 +149,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private func videoPlayerSubView() {
     guard let avPlayer = player else { return }
     playerLayer = AVPlayerLayer(player: avPlayer)
-    
-    if #available(iOS 14.0, *) {
-      // need move to function
-      let menuControllers = MenuControlls(player: player!)
-      moreOptionsUIButton.menu = menuControllers.showMenu
-      moreOptionsUIButton.showsMenuAsPrimaryAction = true
-    } else {
-      // Fallback on earlier versions
-    }
     
     // View
     viewControlls = UIView()
@@ -176,7 +165,11 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     viewControlls.layer.addSublayer(playerLayer)
     
     // PlayPause
+    
     viewControlls.addSubview(playPauseUIView)
+    playPauseUIView.tintColor = .white
+    playPauseUIView.imageView?.contentMode = .scaleAspectFill
+    
     playPauseUIView.frame = CGRect(
       x: viewControlls.bounds.midX - (defaultControllerSize/2),
       y: viewControlls.bounds.midY - (defaultControllerSize/2),
@@ -229,12 +222,15 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     // seek slider monitoring label
     labelCurrentTime.textColor = .white
-    labelCurrentTime.font = UIFont.systemFont(ofSize: 8)
+    labelCurrentTime.font = UIFont.systemFont(ofSize: 10)
+    if labelCurrentTime.text == nil {
+      self.labelCurrentTime.text = StringHandler().stringFromTimeInterval(interval: 0)
+    }
     viewControlls.addSubview(labelCurrentTime)
     labelCurrentTime.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      labelCurrentTime.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 30),
-      labelCurrentTime.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.bottomAnchor, constant: -20)
+      labelCurrentTime.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
+      labelCurrentTime.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.bottomAnchor)
     ])
     
     
@@ -245,33 +241,27 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     // add fullScreen
     fullScreenUIButton.frame = CGRect(
-      x: viewControlls.bounds.maxX - (viewControlls.layoutMargins.right + 78),
-      y: viewControlls.bounds.maxY - (viewControlls.layoutMargins.bottom + 45),
+      x: viewControlls.bounds.maxX - (viewControlls.layoutMargins.right + 96),
+      y: viewControlls.layoutMargins.top,
       width: 30,
       height: 30
     )
-    let fullScreenLayer = _shapeLayer.createFullScreenShapeLayer()
-    fullScreenLayer.position = CGPoint(x: fullScreenUIButton.bounds.minX + 10, y: fullScreenUIButton.bounds.minY + 10)
-    if fullScreenCAShapeLayer.path == nil {
-      fullScreenUIButton.layer.addSublayer(fullScreenLayer)
-      fullScreenCAShapeLayer = fullScreenLayer
-    }
-    
+  
+    fullScreenUIButton.tintColor = .white
     fullScreenUIButton.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
     viewControlls.addSubview(fullScreenUIButton)
     
     // add more options
     moreOptionsUIButton.frame = CGRect(
       x: viewControlls.bounds.maxX - (viewControlls.layoutMargins.right + 48),
-      y: viewControlls.bounds.maxY - (viewControlls.layoutMargins.bottom + 45),
+      y: viewControlls.layoutMargins.top,
       width: 30,
       height: 30
     )
-    
-    let moreOptionsLayer = _shapeLayer.createMoreOptionsShapeLayer()
-    moreOptionsLayer.position = CGPoint(x: moreOptionsUIButton.bounds.minX + 15, y: moreOptionsUIButton.bounds.minY + 15)
-    moreOptionsUIButton.layer.addSublayer(moreOptionsLayer)
-    
+
+    moreOptionsUIButton.setImage(UIImage(systemName: "ellipsis"), for: .normal)
+    moreOptionsUIButton.tintColor = .white
+    moreOptionsUIButton.transform = CGAffineTransform(rotationAngle: CGFloat.pi * 0.5)
     moreOptionsUIButton.addTarget(self, action: #selector(onTappedOnMoreOptions), for: .touchUpInside)
     viewControlls.addSubview(moreOptionsUIButton)
     
@@ -299,9 +289,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     let durationTimeInSecond = CMTimeGetSeconds(duration)
     labelCurrentTime.text = (
       self.stringHandler.stringFromTimeInterval(
-        interval: currenTimeInSecond) + "  " + self.stringHandler.stringFromTimeInterval(
-          interval: (player?.currentItem?.duration.seconds)!
-        )
+        interval: player?.currentItem?.duration.seconds ?? 0
+      )
     )
     if self.isThumbSeek == false {
       self.seekSlider.value = Float(currenTimeInSecond/durationTimeInSecond)
@@ -322,12 +311,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         self.onLoaded?(["duration": player.currentItem?.duration.seconds, "isReady": true])
         loadingView.removeFromSuperview()
         Loading(loadingView).hideLoading()
-        let svgPauseLayer = _shapeLayer.createPauseShapeLayer()
-        svgPauseLayer.frame.origin = CGPoint(x: playPauseUIView.bounds.midX, y: playPauseUIView.bounds.midY - svgPauseLayer.bounds.height / 2)
-        
-        if playPauseCAShapeLayer.path == nil {
-          playPauseUIView.layer.addSublayer(svgPauseLayer)
-          playPauseCAShapeLayer = svgPauseLayer
+        if playPauseUIView.imageView?.layer.sublayers == nil {
+          playPauseUIView.setBackgroundImage(UIImage(systemName: player.rate == 0 ? "play.fill" : "pause.fill"), for: .normal)
         }
       } else if player.status == .failed {
         // Handle failure
@@ -373,10 +358,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     seekSlider.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       seekSlider.leadingAnchor.constraint(
-        equalTo: layoutMarginsGuide.leadingAnchor, constant: 20
+        equalTo: layoutMarginsGuide.leadingAnchor, constant: 50
       ),
       seekSlider.trailingAnchor.constraint(
-        equalTo: layoutMarginsGuide.trailingAnchor, constant: -20
+        equalTo: layoutMarginsGuide.trailingAnchor, constant: -50
       ),
       seekSlider.bottomAnchor.constraint(
         equalTo: viewControlls.layoutMarginsGuide.bottomAnchor
@@ -430,9 +415,28 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   // native controllers
+  @available(iOS 13.0, *)
   @objc private func onTappedPlayPause() {
-    let playPause = PlayPause(video: player, view: playPauseUIView, initialShapeLayer: playPauseCAShapeLayer)
-    playPause.button()
+    var image = ""
+    if player?.rate == 0 {
+      player?.play()
+      image = "pause.fill"
+    } else {
+      player?.pause()
+      image = "play.fill"
+    }
+    
+    let animation = UIViewPropertyAnimator(duration: 0.2, curve: .easeInOut) { [self] in
+      playPauseUIView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+      self.playPauseUIView.setBackgroundImage(UIImage(systemName: image), for: .normal)
+    }
+    
+    animation.addCompletion { _ in
+      UIView.animate(withDuration: 0.2) {
+        self.playPauseUIView.transform = .identity
+      }
+    }
+    animation.startAnimation()
   }
   
   @objc private func fowardTime() {
@@ -445,30 +449,25 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     backward.button()
   }
   
+  @available(iOS 13.0, *)
   private func onChangeDeviceOrientation() {
     guard let playerLayer = playerLayer else { return }
     let isLandscape: Bool
+    var image = ""
     
-    if #available(iOS 13.0, *) {
-      isLandscape = window?.windowScene?.interfaceOrientation.isLandscape == true
-    } else {
-      isLandscape = UIDevice.current.orientation.isLandscape
-    }
+    isLandscape = window?.windowScene?.interfaceOrientation.isLandscape == true
     
     frame = isLandscape ? UIScreen.main.bounds : bounds
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
       playerLayer.videoGravity = isLandscape ? .resizeAspectFill : .resizeAspect
     })
     playerLayer.frame = isLandscape ? UIScreen.main.bounds : viewControlls.bounds
-    fullScreenCAShapeLayer = isLandscape ? _shapeLayer.createExitFullScreenShapeLayer() : _shapeLayer.createFullScreenShapeLayer()
-    
-    let transition = CATransition()
-    transition.type = .reveal
-    transition.duration = 1.0
-    
-    fullScreenUIButton.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
-    fullScreenUIButton.layer.sublayers?.forEach { $0.add(transition, forKey: nil) }
-    fullScreenUIButton.layer.addSublayer(fullScreenCAShapeLayer)
+    if isLandscape {
+      image = "rectangle.and.arrow.up.right.and.arrow.down.left"
+    } else {
+      image = "rectangle.expand.vertical"
+    }
+    fullScreenUIButton.setImage(UIImage(systemName: image), for: .normal)
   }
   
   @objc private func onTappedOnMoreOptions() {
