@@ -22,9 +22,7 @@
 		DB0C9DD92B23D9EA00B7D598 /* backwardButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DD82B23D9EA00B7D598 /* backwardButton.swift */; };
 		DB0C9DDB2B23DB0400B7D598 /* fullScreenButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DDA2B23DB0400B7D598 /* fullScreenButton.swift */; };
 		DB0C9DE32B260AE100B7D598 /* loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DE22B260AE100B7D598 /* loading.swift */; };
-		DB3092FC2B3E64B500992DB8 /* moreOptionsButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB3092FB2B3E64B500992DB8 /* moreOptionsButton.swift */; };
 		DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */; };
-		DB8C88AC2B12E369007746A4 /* CustomCAShapeLayers.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8C88AB2B12E369007746A4 /* CustomCAShapeLayers.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,9 +61,7 @@
 		DB0C9DD82B23D9EA00B7D598 /* backwardButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = backwardButton.swift; sourceTree = "<group>"; };
 		DB0C9DDA2B23DB0400B7D598 /* fullScreenButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fullScreenButton.swift; sourceTree = "<group>"; };
 		DB0C9DE22B260AE100B7D598 /* loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = loading.swift; sourceTree = "<group>"; };
-		DB3092FB2B3E64B500992DB8 /* moreOptionsButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = moreOptionsButton.swift; sourceTree = "<group>"; };
 		DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapSeek.swift; sourceTree = "<group>"; };
-		DB8C88AB2B12E369007746A4 /* CustomCAShapeLayers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCAShapeLayers.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -189,17 +185,8 @@
 			children = (
 				DB0C9DD52B23CB8A00B7D598 /* Video */,
 				DB0C9DD22B23B68F00B7D598 /* CustomNativeControllers */,
-				DB0C9DCE2B23ADC800B7D598 /* CAShapeLayers */,
 			);
 			name = Features;
-			sourceTree = "<group>";
-		};
-		DB0C9DCE2B23ADC800B7D598 /* CAShapeLayers */ = {
-			isa = PBXGroup;
-			children = (
-				DB8C88AB2B12E369007746A4 /* CustomCAShapeLayers.swift */,
-			);
-			name = CAShapeLayers;
 			sourceTree = "<group>";
 		};
 		DB0C9DCF2B23B55900B7D598 /* Utilities */ = {
@@ -218,7 +205,6 @@
 				DB0C9DDA2B23DB0400B7D598 /* fullScreenButton.swift */,
 				DB0C9DE22B260AE100B7D598 /* loading.swift */,
 				DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */,
-				DB3092FB2B3E64B500992DB8 /* moreOptionsButton.swift */,
 			);
 			name = CustomNativeControllers;
 			sourceTree = "<group>";
@@ -505,8 +491,6 @@
 				DB0C9DDB2B23DB0400B7D598 /* fullScreenButton.swift in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */,
-				DB8C88AC2B12E369007746A4 /* CustomCAShapeLayers.swift in Sources */,
-				DB3092FC2B3E64B500992DB8 /* moreOptionsButton.swift in Sources */,
 				DB0C9DD42B23C85300B7D598 /* videoTimerManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   Modal,
   Text,
+  ViewStyle,
 } from 'react-native';
 import {PlayPauseIcon} from './src/components/PlayButton';
 const VPlayer = requireNativeComponent('RNVideoPlayer');
@@ -37,17 +38,20 @@ function App(): JSX.Element {
   return (
     <>
       <VPlayer
-        style={{
-          height: 350,
-          backgroundColor: 'white',
-          overflow: 'hidden',
-          zIndex: 2,
-        }}
+        style={
+          {
+            height: 400,
+            backgroundColor: 'blue',
+            overflow: 'hidden',
+            zIndex: 2,
+            alignItems: 'center',
+          } as ViewStyle
+        }
         source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         // source="https://assets.mixkit.co/videos/download/mixkit-countryside-meadow-4075.mp4"
         paused={pause}
         rate={rate}
-        resizeMode="contain"
+        videoTitle={'Game of Thrones'}
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
         onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
         onCompleted={({nativeEvent: {completed}}) => console.log(completed)}

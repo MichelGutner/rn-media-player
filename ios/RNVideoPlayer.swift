@@ -24,27 +24,26 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private var url: URL?
   
-  private var labelCurrentTime: UILabel! = UILabel()
   private var labelDuration: UILabel! = UILabel()
+  private var labelProgress: UILabel! = UILabel()
+  
+  private var title: UILabel! = UILabel()
   
   private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height - 60, width:UIScreen.main.bounds.width, height:10))
-  
-  private var playPauseCAShapeLayer = CAShapeLayer()
-  private var fullScreenCAShapeLayer = CAShapeLayer()
   
   private var playPauseUIView = UIButton()
   private var forwardButton = UIButton()
   private var backwardButton = UIButton()
   private var fullScreenUIButton = UIButton()
   private var moreOptionsUIButton = UIButton()
+  private var goBackButton = UIButton()
   
   private var videoTimeForChange: Double?
   private var playerLayer: AVPlayerLayer!
   
   private var stringHandler = StringHandler()
-  private var _shapeLayer = CustomCAShapeLayers()
   
-  private var defaultControllerSize = CGFloat(30)
+  private var controlSize = CGFloat(30)
   
   private var hasCalledSetup = false
   private var player: AVPlayer?
@@ -106,6 +105,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
+  @objc var videoTitle: String = "" {
+    didSet {
+      self.title.text = videoTitle
+    }
+  }
+  
   @objc var fullScreen: Bool = false {
     didSet {
       self.onToggleOrientation()
@@ -125,7 +130,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   
-  // Função para criar uma URL e lançar um erro se for inválida
+  // this function must be return a url error when trigger a invalid url
   func verifyUrl(urlString: String?) throws -> URL {
     if let urlString = urlString, let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
       return url
@@ -158,113 +163,126 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     addSubview(loadingView)
     
     Loading(loadingView).showLoading()
-    loadingView.frame.origin =  viewControlls.center
+    loadingView.frame.origin =  viewControlls.frame.origin
     // player
     onChangeDeviceOrientation()
     
     viewControlls.layer.addSublayer(playerLayer)
     
     // PlayPause
-    
-    viewControlls.addSubview(playPauseUIView)
     playPauseUIView.tintColor = .white
     playPauseUIView.imageView?.contentMode = .scaleAspectFill
-    
-    playPauseUIView.frame = CGRect(
-      x: viewControlls.bounds.midX - (defaultControllerSize/2),
-      y: viewControlls.bounds.midY - (defaultControllerSize/2),
-      width: defaultControllerSize,
-      height: defaultControllerSize
-    )
-    
     playPauseUIView.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
+    viewControlls.addSubview(playPauseUIView)
+    playPauseUIView.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      playPauseUIView.centerXAnchor.constraint(equalTo: viewControlls.centerXAnchor),
+      playPauseUIView.centerYAnchor.constraint(equalTo: layoutMarginsGuide.centerYAnchor),
+      playPauseUIView.widthAnchor.constraint(equalToConstant: controlSize),
+      playPauseUIView.heightAnchor.constraint(equalToConstant: controlSize)
+    ])
     
     
     
     // add forward button
-    forwardButton.frame = CGRect(
-      origin: CGPoint(
-        x: viewControlls.frame.midX + (viewControlls.frame.midX * 0.3),
-        y: playPauseUIView.frame.minY),
-      size: playPauseUIView.frame.size
-    )
-    
-    let forwardSvgLayer = _shapeLayer.createForwardShapeLayer(timeValueForChange!)
-    forwardSvgLayer.position = CGPoint(
-      x: forwardButton.bounds.midX + forwardSvgLayer.bounds.width / 2,
-      y: forwardButton.bounds.midY + forwardSvgLayer.bounds.height / 2
-    )
-    
-    forwardButton.layer.addSublayer(forwardSvgLayer)
+    forwardButton.setBackgroundImage(UIImage(systemName: "goforward.10"), for: .normal)
+    forwardButton.tintColor = .white
     forwardButton.addTarget(self, action: #selector(fowardTime), for: .touchUpInside)
-    
     viewControlls.addSubview(forwardButton)
-    
-    // add backward button
-    backwardButton.frame = CGRect(
-      origin: CGPoint(
-        x: (viewControlls.frame.midX - playPauseUIView.frame.width) - (viewControlls.frame.midX * 0.3),
-        y: playPauseUIView.frame.minY
-      ),
-      size: playPauseUIView.frame.size
-    )
-    let backwardSvgLayer = _shapeLayer.createBackwardShapeLayer(timeValueForChange!)
-    
-    backwardSvgLayer.position = CGPoint(
-      x: backwardButton.bounds.midX + backwardSvgLayer.bounds.width / 2,
-      y: backwardButton.bounds.midY + backwardSvgLayer.bounds.height / 2
-    )
-    
-    backwardButton.layer.addSublayer(backwardSvgLayer)
-    backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
-    
-    viewControlls.addSubview(backwardButton)
-    
-    // seek slider monitoring label
-    labelCurrentTime.textColor = .white
-    labelCurrentTime.font = UIFont.systemFont(ofSize: 10)
-    if labelCurrentTime.text == nil {
-      self.labelCurrentTime.text = StringHandler().stringFromTimeInterval(interval: 0)
-    }
-    viewControlls.addSubview(labelCurrentTime)
-    labelCurrentTime.translatesAutoresizingMaskIntoConstraints = false
+    forwardButton.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      labelCurrentTime.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
-      labelCurrentTime.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.bottomAnchor)
+      forwardButton.centerXAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.centerXAnchor, constant: viewControlls.bounds.width * 0.2),
+      forwardButton.centerYAnchor.constraint(equalTo: layoutMarginsGuide.centerYAnchor),
+      forwardButton.widthAnchor.constraint(equalToConstant: controlSize),
+      forwardButton.heightAnchor.constraint(equalToConstant: controlSize)
     ])
     
+    // add backward button
+
+    backwardButton.setBackgroundImage(UIImage(systemName: "gobackward.10"), for: .normal)
+    backwardButton.tintColor = .white
+    backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
+    viewControlls.addSubview(backwardButton)
+    backwardButton.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      backwardButton.centerXAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.centerXAnchor, constant: -viewControlls.bounds.width * 0.2),
+      backwardButton.centerYAnchor.constraint(equalTo: layoutMarginsGuide.centerYAnchor),
+      backwardButton.widthAnchor.constraint(equalToConstant: controlSize),
+      backwardButton.heightAnchor.constraint(equalToConstant: controlSize)
+    ])
+    
+    // seek slider monitoring label
+    labelDuration.textColor = .white
+    labelDuration.font = UIFont.systemFont(ofSize: 10)
+    if labelDuration.text == nil {
+      self.labelDuration.text = StringHandler().stringFromTimeInterval(interval: 0)
+    }
+    viewControlls.addSubview(labelDuration)
+    labelDuration.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      labelDuration.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
+      labelDuration.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.bottomAnchor)
+    ])
+    
+    labelProgress.textColor = .white
+    labelProgress.font = UIFont.systemFont(ofSize: 10)
+    if labelProgress.text == nil {
+      self.labelProgress.text = stringHandler.stringFromTimeInterval(interval: 0)
+    }
+    viewControlls.addSubview(labelProgress)
+    labelProgress.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      labelProgress.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor),
+      labelProgress.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.bottomAnchor)
+    ])
+    
+    title.textColor = .white
+    title.font = UIFont.systemFont(ofSize: 18)
+    viewControlls.addSubview(title)
+    title.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      title.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 30),
+      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.topAnchor, constant: 4)
+    ])
+    
+    goBackButton.tintColor = .white
+    goBackButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
+    viewControlls.addSubview(goBackButton)
+    goBackButton.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      goBackButton.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 8),
+      goBackButton.safeAreaLayoutGuide.topAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.topAnchor, constant: 4)
+    ])
     
     // seek slider
     seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
     viewControlls.addSubview(seekSlider!)
     self.configureSeekSliderLayout()
     
-    // add fullScreen
-    fullScreenUIButton.frame = CGRect(
-      x: viewControlls.bounds.maxX - (viewControlls.layoutMargins.right + 96),
-      y: viewControlls.layoutMargins.top,
-      width: 30,
-      height: 30
-    )
-  
     fullScreenUIButton.tintColor = .white
     fullScreenUIButton.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
     viewControlls.addSubview(fullScreenUIButton)
+    fullScreenUIButton.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      fullScreenUIButton.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -60),
+      fullScreenUIButton.safeAreaLayoutGuide.topAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.topAnchor),
+      fullScreenUIButton.widthAnchor.constraint(equalToConstant: controlSize),
+      fullScreenUIButton.heightAnchor.constraint(equalToConstant: controlSize)
+    ])
     
-    // add more options
-    moreOptionsUIButton.frame = CGRect(
-      x: viewControlls.bounds.maxX - (viewControlls.layoutMargins.right + 48),
-      y: viewControlls.layoutMargins.top,
-      width: 30,
-      height: 30
-    )
-
+    // add more option
     moreOptionsUIButton.setImage(UIImage(systemName: "ellipsis"), for: .normal)
     moreOptionsUIButton.tintColor = .white
     moreOptionsUIButton.transform = CGAffineTransform(rotationAngle: CGFloat.pi * 0.5)
     moreOptionsUIButton.addTarget(self, action: #selector(onTappedOnMoreOptions), for: .touchUpInside)
     viewControlls.addSubview(moreOptionsUIButton)
-    
+    moreOptionsUIButton.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      moreOptionsUIButton.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -20),
+      moreOptionsUIButton.safeAreaLayoutGuide.topAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.topAnchor),
+      moreOptionsUIButton.widthAnchor.constraint(equalToConstant: controlSize),
+      moreOptionsUIButton.heightAnchor.constraint(equalToConstant: controlSize)
+    ])
     
     player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
@@ -287,11 +305,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     guard let duration = self.player?.currentItem?.duration else {return}
     let currenTimeInSecond = CMTimeGetSeconds(currentTitme)
     let durationTimeInSecond = CMTimeGetSeconds(duration)
-    labelCurrentTime.text = (
+    labelDuration.text = (
       self.stringHandler.stringFromTimeInterval(
         interval: player?.currentItem?.duration.seconds ?? 0
       )
     )
+    labelProgress.text = (
+      self.stringHandler.stringFromTimeInterval(interval: currenTimeInSecond ))
     if self.isThumbSeek == false {
       self.seekSlider.value = Float(currenTimeInSecond/durationTimeInSecond)
     }
@@ -428,7 +448,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     let animation = UIViewPropertyAnimator(duration: 0.2, curve: .easeInOut) { [self] in
       playPauseUIView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
-      self.playPauseUIView.setBackgroundImage(UIImage(systemName: image), for: .normal)
+      playPauseUIView.setBackgroundImage(UIImage(systemName: image), for: .normal)
     }
     
     animation.addCompletion { _ in
@@ -465,7 +485,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     if isLandscape {
       image = "rectangle.and.arrow.up.right.and.arrow.down.left"
     } else {
-      image = "rectangle.expand.vertical"
+      image = "viewfinder"
     }
     fullScreenUIButton.setImage(UIImage(systemName: image), for: .normal)
   }
