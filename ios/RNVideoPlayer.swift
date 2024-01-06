@@ -17,17 +17,20 @@ class RNVideoPlayer: RCTViewManager {
 
 @available(iOS 13.0, *)
 class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
-  private var viewControlls: UIView!
+  private var _view: UIView!
+  private var _subView: UIView!
   private var loadingView = UIView()
   
   private var circleImage: UIImage!
+  private var fullScreenImage: String!
+  
   
   private var url: URL?
   
-  private var labelDuration: UILabel! = UILabel()
-  private var labelProgress: UILabel! = UILabel()
+  private var labelDuration = UILabel()
+  private var labelProgress = UILabel()
   
-  private var title: UILabel! = UILabel()
+  private var title = UILabel()
   
   private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height - 60, width:UIScreen.main.bounds.width, height:10))
   
@@ -49,11 +52,11 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var player: AVPlayer?
   private var timeObserver: Any?
   
-  
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
-  @objc var onMoreOptions: RCTDirectEventBlock?
+  @objc var onMoreOptionsTapped: RCTDirectEventBlock?
+  @objc var onFullScreenTapped: RCTDirectEventBlock?
   @objc var onError: RCTDirectEventBlock?
   @objc var timeValueForChange: NSNumber?
   
@@ -98,6 +101,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         
         // Adicione um observador para o status do player
         player?.addObserver(self, forKeyPath: "status", options: .new, context: nil)
+        playerLayer = AVPlayerLayer(player: player)
         periodTimeObserver()
       } catch {
         self.onError?(["error": "Error on get url: error type is \(error)"])
@@ -113,7 +117,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   @objc var fullScreen: Bool = false {
     didSet {
-      self.onToggleOrientation()
+//      self.onChangeOrientation(fullScreen)
     }
   }
   
@@ -126,6 +130,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var paused: Bool = false {
     didSet {
       self.onPaused(paused)
+    }
+  }
+  
+  @objc var resizeMode: NSString = "contain" {
+    didSet {
+      self.onUpdatePlayerLayer(resizeMode)
     }
   }
   
@@ -153,60 +163,60 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private func videoPlayerSubView() {
     guard let avPlayer = player else { return }
-    playerLayer = AVPlayerLayer(player: avPlayer)
-    
+
     // View
-    viewControlls = UIView()
-    viewControlls.backgroundColor = .black
-    viewControlls.frame = bounds
-    addSubview(viewControlls)
+    _view = UIView()
+    _view.backgroundColor = .black
+    _view.frame = bounds
+    addSubview(_view)
+    
+    _subView = UIView()
+    _subView.backgroundColor = .black
+    _view.addSubview(_subView)
+    _subView.frame = bounds
     addSubview(loadingView)
     
-    Loading(loadingView).showLoading()
-    loadingView.frame.origin =  viewControlls.frame.origin
-    // player
-    onChangeDeviceOrientation()
     
-    viewControlls.layer.addSublayer(playerLayer)
+    let loading = Loading(loadingView)
+    loading.show()
+    loadingView.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      loadingView.layoutMarginsGuide.centerXAnchor.constraint(equalTo: layoutMarginsGuide.centerXAnchor),
+      loadingView.layoutMarginsGuide.centerYAnchor.constraint(equalTo: layoutMarginsGuide.centerYAnchor)
+    ])
+    // player
+    onChangeOrientation(fullScreen)
+    _subView.layer.addSublayer(playerLayer)
     
     // PlayPause
-    playPauseUIView.tintColor = .white
-    playPauseUIView.imageView?.contentMode = .scaleAspectFill
+    let playPause = PlayPause(player, _subView)
+    playPause.crateAndAdjustLayout()
+    playPauseUIView = playPause.button()
     playPauseUIView.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
-    viewControlls.addSubview(playPauseUIView)
-    playPauseUIView.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      playPauseUIView.centerXAnchor.constraint(equalTo: viewControlls.centerXAnchor),
-      playPauseUIView.centerYAnchor.constraint(equalTo: layoutMarginsGuide.centerYAnchor),
-      playPauseUIView.widthAnchor.constraint(equalToConstant: controlSize),
-      playPauseUIView.heightAnchor.constraint(equalToConstant: controlSize)
-    ])
-    
-    
     
     // add forward button
     forwardButton.setBackgroundImage(UIImage(systemName: "goforward.10"), for: .normal)
     forwardButton.tintColor = .white
     forwardButton.addTarget(self, action: #selector(fowardTime), for: .touchUpInside)
-    viewControlls.addSubview(forwardButton)
+    _subView.addSubview(forwardButton)
     forwardButton.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      forwardButton.centerXAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.centerXAnchor, constant: viewControlls.bounds.width * 0.2),
-      forwardButton.centerYAnchor.constraint(equalTo: layoutMarginsGuide.centerYAnchor),
+      forwardButton.centerXAnchor.constraint(equalTo: _subView.layoutMarginsGuide.centerXAnchor, constant: _subView.bounds.width * 0.2),
+      forwardButton.centerYAnchor.constraint(equalTo: _subView.centerYAnchor),
       forwardButton.widthAnchor.constraint(equalToConstant: controlSize),
       forwardButton.heightAnchor.constraint(equalToConstant: controlSize)
     ])
     
     // add backward button
-
+    
     backwardButton.setBackgroundImage(UIImage(systemName: "gobackward.10"), for: .normal)
     backwardButton.tintColor = .white
     backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
-    viewControlls.addSubview(backwardButton)
+    _subView.addSubview(backwardButton)
     backwardButton.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      backwardButton.centerXAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.centerXAnchor, constant: -viewControlls.bounds.width * 0.2),
-      backwardButton.centerYAnchor.constraint(equalTo: layoutMarginsGuide.centerYAnchor),
+      backwardButton.centerXAnchor.constraint(equalTo: _subView.centerXAnchor, constant: -_subView.bounds.width * 0.2),
+      backwardButton.centerYAnchor.constraint(equalTo: _subView.centerYAnchor),
       backwardButton.widthAnchor.constraint(equalToConstant: controlSize),
       backwardButton.heightAnchor.constraint(equalToConstant: controlSize)
     ])
@@ -217,11 +227,11 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     if labelDuration.text == nil {
       self.labelDuration.text = StringHandler().stringFromTimeInterval(interval: 0)
     }
-    viewControlls.addSubview(labelDuration)
+    _subView.addSubview(labelDuration)
     labelDuration.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       labelDuration.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
-      labelDuration.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.bottomAnchor)
+      labelDuration.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _subView.layoutMarginsGuide.bottomAnchor)
     ])
     
     labelProgress.textColor = .white
@@ -229,57 +239,55 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     if labelProgress.text == nil {
       self.labelProgress.text = stringHandler.stringFromTimeInterval(interval: 0)
     }
-    viewControlls.addSubview(labelProgress)
+    _subView.addSubview(labelProgress)
     labelProgress.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       labelProgress.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor),
-      labelProgress.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.bottomAnchor)
+      labelProgress.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _subView.layoutMarginsGuide.bottomAnchor)
     ])
     
     title.textColor = .white
     title.font = UIFont.systemFont(ofSize: 18)
-    viewControlls.addSubview(title)
+    _subView.addSubview(title)
     title.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       title.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 30),
-      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.topAnchor, constant: 4)
+      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _subView.layoutMarginsGuide.topAnchor, constant: 4)
     ])
     
     goBackButton.tintColor = .white
     goBackButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-    viewControlls.addSubview(goBackButton)
+    _subView.addSubview(goBackButton)
     goBackButton.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       goBackButton.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 8),
-      goBackButton.safeAreaLayoutGuide.topAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.topAnchor, constant: 4)
+      goBackButton.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _subView.layoutMarginsGuide.topAnchor, constant: 4)
     ])
     
     // seek slider
     seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
-    viewControlls.addSubview(seekSlider!)
+    _subView.addSubview(seekSlider!)
     self.configureSeekSliderLayout()
     
-    fullScreenUIButton.tintColor = .white
+    let fullScreen = FullScreen(_subView)
+    fullScreen.createAndAdjustLayout()
+    fullScreenUIButton = fullScreen.button()
+    
+    fullScreenUIButton.setImage(UIImage(systemName: fullScreenImage ?? "arrow.up.left.and.arrow.down.right"), for: .normal)
+    
     fullScreenUIButton.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
-    viewControlls.addSubview(fullScreenUIButton)
-    fullScreenUIButton.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      fullScreenUIButton.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -60),
-      fullScreenUIButton.safeAreaLayoutGuide.topAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.topAnchor),
-      fullScreenUIButton.widthAnchor.constraint(equalToConstant: controlSize),
-      fullScreenUIButton.heightAnchor.constraint(equalToConstant: controlSize)
-    ])
+    
     
     // add more option
     moreOptionsUIButton.setImage(UIImage(systemName: "ellipsis"), for: .normal)
     moreOptionsUIButton.tintColor = .white
     moreOptionsUIButton.transform = CGAffineTransform(rotationAngle: CGFloat.pi * 0.5)
     moreOptionsUIButton.addTarget(self, action: #selector(onTappedOnMoreOptions), for: .touchUpInside)
-    viewControlls.addSubview(moreOptionsUIButton)
+    _subView.addSubview(moreOptionsUIButton)
     moreOptionsUIButton.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      moreOptionsUIButton.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -20),
-      moreOptionsUIButton.safeAreaLayoutGuide.topAnchor.constraint(equalTo: viewControlls.layoutMarginsGuide.topAnchor),
+      moreOptionsUIButton.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -60),
+      moreOptionsUIButton.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _subView.layoutMarginsGuide.topAnchor, constant: 4),
       moreOptionsUIButton.widthAnchor.constraint(equalToConstant: controlSize),
       moreOptionsUIButton.heightAnchor.constraint(equalToConstant: controlSize)
     ])
@@ -296,7 +304,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       guard let self = self else { return }
       self.onVideoProgress?(["progress": time.seconds])
       self.updatePlayerTime()
-      
     }
   }
   
@@ -326,14 +333,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
     if keyPath == "status", let player = player {
-      print("key", player.status.rawValue)
       if player.status == .readyToPlay {
+   
         self.onLoaded?(["duration": player.currentItem?.duration.seconds, "isReady": true])
         loadingView.removeFromSuperview()
-        Loading(loadingView).hideLoading()
-        if playPauseUIView.imageView?.layer.sublayers == nil {
-          playPauseUIView.setBackgroundImage(UIImage(systemName: player.rate == 0 ? "play.fill" : "pause.fill"), for: .normal)
-        }
+        Loading(loadingView).hide()
+        
+        playerLayer.frame = bounds
       } else if player.status == .failed {
         // Handle failure
         print("Failed to load video")
@@ -378,13 +384,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     seekSlider.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       seekSlider.leadingAnchor.constraint(
-        equalTo: layoutMarginsGuide.leadingAnchor, constant: 50
+        equalTo: layoutMarginsGuide.leadingAnchor, constant: 60
       ),
       seekSlider.trailingAnchor.constraint(
-        equalTo: layoutMarginsGuide.trailingAnchor, constant: -50
+        equalTo: layoutMarginsGuide.trailingAnchor, constant: -60
       ),
-      seekSlider.bottomAnchor.constraint(
-        equalTo: viewControlls.layoutMarginsGuide.bottomAnchor
+      seekSlider.safeAreaLayoutGuide.bottomAnchor.constraint(
+        equalTo: _subView.layoutMarginsGuide.bottomAnchor
       ),
     ])
   }
@@ -430,17 +436,15 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   // controllers
   @objc public func onToggleOrientation() {
-    let fullsScreen = FullScreen(_window: window, parentView: fullScreenUIButton)
-    fullsScreen.toggleFullScreen()
+    onFullScreenTapped?([:])
   }
   
   // native controllers
-  @available(iOS 13.0, *)
   @objc private func onTappedPlayPause() {
     var image = ""
     if player?.rate == 0 {
       player?.play()
-      image = "pause.fill"
+      image = "pause"
     } else {
       player?.pause()
       image = "play.fill"
@@ -448,7 +452,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     let animation = UIViewPropertyAnimator(duration: 0.2, curve: .easeInOut) { [self] in
       playPauseUIView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
-      playPauseUIView.setBackgroundImage(UIImage(systemName: image), for: .normal)
+      playPauseUIView.setImage(UIImage(systemName: image), for: .normal)
     }
     
     animation.addCompletion { _ in
@@ -460,37 +464,50 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   @objc private func fowardTime() {
-    let forward = Forward(player: player!, time: Double(truncating: timeValueForChange!))
-    forward.button()
+    let forward = AdvanceTime(player: player)
+    forward.change(Double(truncating: timeValueForChange!))
   }
   
   @objc private func backwardTime() {
-    let backward = Backward(player: player!, time: Double(truncating: timeValueForChange!))
-    backward.button()
+    let backward = AdvanceTime(player: player)
+    backward.change(-Double(truncating: timeValueForChange!))
   }
   
-  @available(iOS 13.0, *)
-  private func onChangeDeviceOrientation() {
+  private func onChangeOrientation(_ fullscreen: Bool) {
     guard let playerLayer = playerLayer else { return }
-    let isLandscape: Bool
-    var image = ""
+    playerLayer.frame = fullscreen ? UIScreen.main.bounds : bounds
     
-    isLandscape = window?.windowScene?.interfaceOrientation.isLandscape == true
+    fullScreenImage = fullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right"
+  }
+  
+  @objc private func onUpdatePlayerLayer(_ resizeMode: NSString) {
+    let mode = Resize(rawValue: resizeMode as String)
+    let videoGravity = videoGravity(mode!)
     
-    frame = isLandscape ? UIScreen.main.bounds : bounds
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
-      playerLayer.videoGravity = isLandscape ? .resizeAspectFill : .resizeAspect
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
+      self.playerLayer.videoGravity = videoGravity
     })
-    playerLayer.frame = isLandscape ? UIScreen.main.bounds : viewControlls.bounds
-    if isLandscape {
-      image = "rectangle.and.arrow.up.right.and.arrow.down.left"
-    } else {
-      image = "viewfinder"
-    }
-    fullScreenUIButton.setImage(UIImage(systemName: image), for: .normal)
   }
   
   @objc private func onTappedOnMoreOptions() {
-    self.onMoreOptions?(["tapped": true])
+    self.onMoreOptionsTapped?([:])
+  }
+}
+
+enum Resize: String {
+  case contain, cover, stretch
+}
+
+@available(iOS 13.0, *)
+extension RNVideoPlayerView {
+  func videoGravity(_ videoResize: Resize) -> AVLayerVideoGravity  {
+    switch (videoResize) {
+    case .stretch:
+      return .resize
+    case .cover:
+      return .resizeAspectFill
+    case .contain:
+      return .resizeAspect
+    }
   }
 }

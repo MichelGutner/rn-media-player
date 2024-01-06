@@ -5,71 +5,28 @@
  * @format
  */
 
-import React, {useState, useEffect} from 'react';
-import {
-  requireNativeComponent,
-  useWindowDimensions,
-  View,
-  Button,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-  Modal,
-  Text,
-  ViewStyle,
-} from 'react-native';
-import {PlayPauseIcon} from './src/components/PlayButton';
-const VPlayer = requireNativeComponent('RNVideoPlayer');
+import React, {useState} from 'react';
+import {useWindowDimensions} from 'react-native';
+import {RNPlayerVideo} from './src/player';
 
 function App(): JSX.Element {
-  const {width, height} = useWindowDimensions();
-  const [pause, setPause] = useState(false);
-  const [rate, setRate] = useState(1);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [loadData, setLoadData] = useState<any>();
-  const [isFullScreen, setFullScreen] = useState(false);
-
+  const {height} = useWindowDimensions();
+  const [isFull, setIsFull] = useState(false);
+  console.log('🚀 ~ file: App.tsx:15 ~ App ~ isFull:', isFull);
+  // console.log('🚀 ~ file: App.tsx:14 ~ App ~ isFull:', isFull);
   // useEffect(() => {
   //   setTimeout(() => {
-  //     setFullScreen(!isFullScreen);
+  //     setIsFull(!isFull);
   //   }, 12000);
-  // }, [isFullScreen]);
-
+  // }, [isFull]);
+  const resizeMode = isFull ? 'cover' : 'contain';
   return (
-    <>
-      <VPlayer
-        style={
-          {
-            height: 400,
-            backgroundColor: 'blue',
-            overflow: 'hidden',
-            zIndex: 2,
-            alignItems: 'center',
-          } as ViewStyle
-        }
-        source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
-        // source="https://assets.mixkit.co/videos/download/mixkit-countryside-meadow-4075.mp4"
-        paused={pause}
-        rate={rate}
-        videoTitle={'Game of Thrones'}
-        onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
-        onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
-        onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
-        fullScreen={isFullScreen}
-        timeValueForChange={10}
-        onError={e => console.log(e.nativeEvent.error)}
-        sliderProps={{
-          maximumTrackColor: '#fff2f2',
-          minimumTrackColor: '#3939ae',
-          thumbSize: 10,
-          thumbColor: '#412cdf',
-        }}
-        onMoreOptions={data => console.log(data.nativeEvent.tapped)}
-      />
-      <View style={{flex: 1}}>
-        <Button title="Pause" onPress={() => setPause(!pause)} />
-      </View>
-    </>
+    <RNPlayerVideo
+      isFullScreen={isFull}
+      style={{height: isFull ? height : 350}}
+      onFullScreen={() => setIsFull(!isFull)}
+      resizeMode={resizeMode}
+    />
   );
 }
 

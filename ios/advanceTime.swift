@@ -8,16 +8,14 @@
 import Foundation
 import AVKit
 
-class Forward {
+class AdvanceTime {
   private weak var _player: AVPlayer?
-  private var _time: Double
-  init(player: AVPlayer?, time: Double) {
+  init(player: AVPlayer?) {
     _player = player
-    _time = time
   }
   
-  public func button() {
+  public func change(_ time: Double) {
     let videoTimer = videoTimerManager(avPlayer: _player!)
-    videoTimer.change(timeToChange: _time)
+    videoTimer.change(timeToChange: time)
   }
 }

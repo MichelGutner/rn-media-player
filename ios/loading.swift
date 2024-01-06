@@ -17,7 +17,7 @@ class Loading {
   
   var indicator: UIActivityIndicatorView!
   
-  public func showLoading() {
+  public func show() {
     if #available(iOS 13.0, *) {
         indicator = UIActivityIndicatorView(style: .large)
         indicator.center = _view.center
@@ -34,7 +34,7 @@ class Loading {
     _view.isUserInteractionEnabled = false
   }
   
-  public func hideLoading() {
+  public func hide() {
     _view.layer.sublayers?.forEach {$0.removeFromSuperlayer()}
     indicator?.stopAnimating()
     _view.isUserInteractionEnabled = true
