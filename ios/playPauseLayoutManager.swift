@@ -35,7 +35,6 @@ class PlayPause {
     if _button.imageView?.layer.sublayers == nil {
       _button.setImage(UIImage(systemName: _player.rate == 0 ? "play.fill" : "pause"), for: .normal)
     }
-    
   }
 
   public func button() -> UIButton {

@@ -18,11 +18,13 @@
 		D02E142F2AF08E73003D0472 /* RNVideoPlayerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = D02E142E2AF08E73003D0472 /* RNVideoPlayerManager.m */; };
 		DB0C9DCD2B23AB6900B7D598 /* StringHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DCC2B23AB6900B7D598 /* StringHandler.swift */; };
 		DB0C9DD42B23C85300B7D598 /* videoTimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */; };
-		DB0C9DD72B23D88600B7D598 /* advanceTime.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DD62B23D88600B7D598 /* advanceTime.swift */; };
-		DB0C9DDB2B23DB0400B7D598 /* fullScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DDA2B23DB0400B7D598 /* fullScreen.swift */; };
+		DB0C9DDB2B23DB0400B7D598 /* fullScreenLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DDA2B23DB0400B7D598 /* fullScreenLayoutManager.swift */; };
 		DB0C9DE32B260AE100B7D598 /* loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DE22B260AE100B7D598 /* loading.swift */; };
 		DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */; };
-		DBC0447B2B43A9A000888241 /* playPause.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447A2B43A9A000888241 /* playPause.swift */; };
+		DBC0447B2B43A9A000888241 /* playPauseLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447A2B43A9A000888241 /* playPauseLayoutManager.swift */; };
+		DBC0447D2B4B3BF000888241 /* advanceVideoTimerLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447C2B4B3BF000888241 /* advanceVideoTimerLayoutManager.swift */; };
+		DBC0447F2B4B3D2F00888241 /* Defaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* Defaults.swift */; };
+		DBC044812B4B4B3D00888241 /* seekLabelLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC044802B4B4B3D00888241 /* seekLabelLayoutManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,11 +59,13 @@
 		D02E142E2AF08E73003D0472 /* RNVideoPlayerManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNVideoPlayerManager.m; sourceTree = "<group>"; };
 		DB0C9DCC2B23AB6900B7D598 /* StringHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringHandler.swift; sourceTree = "<group>"; };
 		DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = videoTimerManager.swift; sourceTree = "<group>"; };
-		DB0C9DD62B23D88600B7D598 /* advanceTime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = advanceTime.swift; sourceTree = "<group>"; };
-		DB0C9DDA2B23DB0400B7D598 /* fullScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fullScreen.swift; sourceTree = "<group>"; };
+		DB0C9DDA2B23DB0400B7D598 /* fullScreenLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fullScreenLayoutManager.swift; sourceTree = "<group>"; };
 		DB0C9DE22B260AE100B7D598 /* loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = loading.swift; sourceTree = "<group>"; };
 		DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapSeek.swift; sourceTree = "<group>"; };
-		DBC0447A2B43A9A000888241 /* playPause.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = playPause.swift; sourceTree = "<group>"; };
+		DBC0447A2B43A9A000888241 /* playPauseLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = playPauseLayoutManager.swift; sourceTree = "<group>"; };
+		DBC0447C2B4B3BF000888241 /* advanceVideoTimerLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = advanceVideoTimerLayoutManager.swift; sourceTree = "<group>"; };
+		DBC0447E2B4B3D2F00888241 /* Defaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Defaults.swift; sourceTree = "<group>"; };
+		DBC044802B4B4B3D00888241 /* seekLabelLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = seekLabelLayoutManager.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -193,6 +197,7 @@
 			isa = PBXGroup;
 			children = (
 				DB0C9DCC2B23AB6900B7D598 /* StringHandler.swift */,
+				DBC0447E2B4B3D2F00888241 /* Defaults.swift */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -200,11 +205,12 @@
 		DB0C9DD22B23B68F00B7D598 /* CustomNativeControllers */ = {
 			isa = PBXGroup;
 			children = (
-				DB0C9DD62B23D88600B7D598 /* advanceTime.swift */,
-				DB0C9DDA2B23DB0400B7D598 /* fullScreen.swift */,
+				DB0C9DDA2B23DB0400B7D598 /* fullScreenLayoutManager.swift */,
 				DB0C9DE22B260AE100B7D598 /* loading.swift */,
 				DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */,
-				DBC0447A2B43A9A000888241 /* playPause.swift */,
+				DBC0447A2B43A9A000888241 /* playPauseLayoutManager.swift */,
+				DBC0447C2B4B3BF000888241 /* advanceVideoTimerLayoutManager.swift */,
+				DBC044802B4B4B3D00888241 /* seekLabelLayoutManager.swift */,
 			);
 			name = CustomNativeControllers;
 			sourceTree = "<group>";
@@ -481,14 +487,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DBC044812B4B4B3D00888241 /* seekLabelLayoutManager.swift in Sources */,
 				D02E142F2AF08E73003D0472 /* RNVideoPlayerManager.m in Sources */,
-				DB0C9DD72B23D88600B7D598 /* advanceTime.swift in Sources */,
-				DBC0447B2B43A9A000888241 /* playPause.swift in Sources */,
+				DBC0447D2B4B3BF000888241 /* advanceVideoTimerLayoutManager.swift in Sources */,
+				DBC0447B2B43A9A000888241 /* playPauseLayoutManager.swift in Sources */,
 				DB0C9DE32B260AE100B7D598 /* loading.swift in Sources */,
 				DB0C9DCD2B23AB6900B7D598 /* StringHandler.swift in Sources */,
+				DBC0447F2B4B3D2F00888241 /* Defaults.swift in Sources */,
 				D02E142D2AF08CF6003D0472 /* RNVideoPlayer.swift in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
-				DB0C9DDB2B23DB0400B7D598 /* fullScreen.swift in Sources */,
+				DB0C9DDB2B23DB0400B7D598 /* fullScreenLayoutManager.swift in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */,
 				DB0C9DD42B23C85300B7D598 /* videoTimerManager.swift in Sources */,

@@ -57,7 +57,7 @@ export const RNPlayerVideo = ({
         timeValueForChange={10}
         onError={e => console.log(e.nativeEvent.error)}
         sliderProps={{
-          maximumTrackColor: '#fff2f2',
+          maximumTrackColor: '#dd1212',
           minimumTrackColor: '#3939ae',
           thumbSize: 10,
           thumbColor: '#412cdf',

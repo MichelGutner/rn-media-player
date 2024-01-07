@@ -101,7 +101,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         player = AVPlayer(url: verificatedUrlString)
         player?.actionAtItemEnd = .none
         hasCalledSetup = true
-
+        
         // Adicione um observador para o status do player
         player?.addObserver(self, forKeyPath: "status", options: .new, context: nil)
         player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferEmpty", options: .new, context: nil)
@@ -165,7 +165,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private func videoPlayerSubView() {
     guard let avPlayer = player else { return }
-
+    
     // View
     _view = UIView()
     _view.backgroundColor = .black
@@ -195,56 +195,29 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     playPauseUIView.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
     
     // add forward button
-    forwardButton.setBackgroundImage(UIImage(systemName: "goforward.10"), for: .normal)
+    let forward = AdvanceVideoTimerComponent(_overlayView)
+    forward.createAndAdjustLayout(isForward: true)
+    forwardButton = forward.button()
     forwardButton.tintColor = .white
     forwardButton.addTarget(self, action: #selector(fowardTime), for: .touchUpInside)
-    _overlayView.addSubview(forwardButton)
-    forwardButton.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      forwardButton.centerXAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.centerXAnchor, constant: _subView.bounds.width * 0.2),
-      forwardButton.centerYAnchor.constraint(equalTo: _overlayView.centerYAnchor),
-      forwardButton.widthAnchor.constraint(equalToConstant: controlSize),
-      forwardButton.heightAnchor.constraint(equalToConstant: controlSize)
-    ])
     
     // add backward button
-    
-    backwardButton.setBackgroundImage(UIImage(systemName: "gobackward.10"), for: .normal)
+    let backward = AdvanceVideoTimerComponent(_overlayView)
+    backward.createAndAdjustLayout(isForward: false)
+    backwardButton = backward.button()
     backwardButton.tintColor = .white
     backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
-    _overlayView.addSubview(backwardButton)
-    backwardButton.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      backwardButton.centerXAnchor.constraint(equalTo: _overlayView.centerXAnchor, constant: -_overlayView.bounds.width * 0.2),
-      backwardButton.centerYAnchor.constraint(equalTo: _overlayView.centerYAnchor),
-      backwardButton.widthAnchor.constraint(equalToConstant: controlSize),
-      backwardButton.heightAnchor.constraint(equalToConstant: controlSize)
-    ])
     
-    // seek slider monitoring label
-    labelDuration.textColor = .white
-    labelDuration.font = UIFont.systemFont(ofSize: 10)
-    if labelDuration.text == nil {
-      self.labelDuration.text = StringHandler().stringFromTimeInterval(interval: 0)
-    }
-    _overlayView.addSubview(labelDuration)
-    labelDuration.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      labelDuration.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor),
-      labelDuration.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor)
-    ])
+    // seek slider label
+    let durationLabel = SeekLabel(_overlayView)
+    durationLabel.createAndAdjustLayout(isDuration: true)
+    labelDuration = durationLabel.label()
     
-    labelProgress.textColor = .white
-    labelProgress.font = UIFont.systemFont(ofSize: 10)
-    if labelProgress.text == nil {
-      self.labelProgress.text = stringHandler.stringFromTimeInterval(interval: 0)
-    }
-    _overlayView.addSubview(labelProgress)
-    labelProgress.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      labelProgress.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor),
-      labelProgress.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor)
-    ])
+    
+    let progressLabel = SeekLabel(_overlayView)
+    progressLabel.createAndAdjustLayout(isDuration: false)
+    labelProgress = progressLabel.label()
+    
     
     title.textColor = .white
     title.font = UIFont.systemFont(ofSize: 18)
@@ -306,18 +279,16 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   private func updatePlayerTime() {
-    guard let currentTime = self.player?.currentTime() else {return}
-    guard let duration = self.player?.currentItem?.duration else {return}
+    let time = videoTimerManager(avPlayer: player)
+    let currentTime = time.getCurrentTimeInSeconds()
+    let duration = time.getDurationTimeInSeconds()
     guard let currentItem = player?.currentItem else { return }
-    
-    let currenTimeInSecond = CMTimeGetSeconds(currentTime)
-    let durationTimeInSecond = CMTimeGetSeconds(duration)
     
     let loadedTimeRanges = currentItem.loadedTimeRanges
     if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
       let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
       let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
-      self.onVideoProgress?(["progress": currenTimeInSecond, "bufferedDuration": bufferedStart + bufferedDuration])
+      self.onVideoProgress?(["progress": currentTime, "bufferedDuration": bufferedStart + bufferedDuration])
     }
     
     labelDuration.text = (
@@ -326,11 +297,11 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       )
     )
     labelProgress.text = (
-      self.stringHandler.stringFromTimeInterval(interval: currenTimeInSecond ))
+      self.stringHandler.stringFromTimeInterval(interval: currentTime )
+    )
     if self.isThumbSeek == false {
-      self.seekSlider.value = Float(currenTimeInSecond/durationTimeInSecond)
+      self.seekSlider.value = Float(currentTime/duration)
     }
-    
   }
   
   private func removePeriodicTimeObserver() {
@@ -439,21 +410,21 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-//      override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-//        if let touch = touches.first {
-//          _subView.subviews.forEach {$0.isHidden = false}
-//        }
-//      }
-//
-//      override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
-//          _subView.subviews.forEach {$0.isHidden = true}
-//        })
-//      }
-//
+  //      override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+  //        if let touch = touches.first {
+  //          _subView.subviews.forEach {$0.isHidden = false}
+  //        }
+  //      }
+  //
+  //      override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+  //        DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
+  //          _subView.subviews.forEach {$0.isHidden = true}
+  //        })
+  //      }
+  //
   
   // controllers
-  @objc public func onToggleOrientation() {
+  @objc private func onToggleOrientation() {
     onFullScreenTapped?([:])
   }
   
@@ -482,13 +453,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   @objc private func fowardTime() {
-    let forward = AdvanceTime(player: player)
-    forward.change(Double(truncating: timeValueForChange!))
+    let forward = videoTimerManager(avPlayer: player)
+    forward.advance(Double(truncating: timeValueForChange!))
   }
   
   @objc private func backwardTime() {
-    let backward = AdvanceTime(player: player)
-    backward.change(-Double(truncating: timeValueForChange!))
+    let backward = videoTimerManager(avPlayer: player)
+    backward.advance(-Double(truncating: timeValueForChange!))
   }
   
   private func onChangeOrientation(_ fullscreen: Bool) {
@@ -510,7 +481,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc private func onTappedOnMoreOptions() {
     self.onMoreOptionsTapped?([:])
   }
-
+  
 }
 
 enum Resize: String {
