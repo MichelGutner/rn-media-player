@@ -26,6 +26,7 @@ function App(): JSX.Element {
       style={{height: isFull ? height : 350}}
       onFullScreen={() => setIsFull(!isFull)}
       resizeMode={resizeMode}
+      loading={true}
     />
   );
 }

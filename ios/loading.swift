@@ -8,7 +8,14 @@
 import Foundation
 import UIKit
 
-class Loading {
+@available(iOS 13.0, *)
+protocol LoadingProtocol: AnyObject {
+    func show()
+    func hide()
+}
+
+@available(iOS 13.0, *)
+class Loading: LoadingProtocol {
   private var _view: UIView
   
   init(_ view: UIView) {
@@ -18,15 +25,11 @@ class Loading {
   var indicator: UIActivityIndicatorView!
   
   public func show() {
-    if #available(iOS 13.0, *) {
-        indicator = UIActivityIndicatorView(style: .large)
-        indicator.center = _view.center
-    } else {
-        // Fallback on earlier versions
-        indicator = UIActivityIndicatorView(style: .whiteLarge)
-      indicator.frame.origin = _view.bounds.origin
-      indicator.frame.size = CGSize(width: 40, height: 40)
-    }
+    indicator = UIActivityIndicatorView(style: .large)
+    indicator.color = .white
+    indicator.center = _view.center
+    indicator.reactZIndex = 3
+    print("SHOWED")
     indicator.hidesWhenStopped = true
     _view.addSubview(indicator)
     
@@ -35,6 +38,7 @@ class Loading {
   }
   
   public func hide() {
+    print("HIDED")
     _view.layer.sublayers?.forEach {$0.removeFromSuperlayer()}
     indicator?.stopAnimating()
     _view.isUserInteractionEnabled = true

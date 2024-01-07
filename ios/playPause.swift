@@ -32,7 +32,7 @@ class PlayPause {
       _button.widthAnchor.constraint(equalToConstant: 50),
       _button.heightAnchor.constraint(equalToConstant: 50)
     ])
-    if _button.imageView?.layer.sublayers == nil && _player.status == .readyToPlay {
+    if _button.imageView?.layer.sublayers == nil {
       _button.setImage(UIImage(systemName: _player.rate == 0 ? "play.fill" : "pause"), for: .normal)
     }
     

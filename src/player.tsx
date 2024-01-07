@@ -20,15 +20,17 @@ export const RNPlayerVideo = ({
   isFullScreen,
   onFullScreen,
   resizeMode,
+  loading,
 }: {
   style: ViewStyle;
   isFullScreen: boolean;
   onFullScreen: () => void;
+  loading: boolean;
 }): JSX.Element => {
   const {width, height} = useWindowDimensions();
   const [pause, setPause] = useState(false);
   const [rate, setRate] = useState(1);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(undefined);
   const [loadData, setLoadData] = useState<any>();
 
   return (
@@ -43,7 +45,7 @@ export const RNPlayerVideo = ({
         rate={rate}
         videoTitle={'Game of Thrones'}
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
-        onVideoProgress={data => setCurrentTime(data.nativeEvent.progress)}
+        onVideoProgress={data => setCurrentTime(data.nativeEvent)}
         onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
         fullScreen={isFullScreen}
         resizeMode={resizeMode}
@@ -62,6 +64,7 @@ export const RNPlayerVideo = ({
         }}
         onMoreOptionsTapped={() => console.log('MORE OPTIONS TAPPED')}
         onFullScreenTapped={onFullScreen}
+        loading={loading}
       />
     </View>
   );
