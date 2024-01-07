@@ -49,11 +49,6 @@ export const RNPlayerVideo = ({
         onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
         fullScreen={isFullScreen}
         resizeMode={resizeMode}
-        onOrientationEvent={data =>
-          console.log(
-            data.nativeEvent.orientation === 'LANDSCAPE' ? true : false,
-          )
-        }
         timeValueForChange={10}
         onError={e => console.log(e.nativeEvent.error)}
         sliderProps={{
@@ -64,6 +59,7 @@ export const RNPlayerVideo = ({
         }}
         onMoreOptionsTapped={() => console.log('MORE OPTIONS TAPPED')}
         onFullScreenTapped={onFullScreen}
+        onGoBackTapped={() => console.log('GO BACK TAPPED')}
         loading={loading}
       />
     </View>

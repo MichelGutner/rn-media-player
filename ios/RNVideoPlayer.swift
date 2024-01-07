@@ -25,8 +25,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private var circleImage: UIImage!
   private var fullScreenImage: String!
-  
-  
+
   private var url: URL?
   
   private var labelDuration = UILabel()
@@ -61,7 +60,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onFullScreenTapped: RCTDirectEventBlock?
   @objc var onError: RCTDirectEventBlock?
   @objc var onBuffer: RCTDirectEventBlock?
+  @objc var onGoBackTapped: RCTDirectEventBlock?
   @objc var timeValueForChange: NSNumber?
+  @objc var fullScreen: Bool = false
   
   @objc var sliderProps: NSDictionary? = [:] {
     didSet {
@@ -120,8 +121,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       self.title.text = videoTitle
     }
   }
-  
-  @objc var fullScreen: Bool = false
   
   @objc var rate: Float = 0.0 {
     didSet{
@@ -231,6 +230,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     goBackButton.tintColor = .white
     goBackButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
     _overlayView.addSubview(goBackButton)
+    goBackButton.addTarget(self, action: #selector(onTappedGoback), for: .touchUpInside)
     goBackButton.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       goBackButton.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 8),
@@ -384,10 +384,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     ])
   }
   
-  @objc private func onChangeRate(_ rate: Float) {
-    self.player?.rate = rate
-  }
-  
   private func makeCircle(size: CGSize, backgroundColor: UIColor) -> UIImage? {
     UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
     let context = UIGraphicsGetCurrentContext()
@@ -423,12 +419,36 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   //      }
   //
   
-  // controllers
+}
+
+enum Resize: String {
+  case contain, cover, stretch
+}
+
+// player method from bridge
+@available(iOS 13.0, *)
+extension RNVideoPlayerView {
+  @objc private func onTappedOnMoreOptions() {
+    onMoreOptionsTapped?([:])
+  }
+  
+  @objc private func onTappedGoback() {
+    onGoBackTapped?([:])
+  }
+  
   @objc private func onToggleOrientation() {
     onFullScreenTapped?([:])
   }
   
-  // native controllers
+  @objc private func onChangeRate(_ rate: Float) {
+    self.player?.rate = rate
+  }
+
+}
+
+// player methods
+@available(iOS 13.0, *)
+extension RNVideoPlayerView {
   @objc private func onTappedPlayPause() {
     var image = ""
     if player?.rate == 0 {
@@ -462,13 +482,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     backward.advance(-Double(truncating: timeValueForChange!))
   }
   
-  private func onChangeOrientation(_ fullscreen: Bool) {
-    guard let playerLayer = playerLayer else { return }
-    playerLayer.frame = fullscreen ? UIScreen.main.bounds : bounds
-    
-    fullScreenImage = fullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right"
-  }
-  
   @objc private func onUpdatePlayerLayer(_ resizeMode: NSString) {
     let mode = Resize(rawValue: resizeMode as String)
     let videoGravity = videoGravity(mode!)
@@ -477,17 +490,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       self.playerLayer.videoGravity = videoGravity
     })
   }
-  
-  @objc private func onTappedOnMoreOptions() {
-    self.onMoreOptionsTapped?([:])
-  }
-  
 }
 
-enum Resize: String {
-  case contain, cover, stretch
-}
-
+// utillites methods
 @available(iOS 13.0, *)
 extension RNVideoPlayerView {
   func videoGravity(_ videoResize: Resize) -> AVLayerVideoGravity  {
@@ -499,5 +504,12 @@ extension RNVideoPlayerView {
     case .contain:
       return .resizeAspect
     }
+  }
+
+  private func onChangeOrientation(_ fullscreen: Bool) {
+    guard let playerLayer = playerLayer else { return }
+    playerLayer.frame = fullscreen ? UIScreen.main.bounds : bounds
+    
+    fullScreenImage = fullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right"
   }
 }

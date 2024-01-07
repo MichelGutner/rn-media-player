@@ -187,8 +187,8 @@
 		DB0C9DCB2B23AB3F00B7D598 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				DBC044822B4B5AD900888241 /* Native */,
 				DB0C9DD52B23CB8A00B7D598 /* Video */,
-				DB0C9DD22B23B68F00B7D598 /* CustomNativeControllers */,
 			);
 			name = Features;
 			sourceTree = "<group>";
@@ -202,7 +202,7 @@
 			name = Utilities;
 			sourceTree = "<group>";
 		};
-		DB0C9DD22B23B68F00B7D598 /* CustomNativeControllers */ = {
+		DB0C9DD22B23B68F00B7D598 /* CustomLayoutManager */ = {
 			isa = PBXGroup;
 			children = (
 				DB0C9DDA2B23DB0400B7D598 /* fullScreenLayoutManager.swift */,
@@ -212,7 +212,7 @@
 				DBC0447C2B4B3BF000888241 /* advanceVideoTimerLayoutManager.swift */,
 				DBC044802B4B4B3D00888241 /* seekLabelLayoutManager.swift */,
 			);
-			name = CustomNativeControllers;
+			name = CustomLayoutManager;
 			sourceTree = "<group>";
 		};
 		DB0C9DD52B23CB8A00B7D598 /* Video */ = {
@@ -221,6 +221,14 @@
 				DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */,
 			);
 			name = Video;
+			sourceTree = "<group>";
+		};
+		DBC044822B4B5AD900888241 /* Native */ = {
+			isa = PBXGroup;
+			children = (
+				DB0C9DD22B23B68F00B7D598 /* CustomLayoutManager */,
+			);
+			name = Native;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
