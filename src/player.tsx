@@ -13,7 +13,10 @@ import {
   requireNativeComponent,
   useWindowDimensions,
 } from 'react-native';
-const VPlayer = requireNativeComponent('RNVideoPlayer');
+const VPlayer = requireNativeComponent<{
+  style: ViewStyle;
+  sliderProps: {maximumTrackColor: string};
+}>('RNVideoPlayer');
 
 export const RNPlayerVideo = ({
   style,
@@ -50,6 +53,7 @@ export const RNPlayerVideo = ({
         fullScreen={isFullScreen}
         resizeMode={resizeMode}
         timeValueForChange={10}
+        lockControls={true}
         onError={e => console.log(e.nativeEvent.error)}
         sliderProps={{
           maximumTrackColor: '#dd1212',
@@ -60,7 +64,13 @@ export const RNPlayerVideo = ({
         onMoreOptionsTapped={() => console.log('MORE OPTIONS TAPPED')}
         onFullScreenTapped={onFullScreen}
         onGoBackTapped={() => console.log('GO BACK TAPPED')}
-        loading={loading}
+        // disableNativeControls={{
+        //   disableSeek: true,
+        //   disableVolume: true,
+        //   disableFullScreen: true,
+        //   disableMoreOptions: true,
+        // }}
+        // loading={loading}
       />
     </View>
   );

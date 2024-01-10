@@ -23,6 +23,8 @@ RCT_EXPORT_VIEW_PROPERTY(onMoreOptionsTapped, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onFullScreenTapped, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onGoBackTapped, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onError, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onReady, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onBufferCompleted, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(videoTitle, NSString)
 RCT_EXPORT_VIEW_PROPERTY(resizeMode, NSString)
 

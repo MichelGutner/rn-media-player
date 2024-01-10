@@ -21,25 +21,21 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var _subView: UIView!
   private var _overlayView: UIView!
   
-  private var loadingView = UIView()
-  
   private var circleImage: UIImage!
   private var fullScreenImage: String!
-
   private var url: URL?
   
+  private var title = UILabel()
   private var labelDuration = UILabel()
   private var labelProgress = UILabel()
   
-  private var title = UILabel()
-  
-  private var seekSlider: UISlider! = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height - 60, width:UIScreen.main.bounds.width, height:10))
+  private var seekSlider: UISlider!
   
   private var playPauseUIView = UIButton()
   private var forwardButton = UIButton()
   private var backwardButton = UIButton()
-  private var fullScreenUIButton = UIButton()
-  private var moreOptionsUIButton = UIButton()
+  private var fullScreenButton = UIButton()
+  private var menuOptionsButton = UIButton()
   private var goBackButton = UIButton()
   
   private var videoTimeForChange: Double?
@@ -55,39 +51,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
+  @objc var onReady: RCTDirectEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
   @objc var onMoreOptionsTapped: RCTDirectEventBlock?
   @objc var onFullScreenTapped: RCTDirectEventBlock?
   @objc var onError: RCTDirectEventBlock?
   @objc var onBuffer: RCTDirectEventBlock?
+  @objc var onBufferCompleted: RCTDirectEventBlock?
   @objc var onGoBackTapped: RCTDirectEventBlock?
   @objc var timeValueForChange: NSNumber?
   @objc var fullScreen: Bool = false
-  
-  @objc var sliderProps: NSDictionary? = [:] {
-    didSet {
-      configureSlider()
-    }
-  }
-  private func configureSlider() {
-    guard let sliderProps = sliderProps,
-          let minimumTrackColor = sliderProps["minimumTrackColor"] as? String,
-          let maximumTrackColor = sliderProps["maximumTrackColor"] as? String,
-          let thumbSize = sliderProps["thumbSize"] as? CGFloat,
-          let thumbColor = sliderProps["thumbColor"] as? String else {
-      return
-    }
-    
-    seekSlider.minimumTrackTintColor = stringHandler.hexStringToUIColor(hexColor: minimumTrackColor)
-    seekSlider.maximumTrackTintColor = stringHandler.hexStringToUIColor(hexColor: maximumTrackColor)
-    
-    circleImage = makeCircle(
-      size: CGSize(width: thumbSize, height: thumbSize),
-      backgroundColor: stringHandler.hexStringToUIColor(hexColor: thumbColor)
-    )
-    seekSlider.setThumbImage(circleImage, for: .normal)
-    seekSlider.setThumbImage(circleImage, for: .highlighted)
-  }
+  @objc var sliderProps: NSDictionary? = [:]
   
   // external controls
   @objc var source: String = "" {
@@ -150,11 +124,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-  enum VideoPlayerError: Error {
-    case invalidURL
-    case invalidPlayer
-  }
-  
   override func layoutSubviews() {
     if hasCalledSetup {
       videoPlayerSubView()
@@ -181,7 +150,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _subView.addSubview(_overlayView)
     _overlayView.frame = _subView.frame
     _overlayView.reactZIndex = 3
-    _overlayView.addSubview(loadingView)
     
     // player
     onChangeOrientation(fullScreen)
@@ -227,43 +195,30 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: 4)
     ])
     
-    goBackButton.tintColor = .white
-    goBackButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
-    _overlayView.addSubview(goBackButton)
+    let goBack = GoBackLayoutManager(_overlayView)
+    goBack.createAndAdjustLayout()
+    goBackButton = goBack.button()
     goBackButton.addTarget(self, action: #selector(onTappedGoback), for: .touchUpInside)
-    goBackButton.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      goBackButton.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 8),
-      goBackButton.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: 4)
-    ])
     
     // seek slider
+    let seek = SeekSliderLayoutManager(_overlayView)
+    seek.createAndAdjustLayout(config: sliderProps)
+    seekSlider = seek.seekSlider()
     seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
-    _overlayView.addSubview(seekSlider!)
-    self.configureSeekSliderLayout()
     
     let fullScreen = FullScreen(_overlayView)
     fullScreen.createAndAdjustLayout()
-    fullScreenUIButton = fullScreen.button()
-    
-    fullScreenUIButton.setImage(UIImage(systemName: fullScreenImage ?? "arrow.up.left.and.arrow.down.right"), for: .normal)
-    
-    fullScreenUIButton.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
+    fullScreenButton = fullScreen.button()
+    fullScreenButton.setImage(UIImage(systemName: fullScreenImage ?? "arrow.up.left.and.arrow.down.right"), for: .normal)
+    fullScreenButton.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
     
     
     // add more option
-    moreOptionsUIButton.setImage(UIImage(systemName: "ellipsis"), for: .normal)
-    moreOptionsUIButton.tintColor = .white
-    moreOptionsUIButton.transform = CGAffineTransform(rotationAngle: CGFloat.pi * 0.5)
-    moreOptionsUIButton.addTarget(self, action: #selector(onTappedOnMoreOptions), for: .touchUpInside)
-    _overlayView.addSubview(moreOptionsUIButton)
-    moreOptionsUIButton.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      moreOptionsUIButton.trailingAnchor.constraint(equalTo: layoutMarginsGuide.trailingAnchor, constant: -60),
-      moreOptionsUIButton.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: 4),
-      moreOptionsUIButton.widthAnchor.constraint(equalToConstant: controlSize),
-      moreOptionsUIButton.heightAnchor.constraint(equalToConstant: controlSize)
-    ])
+    let menuOptions = MenuOptionsLayoutManager(_overlayView)
+    menuOptions.createAndAdjustLayout()
+    menuOptionsButton = menuOptions.button()
+    menuOptionsButton.addTarget(self, action: #selector(onTappedOnMoreOptions), for: .touchUpInside)
+    
     
     player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
@@ -318,7 +273,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       case "playbackLikelyToKeepUp":
         onBuffer?(["buffering": false])
       case "playbackBufferFull":
-        print("TESTING")
+        onBufferCompleted?(["completed": true])
       case .none:
         break
       case .some(_):
@@ -327,14 +282,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
     if keyPath == "status", let player = player {
       if player.status == .readyToPlay {
-        self.onLoaded?(["duration": player.currentItem?.duration.seconds, "isReady": true])
+        onLoaded?(["duration": player.currentItem?.duration.seconds as Any])
+        onReady?(["ready": true])
         playerLayer.frame = bounds
       } else if player.status == .failed {
-        // Handle failure
-        print("Failed to load video")
+        onError?(["error": "Failed to load video \(player.status)"])
       } else if player.status == .unknown {
-        // Handle unknown status
-        print("Unknown status")
+        onError?(["error": "Unknown to load video \(player.status)"])
       }
     }
   }
@@ -368,35 +322,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       })
     }
   }
-  
-  private func configureSeekSliderLayout() {
-    seekSlider.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      seekSlider.leadingAnchor.constraint(
-        equalTo: layoutMarginsGuide.leadingAnchor, constant: 60
-      ),
-      seekSlider.trailingAnchor.constraint(
-        equalTo: layoutMarginsGuide.trailingAnchor, constant: -60
-      ),
-      seekSlider.safeAreaLayoutGuide.bottomAnchor.constraint(
-        equalTo: _subView.layoutMarginsGuide.bottomAnchor
-      ),
-    ])
-  }
-  
-  private func makeCircle(size: CGSize, backgroundColor: UIColor) -> UIImage? {
-    UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
-    let context = UIGraphicsGetCurrentContext()
-    context?.setFillColor(backgroundColor.cgColor)
-    context?.setStrokeColor(UIColor.clear.cgColor)
-    let bounds = CGRect(origin: .zero, size: size)
-    context?.addEllipse(in: bounds)
-    context?.drawPath(using: .fill)
-    let image = UIGraphicsGetImageFromCurrentImageContext()
-    UIGraphicsEndImageContext()
-    return image
-  }
-  
+
   private func enableAudioSession() {
     do {
       try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers, .allowAirPlay])
@@ -424,6 +350,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 enum Resize: String {
   case contain, cover, stretch
 }
+
+enum VideoPlayerError: Error {
+  case invalidURL
+  case invalidPlayer
+}
+
 
 // player method from bridge
 @available(iOS 13.0, *)
