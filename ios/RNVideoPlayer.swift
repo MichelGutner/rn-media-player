@@ -61,7 +61,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onGoBackTapped: RCTDirectEventBlock?
   @objc var timeValueForChange: NSNumber?
   @objc var fullScreen: Bool = false
+
   @objc var sliderProps: NSDictionary? = [:]
+  @objc var forwardProps: NSDictionary? = [:]
+  @objc var backwardProps: NSDictionary? = [:]
   
   // external controls
   @objc var source: String = "" {
@@ -162,17 +165,15 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     playPauseUIView.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
     
     // add forward button
-    let forward = AdvanceVideoTimerComponent(_overlayView)
-    forward.createAndAdjustLayout(isForward: true)
+    let forward = ForwardLayoutManager(_overlayView)
+    forward.createAndAdjustLayout(config: forwardProps)
     forwardButton = forward.button()
-    forwardButton.tintColor = .white
     forwardButton.addTarget(self, action: #selector(fowardTime), for: .touchUpInside)
     
     // add backward button
-    let backward = AdvanceVideoTimerComponent(_overlayView)
-    backward.createAndAdjustLayout(isForward: false)
+    let backward = BackwardLayoutManager(_overlayView)
+    backward.createAndAdjustLayout(config: backwardProps)
     backwardButton = backward.button()
-    backwardButton.tintColor = .white
     backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
     
     // seek slider label

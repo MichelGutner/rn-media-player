@@ -26,8 +26,9 @@
 		DB78214D2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */; };
 		DB78214F2B4E47200022DCE8 /* ImageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214E2B4E47200022DCE8 /* ImageHandler.swift */; };
 		DB7821512B4E486D0022DCE8 /* SeekSliderLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */; };
+		DB7821532B5009F70022DCE8 /* BackwardLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */; };
 		DBC0447B2B43A9A000888241 /* PlayPauseLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */; };
-		DBC0447D2B4B3BF000888241 /* AdvanceVideoTimerLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447C2B4B3BF000888241 /* AdvanceVideoTimerLayoutManager.swift */; };
+		DBC0447D2B4B3BF000888241 /* ForwardLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */; };
 		DBC0447F2B4B3D2F00888241 /* Defaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* Defaults.swift */; };
 		DBC044812B4B4B3D00888241 /* SeekLabelLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC044802B4B4B3D00888241 /* SeekLabelLayoutManager.swift */; };
 /* End PBXBuildFile section */
@@ -72,8 +73,9 @@
 		DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuOptionsLayoutManager.swift; sourceTree = "<group>"; };
 		DB78214E2B4E47200022DCE8 /* ImageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageHandler.swift; sourceTree = "<group>"; };
 		DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekSliderLayoutManager.swift; sourceTree = "<group>"; };
+		DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackwardLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayPauseLayoutManager.swift; sourceTree = "<group>"; };
-		DBC0447C2B4B3BF000888241 /* AdvanceVideoTimerLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvanceVideoTimerLayoutManager.swift; sourceTree = "<group>"; };
+		DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForwardLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447E2B4B3D2F00888241 /* Defaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Defaults.swift; sourceTree = "<group>"; };
 		DBC044802B4B4B3D00888241 /* SeekLabelLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekLabelLayoutManager.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -220,12 +222,13 @@
 				DB0C9DE22B260AE100B7D598 /* loading.swift */,
 				DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */,
 				DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */,
-				DBC0447C2B4B3BF000888241 /* AdvanceVideoTimerLayoutManager.swift */,
+				DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */,
 				DBC044802B4B4B3D00888241 /* SeekLabelLayoutManager.swift */,
 				DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */,
 				DB78214A2B4E42F10022DCE8 /* TitleLayoutManager.swift */,
 				DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */,
 				DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */,
+				DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */,
 			);
 			name = CustomLayoutManager;
 			sourceTree = "<group>";
@@ -514,13 +517,14 @@
 				DBC044812B4B4B3D00888241 /* SeekLabelLayoutManager.swift in Sources */,
 				DB78214D2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift in Sources */,
 				D02E142F2AF08E73003D0472 /* RNVideoPlayerManager.m in Sources */,
-				DBC0447D2B4B3BF000888241 /* AdvanceVideoTimerLayoutManager.swift in Sources */,
+				DBC0447D2B4B3BF000888241 /* ForwardLayoutManager.swift in Sources */,
 				DBC0447B2B43A9A000888241 /* PlayPauseLayoutManager.swift in Sources */,
 				DB7821492B4E414C0022DCE8 /* GobackLayoutManager.swift in Sources */,
 				DB0C9DE32B260AE100B7D598 /* loading.swift in Sources */,
 				DB78214F2B4E47200022DCE8 /* ImageHandler.swift in Sources */,
 				DB0C9DCD2B23AB6900B7D598 /* StringHandler.swift in Sources */,
 				DB78214B2B4E42F10022DCE8 /* TitleLayoutManager.swift in Sources */,
+				DB7821532B5009F70022DCE8 /* BackwardLayoutManager.swift in Sources */,
 				DBC0447F2B4B3D2F00888241 /* Defaults.swift in Sources */,
 				D02E142D2AF08CF6003D0472 /* RNVideoPlayer.swift in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,

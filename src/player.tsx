@@ -16,7 +16,27 @@ import {
 const VPlayer = requireNativeComponent<{
   style: ViewStyle;
   sliderProps: {maximumTrackColor: string};
+  forwardProps: TAdvanceVideoControlProps<'forward'>;
+  backwardProps: TAdvanceVideoControlProps<'backward'>;
 }>('RNVideoPlayer');
+
+export type TAdvanceVideoControlProps<T extends TImageTypes> = {
+  color?: string;
+  hidden?: boolean;
+  image?: TImageControlProps<T>;
+};
+
+type TImageTypes = 'forward' | 'backward';
+
+type TImageControlProps<T extends TImageTypes> =
+  | `${T}empty`
+  | `${T}15`
+  | `${T}30`
+  | `${T}45`
+  | `${T}60`
+  | `${T}75`
+  | `${T}90`
+  | `${T}Default`;
 
 export const RNPlayerVideo = ({
   style,
@@ -39,6 +59,8 @@ export const RNPlayerVideo = ({
   return (
     <View style={style}>
       <VPlayer
+        forwardProps={{color: '#e10d0d', hidden: false, image: 'forward15'}}
+        backwardProps={{color: '#845ec6', hidden: false, image: 'backward15'}}
         style={
           {...StyleSheet.absoluteFillObject, overflow: 'hidden'} as ViewStyle
         }
@@ -64,6 +86,13 @@ export const RNPlayerVideo = ({
         onMoreOptionsTapped={() => console.log('MORE OPTIONS TAPPED')}
         onFullScreenTapped={onFullScreen}
         onGoBackTapped={() => console.log('GO BACK TAPPED')}
+        onBufferCompleted={e =>
+          console.log(`BUFFER COMPLETED ${JSON.stringify(e.nativeEvent)}`)
+        }
+        onBuffer={
+          e => undefined
+          // console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)
+        }
         // disableNativeControls={{
         //   disableSeek: true,
         //   disableVolume: true,
