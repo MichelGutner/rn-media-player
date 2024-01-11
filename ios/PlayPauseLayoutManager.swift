@@ -10,7 +10,7 @@ import AVKit
 import UIKit
 
 @available(iOS 13.0, *)
-class PlayPause {
+class PlayPauseLayoutManager {
   private var _button = UIButton()
   private weak var _player: AVPlayer!
   private var _view: UIView!

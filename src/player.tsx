@@ -59,8 +59,6 @@ export const RNPlayerVideo = ({
   return (
     <View style={style}>
       <VPlayer
-        forwardProps={{color: '#e10d0d', hidden: false, image: 'forward15'}}
-        backwardProps={{color: '#845ec6', hidden: false, image: 'backward15'}}
         style={
           {...StyleSheet.absoluteFillObject, overflow: 'hidden'} as ViewStyle
         }

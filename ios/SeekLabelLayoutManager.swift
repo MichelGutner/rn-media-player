@@ -7,7 +7,7 @@
 
 import Foundation
 
-class SeekLabel {
+class SeekLabelLayoutManager {
   private var _label = UILabel()
   private var uiView: UIView!
   
@@ -23,7 +23,7 @@ class SeekLabel {
     _label.trailingAnchor.constraint(equalTo: uiView.layoutMarginsGuide.trailingAnchor) :
     _label.leadingAnchor.constraint(equalTo: uiView.layoutMarginsGuide.leadingAnchor)
     if _label.text == nil {
-      self._label.text = StringHandler().stringFromTimeInterval(interval: 0)
+      self._label.text = UtilityStringHandler().stringFromTimeInterval(interval: 0)
     }
     uiView.addSubview(_label)
     _label.translatesAutoresizingMaskIntoConstraints = false

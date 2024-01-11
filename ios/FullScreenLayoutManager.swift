@@ -8,7 +8,7 @@
 import Foundation
 
 
-class FullScreen {
+class FullScreenLayoutManager {
   private var _button = UIButton()
   private var _view = UIView()
   

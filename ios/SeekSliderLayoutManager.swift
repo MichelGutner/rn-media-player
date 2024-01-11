@@ -8,8 +8,8 @@
 import Foundation
 
 class SeekSliderLayoutManager {
-  private var stringHandler = StringHandler()
-  private var imageHandler = ImageHandler()
+  private var stringHandler = UtilityStringHandler()
+  private var imageHandler = UtilityImageHandler()
   private var _view: UIView
   private var _seekSlider = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height - 60, width:UIScreen.main.bounds.width, height:10))
   private var circleImage: UIImage!
@@ -49,7 +49,7 @@ extension SeekSliderLayoutManager {
           let thumbColor = sliderProps["thumbColor"] as? String else {
       return
     }
-    let imageHandler = ImageHandler()
+    let imageHandler = UtilityImageHandler()
     
     _seekSlider.minimumTrackTintColor = stringHandler.hexStringToUIColor(hexColor: minimumTrackColor)
     _seekSlider.maximumTrackTintColor = stringHandler.hexStringToUIColor(hexColor: maximumTrackColor)

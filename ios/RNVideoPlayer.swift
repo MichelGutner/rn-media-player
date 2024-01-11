@@ -41,7 +41,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var videoTimeForChange: Double?
   private var playerLayer: AVPlayerLayer!
   
-  private var stringHandler = StringHandler()
+  private var stringHandler = UtilityStringHandler()
   
   private var controlSize = CGFloat(30)
   
@@ -159,7 +159,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _subView.layer.addSublayer(playerLayer)
     
     // PlayPause
-    let playPause = PlayPause(player, _overlayView)
+    let playPause = PlayPauseLayoutManager(player, _overlayView)
     playPause.crateAndAdjustLayout()
     playPauseUIView = playPause.button()
     playPauseUIView.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
@@ -177,12 +177,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
     
     // seek slider label
-    let durationLabel = SeekLabel(_overlayView)
+    let durationLabel = SeekLabelLayoutManager(_overlayView)
     durationLabel.createAndAdjustLayout(isDuration: true)
     labelDuration = durationLabel.label()
     
     
-    let progressLabel = SeekLabel(_overlayView)
+    let progressLabel = SeekLabelLayoutManager(_overlayView)
     progressLabel.createAndAdjustLayout(isDuration: false)
     labelProgress = progressLabel.label()
     
@@ -207,7 +207,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     seekSlider = seek.seekSlider()
     seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
     
-    let fullScreen = FullScreen(_overlayView)
+    let fullScreen = FullScreenLayoutManager(_overlayView)
     fullScreen.createAndAdjustLayout()
     fullScreenButton = fullScreen.button()
     fullScreenButton.setImage(UIImage(systemName: fullScreenImage ?? "arrow.up.left.and.arrow.down.right"), for: .normal)

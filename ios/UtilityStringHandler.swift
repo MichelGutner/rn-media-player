@@ -5,7 +5,7 @@
 //  Created by Michel Gutner on 08/12/23.
 //
 
-class StringHandler {
+class UtilityStringHandler {
   public func hexStringToUIColor(hexColor: String) -> UIColor {
     let stringScanner = Scanner(string: hexColor)
     

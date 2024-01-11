@@ -7,7 +7,7 @@
 
 import Foundation
 
-class ImageHandler {
+class UtilityImageHandler {
   public func makeCircle(size: CGSize, backgroundColor: UIColor) -> UIImage? {
     UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
     let context = UIGraphicsGetCurrentContext()
