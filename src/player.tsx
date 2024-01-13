@@ -44,6 +44,7 @@ export const RNPlayerVideo = ({
   onFullScreen,
   resizeMode,
   loading,
+  paused,
 }: {
   style: ViewStyle;
   isFullScreen: boolean;
@@ -59,12 +60,11 @@ export const RNPlayerVideo = ({
   return (
     <View style={style}>
       <VPlayer
-        style={
-          {...StyleSheet.absoluteFillObject, overflow: 'hidden'} as ViewStyle
-        }
+        forwardProps={{color: '#ffffff', image: 'forward15'}}
+        style={{...StyleSheet.absoluteFillObject, overflow: 'hidden'}}
         source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         // source="https://assets.mixkit.co/videos/download/mixkit-countryside-meadow-4075.mp4"
-        paused={pause}
+        paused={paused}
         rate={rate}
         videoTitle={'Game of Thrones'}
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}

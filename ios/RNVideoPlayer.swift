@@ -136,7 +136,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private func videoPlayerSubView() {
     guard let avPlayer = player else { return }
-    
     // View
     _view = UIView()
     _view.backgroundColor = .black
@@ -149,7 +148,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _subView.frame = bounds
     
     _overlayView = UIView()
-    _overlayView.backgroundColor = UIColor(white: 0, alpha: 0.3)
+    _overlayView.backgroundColor = UIColor(white: 0, alpha: 0.4)
     _subView.addSubview(_overlayView)
     _overlayView.frame = _subView.frame
     _overlayView.reactZIndex = 3
@@ -159,7 +158,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _subView.layer.addSublayer(playerLayer)
     
     // PlayPause
-    let playPause = PlayPauseLayoutManager(player, _overlayView)
+    let playPause = PlayPauseLayoutManager(avPlayer, _overlayView)
     playPause.crateAndAdjustLayout()
     playPauseUIView = playPause.button()
     playPauseUIView.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
@@ -177,14 +176,31 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
     
     // seek slider label
-    let durationLabel = SeekLabelLayoutManager(_overlayView)
-    durationLabel.createAndAdjustLayout(isDuration: true)
-    labelDuration = durationLabel.label()
+    labelDuration.textColor = .white
+    labelDuration.font = UIFont.systemFont(ofSize: 10)
+    if labelDuration.text == nil {
+      labelDuration.text = stringHandler.stringFromTimeInterval(interval: 0)
+    }
+    _overlayView.addSubview(labelDuration)
+    labelDuration.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      labelDuration.trailingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.trailingAnchor),
+      labelDuration.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor)
+    ])
     
     
-    let progressLabel = SeekLabelLayoutManager(_overlayView)
-    progressLabel.createAndAdjustLayout(isDuration: false)
-    labelProgress = progressLabel.label()
+    labelProgress.textColor = .white
+    labelProgress.font = UIFont.systemFont(ofSize: 10)
+    if labelProgress.text == nil {
+      labelProgress.text = stringHandler.stringFromTimeInterval(interval: 0)
+    }
+    _overlayView.addSubview(labelProgress)
+    labelProgress.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      labelProgress.leadingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.leadingAnchor),
+      labelProgress.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor)
+    ])
+    
     
     
     title.textColor = .white
@@ -192,7 +208,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _overlayView.addSubview(title)
     title.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      title.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 30),
+      title.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 36),
       title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: 4)
     ])
     
@@ -226,14 +242,14 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem
     )
   }
-  
+    
   private func periodTimeObserver() {
     let interval = CMTime(value: 1, timescale: 2)
     timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
       self?.updatePlayerTime()
     }
   }
-  
+    
   private func updatePlayerTime() {
     let time = videoTimerManager(avPlayer: player)
     let currentTime = time.getCurrentTimeInSeconds()
@@ -285,7 +301,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       if player.status == .readyToPlay {
         onLoaded?(["duration": player.currentItem?.duration.seconds as Any])
         onReady?(["ready": true])
-        playerLayer.frame = bounds
       } else if player.status == .failed {
         onError?(["error": "Failed to load video \(player.status)"])
       } else if player.status == .unknown {
@@ -300,11 +315,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   @objc private func onPaused(_ paused: Bool) {
-    if player?.rate == 0
-    {
-      player?.play()
-    } else {
+    if paused {
       player?.pause()
+    } else {
+      player?.play()
     }
   }
   
@@ -419,7 +433,7 @@ extension RNVideoPlayerView {
     let mode = Resize(rawValue: resizeMode as String)
     let videoGravity = videoGravity(mode!)
     
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
+    DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
       self.playerLayer.videoGravity = videoGravity
     })
   }
@@ -441,7 +455,7 @@ extension RNVideoPlayerView {
 
   private func onChangeOrientation(_ fullscreen: Bool) {
     guard let playerLayer = playerLayer else { return }
-    playerLayer.frame = fullscreen ? UIScreen.main.bounds : bounds
+    playerLayer.frame = fullScreen ? bounds : bounds.inset(by: safeAreaInsets)
     
     fullScreenImage = fullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right"
   }

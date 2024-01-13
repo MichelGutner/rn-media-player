@@ -30,7 +30,6 @@
 		DBC0447B2B43A9A000888241 /* PlayPauseLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */; };
 		DBC0447D2B4B3BF000888241 /* ForwardLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */; };
 		DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */; };
-		DBC044812B4B4B3D00888241 /* SeekLabelLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC044802B4B4B3D00888241 /* SeekLabelLayoutManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -77,7 +76,6 @@
 		DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayPauseLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForwardLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDefault.swift; sourceTree = "<group>"; };
-		DBC044802B4B4B3D00888241 /* SeekLabelLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekLabelLayoutManager.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -223,7 +221,6 @@
 				DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */,
 				DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */,
 				DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */,
-				DBC044802B4B4B3D00888241 /* SeekLabelLayoutManager.swift */,
 				DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */,
 				DB78214A2B4E42F10022DCE8 /* TitleLayoutManager.swift */,
 				DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */,
@@ -514,7 +511,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				DB7821512B4E486D0022DCE8 /* SeekSliderLayoutManager.swift in Sources */,
-				DBC044812B4B4B3D00888241 /* SeekLabelLayoutManager.swift in Sources */,
 				DB78214D2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift in Sources */,
 				D02E142F2AF08E73003D0472 /* RNVideoPlayerManager.m in Sources */,
 				DBC0447D2B4B3BF000888241 /* ForwardLayoutManager.swift in Sources */,

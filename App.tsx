@@ -6,7 +6,7 @@
  */
 
 import React, {useState} from 'react';
-import {useWindowDimensions} from 'react-native';
+import {SafeAreaView, useWindowDimensions} from 'react-native';
 import {RNPlayerVideo} from './src/player';
 
 function App(): JSX.Element {
@@ -22,12 +22,12 @@ function App(): JSX.Element {
   const resizeMode = isFull ? 'cover' : 'contain';
   return (
     <RNPlayerVideo
-      isFullScreen={true}
-      style={{height}}
-      // style={{height: isFull ? height : 350}}
+      isFullScreen={isFull}
+      // style={{height}}
+      style={{height: isFull ? height : 350, zIndex: 2}}
       onFullScreen={() => setIsFull(!isFull)}
       resizeMode={resizeMode}
-      loading={true}
+      paused={false}
     />
   );
 }

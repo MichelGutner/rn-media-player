@@ -27,7 +27,7 @@ class ForwardLayoutManager {
     _button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       _button.centerXAnchor.constraint(equalTo: uiView.layoutMarginsGuide.centerXAnchor, constant: layoutPosition),
-      _button.centerYAnchor.constraint(equalTo: uiView.centerYAnchor),
+      _button.safeAreaLayoutGuide.centerYAnchor.constraint(equalTo: uiView.layoutMarginsGuide.centerYAnchor),
       _button.widthAnchor.constraint(equalToConstant: defaultVideo.controlDefaultSize),
       _button.heightAnchor.constraint(equalToConstant: defaultVideo.controlDefaultSize)
     ])
