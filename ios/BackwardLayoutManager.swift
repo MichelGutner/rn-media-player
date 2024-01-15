@@ -10,8 +10,6 @@ import UIKit
 
 @available(iOS 13.0, *)
 class BackwardLayoutManager {
-  let stringHandler = UtilityStringHandler()
-  let defaultVideo = UtilityDefault()
   private var _button = UIButton()
   private var uiView: UIView!
   
@@ -28,8 +26,8 @@ class BackwardLayoutManager {
     NSLayoutConstraint.activate([
       _button.centerXAnchor.constraint(equalTo: uiView.layoutMarginsGuide.centerXAnchor, constant: layoutPosition),
       _button.safeAreaLayoutGuide.centerYAnchor.constraint(equalTo: uiView.layoutMarginsGuide.centerYAnchor),
-      _button.widthAnchor.constraint(equalToConstant: defaultVideo.controlDefaultSize),
-      _button.heightAnchor.constraint(equalToConstant: defaultVideo.controlDefaultSize)
+      _button.widthAnchor.constraint(equalToConstant: controlDefaultSize),
+      _button.heightAnchor.constraint(equalToConstant: controlDefaultSize)
     ])
   }
   
@@ -48,7 +46,7 @@ extension BackwardLayoutManager {
     
     let imageType = EImageBackward(rawValue: image ?? "")
     
-    _button.tintColor = stringHandler.hexStringToUIColor(hexColor: color ?? defaultVideo.hexDefaultColor)
+    _button.tintColor = hexStringToUIColor(hexColor: color ?? hexDefaultColor)
     _button.isHidden = hidden ?? false
     _button.setBackgroundImage(UIImage(systemName: generateImageByType(imageType ?? .backwardDefault)), for: .normal)
   }

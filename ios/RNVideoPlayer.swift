@@ -20,8 +20,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var _view: UIView!
   private var _subView: UIView!
   private var _overlayView: UIView!
-  
-  private var circleImage: UIImage!
+
   private var fullScreenImage: String!
   private var url: URL?
   
@@ -40,10 +39,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private var videoTimeForChange: Double?
   private var playerLayer: AVPlayerLayer!
-  
-  private var stringHandler = UtilityStringHandler()
-  
-  private var controlSize = CGFloat(30)
   
   private var hasCalledSetup = false
   private var player: AVPlayer?
@@ -87,6 +82,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferFull", options: .new, context: nil)
         playerLayer = AVPlayerLayer(player: player)
         periodTimeObserver()
+      
       } catch {
         self.onError?(["error": "Error on get url: error type is \(error)"])
       }
@@ -179,7 +175,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     labelDuration.textColor = .white
     labelDuration.font = UIFont.systemFont(ofSize: 10)
     if labelDuration.text == nil {
-      labelDuration.text = stringHandler.stringFromTimeInterval(interval: 0)
+      labelDuration.text = stringFromTimeInterval(interval: 0)
     }
     _overlayView.addSubview(labelDuration)
     labelDuration.translatesAutoresizingMaskIntoConstraints = false
@@ -192,7 +188,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     labelProgress.textColor = .white
     labelProgress.font = UIFont.systemFont(ofSize: 10)
     if labelProgress.text == nil {
-      labelProgress.text = stringHandler.stringFromTimeInterval(interval: 0)
+      labelProgress.text = stringFromTimeInterval(interval: 0)
     }
     _overlayView.addSubview(labelProgress)
     labelProgress.translatesAutoresizingMaskIntoConstraints = false
@@ -201,10 +197,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       labelProgress.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor)
     ])
     
-    
-    
+    let titleSize = calculateSizeByWidth(18, 0.2)
     title.textColor = .white
-    title.font = UIFont.systemFont(ofSize: 18)
+    title.font = UIFont.systemFont(ofSize: titleSize)
     _overlayView.addSubview(title)
     title.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
@@ -264,12 +259,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
     
     labelDuration.text = (
-      self.stringHandler.stringFromTimeInterval(
+      stringFromTimeInterval(
         interval: player?.currentItem?.duration.seconds ?? 0
       )
     )
     labelProgress.text = (
-      self.stringHandler.stringFromTimeInterval(interval: currentTime )
+      stringFromTimeInterval(interval: currentTime )
     )
     if self.isThumbSeek == false {
       self.seekSlider.value = Float(currentTime/duration)

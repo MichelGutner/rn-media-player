@@ -9,7 +9,6 @@ import Foundation
 
 @available(iOS 13.0, *)
 class MenuOptionsLayoutManager {
-  let defaultVideo = UtilityDefault()
   private var _button = UIButton()
   private var _view: UIView
   
@@ -26,8 +25,8 @@ class MenuOptionsLayoutManager {
     NSLayoutConstraint.activate([
       _button.trailingAnchor.constraint(equalTo: _view.layoutMarginsGuide.trailingAnchor, constant: -60),
       _button.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _view.layoutMarginsGuide.topAnchor, constant: 4),
-      _button.widthAnchor.constraint(equalToConstant: defaultVideo.controlDefaultSize),
-      _button.heightAnchor.constraint(equalToConstant: defaultVideo.controlDefaultSize)
+      _button.widthAnchor.constraint(equalToConstant: controlDefaultSize),
+      _button.heightAnchor.constraint(equalToConstant: controlDefaultSize)
     ])
   }
   

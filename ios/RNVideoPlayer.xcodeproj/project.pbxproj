@@ -30,6 +30,7 @@
 		DBC0447B2B43A9A000888241 /* PlayPauseLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */; };
 		DBC0447D2B4B3BF000888241 /* ForwardLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */; };
 		DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */; };
+		DBD7188A2B54CA9B008ED0AD /* UtilityDynamicSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,6 +77,7 @@
 		DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayPauseLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForwardLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDefault.swift; sourceTree = "<group>"; };
+		DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDynamicSize.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -209,6 +211,7 @@
 				DB0C9DCC2B23AB6900B7D598 /* UtilityStringHandler.swift */,
 				DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */,
 				DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */,
+				DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -516,6 +519,7 @@
 				DBC0447D2B4B3BF000888241 /* ForwardLayoutManager.swift in Sources */,
 				DBC0447B2B43A9A000888241 /* PlayPauseLayoutManager.swift in Sources */,
 				DB7821492B4E414C0022DCE8 /* GobackLayoutManager.swift in Sources */,
+				DBD7188A2B54CA9B008ED0AD /* UtilityDynamicSize.swift in Sources */,
 				DB0C9DE32B260AE100B7D598 /* loading.swift in Sources */,
 				DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */,
 				DB0C9DCD2B23AB6900B7D598 /* UtilityStringHandler.swift in Sources */,
