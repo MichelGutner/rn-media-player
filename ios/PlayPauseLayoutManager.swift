@@ -20,8 +20,14 @@ class PlayPauseLayoutManager {
     self._view = view
   }
   
-  public func crateAndAdjustLayout() {
-    _button.tintColor = .white
+  public func crateAndAdjustLayout(config: NSDictionary?) {
+    let tintColor = config?["color"] as? String
+    let isHidden = config?["hidden"] as? Bool
+    
+    let size = (calculateSizeByWidth(controlDefaultSize, 0.2) + 20)
+    
+    _button.tintColor = hexStringToUIColor(hexColor: tintColor)
+    _button.isHidden = isHidden ?? false
     _button.backgroundColor = UIColor(white: 0, alpha: 0.4)
     _button.layer.cornerRadius = 30 / 2.0
     _view.addSubview(_button)
@@ -29,8 +35,8 @@ class PlayPauseLayoutManager {
     NSLayoutConstraint.activate([
       _button.centerXAnchor.constraint(equalTo: _view.centerXAnchor),
       _button.safeAreaLayoutGuide.centerYAnchor.constraint(equalTo: _view.layoutMarginsGuide.centerYAnchor),
-      _button.widthAnchor.constraint(equalToConstant: 50),
-      _button.heightAnchor.constraint(equalToConstant: 50)
+      _button.widthAnchor.constraint(equalToConstant: size),
+      _button.heightAnchor.constraint(equalToConstant:  size),
     ])
     if _button.imageView?.layer.sublayers == nil {
       _button.setImage(UIImage(systemName: _player.rate == 0 ? "play.fill" : "pause"), for: .normal)

@@ -19,15 +19,18 @@ class ForwardLayoutManager {
   
   
   public func createAndAdjustLayout(config: NSDictionary?) {
+    let size = calculateSizeByWidth(controlDefaultSize, 0.1)
+    
     let layoutPosition = uiView.bounds.width * 0.2
     configureLayoutForward(config)
     uiView.addSubview(_button)
+    
     _button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       _button.centerXAnchor.constraint(equalTo: uiView.layoutMarginsGuide.centerXAnchor, constant: layoutPosition),
       _button.safeAreaLayoutGuide.centerYAnchor.constraint(equalTo: uiView.layoutMarginsGuide.centerYAnchor),
-      _button.widthAnchor.constraint(equalToConstant: controlDefaultSize),
-      _button.heightAnchor.constraint(equalToConstant: controlDefaultSize)
+      _button.widthAnchor.constraint(equalToConstant: size),
+      _button.heightAnchor.constraint(equalToConstant: size)
     ])
   }
   
@@ -45,7 +48,7 @@ extension ForwardLayoutManager {
     let image = advanceLayoutProps?["image"] as? String
     let imageType = EImageForward(rawValue: image ?? "")
     
-    _button.tintColor = hexStringToUIColor(hexColor: color ?? hexDefaultColor)
+    _button.tintColor = hexStringToUIColor(hexColor: color)
     _button.isHidden = hidden ?? false
     _button.setBackgroundImage(UIImage(systemName: generateImageByType(imageType ?? .forwardDefault)), for: .normal)
   }

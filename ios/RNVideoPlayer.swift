@@ -17,10 +17,12 @@ class RNVideoPlayer: RCTViewManager {
 
 @available(iOS 13.0, *)
 class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
+  private var isRotated = false
+  
   private var _view: UIView!
   private var _subView: UIView!
   private var _overlayView: UIView!
-
+  
   private var fullScreenImage: String!
   private var url: URL?
   
@@ -56,10 +58,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onGoBackTapped: RCTDirectEventBlock?
   @objc var timeValueForChange: NSNumber?
   @objc var fullScreen: Bool = false
-
+  
   @objc var sliderProps: NSDictionary? = [:]
   @objc var forwardProps: NSDictionary? = [:]
   @objc var backwardProps: NSDictionary? = [:]
+  @objc var playPauseProps: NSDictionary? = [:]
+  @objc var labelProgressProps: NSDictionary? = [:]
+  @objc var labelDurationProps: NSDictionary? = [:]
+  @objc var menuOptionsProps: NSDictionary? = [:]
+  @objc var fullScreenProps: NSDictionary? = [:]
+  @objc var titleProps: NSDictionary? = [:]
+  @objc var goBackProps: NSDictionary? = [:]
   
   // external controls
   @objc var source: String = "" {
@@ -82,7 +91,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferFull", options: .new, context: nil)
         playerLayer = AVPlayerLayer(player: player)
         periodTimeObserver()
-      
+        
       } catch {
         self.onError?(["error": "Error on get url: error type is \(error)"])
       }
@@ -155,7 +164,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     // PlayPause
     let playPause = PlayPauseLayoutManager(avPlayer, _overlayView)
-    playPause.crateAndAdjustLayout()
+    playPause.crateAndAdjustLayout(config: playPauseProps)
     playPauseUIView = playPause.button()
     playPauseUIView.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
     
@@ -171,9 +180,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     backwardButton = backward.button()
     backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
     
+    let sizeLabelSeekSlider = calculateSizeByWidth(10, 0.1)
     // seek slider label
-    labelDuration.textColor = .white
-    labelDuration.font = UIFont.systemFont(ofSize: 10)
+    let labelDurationProps = labelDurationProps
+    let labelDurationTextColor = labelDurationProps?["color"] as? String
+    labelDuration.textColor = hexStringToUIColor(hexColor: labelDurationTextColor)
+    labelDuration.font = UIFont.systemFont(ofSize: sizeLabelSeekSlider)
     if labelDuration.text == nil {
       labelDuration.text = stringFromTimeInterval(interval: 0)
     }
@@ -184,9 +196,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       labelDuration.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor)
     ])
     
-    
-    labelProgress.textColor = .white
-    labelProgress.font = UIFont.systemFont(ofSize: 10)
+    let labelProgressProps = labelProgressProps
+    let labelProgressTextColor = labelProgressProps?["color"] as? String
+    labelProgress.textColor = hexStringToUIColor(hexColor: labelProgressTextColor)
+    labelProgress.font = UIFont.systemFont(ofSize: sizeLabelSeekSlider)
     if labelProgress.text == nil {
       labelProgress.text = stringFromTimeInterval(interval: 0)
     }
@@ -197,18 +210,20 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       labelProgress.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor)
     ])
     
-    let titleSize = calculateSizeByWidth(18, 0.2)
-    title.textColor = .white
+    
+    let titleSize = calculateSizeByWidth(14, 0.1)
+    let titleColor = titleProps?["color"] as? String
+    title.textColor = hexStringToUIColor(hexColor: titleColor)
     title.font = UIFont.systemFont(ofSize: titleSize)
     _overlayView.addSubview(title)
     title.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      title.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 36),
-      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: 4)
+      title.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 45),
+      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: 8)
     ])
     
     let goBack = GoBackLayoutManager(_overlayView)
-    goBack.createAndAdjustLayout()
+    goBack.createAndAdjustLayout(config: goBackProps)
     goBackButton = goBack.button()
     goBackButton.addTarget(self, action: #selector(onTappedGoback), for: .touchUpInside)
     
@@ -219,15 +234,15 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
     
     let fullScreen = FullScreenLayoutManager(_overlayView)
-    fullScreen.createAndAdjustLayout()
+    fullScreen.createAndAdjustLayout(config: fullScreenProps)
     fullScreenButton = fullScreen.button()
-    fullScreenButton.setImage(UIImage(systemName: fullScreenImage ?? "arrow.up.left.and.arrow.down.right"), for: .normal)
+    fullScreenButton.setBackgroundImage(UIImage(systemName: fullScreenImage ?? "arrow.up.left.and.arrow.down.right"), for: .normal)
     fullScreenButton.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
     
     
     // add more option
     let menuOptions = MenuOptionsLayoutManager(_overlayView)
-    menuOptions.createAndAdjustLayout()
+    menuOptions.createAndAdjustLayout(config: menuOptionsProps)
     menuOptionsButton = menuOptions.button()
     menuOptionsButton.addTarget(self, action: #selector(onTappedOnMoreOptions), for: .touchUpInside)
     
@@ -237,14 +252,14 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem
     )
   }
-    
+  
   private func periodTimeObserver() {
     let interval = CMTime(value: 1, timescale: 2)
     timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
       self?.updatePlayerTime()
     }
   }
-    
+  
   private func updatePlayerTime() {
     let time = videoTimerManager(avPlayer: player)
     let currentTime = time.getCurrentTimeInSeconds()
@@ -332,7 +347,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       })
     }
   }
-
+  
   private func enableAudioSession() {
     do {
       try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers, .allowAirPlay])
@@ -372,6 +387,13 @@ enum VideoPlayerError: Error {
 extension RNVideoPlayerView {
   @objc private func onTappedOnMoreOptions() {
     onMoreOptionsTapped?([:])
+    
+    UIView.animate(withDuration: 0.5) { [weak self] in
+      guard let self = self else { return }
+      let rotationAngle: CGFloat = .pi
+      self.menuOptionsButton.transform = self.menuOptionsButton.transform.rotated(by: rotationAngle)
+      self.isRotated.toggle()
+    }
   }
   
   @objc private func onTappedGoback() {
@@ -385,7 +407,7 @@ extension RNVideoPlayerView {
   @objc private func onChangeRate(_ rate: Float) {
     self.player?.rate = rate
   }
-
+  
 }
 
 // player methods
@@ -447,7 +469,7 @@ extension RNVideoPlayerView {
       return .resizeAspect
     }
   }
-
+  
   private func onChangeOrientation(_ fullscreen: Bool) {
     guard let playerLayer = playerLayer else { return }
     playerLayer.frame = fullScreen ? bounds : bounds.inset(by: safeAreaInsets)

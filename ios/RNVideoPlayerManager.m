@@ -31,5 +31,12 @@ RCT_EXPORT_VIEW_PROPERTY(resizeMode, NSString)
 RCT_EXPORT_VIEW_PROPERTY(sliderProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(forwardProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(backwardProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(playPauseProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(labelDurationProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(labelProgressProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(menuOptionsProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(fullScreenProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(titleProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(goBackProps, NSDictionary)
 
 @end

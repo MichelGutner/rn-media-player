@@ -5,7 +5,10 @@
 //  Created by Michel Gutner on 08/12/23.
 //
 
-public func hexStringToUIColor(hexColor: String) -> UIColor {
+public func hexStringToUIColor(hexColor: String?) -> UIColor {
+  guard let hexColor = hexColor else {
+    return .white
+  }
   let stringScanner = Scanner(string: hexColor)
   
   if(hexColor.hasPrefix("#")) {

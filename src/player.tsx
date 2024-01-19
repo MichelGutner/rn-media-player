@@ -81,6 +81,28 @@ export const RNPlayerVideo = ({
           thumbSize: 10,
           thumbColor: '#412cdf',
         }}
+        playPauseProps={{
+          color: '#ce0808',
+          hidden: false,
+        }}
+        labelDurationProps={{
+          color: '#ce0808',
+        }}
+        labelProgressProps={{
+          color: '#ce0808',
+        }}
+        menuOptionsProps={{
+          color: '#ce0808',
+        }}
+        fullScreenProps={{
+          color: '#ce0808',
+        }}
+        titleProps={{
+          color: '#ce0808',
+        }}
+        goBackProps={{
+          color: '#ce0808',
+        }}
         onMoreOptionsTapped={() => console.log('MORE OPTIONS TAPPED')}
         onFullScreenTapped={onFullScreen}
         onGoBackTapped={() => console.log('GO BACK TAPPED')}

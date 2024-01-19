@@ -16,17 +16,22 @@ class MenuOptionsLayoutManager {
     self._view = view
   }
   
-  public func createAndAdjustLayout() {
-    _button.setImage(UIImage(systemName: "ellipsis"), for: .normal)
-    _button.tintColor = .white
-    _button.transform = CGAffineTransform(rotationAngle: CGFloat.pi * 0.5)
+  public func createAndAdjustLayout(config: NSDictionary?) {
+    let size = calculateSizeByWidth(18, 0.2)
+    let trailingAnchor = calculateSizeByWidth(60, 0.2)
+    
+    let menuProps = config;
+    let color = menuProps?["color"] as? String
+    
+    _button.setBackgroundImage(UIImage(systemName: "gear"), for: .normal)
+    _button.tintColor = hexStringToUIColor(hexColor: color)
     _view.addSubview(_button)
     _button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      _button.trailingAnchor.constraint(equalTo: _view.layoutMarginsGuide.trailingAnchor, constant: -60),
-      _button.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _view.layoutMarginsGuide.topAnchor, constant: 4),
-      _button.widthAnchor.constraint(equalToConstant: controlDefaultSize),
-      _button.heightAnchor.constraint(equalToConstant: controlDefaultSize)
+      _button.trailingAnchor.constraint(equalTo: _view.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchor),
+      _button.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _view.layoutMarginsGuide.topAnchor, constant: 8),
+      _button.widthAnchor.constraint(equalToConstant: size),
+      _button.heightAnchor.constraint(equalToConstant: size)
     ])
   }
   

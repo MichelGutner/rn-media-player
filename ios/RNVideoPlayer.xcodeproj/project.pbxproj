@@ -22,7 +22,6 @@
 		DB0C9DE32B260AE100B7D598 /* loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DE22B260AE100B7D598 /* loading.swift */; };
 		DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */; };
 		DB7821492B4E414C0022DCE8 /* GobackLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */; };
-		DB78214B2B4E42F10022DCE8 /* TitleLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214A2B4E42F10022DCE8 /* TitleLayoutManager.swift */; };
 		DB78214D2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */; };
 		DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */; };
 		DB7821512B4E486D0022DCE8 /* SeekSliderLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */; };
@@ -69,7 +68,6 @@
 		DB0C9DE22B260AE100B7D598 /* loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = loading.swift; sourceTree = "<group>"; };
 		DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapSeek.swift; sourceTree = "<group>"; };
 		DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GobackLayoutManager.swift; sourceTree = "<group>"; };
-		DB78214A2B4E42F10022DCE8 /* TitleLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitleLayoutManager.swift; sourceTree = "<group>"; };
 		DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuOptionsLayoutManager.swift; sourceTree = "<group>"; };
 		DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityImageHandler.swift; sourceTree = "<group>"; };
 		DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekSliderLayoutManager.swift; sourceTree = "<group>"; };
@@ -225,7 +223,6 @@
 				DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */,
 				DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */,
 				DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */,
-				DB78214A2B4E42F10022DCE8 /* TitleLayoutManager.swift */,
 				DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */,
 				DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */,
 				DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */,
@@ -523,7 +520,6 @@
 				DB0C9DE32B260AE100B7D598 /* loading.swift in Sources */,
 				DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */,
 				DB0C9DCD2B23AB6900B7D598 /* UtilityStringHandler.swift in Sources */,
-				DB78214B2B4E42F10022DCE8 /* TitleLayoutManager.swift in Sources */,
 				DB7821532B5009F70022DCE8 /* BackwardLayoutManager.swift in Sources */,
 				DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */,
 				D02E142D2AF08CF6003D0472 /* RNVideoPlayer.swift in Sources */,

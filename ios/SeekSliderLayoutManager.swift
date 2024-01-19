@@ -28,7 +28,8 @@ class SeekSliderLayoutManager {
         equalTo: _view.layoutMarginsGuide.trailingAnchor, constant: -60
       ),
       _seekSlider.safeAreaLayoutGuide.bottomAnchor.constraint(
-        equalTo: _view.layoutMarginsGuide.bottomAnchor
+        equalTo: _view.layoutMarginsGuide.bottomAnchor,
+        constant: -1
       ),
     ])
   }

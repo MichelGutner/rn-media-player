@@ -7,5 +7,4 @@
 
 import Foundation
 
-public var controlDefaultSize = calculateSizeByWidth(30, 0.2)
-public var hexDefaultColor = "#ffffff"
+public var controlDefaultSize = CGFloat(30)

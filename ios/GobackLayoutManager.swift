@@ -16,14 +16,19 @@ class GoBackLayoutManager {
     self._view = view
   }
   
-  public func createAndAdjustLayout() {
-    _button.tintColor = .white
-    _button.setImage(UIImage(systemName: "chevron.left"), for: .normal)
+  public func createAndAdjustLayout(config: NSDictionary?) {
+    let size = calculateSizeByWidth(22, 0.1)
+    let color = config?["color"] as? String
+    
+    _button.tintColor = hexStringToUIColor(hexColor: color)
+    _button.setBackgroundImage(UIImage(systemName: "arrow.left"), for: .normal)
     _view.addSubview(_button)
     _button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       _button.leadingAnchor.constraint(equalTo: _view.layoutMarginsGuide.leadingAnchor, constant: 8),
-      _button.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _view.layoutMarginsGuide.topAnchor, constant: 4)
+      _button.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _view.layoutMarginsGuide.topAnchor, constant: 6),
+      _button.widthAnchor.constraint(equalToConstant: size),
+      _button.heightAnchor.constraint(equalToConstant: size)
     ])
   }
   

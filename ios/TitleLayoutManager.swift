@@ -17,13 +17,13 @@ class TitleLayoutManager {
   }
   
   public func createAndAdjustLayout() {
-    print(_title.text)
+    let size = calculateSizeByWidth(18, 0.1)
     _title.textColor = .white
-    _title.font = UIFont.systemFont(ofSize: 18)
+    _title.font = UIFont.systemFont(ofSize: size)
     _view.addSubview(_title)
     _title.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      _title.leadingAnchor.constraint(equalTo: _view.layoutMarginsGuide.leadingAnchor, constant: 30),
+      _title.leadingAnchor.constraint(equalTo: _view.layoutMarginsGuide.leadingAnchor, constant: 0),
       _title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _view.layoutMarginsGuide.topAnchor, constant: 4)
     ])
   }
