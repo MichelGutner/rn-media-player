@@ -17,10 +17,12 @@ class FullScreenLayoutManager {
   }
   
   public func createAndAdjustLayout(config: NSDictionary?) {
-    let size = calculateSizeByWidth(18, 0.2)
+    let size = calculateFrameSize(18, 0.2)
     let fullScreenProps = config
     let color = fullScreenProps?["color"] as? String
+    let isHidden = fullScreenProps?["hidden"] as? Bool
     
+    _button.isHidden = isHidden ?? false
     _button.tintColor = hexStringToUIColor(hexColor: color)
     _view.addSubview(_button)
     _button.translatesAutoresizingMaskIntoConstraints = false

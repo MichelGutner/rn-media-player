@@ -7,6 +7,6 @@
 
 import Foundation
 
-public func calculateSizeByWidth(_ size: CGFloat, _ fontVariant: CGFloat) -> CGFloat {
+public func calculateFrameSize(_ size: CGFloat, _ fontVariant: CGFloat) -> CGFloat {
   return round(size + (round((UIScreen.main.bounds.width / 375) * size) - size) * fontVariant)
 }

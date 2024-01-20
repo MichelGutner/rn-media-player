@@ -19,7 +19,7 @@ class BackwardLayoutManager {
   
   
   public func createAndAdjustLayout(config: NSDictionary?) {
-    let size = calculateSizeByWidth(controlDefaultSize, 0.1)
+    let size = calculateFrameSize(controlDefaultSize, 0.1)
     
     let layoutPosition = -uiView.bounds.width * 0.2
     configureLayoutBackward(config)

@@ -32,7 +32,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private var seekSlider: UISlider!
   
-  private var playPauseUIView = UIButton()
+  private var playPauseButton = UIButton()
   private var forwardButton = UIButton()
   private var backwardButton = UIButton()
   private var fullScreenButton = UIButton()
@@ -98,11 +98,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-  @objc var videoTitle: String = "" {
-    didSet {
-      self.title.text = videoTitle
-    }
-  }
+  @objc var videoTitle: String = ""
   
   @objc var rate: Float = 0.0 {
     didSet{
@@ -165,8 +161,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     // PlayPause
     let playPause = PlayPauseLayoutManager(avPlayer, _overlayView)
     playPause.crateAndAdjustLayout(config: playPauseProps)
-    playPauseUIView = playPause.button()
-    playPauseUIView.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
+    playPauseButton = playPause.button()
+    playPauseButton.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
     
     // add forward button
     let forward = ForwardLayoutManager(_overlayView)
@@ -180,7 +176,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     backwardButton = backward.button()
     backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
     
-    let sizeLabelSeekSlider = calculateSizeByWidth(10, 0.1)
+    let sizeLabelSeekSlider = calculateFrameSize(10, 0.1)
     // seek slider label
     let labelDurationProps = labelDurationProps
     let labelDurationTextColor = labelDurationProps?["color"] as? String
@@ -210,16 +206,22 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       labelProgress.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor)
     ])
     
+    title.text = videoTitle
+    title.numberOfLines = 2
     
-    let titleSize = calculateSizeByWidth(14, 0.1)
+    let titleSize = calculateFrameSize(14, 0.1)
     let titleColor = titleProps?["color"] as? String
+    let titleHidden = titleProps?["hidden"] as? Bool
+    
     title.textColor = hexStringToUIColor(hexColor: titleColor)
     title.font = UIFont.systemFont(ofSize: titleSize)
+    title.isHidden = titleHidden ?? false
     _overlayView.addSubview(title)
     title.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       title.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 45),
-      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: 8)
+      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor),
+      title.widthAnchor.constraint(lessThanOrEqualTo: _overlayView.safeAreaLayoutGuide.widthAnchor, multiplier: 0.3)
     ])
     
     let goBack = GoBackLayoutManager(_overlayView)
@@ -273,14 +275,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       self.onVideoProgress?(["progress": currentTime, "bufferedDuration": bufferedStart + bufferedDuration])
     }
     
-    labelDuration.text = (
-      stringFromTimeInterval(
-        interval: player?.currentItem?.duration.seconds ?? 0
-      )
-    )
-    labelProgress.text = (
-      stringFromTimeInterval(interval: currentTime )
-    )
+    labelDuration.text = (stringFromTimeInterval(interval: duration))
+    labelProgress.text = (stringFromTimeInterval(interval: currentTime))
+    
     if self.isThumbSeek == false {
       self.seekSlider.value = Float(currentTime/duration)
     }
@@ -424,13 +421,13 @@ extension RNVideoPlayerView {
     }
     
     let animation = UIViewPropertyAnimator(duration: 0.2, curve: .easeInOut) { [self] in
-      playPauseUIView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
-      playPauseUIView.setImage(UIImage(systemName: image), for: .normal)
+      playPauseButton.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+      playPauseButton.setImage(UIImage(systemName: image), for: .normal)
     }
     
     animation.addCompletion { _ in
       UIView.animate(withDuration: 0.2) {
-        self.playPauseUIView.transform = .identity
+        self.playPauseButton.transform = .identity
       }
     }
     animation.startAnimation()

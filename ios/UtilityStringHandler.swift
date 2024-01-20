@@ -32,5 +32,3 @@ public func stringFromTimeInterval(interval: TimeInterval) -> String {
   let hours = (interval / 3600)
   return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
 }
-
-
