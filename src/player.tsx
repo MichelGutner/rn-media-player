@@ -62,14 +62,14 @@ export const RNPlayerVideo = ({
       <VPlayer
         forwardProps={{color: '#ffffff', image: 'forward15'}}
         style={{...StyleSheet.absoluteFillObject, overflow: 'hidden'}}
-        source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
-        // source="https://assets.mixkit.co/videos/download/mixkit-countryside-meadow-4075.mp4"
+        // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+        source="https://content.jwplatform.com/videos/MGAxJ46m-aoHq8DIe.mp4"
         paused={paused}
         rate={rate}
         videoTitle={'Game of Thrones'}
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
         onVideoProgress={data => setCurrentTime(data.nativeEvent)}
-        onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
+        // onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
         fullScreen={isFullScreen}
         resizeMode={resizeMode}
         timeValueForChange={10}
@@ -106,9 +106,9 @@ export const RNPlayerVideo = ({
         onMoreOptionsTapped={() => console.log('MORE OPTIONS TAPPED')}
         onFullScreenTapped={onFullScreen}
         onGoBackTapped={() => console.log('GO BACK TAPPED')}
-        onBufferCompleted={e =>
-          console.log(`BUFFER COMPLETED ${JSON.stringify(e.nativeEvent)}`)
-        }
+        // onBufferCompleted={e =>
+        //   console.log(`BUFFER COMPLETED ${JSON.stringify(e.nativeEvent)}`)
+        // }
         onBuffer={
           e => undefined
           // console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)

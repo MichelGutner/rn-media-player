@@ -9,37 +9,16 @@ import Foundation
 
 class SeekSliderLayoutManager {
   private var _view: UIView
-  private var _seekSlider = UISlider(frame:CGRect(x: 0, y:UIScreen.main.bounds.height - 60, width:UIScreen.main.bounds.width, height:10))
+  private var _seekSlider = UISlider(frame: .zero)
   private var circleImage: UIImage!
   
   init(_ view: UIView) {
     self._view = view
   }
   
-  public func createAndAdjustLayout(config: NSDictionary?) {
-    configureThumb(config)
-    _view.addSubview(_seekSlider)
-    _seekSlider.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      _seekSlider.leadingAnchor.constraint(
-        equalTo: _view.layoutMarginsGuide.leadingAnchor, constant: 60
-      ),
-      _seekSlider.trailingAnchor.constraint(
-        equalTo: _view.layoutMarginsGuide.trailingAnchor, constant: -60
-      ),
-      _seekSlider.safeAreaLayoutGuide.bottomAnchor.constraint(
-        equalTo: _view.layoutMarginsGuide.bottomAnchor,
-        constant: -1
-      ),
-    ])
-  }
-  
   public func seekSlider() -> UISlider {
     return _seekSlider
   }
-}
-
-extension SeekSliderLayoutManager {
   private func configureThumb(_ config: NSDictionary?) {
     guard let sliderProps = config,
           let minimumTrackColor = sliderProps["minimumTrackColor"] as? String,

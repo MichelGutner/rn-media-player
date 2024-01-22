@@ -18,7 +18,7 @@ class MenuOptionsLayoutManager {
   
   public func createAndAdjustLayout(config: NSDictionary?) {
     let size = calculateFrameSize(18, 0.2)
-    let trailingAnchor = calculateFrameSize(60, 0.2)
+    let trailingAnchor = calculateFrameSize(30, 0.2)
     
     let color = config?["color"] as? String
     let isHidden = config?["color"] as? Bool

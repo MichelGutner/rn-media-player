@@ -20,6 +20,7 @@
 		DB0C9DD42B23C85300B7D598 /* videoTimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */; };
 		DB0C9DDB2B23DB0400B7D598 /* FullScreenLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DDA2B23DB0400B7D598 /* FullScreenLayoutManager.swift */; };
 		DB0C9DE32B260AE100B7D598 /* loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DE22B260AE100B7D598 /* loading.swift */; };
+		DB18CA6A2B5C67FC00A42B83 /* SpeedRateLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB18CA692B5C67FC00A42B83 /* SpeedRateLayoutManager.swift */; };
 		DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */; };
 		DB7821492B4E414C0022DCE8 /* GobackLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */; };
 		DB78214D2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */; };
@@ -66,6 +67,7 @@
 		DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = videoTimerManager.swift; sourceTree = "<group>"; };
 		DB0C9DDA2B23DB0400B7D598 /* FullScreenLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenLayoutManager.swift; sourceTree = "<group>"; };
 		DB0C9DE22B260AE100B7D598 /* loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = loading.swift; sourceTree = "<group>"; };
+		DB18CA692B5C67FC00A42B83 /* SpeedRateLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedRateLayoutManager.swift; sourceTree = "<group>"; };
 		DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapSeek.swift; sourceTree = "<group>"; };
 		DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GobackLayoutManager.swift; sourceTree = "<group>"; };
 		DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuOptionsLayoutManager.swift; sourceTree = "<group>"; };
@@ -226,6 +228,7 @@
 				DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */,
 				DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */,
 				DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */,
+				DB18CA692B5C67FC00A42B83 /* SpeedRateLayoutManager.swift */,
 			);
 			name = CustomLayoutManager;
 			sourceTree = "<group>";
@@ -510,6 +513,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DB18CA6A2B5C67FC00A42B83 /* SpeedRateLayoutManager.swift in Sources */,
 				DB7821512B4E486D0022DCE8 /* SeekSliderLayoutManager.swift in Sources */,
 				DB78214D2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift in Sources */,
 				D02E142F2AF08E73003D0472 /* RNVideoPlayerManager.m in Sources */,
