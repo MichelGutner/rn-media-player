@@ -30,6 +30,7 @@
 		DBC0447B2B43A9A000888241 /* PlayPauseLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */; };
 		DBC0447D2B4B3BF000888241 /* ForwardLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */; };
 		DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */; };
+		DBC6D72B2B64596C0025CC13 /* QualityLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC6D72A2B64596C0025CC13 /* QualityLayoutManager.swift */; };
 		DBD7188A2B54CA9B008ED0AD /* UtilityDynamicSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */; };
 /* End PBXBuildFile section */
 
@@ -77,6 +78,7 @@
 		DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayPauseLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForwardLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDefault.swift; sourceTree = "<group>"; };
+		DBC6D72A2B64596C0025CC13 /* QualityLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QualityLayoutManager.swift; sourceTree = "<group>"; };
 		DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDynamicSize.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -229,6 +231,7 @@
 				DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */,
 				DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */,
 				DB18CA692B5C67FC00A42B83 /* SpeedRateLayoutManager.swift */,
+				DBC6D72A2B64596C0025CC13 /* QualityLayoutManager.swift */,
 			);
 			name = CustomLayoutManager;
 			sourceTree = "<group>";
@@ -528,6 +531,7 @@
 				DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */,
 				D02E142D2AF08CF6003D0472 /* RNVideoPlayer.swift in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
+				DBC6D72B2B64596C0025CC13 /* QualityLayoutManager.swift in Sources */,
 				DB0C9DDB2B23DB0400B7D598 /* FullScreenLayoutManager.swift in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */,

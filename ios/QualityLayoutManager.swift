@@ -1,26 +1,26 @@
 //
-//  SpeedRateLayoutManager.swift
+//  QualityLayoutManager.swift
 //  RNVideoPlayer
 //
-//  Created by Michel Gutner on 20/01/24.
+//  Created by Michel Gutner on 26/01/24.
 //
 
 import Foundation
 
 @available(iOS 13.0, *)
-class SpeedRateLayoutManager {
+class QualityLayoutManager {
   private var _button = UIButton()
   private var _view = UIView()
   
-  init(_ view: UIView!) {
+  init(_ view: UIView) {
     self._view = view
   }
   
   public func createAndAdjustLayout() {
     let size = calculateFrameSize(18, 0.2)
-    let trailingAnchor = calculateFrameSize(60, 0.2)
+    let trailingAnchor = calculateFrameSize(100, 0.2)
     
-    _button.setBackgroundImage(UIImage(systemName: "timer"), for: .normal)
+    _button.setBackgroundImage(UIImage(systemName: "chart.bar.fill"), for: .normal)
     _view.addSubview(_button)
     _button.tintColor = .white
     _button.translatesAutoresizingMaskIntoConstraints = false
@@ -36,4 +36,5 @@ class SpeedRateLayoutManager {
   public func button() -> UIButton {
     return _button
   }
+  
 }

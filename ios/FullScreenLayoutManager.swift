@@ -18,7 +18,7 @@ class FullScreenLayoutManager {
   
   public func createAndAdjustLayout(config: NSDictionary?) {
     let size = calculateFrameSize(18, 0.2)
-    let trailingAnchor = calculateFrameSize(30, 0.2)
+    let trailingAnchor = calculateFrameSize(20, 0.2)
     let fullScreenProps = config
     let color = fullScreenProps?["color"] as? String
     let isHidden = fullScreenProps?["hidden"] as? Bool

@@ -62,11 +62,13 @@ export const RNPlayerVideo = ({
       <VPlayer
         forwardProps={{color: '#ffffff', image: 'forward15'}}
         style={{...StyleSheet.absoluteFillObject, overflow: 'hidden'}}
-        // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
-        source="https://content.jwplatform.com/videos/MGAxJ46m-aoHq8DIe.mp4"
+        source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+        // source="https://content.jwplatform.com/videos/MGAxJ46m-aoHq8DIe.mp4"
         paused={paused}
         rate={rate}
-        videoTitle={'Game of Thrones'}
+        videoTitle={
+          'Game of Thrones Game of Thrones Game of Thrones Game of Thrones Game of Thrones Game of Thrones'
+        }
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
         onVideoProgress={data => setCurrentTime(data.nativeEvent)}
         // onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
