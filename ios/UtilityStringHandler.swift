@@ -5,13 +5,18 @@
 //  Created by Michel Gutner on 08/12/23.
 //
 
-public func hexStringToUIColor(hexColor: String?) -> UIColor {
-  guard let hexColor = hexColor else {
+public func transformStringIntoUIColor(color: String?) -> UIColor {
+  guard let colorToTransform = color else {
     return .white
   }
-  let stringScanner = Scanner(string: hexColor)
   
-  if(hexColor.hasPrefix("#")) {
+  if (colorToTransform.hasPrefix("rgba")) {
+    return transformRgbaIntoUIColor(color: colorToTransform)!
+  }
+  
+  let stringScanner = Scanner(string: colorToTransform)
+  
+  if(colorToTransform.hasPrefix("#")) {
     stringScanner.scanLocation = 1
   }
   
@@ -30,11 +35,28 @@ public func stringFromTimeInterval(interval: TimeInterval) -> String {
   let seconds = interval % 60
   let minutes = (interval / 60) % 60
   let hours = (interval / 3600)
-  let formmatedTime = hours > 0 ? "%02d:%02d:%02d" : "%02d:%02d"
-  let ableToShowHours = hours > 0 ? hours : nil
+  
   if hours > 0 {
     return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
   } else {
     return String(format: "%02d:%02d", minutes, seconds)
+  }
+}
+
+func transformRgbaIntoUIColor(color hexColor: String) -> UIColor? {
+  if let index = hexColor.index(hexColor.startIndex, offsetBy: 4, limitedBy: hexColor.endIndex) {
+    let removeAllSpecialCharacters = hexColor[index...]
+    let numericValues = removeAllSpecialCharacters.components(separatedBy: CharacterSet(charactersIn: "0123456789.").inverted)
+    let numerics = numericValues
+    print(numerics[1])
+    let red = Float(numerics[1]) ?? 255.0
+    let green = Float(numerics[2]) ?? 255.0
+    let blue = Float(numerics[3]) ?? 255.0
+    let alpha = Float(numerics[4]) ?? 1
+    
+    return UIColor(red: CGFloat(red / 255.0), green: CGFloat(green / 255.0), blue: CGFloat(blue / 255.0), alpha: CGFloat(alpha))
+  } else {
+    print("error: Invalid color")
+    return .white
   }
 }

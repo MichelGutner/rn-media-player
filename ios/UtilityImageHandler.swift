@@ -7,7 +7,7 @@
 
 import Foundation
 
-public func createCircle(size: CGSize, backgroundColor: UIColor) -> UIImage? {
+public func createCircleImage(size: CGSize, backgroundColor: UIColor) -> UIImage? {
   UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
   let context = UIGraphicsGetCurrentContext()
   context?.setFillColor(backgroundColor.cgColor)

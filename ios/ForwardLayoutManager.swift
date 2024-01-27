@@ -19,9 +19,9 @@ class ForwardLayoutManager {
   
   
   public func createAndAdjustLayout(config: NSDictionary?) {
-    let size = calculateFrameSize(controlDefaultSize, 0.1)
+    let size = calculateFrameSize(size30, variantPercent01)
     
-    let layoutPosition = uiView.bounds.width * 0.2
+    let layoutPosition = uiView.bounds.width * variantPercent02
     configureLayoutForward(config)
     uiView.addSubview(_button)
     
@@ -42,13 +42,12 @@ class ForwardLayoutManager {
 @available(iOS 13.0, *)
 extension ForwardLayoutManager {
   private func configureLayoutForward(_ config: NSDictionary?) {
-    let advanceLayoutProps = config
-    let color = advanceLayoutProps?["color"] as? String
-    let hidden = advanceLayoutProps?["hidden"] as? Bool
-    let image = advanceLayoutProps?["image"] as? String
+    let color = config?["color"] as? String
+    let hidden = config?["hidden"] as? Bool
+    let image = config?["image"] as? String
     let imageType = EImageForward(rawValue: image ?? "")
     
-    _button.tintColor = hexStringToUIColor(hexColor: color)
+    _button.tintColor = transformStringIntoUIColor(color: color)
     _button.isHidden = hidden ?? false
     _button.setBackgroundImage(UIImage(systemName: generateImageByType(imageType ?? .forwardDefault)), for: .normal)
   }

@@ -24,12 +24,12 @@ class PlayPauseLayoutManager {
     let tintColor = config?["color"] as? String
     let isHidden = config?["hidden"] as? Bool
     
-    let size = (calculateFrameSize(controlDefaultSize, 0.2) + 20)
+    let size = (calculateFrameSize(size30, variantPercent02) + size20)
     
-    _button.tintColor = hexStringToUIColor(hexColor: tintColor)
+    _button.tintColor = transformStringIntoUIColor(color: tintColor)
     _button.isHidden = isHidden ?? false
     _button.backgroundColor = UIColor(white: 0, alpha: 0.4)
-    _button.layer.cornerRadius = 30 / 2.0
+    _button.layer.cornerRadius = size16
     _view.addSubview(_button)
     _button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([

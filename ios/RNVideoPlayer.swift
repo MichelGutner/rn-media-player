@@ -19,16 +19,14 @@ class RNVideoPlayer: RCTViewManager {
 @available(iOS 13.0, *)
 class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var isRotated = false
-  private var progress = 0.0
-  private var thumbnailFrames: [UIImage] = []
-  private var frameTimes: [CMTime] = []
-  private var draggingImage: UIImage?
   private var isSeeking: Bool = false
   
   private var _view: UIView!
   private var _subView: UIView!
   private var _overlayView: UIView!
-  //  private var SeekerThumbnailView = UIImageView()
+  private var menuOptionsView = UIView()
+  private var optionsItemView = UIStackView()
+  private var imagePlayPause: String = ""
   
   private var fullScreenImage: String!
   private var url: URL?
@@ -78,6 +76,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var fullScreenProps: NSDictionary? = [:]
   @objc var titleProps: NSDictionary? = [:]
   @objc var goBackProps: NSDictionary? = [:]
+  @objc var menuOptionsItemProps: NSDictionary? = [:]
   
   // external controls
   @objc var source: String = "" {
@@ -161,7 +160,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _overlayView.backgroundColor = UIColor(white: 0, alpha: 0.4)
     _subView.addSubview(_overlayView)
     _overlayView.frame = _subView.frame
-    _overlayView.reactZIndex = 3
+    _overlayView.reactZIndex = 2
     
     // player
     onChangeOrientation(fullScreen)
@@ -185,12 +184,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     backwardButton = backward.button()
     backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
     
-    let sizeLabelSeekSlider = calculateFrameSize(10, 0.1)
+    let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent01)
     // seek slider label
-    let trailingAnchor = calculateFrameSize(50, 0.2)
+    let trailingAnchor = calculateFrameSize(size50, variantPercent02)
     let labelDurationProps = labelDurationProps
     let labelDurationTextColor = labelDurationProps?["color"] as? String
-    labelDuration.textColor = hexStringToUIColor(hexColor: labelDurationTextColor)
+    labelDuration.textColor = transformStringIntoUIColor(color: labelDurationTextColor)
     labelDuration.font = UIFont.systemFont(ofSize: sizeLabelSeekSlider)
     if labelDuration.text == nil {
       labelDuration.text = stringFromTimeInterval(interval: 0)
@@ -204,7 +203,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     let labelProgressProps = labelProgressProps
     let labelProgressTextColor = labelProgressProps?["color"] as? String
-    labelProgress.textColor = hexStringToUIColor(hexColor: labelProgressTextColor)
+    labelProgress.textColor = transformStringIntoUIColor(color: labelProgressTextColor)
     labelProgress.font = UIFont.systemFont(ofSize: sizeLabelSeekSlider)
     labelProgress.frame = bounds
     if labelProgress.text == nil {
@@ -217,19 +216,18 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     title.text = videoTitle
     title.numberOfLines = 2
     
-    let titleSize = calculateFrameSize(14, 0.1)
+    let titleSize = calculateFrameSize(size14, variantPercent01)
     let titleColor = titleProps?["color"] as? String
-    //    let titleHidden = titleProps?["hidden"] as? Bool
     
-    title.textColor = hexStringToUIColor(hexColor: titleColor)
+    title.textColor = transformStringIntoUIColor(color: titleColor)
     title.font = UIFont.systemFont(ofSize: titleSize)
     //    title.isHidden = titleHidden ?? false
     _overlayView.addSubview(title)
     title.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      title.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: 45),
-      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: 8),
-      title.widthAnchor.constraint(lessThanOrEqualTo: _overlayView.safeAreaLayoutGuide.widthAnchor, multiplier: 0.6)
+      title.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: size45),
+      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: margin8),
+      title.widthAnchor.constraint(lessThanOrEqualTo: _overlayView.safeAreaLayoutGuide.widthAnchor, multiplier: variantPercent06)
     ])
     
     let goBack = GoBackLayoutManager(_overlayView)
@@ -239,13 +237,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     // seek slider
     _overlayView.addSubview(seekSlider)
-    let seekTrailingAnchor = calculateFrameSize(80, 0.2)
+    let seekTrailingAnchor = calculateFrameSize(size80, variantPercent02)
     configureThumb(sliderProps)
     seekSlider.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       seekSlider.leadingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.leadingAnchor),
       seekSlider.trailingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -seekTrailingAnchor),
-      seekSlider.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -5),
+      seekSlider.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -3),
     ])
     seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
     
@@ -264,22 +262,27 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     menuOptionsButton.addTarget(self, action: #selector(onTapMenuOptions), for: .touchUpInside)
     
     
-    let speedRate = SpeedRateLayoutManager(_overlayView)
+    let speedRate = SpeedRateLayoutManager(optionsItemView)
     speedRate.createAndAdjustLayout()
     speedRateButton = speedRate.button()
-    speedRateButton.isHidden = !isRotated
     
-    let quality = QualityLayoutManager(_overlayView)
+    let quality = QualityLayoutManager(optionsItemView)
     quality.createAndAdjustLayout()
     qualityButton = quality.button()
-    qualityButton.isHidden = !isRotated
+  
+    optionsItemView.axis = .horizontal
+    optionsItemView.spacing = spacing20
+
+    // Create a spacer view to add space between buttons
+    let trailingAnchorOptionsItemView = calculateFrameSize(size60, variantPercent02)
     
-    //    _overlayView.addSubview(SeekerThumbnailView)
-    //    SeekerThumbnailView.backgroundColor = .black
-    ////    let originSeekThumbnail = CGPoint(x: _overlayView.safeAreaLayoutGuide.layoutFrame.minX, y: _overlayView.safeAreaLayoutGuide.layoutFrame.midY)
-    //    SeekerThumbnailView.frame.size = CGSize(width: bounds.width * 0.25, height: bounds.height * 0.25)
-    //    SeekerThumbnailView.layer.opacity = isSeeking ? 1 : 0
-    
+    _overlayView.addSubview(optionsItemView)
+    optionsItemView.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      optionsItemView.trailingAnchor.constraint(lessThanOrEqualTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchorOptionsItemView),
+      optionsItemView.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: margin8)
+    ])
+
     player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
       self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem
@@ -294,7 +297,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   private func updatePlayerTime() {
-    //    SeekerThumbnailView.layer.opacity = isSeeking ? 1 : 0
     let time = videoTimerManager(avPlayer: player)
     let currentTime = time.getCurrentTimeInSeconds()
     let duration = time.getDurationTimeInSeconds()
@@ -309,7 +311,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     labelDuration.text = (stringFromTimeInterval(interval: duration))
     labelProgress.text = (stringFromTimeInterval(interval: currentTime))
-    self.progress = currentTime
+    
     if self.isSeeking == false {
       self.seekSlider.value = Float(currentTime/duration)
     }
@@ -341,7 +343,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       if player.status == .readyToPlay {
         onLoaded?(["duration": player.currentItem?.duration.seconds as Any])
         onReady?(["ready": true])
-        //        generateThumbnailFrames()
       } else if player.status == .failed {
         onError?(["error": "Failed to load video \(player.status)"])
       } else if player.status == .unknown {
@@ -355,41 +356,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     self.removePeriodicTimeObserver()
   }
   
-  //  @objc func generateThumbnailFrames() {
-  //    Task.detached { [self] in
-  //      guard let currentItem = await player?.currentItem else { return }
-  //      let generator = AVAssetImageGenerator(asset: currentItem.asset)
-  //      generator.appliesPreferredTrackTransform = true
-  //
-  //      generator.maximumSize = .init(width: 250, height: 100)
-  //
-  //      do {
-  //        let totalDuration = currentItem.asset.duration.seconds
-  //
-  //        for progress in stride(from: 0, to: 1, by: 0.001) {
-  //
-  //          let time = CMTime(seconds: progress * totalDuration, preferredTimescale: 1000)
-  //          await MainActor.run(body: {
-  //                frameTimes.append(time)
-  //          })
-  //        }
-  //
-  //        for time in await frameTimes {
-  //          generator.generateCGImagesAsynchronously(forTimes: [time as NSValue]) { requestedTime, cgImage, actualTime, result, error in
-  //            if let cgImage = cgImage {
-  //              // Process the CGImage in the main thread
-  //              DispatchQueue.main.async { [self] in
-  //                thumbnailFrames.append(UIImage(cgImage: cgImage))
-  //              }
-  //            } else if let error = error {
-  //              // Handle error
-  //              print("Error: \(error)")
-  //            }}
-  //        }
-  //      }
-  //    }
-  //  }
-  
   @objc private func onPaused(_ paused: Bool) {
     if paused {
       player?.pause()
@@ -401,7 +367,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc func seekSliderChanged(_ seekSlider: UISlider) {
     self.isSeeking = true
     labelProgress.isHidden = false
-    player?.pause()
+    
     guard let duration = self.player?.currentItem?.duration else { return }
     let seconds : Float64 = Double(self.seekSlider.value) * CMTimeGetSeconds(duration)
     if seekSlider.currentThumbImage != nil {
@@ -409,33 +375,21 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       let xPosition = thumbRect.origin.x
       
       labelProgress.transform = CGAffineTransform(
-        translationX: xPosition + (seekSlider.frame.origin.x),
-        y: seekSlider.frame.minY - 20
+        translationX: xPosition + seekSlider.frame.origin.x,
+        y: seekSlider.frame.minY - size20
       )
     } else {
       print("No thumb image available")
     }
-    
-    //    if thumbnailFrames.indices.contains(myIndex) {
-    //
-    //      SeekerThumbnailView.image = thumbnailFrames[myIndex]
-    //      if let thumbImage = seekSlider.currentThumbImage {
-    //        let thumbRect = seekSlider.thumbRect(forBounds: seekSlider.bounds, trackRect: seekSlider.trackRect(forBounds: seekSlider.bounds), value: seekSlider.value)
-    //        let xPosition = thumbRect.origin.x
-    ////        SeekerThumbnailView.center = CGPoint(x: xPosition + seekSlider.frame.origin.x, y: seekSlider.frame.origin.y - 45)
-    //        SeekerThumbnailView.transform = CGAffineTransform(translationX: xPosition, y: seekSlider.frame.minY - 120)
-    //      } else {
-    //          print("No thumb image available")
-    //      }
-    
-    //    }
+
     if seconds.isNaN == false {
       let seekTime = CMTime(value: CMTimeValue(seconds), timescale: 1)
       self.player?.seek(to: seekTime, completionHandler: { [self] completed in
         if completed {
           self.isSeeking = false
-          self.labelProgress.isHidden = true
-          self.player?.play()
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
+            self.labelProgress.isHidden = true
+          })
         }
       })
     }
@@ -446,7 +400,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers, .allowAirPlay])
       try AVAudioSession.sharedInstance().setActive(true)
     } catch {
-      print(error)
+      print("cant able to enable audio background session", error)
     }
   }
   
@@ -492,16 +446,35 @@ extension RNVideoPlayerView {
       guard let self = self else { return }
       self.menuOptionsButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
     }
+    
+    let spacerView = UIView()
+    optionsItemView.addArrangedSubview(spacerView)
+    
+    if let speedRateConfig = menuOptionsItemProps?["speedRate"] as? [String: Any],
+       let isDisabled = speedRateConfig["disabled"] as? Bool, !isDisabled {
+      optionsItemView.addArrangedSubview(speedRateButton)
+    }
+    
+    if let qualityConfig = menuOptionsItemProps?["quality"] as? [String: Any],
+       let isDisabled = qualityConfig["disabled"] as? Bool, !isDisabled {
+      optionsItemView.addArrangedSubview(qualityButton)
+    }
+    
+    
     speedRateButton.layer.add(animation, forKey: CATransitionType.push.rawValue)
     self.speedRateButton.isHidden = !self.isRotated
-    
     qualityButton.layer.add(animation, forKey: CATransitionType.push.rawValue)
     self.qualityButton.isHidden = !self.isRotated
     
+    self.optionsItemView.isHidden = !self.isRotated
+    
     self.title.isHidden = self.isRotated
-    
-    
-    
+
+    if (!isRotated) {
+      optionsItemView.arrangedSubviews.forEach {
+        $0.removeFromSuperview()
+      }
+    }
   }
   
   @objc private func onTappedGoback() {
@@ -522,26 +495,12 @@ extension RNVideoPlayerView {
 @available(iOS 13.0, *)
 extension RNVideoPlayerView {
   @objc private func onTappedPlayPause() {
-    var image = ""
     if player?.rate == 0 {
       player?.play()
-      image = "pause"
     } else {
       player?.pause()
-      image = "play.fill"
     }
-    
-    let animation = UIViewPropertyAnimator(duration: 0.2, curve: .easeInOut) { [self] in
-      playPauseButton.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
-      playPauseButton.setImage(UIImage(systemName: image), for: .normal)
-    }
-    
-    animation.addCompletion { _ in
-      UIView.animate(withDuration: 0.2) {
-        self.playPauseButton.transform = .identity
-      }
-    }
-    animation.startAnimation()
+    animatedPlayPause()
   }
   
   @objc private func fowardTime() {
@@ -586,22 +545,33 @@ extension RNVideoPlayerView {
   }
   
   private func configureThumb(_ config: NSDictionary?) {
-    guard let sliderProps = config,
-          let minimumTrackColor = sliderProps["minimumTrackColor"] as? String,
-          let maximumTrackColor = sliderProps["maximumTrackColor"] as? String,
-          let thumbSize = sliderProps["thumbSize"] as? CGFloat,
-          let thumbColor = sliderProps["thumbColor"] as? String else {
-      return
-    }
+    let minimumTrackColor = config?["minimumTrackColor"] as? String
+    let maximumTrackColor = config?["maximumTrackColor"] as? String
+    let thumbSize = config?["thumbSize"] as? CGFloat
+    let thumbColor = config?["thumbColor"] as? String
     
-    seekSlider.minimumTrackTintColor = hexStringToUIColor(hexColor: minimumTrackColor)
-    seekSlider.maximumTrackTintColor = hexStringToUIColor(hexColor: maximumTrackColor)
+    seekSlider.minimumTrackTintColor = transformStringIntoUIColor(color: minimumTrackColor)
+    seekSlider.maximumTrackTintColor = transformStringIntoUIColor(color: maximumTrackColor)
     
-    let circleImage = createCircle(
-      size: CGSize(width: thumbSize, height: thumbSize),
-      backgroundColor: hexStringToUIColor(hexColor: thumbColor)
+    let circleImage = createCircleImage(
+      size: CGSize(width: thumbSize ?? size20, height: thumbSize ?? size20),
+      backgroundColor: transformStringIntoUIColor(color: thumbColor)
     )
     seekSlider.setThumbImage(circleImage, for: .normal)
     seekSlider.setThumbImage(circleImage, for: .highlighted)
+  }
+  
+  private func animatedPlayPause() {
+    let animation = UIViewPropertyAnimator(duration: variantPercent02, curve: .easeInOut) { [self] in
+      playPauseButton.transform = CGAffineTransform(scaleX: variantPercent08, y: variantPercent08)
+      playPauseButton.setImage(UIImage(systemName: player?.rate == 0 ? "play.fill" : "pause"), for: .normal)
+    }
+    
+    animation.addCompletion { _ in
+      UIView.animate(withDuration: 0.2) {
+        self.playPauseButton.transform = .identity
+      }
+    }
+    animation.startAnimation()
   }
 }

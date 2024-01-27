@@ -17,23 +17,21 @@ class MenuOptionsLayoutManager {
   }
   
   public func createAndAdjustLayout(config: NSDictionary?) {
-    let size = calculateFrameSize(18, 0.2)
-    let trailingAnchor = calculateFrameSize(20, 0.2)
-    
+    let trailingAnchor = calculateFrameSize(size20, variantPercent02)
     let color = config?["color"] as? String
-    let isHidden = config?["color"] as? Bool
+    let isHidden = config?["hidden"] as? Bool
     
     
     _button.setBackgroundImage(UIImage(systemName: "gear"), for: .normal)
-    _button.tintColor = hexStringToUIColor(hexColor: color)
+    _button.tintColor = transformStringIntoUIColor(color: color)
     _button.isHidden = isHidden ?? false
     _view.addSubview(_button)
     _button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       _button.trailingAnchor.constraint(equalTo: _view.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchor),
-      _button.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _view.layoutMarginsGuide.topAnchor, constant: 8),
-      _button.widthAnchor.constraint(equalToConstant: size),
-      _button.heightAnchor.constraint(equalToConstant: size)
+      _button.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _view.layoutMarginsGuide.topAnchor, constant: margin8),
+      _button.widthAnchor.constraint(equalToConstant: size20v02),
+      _button.heightAnchor.constraint(equalToConstant: size20v02)
     ])
   }
   

@@ -28,12 +28,12 @@ class SeekSliderLayoutManager {
       return
     }
     
-    _seekSlider.minimumTrackTintColor = hexStringToUIColor(hexColor: minimumTrackColor)
-    _seekSlider.maximumTrackTintColor = hexStringToUIColor(hexColor: maximumTrackColor)
+    _seekSlider.minimumTrackTintColor = transformStringIntoUIColor(color: minimumTrackColor)
+    _seekSlider.maximumTrackTintColor = transformStringIntoUIColor(color: maximumTrackColor)
     
-    circleImage = createCircle(
+    circleImage = createCircleImage(
       size: CGSize(width: thumbSize, height: thumbSize),
-      backgroundColor: hexStringToUIColor(hexColor: thumbColor)
+      backgroundColor: transformStringIntoUIColor(color: thumbColor)
     )
     _seekSlider.setThumbImage(circleImage, for: .normal)
     _seekSlider.setThumbImage(circleImage, for: .highlighted)

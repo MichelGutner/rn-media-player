@@ -10,25 +10,19 @@ import Foundation
 @available(iOS 13.0, *)
 class SpeedRateLayoutManager {
   private var _button = UIButton()
-  private var _view = UIView()
+  private var _view = UIStackView()
   
-  init(_ view: UIView!) {
+  init(_ view: UIStackView) {
     self._view = view
   }
   
   public func createAndAdjustLayout() {
-    let size = calculateFrameSize(18, 0.2)
-    let trailingAnchor = calculateFrameSize(60, 0.2)
-    
     _button.setBackgroundImage(UIImage(systemName: "timer"), for: .normal)
-    _view.addSubview(_button)
     _button.tintColor = .white
     _button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      _button.trailingAnchor.constraint(lessThanOrEqualTo: _view.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchor),
-      _button.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _view.layoutMarginsGuide.topAnchor, constant: 8),
-      _button.widthAnchor.constraint(equalToConstant: size),
-      _button.heightAnchor.constraint(equalToConstant: size)
+      _button.widthAnchor.constraint(equalToConstant: size20v02),
+      _button.heightAnchor.constraint(equalToConstant: size20v02)
       
     ])
   }

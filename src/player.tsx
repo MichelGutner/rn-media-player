@@ -60,7 +60,7 @@ export const RNPlayerVideo = ({
   return (
     <View style={style}>
       <VPlayer
-        forwardProps={{color: '#ffffff', image: 'forward15'}}
+        // forwardProps={{color: '#ffffff', image: 'forward15'}}
         style={{...StyleSheet.absoluteFillObject, overflow: 'hidden'}}
         source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         // source="https://content.jwplatform.com/videos/MGAxJ46m-aoHq8DIe.mp4"
@@ -77,11 +77,19 @@ export const RNPlayerVideo = ({
         timeValueForChange={10}
         lockControls={true}
         onError={e => console.log(e.nativeEvent.error)}
+        menuOptionsItemProps={{
+          speedRate: {
+            disabled: false,
+          },
+          quality: {
+            disabled: true,
+          },
+        }}
         sliderProps={{
-          maximumTrackColor: '#dd1212',
-          minimumTrackColor: '#3939ae',
-          thumbSize: 10,
-          thumbColor: '#412cdf',
+          maximumTrackColor: 'rgba(255,255,255,0.2)',
+          // minimumTrackColor: '#3939ae',
+          thumbSize: 15,
+          // thumbColor: '#412cdf',
         }}
         // playPauseProps={{
         //   color: '#ce0808',

@@ -17,14 +17,13 @@ class FullScreenLayoutManager {
   }
   
   public func createAndAdjustLayout(config: NSDictionary?) {
-    let size = calculateFrameSize(18, 0.2)
-    let trailingAnchor = calculateFrameSize(20, 0.2)
+    let trailingAnchor = calculateFrameSize(size20, variantPercent02)
     let fullScreenProps = config
     let color = fullScreenProps?["color"] as? String
     let isHidden = fullScreenProps?["hidden"] as? Bool
     
     _button.isHidden = isHidden ?? false
-    _button.tintColor = hexStringToUIColor(hexColor: color)
+    _button.tintColor = transformStringIntoUIColor(color: color)
     _view.addSubview(_button)
     _button.translatesAutoresizingMaskIntoConstraints = false
     _button.transform = CGAffineTransform(rotationAngle: CGFloat.pi * 0.5)
@@ -32,8 +31,8 @@ class FullScreenLayoutManager {
     NSLayoutConstraint.activate([
       _button.trailingAnchor.constraint(equalTo: _view.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchor),
       _button.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _view.layoutMarginsGuide.bottomAnchor),
-      _button.widthAnchor.constraint(equalToConstant: size),
-      _button.heightAnchor.constraint(equalToConstant: size)
+      _button.widthAnchor.constraint(equalToConstant: size20v02),
+      _button.heightAnchor.constraint(equalToConstant: size20v02)
     ])
   }
   
