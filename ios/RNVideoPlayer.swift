@@ -20,12 +20,15 @@ class RNVideoPlayer: RCTViewManager {
 class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var isRotated = false
   private var isSeeking: Bool = false
+  private var loading = true
   
   private var _view: UIView!
   private var _subView: UIView!
   private var _overlayView: UIView!
   private var menuOptionsView = UIView()
   private var optionsItemView = UIStackView()
+  private var menu = UIStackView()
+  private var loadingView = UIView()
   private var imagePlayPause: String = ""
   
   private var fullScreenImage: String!
@@ -63,7 +66,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onBuffer: RCTDirectEventBlock?
   @objc var onBufferCompleted: RCTDirectEventBlock?
   @objc var onGoBackTapped: RCTDirectEventBlock?
-  @objc var timeValueForChange: NSNumber?
+  @objc var timeValueForChange: NSNumber? = 0
   @objc var fullScreen: Bool = false
   
   @objc var sliderProps: NSDictionary? = [:]
@@ -77,6 +80,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var titleProps: NSDictionary? = [:]
   @objc var goBackProps: NSDictionary? = [:]
   @objc var menuOptionsItemProps: NSDictionary? = [:]
+  @objc var loadingProps: NSDictionary? = [:]
   
   // external controls
   @objc var source: String = "" {
@@ -160,6 +164,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _overlayView.backgroundColor = UIColor(white: 0, alpha: 0.4)
     _subView.addSubview(_overlayView)
     _overlayView.frame = _subView.frame
+    _overlayView.isHidden = loading
     _overlayView.reactZIndex = 2
     
     // player
@@ -176,17 +181,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     let forward = ForwardLayoutManager(_overlayView)
     forward.createAndAdjustLayout(config: forwardProps)
     forwardButton = forward.button()
-    forwardButton.addTarget(self, action: #selector(fowardTime), for: .touchUpInside)
+    forwardButton.addTarget(self, action: #selector(onTapFowardTime), for: .touchUpInside)
     
     // add backward button
     let backward = BackwardLayoutManager(_overlayView)
     backward.createAndAdjustLayout(config: backwardProps)
     backwardButton = backward.button()
-    backwardButton.addTarget(self, action: #selector(backwardTime), for: .touchUpInside)
+    backwardButton.addTarget(self, action: #selector(onTapBackwardTime), for: .touchUpInside)
     
     let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent01)
     // seek slider label
-    let trailingAnchor = calculateFrameSize(size50, variantPercent02)
+    let trailingAnchor = calculateFrameSize(size45, variantPercent02)
     let labelDurationProps = labelDurationProps
     let labelDurationTextColor = labelDurationProps?["color"] as? String
     labelDuration.textColor = transformStringIntoUIColor(color: labelDurationTextColor)
@@ -233,11 +238,11 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     let goBack = GoBackLayoutManager(_overlayView)
     goBack.createAndAdjustLayout(config: goBackProps)
     goBackButton = goBack.button()
-    goBackButton.addTarget(self, action: #selector(onTappedGoback), for: .touchUpInside)
+    goBackButton.addTarget(self, action: #selector(onTapGoback), for: .touchUpInside)
     
     // seek slider
     _overlayView.addSubview(seekSlider)
-    let seekTrailingAnchor = calculateFrameSize(size80, variantPercent02)
+    let seekTrailingAnchor = calculateFrameSize(size90, variantPercent02)
     configureThumb(sliderProps)
     seekSlider.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
@@ -265,6 +270,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     let speedRate = SpeedRateLayoutManager(optionsItemView)
     speedRate.createAndAdjustLayout()
     speedRateButton = speedRate.button()
+    speedRateButton.addTarget(self, action: #selector(onTapSpeedRate), for: .touchUpInside)
     
     let quality = QualityLayoutManager(optionsItemView)
     quality.createAndAdjustLayout()
@@ -282,7 +288,14 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       optionsItemView.trailingAnchor.constraint(lessThanOrEqualTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchorOptionsItemView),
       optionsItemView.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: margin8)
     ])
-
+    
+    let loading = UIHostingController(rootView: LoadingLayoutManager(loadingColor: loadingProps))
+    loading.view.frame = bounds
+    loading.view.backgroundColor = .clear
+    loadingView = loading.view
+    loadingView.isHidden = !self.loading
+    addSubview(loadingView)
+    
     player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
       self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem
@@ -309,8 +322,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       self.onVideoProgress?(["progress": currentTime, "bufferedDuration": bufferedStart + bufferedDuration])
     }
     
-    labelDuration.text = (stringFromTimeInterval(interval: duration))
-    labelProgress.text = (stringFromTimeInterval(interval: currentTime))
+    labelDuration.text = stringFromTimeInterval(interval: duration)
+    labelProgress.text = stringFromTimeInterval(interval: currentTime)
     
     if self.isSeeking == false {
       self.seekSlider.value = Float(currentTime/duration)
@@ -341,6 +354,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
     if keyPath == "status", let player = player {
       if player.status == .readyToPlay {
+        loading = false
+        loadingView.isHidden = true
+        _overlayView.isHidden = false
         onLoaded?(["duration": player.currentItem?.duration.seconds as Any])
         onReady?(["ready": true])
       } else if player.status == .failed {
@@ -354,14 +370,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc private func itemDidFinishPlaying(_ notification: Notification) {
     self.onCompleted?(["completed": true])
     self.removePeriodicTimeObserver()
-  }
-  
-  @objc private func onPaused(_ paused: Bool) {
-    if paused {
-      player?.pause()
-    } else {
-      player?.play()
-    }
   }
   
   @objc func seekSliderChanged(_ seekSlider: UISlider) {
@@ -404,19 +412,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-  //      override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-  //        if let touch = touches.first {
-  //          _subView.subviews.forEach {$0.isHidden = false}
-  //        }
-  //      }
-  //
-  //      override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-  //        DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
-  //          _subView.subviews.forEach {$0.isHidden = true}
-  //        })
-  //      }
-  //
-  
+//  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+//    if let touch = touches.first {
+//      _subView.subviews.forEach {$0.isHidden = false}
+//    }
+//  }
+//
+//  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+//    DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
+//      _subView.subviews.forEach {$0.isHidden = true}
+//    })
+//  }
 }
 
 enum Resize: String {
@@ -432,6 +438,51 @@ enum VideoPlayerError: Error {
 // player method from bridge
 @available(iOS 13.0, *)
 extension RNVideoPlayerView {
+  @objc private func onPaused(_ paused: Bool) {
+    if paused {
+      player?.pause()
+    } else {
+      player?.play()
+    }
+    animatedPlayPause()
+  }
+  
+  @objc private func onChangeRate(_ rate: Float) {
+    self.player?.rate = rate
+  }
+}
+
+// player methods
+@available(iOS 13.0, *)
+extension RNVideoPlayerView {
+  @objc private func onTappedPlayPause() {
+    if player?.rate == 0 {
+      player?.play()
+    } else {
+      player?.pause()
+    }
+    animatedPlayPause()
+  }
+  
+  @objc private func onTapFowardTime() {
+    let forward = videoTimerManager(avPlayer: player)
+    forward.advance(Double(truncating: timeValueForChange!))
+  }
+  
+  @objc private func onTapBackwardTime() {
+    let backward = videoTimerManager(avPlayer: player)
+    backward.advance(-Double(truncating: timeValueForChange!))
+  }
+  
+  @objc private func onUpdatePlayerLayer(_ resizeMode: NSString) {
+    let mode = Resize(rawValue: resizeMode as String)
+    let videoGravity = videoGravity(mode!)
+    
+    DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
+      self.playerLayer.videoGravity = videoGravity
+    })
+  }
+  
   @objc private func onTapMenuOptions() {
     onMoreOptionsTapped?([:])
     isRotated.toggle()
@@ -451,12 +502,12 @@ extension RNVideoPlayerView {
     optionsItemView.addArrangedSubview(spacerView)
     
     if let speedRateConfig = menuOptionsItemProps?["speedRate"] as? [String: Any],
-       let isDisabled = speedRateConfig["disabled"] as? Bool, !isDisabled {
+       let isHidden = speedRateConfig["hidden"] as? Bool, !isHidden {
       optionsItemView.addArrangedSubview(speedRateButton)
     }
     
     if let qualityConfig = menuOptionsItemProps?["quality"] as? [String: Any],
-       let isDisabled = qualityConfig["disabled"] as? Bool, !isDisabled {
+       let isHidden = qualityConfig["hidden"] as? Bool, !isHidden {
       optionsItemView.addArrangedSubview(qualityButton)
     }
     
@@ -477,7 +528,7 @@ extension RNVideoPlayerView {
     }
   }
   
-  @objc private func onTappedGoback() {
+  @objc private func onTapGoback() {
     onGoBackTapped?([:])
   }
   
@@ -485,41 +536,14 @@ extension RNVideoPlayerView {
     onFullScreenTapped?([:])
   }
   
-  @objc private func onChangeRate(_ rate: Float) {
-    self.player?.rate = rate
-  }
-  
-}
+  @objc private func onTapSpeedRate() {
+    print("is tapped")
+//    modalMenu.isHidden = false
+    let animation = CATransition()
+    animation.type = .fade
 
-// player methods
-@available(iOS 13.0, *)
-extension RNVideoPlayerView {
-  @objc private func onTappedPlayPause() {
-    if player?.rate == 0 {
-      player?.play()
-    } else {
-      player?.pause()
-    }
-    animatedPlayPause()
-  }
-  
-  @objc private func fowardTime() {
-    let forward = videoTimerManager(avPlayer: player)
-    forward.advance(Double(truncating: timeValueForChange!))
-  }
-  
-  @objc private func backwardTime() {
-    let backward = videoTimerManager(avPlayer: player)
-    backward.advance(-Double(truncating: timeValueForChange!))
-  }
-  
-  @objc private func onUpdatePlayerLayer(_ resizeMode: NSString) {
-    let mode = Resize(rawValue: resizeMode as String)
-    let videoGravity = videoGravity(mode!)
-    
-    DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
-      self.playerLayer.videoGravity = videoGravity
-    })
+//    menu.layer.add(animation, forKey: CATransitionType.push.rawValue)
+//    sideMenu.addArrangedSubview(spacerView)
   }
 }
 
@@ -539,7 +563,7 @@ extension RNVideoPlayerView {
   
   private func onChangeOrientation(_ fullscreen: Bool) {
     guard let playerLayer = playerLayer else { return }
-    playerLayer.frame = fullScreen ? bounds : bounds.inset(by: safeAreaInsets)
+    playerLayer.frame = fullScreen ? bounds : _overlayView.bounds.inset(by: safeAreaInsets)
     
     fullScreenImage = fullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right"
   }

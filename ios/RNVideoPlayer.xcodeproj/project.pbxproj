@@ -19,7 +19,6 @@
 		DB0C9DCD2B23AB6900B7D598 /* UtilityStringHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DCC2B23AB6900B7D598 /* UtilityStringHandler.swift */; };
 		DB0C9DD42B23C85300B7D598 /* videoTimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */; };
 		DB0C9DDB2B23DB0400B7D598 /* FullScreenLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DDA2B23DB0400B7D598 /* FullScreenLayoutManager.swift */; };
-		DB0C9DE32B260AE100B7D598 /* loading.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DE22B260AE100B7D598 /* loading.swift */; };
 		DB18CA6A2B5C67FC00A42B83 /* SpeedRateLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB18CA692B5C67FC00A42B83 /* SpeedRateLayoutManager.swift */; };
 		DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */; };
 		DB7821492B4E414C0022DCE8 /* GobackLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */; };
@@ -27,6 +26,7 @@
 		DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */; };
 		DB7821512B4E486D0022DCE8 /* SeekSliderLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */; };
 		DB7821532B5009F70022DCE8 /* BackwardLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */; };
+		DBAAB1952B66863900BE5FD7 /* LoadingLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1942B66863900BE5FD7 /* LoadingLayoutManager.swift */; };
 		DBC0447B2B43A9A000888241 /* PlayPauseLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */; };
 		DBC0447D2B4B3BF000888241 /* ForwardLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */; };
 		DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */; };
@@ -67,7 +67,6 @@
 		DB0C9DCC2B23AB6900B7D598 /* UtilityStringHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityStringHandler.swift; sourceTree = "<group>"; };
 		DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = videoTimerManager.swift; sourceTree = "<group>"; };
 		DB0C9DDA2B23DB0400B7D598 /* FullScreenLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenLayoutManager.swift; sourceTree = "<group>"; };
-		DB0C9DE22B260AE100B7D598 /* loading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = loading.swift; sourceTree = "<group>"; };
 		DB18CA692B5C67FC00A42B83 /* SpeedRateLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedRateLayoutManager.swift; sourceTree = "<group>"; };
 		DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapSeek.swift; sourceTree = "<group>"; };
 		DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GobackLayoutManager.swift; sourceTree = "<group>"; };
@@ -75,6 +74,7 @@
 		DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityImageHandler.swift; sourceTree = "<group>"; };
 		DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekSliderLayoutManager.swift; sourceTree = "<group>"; };
 		DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackwardLayoutManager.swift; sourceTree = "<group>"; };
+		DBAAB1942B66863900BE5FD7 /* LoadingLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayPauseLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForwardLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDefault.swift; sourceTree = "<group>"; };
@@ -222,7 +222,6 @@
 			isa = PBXGroup;
 			children = (
 				DB0C9DDA2B23DB0400B7D598 /* FullScreenLayoutManager.swift */,
-				DB0C9DE22B260AE100B7D598 /* loading.swift */,
 				DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */,
 				DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */,
 				DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */,
@@ -232,6 +231,7 @@
 				DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */,
 				DB18CA692B5C67FC00A42B83 /* SpeedRateLayoutManager.swift */,
 				DBC6D72A2B64596C0025CC13 /* QualityLayoutManager.swift */,
+				DBAAB1942B66863900BE5FD7 /* LoadingLayoutManager.swift */,
 			);
 			name = CustomLayoutManager;
 			sourceTree = "<group>";
@@ -516,6 +516,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DBAAB1952B66863900BE5FD7 /* LoadingLayoutManager.swift in Sources */,
 				DB18CA6A2B5C67FC00A42B83 /* SpeedRateLayoutManager.swift in Sources */,
 				DB7821512B4E486D0022DCE8 /* SeekSliderLayoutManager.swift in Sources */,
 				DB78214D2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift in Sources */,
@@ -524,7 +525,6 @@
 				DBC0447B2B43A9A000888241 /* PlayPauseLayoutManager.swift in Sources */,
 				DB7821492B4E414C0022DCE8 /* GobackLayoutManager.swift in Sources */,
 				DBD7188A2B54CA9B008ED0AD /* UtilityDynamicSize.swift in Sources */,
-				DB0C9DE32B260AE100B7D598 /* loading.swift in Sources */,
 				DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */,
 				DB0C9DCD2B23AB6900B7D598 /* UtilityStringHandler.swift in Sources */,
 				DB7821532B5009F70022DCE8 /* BackwardLayoutManager.swift in Sources */,

@@ -17,7 +17,7 @@ public var size50 = CGFloat(50)
 public var size10 = CGFloat(10)
 public var size14 = CGFloat(14)
 public var size45 = CGFloat(45)
-public var size80 = CGFloat(80)
+public var size90 = CGFloat(90)
 public var size60 = CGFloat(60)
 
 public var variantPercent02 = CGFloat(0.2)

@@ -33,7 +33,7 @@ class PlayPauseLayoutManager {
     _view.addSubview(_button)
     _button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      _button.centerXAnchor.constraint(equalTo: _view.centerXAnchor),
+      _button.centerXAnchor.constraint(equalTo: _view.layoutMarginsGuide.centerXAnchor),
       _button.safeAreaLayoutGuide.centerYAnchor.constraint(equalTo: _view.layoutMarginsGuide.centerYAnchor),
       _button.widthAnchor.constraint(equalToConstant: size),
       _button.heightAnchor.constraint(equalToConstant:  size),

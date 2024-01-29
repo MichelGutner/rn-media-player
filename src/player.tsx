@@ -79,11 +79,14 @@ export const RNPlayerVideo = ({
         onError={e => console.log(e.nativeEvent.error)}
         menuOptionsItemProps={{
           speedRate: {
-            disabled: false,
+            hidden: false,
           },
           quality: {
-            disabled: true,
+            hidden: false,
           },
+        }}
+        loadingProps={{
+          color: '#ce0808',
         }}
         sliderProps={{
           maximumTrackColor: 'rgba(255,255,255,0.2)',

@@ -39,5 +39,6 @@ RCT_EXPORT_VIEW_PROPERTY(fullScreenProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(titleProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(goBackProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(menuOptionsItemProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(loadingProps, NSDictionary)
 
 @end
