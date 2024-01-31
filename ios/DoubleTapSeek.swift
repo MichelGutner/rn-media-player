@@ -47,7 +47,6 @@ struct DoubleTapSeek: View {
         .opacity(isTapped ? 1 : 0.1)
         .onTapGesture(count: 2) {
           withAnimation(.easeInOut(duration: 0.2)) {
-            print("tapped", isTapped)
             self.isTapped.toggle()
             self.showArrows[0] = true
           }

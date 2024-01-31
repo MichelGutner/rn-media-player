@@ -86,7 +86,7 @@ export const RNPlayerVideo = ({
           },
         }}
         loadingProps={{
-          color: '#ce0808',
+          color: '#aca5a5a7',
         }}
         sliderProps={{
           maximumTrackColor: 'rgba(255,255,255,0.2)',
@@ -116,6 +116,30 @@ export const RNPlayerVideo = ({
         // goBackProps={{
         //   color: '#ce0808',
         // }}
+        speedRateModalProps={{
+          title: 'Speed Rate',
+        }}
+        qualityModalProps={{
+          title: 'Quality',
+          data: [
+            {
+              name: 'Auto',
+              value: '',
+            },
+            {
+              name: 'High Quality',
+              value: '',
+            },
+            {
+              name: 'Medium Quality',
+              value: '',
+            },
+            {
+              name: 'Low Quality',
+              value: '',
+            },
+          ],
+        }}
         onMoreOptionsTapped={() => console.log('MORE OPTIONS TAPPED')}
         onFullScreenTapped={onFullScreen}
         onGoBackTapped={() => console.log('GO BACK TAPPED')}

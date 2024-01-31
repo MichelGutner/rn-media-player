@@ -8,7 +8,7 @@
 import Foundation
 
 @available(iOS 13.0, *)
-class MenuOptionsLayoutManager {
+class SettingsLayoutManager {
   private var _button = UIButton()
   private var _view: UIView
   

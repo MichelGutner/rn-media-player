@@ -19,18 +19,20 @@
 		DB0C9DCD2B23AB6900B7D598 /* UtilityStringHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DCC2B23AB6900B7D598 /* UtilityStringHandler.swift */; };
 		DB0C9DD42B23C85300B7D598 /* videoTimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */; };
 		DB0C9DDB2B23DB0400B7D598 /* FullScreenLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DDA2B23DB0400B7D598 /* FullScreenLayoutManager.swift */; };
-		DB18CA6A2B5C67FC00A42B83 /* SpeedRateLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB18CA692B5C67FC00A42B83 /* SpeedRateLayoutManager.swift */; };
+		DB18CA6A2B5C67FC00A42B83 /* PlayBackSpeedLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB18CA692B5C67FC00A42B83 /* PlayBackSpeedLayoutManager.swift */; };
 		DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */; };
 		DB7821492B4E414C0022DCE8 /* GobackLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */; };
-		DB78214D2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */; };
+		DB78214D2B4E45450022DCE8 /* SettingsLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214C2B4E45450022DCE8 /* SettingsLayoutManager.swift */; };
 		DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */; };
 		DB7821512B4E486D0022DCE8 /* SeekSliderLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */; };
 		DB7821532B5009F70022DCE8 /* BackwardLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */; };
 		DBAAB1952B66863900BE5FD7 /* LoadingLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1942B66863900BE5FD7 /* LoadingLayoutManager.swift */; };
+		DBAAB1972B67275000BE5FD7 /* ModalLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1962B67275000BE5FD7 /* ModalLayoutManager.swift */; };
 		DBC0447B2B43A9A000888241 /* PlayPauseLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */; };
 		DBC0447D2B4B3BF000888241 /* ForwardLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */; };
 		DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */; };
 		DBC6D72B2B64596C0025CC13 /* QualityLayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC6D72A2B64596C0025CC13 /* QualityLayoutManager.swift */; };
+		DBCD42E72B69E3180099DFEF /* data.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCD42E62B69E3180099DFEF /* data.swift */; };
 		DBD7188A2B54CA9B008ED0AD /* UtilityDynamicSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */; };
 /* End PBXBuildFile section */
 
@@ -67,18 +69,20 @@
 		DB0C9DCC2B23AB6900B7D598 /* UtilityStringHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityStringHandler.swift; sourceTree = "<group>"; };
 		DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = videoTimerManager.swift; sourceTree = "<group>"; };
 		DB0C9DDA2B23DB0400B7D598 /* FullScreenLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenLayoutManager.swift; sourceTree = "<group>"; };
-		DB18CA692B5C67FC00A42B83 /* SpeedRateLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedRateLayoutManager.swift; sourceTree = "<group>"; };
+		DB18CA692B5C67FC00A42B83 /* PlayBackSpeedLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayBackSpeedLayoutManager.swift; sourceTree = "<group>"; };
 		DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapSeek.swift; sourceTree = "<group>"; };
 		DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GobackLayoutManager.swift; sourceTree = "<group>"; };
-		DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuOptionsLayoutManager.swift; sourceTree = "<group>"; };
+		DB78214C2B4E45450022DCE8 /* SettingsLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsLayoutManager.swift; sourceTree = "<group>"; };
 		DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityImageHandler.swift; sourceTree = "<group>"; };
 		DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekSliderLayoutManager.swift; sourceTree = "<group>"; };
 		DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackwardLayoutManager.swift; sourceTree = "<group>"; };
 		DBAAB1942B66863900BE5FD7 /* LoadingLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingLayoutManager.swift; sourceTree = "<group>"; };
+		DBAAB1962B67275000BE5FD7 /* ModalLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalLayoutManager.swift; sourceTree = "<group>"; usesTabs = 0; };
 		DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayPauseLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForwardLayoutManager.swift; sourceTree = "<group>"; };
 		DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDefault.swift; sourceTree = "<group>"; };
 		DBC6D72A2B64596C0025CC13 /* QualityLayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QualityLayoutManager.swift; sourceTree = "<group>"; };
+		DBCD42E62B69E3180099DFEF /* data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = data.swift; sourceTree = "<group>"; };
 		DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDynamicSize.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -189,6 +193,7 @@
 		D02E142A2AF08CCB003D0472 /* videoPlayer */ = {
 			isa = PBXGroup;
 			children = (
+				DBCD42E42B69E2E30099DFEF /* Helpers */,
 				DB0C9DCF2B23B55900B7D598 /* Utilities */,
 				DB0C9DCB2B23AB3F00B7D598 /* Features */,
 				D02E142C2AF08CF6003D0472 /* RNVideoPlayer.swift */,
@@ -226,12 +231,13 @@
 				DBC0447A2B43A9A000888241 /* PlayPauseLayoutManager.swift */,
 				DBC0447C2B4B3BF000888241 /* ForwardLayoutManager.swift */,
 				DB7821482B4E414C0022DCE8 /* GobackLayoutManager.swift */,
-				DB78214C2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift */,
+				DB78214C2B4E45450022DCE8 /* SettingsLayoutManager.swift */,
 				DB7821502B4E486D0022DCE8 /* SeekSliderLayoutManager.swift */,
 				DB7821522B5009F70022DCE8 /* BackwardLayoutManager.swift */,
-				DB18CA692B5C67FC00A42B83 /* SpeedRateLayoutManager.swift */,
+				DB18CA692B5C67FC00A42B83 /* PlayBackSpeedLayoutManager.swift */,
 				DBC6D72A2B64596C0025CC13 /* QualityLayoutManager.swift */,
 				DBAAB1942B66863900BE5FD7 /* LoadingLayoutManager.swift */,
+				DBAAB1962B67275000BE5FD7 /* ModalLayoutManager.swift */,
 			);
 			name = CustomLayoutManager;
 			sourceTree = "<group>";
@@ -250,6 +256,22 @@
 				DB0C9DD22B23B68F00B7D598 /* CustomLayoutManager */,
 			);
 			name = Native;
+			sourceTree = "<group>";
+		};
+		DBCD42E42B69E2E30099DFEF /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				DBCD42E52B69E2F80099DFEF /* OptionsView */,
+			);
+			name = Helpers;
+			sourceTree = "<group>";
+		};
+		DBCD42E52B69E2F80099DFEF /* OptionsView */ = {
+			isa = PBXGroup;
+			children = (
+				DBCD42E62B69E3180099DFEF /* data.swift */,
+			);
+			name = OptionsView;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -517,10 +539,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				DBAAB1952B66863900BE5FD7 /* LoadingLayoutManager.swift in Sources */,
-				DB18CA6A2B5C67FC00A42B83 /* SpeedRateLayoutManager.swift in Sources */,
+				DB18CA6A2B5C67FC00A42B83 /* PlayBackSpeedLayoutManager.swift in Sources */,
 				DB7821512B4E486D0022DCE8 /* SeekSliderLayoutManager.swift in Sources */,
-				DB78214D2B4E45450022DCE8 /* MenuOptionsLayoutManager.swift in Sources */,
+				DB78214D2B4E45450022DCE8 /* SettingsLayoutManager.swift in Sources */,
 				D02E142F2AF08E73003D0472 /* RNVideoPlayerManager.m in Sources */,
+				DBAAB1972B67275000BE5FD7 /* ModalLayoutManager.swift in Sources */,
 				DBC0447D2B4B3BF000888241 /* ForwardLayoutManager.swift in Sources */,
 				DBC0447B2B43A9A000888241 /* PlayPauseLayoutManager.swift in Sources */,
 				DB7821492B4E414C0022DCE8 /* GobackLayoutManager.swift in Sources */,
@@ -534,6 +557,7 @@
 				DBC6D72B2B64596C0025CC13 /* QualityLayoutManager.swift in Sources */,
 				DB0C9DDB2B23DB0400B7D598 /* FullScreenLayoutManager.swift in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
+				DBCD42E72B69E3180099DFEF /* data.swift in Sources */,
 				DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */,
 				DB0C9DD42B23C85300B7D598 /* videoTimerManager.swift in Sources */,
 			);

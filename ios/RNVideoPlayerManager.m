@@ -40,5 +40,7 @@ RCT_EXPORT_VIEW_PROPERTY(titleProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(goBackProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(menuOptionsItemProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(loadingProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(speedRateModalProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(qualityModalProps, NSDictionary)
 
 @end

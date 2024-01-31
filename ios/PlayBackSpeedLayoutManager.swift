@@ -8,7 +8,7 @@
 import Foundation
 
 @available(iOS 13.0, *)
-class SpeedRateLayoutManager {
+class PlayBackSpeedLayoutManager {
   private var _button = UIButton()
   private var _view = UIStackView()
   

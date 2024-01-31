@@ -21,14 +21,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var isRotated = false
   private var isSeeking: Bool = false
   private var loading = true
+  private var isOpenedModal = false
   
   private var _view: UIView!
   private var _subView: UIView!
   private var _overlayView: UIView!
   private var menuOptionsView = UIView()
-  private var optionsItemView = UIStackView()
+  private var settingsStackView = UIStackView()
   private var menu = UIStackView()
   private var loadingView = UIView()
+  private var playBackSpeedModalView = UIView()
+  private var qualityModalView = UIView()
   private var imagePlayPause: String = ""
   
   private var fullScreenImage: String!
@@ -44,9 +47,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var forwardButton = UIButton()
   private var backwardButton = UIButton()
   private var fullScreenButton = UIButton()
-  private var menuOptionsButton = UIButton()
+  private var settingsButton = UIButton()
   private var goBackButton = UIButton()
-  private var speedRateButton = UIButton()
+  private var playBackSpeedButton = UIButton()
   private var qualityButton = UIButton()
   
   private var videoTimeForChange: Double?
@@ -81,6 +84,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var goBackProps: NSDictionary? = [:]
   @objc var menuOptionsItemProps: NSDictionary? = [:]
   @objc var loadingProps: NSDictionary? = [:]
+  @objc var speedRateModalProps: NSDictionary? = [:]
+  @objc var qualityModalProps: NSDictionary? = [:]
   
   // external controls
   @objc var source: String = "" {
@@ -260,33 +265,34 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     
     // add more option
-    let menuOptions = MenuOptionsLayoutManager(_overlayView)
-    menuOptions.createAndAdjustLayout(config: menuOptionsProps)
-    menuOptionsButton = menuOptions.button()
-    menuOptionsButton.transform = CGAffineTransform(rotationAngle: isRotated ? .pi : 0)
-    menuOptionsButton.addTarget(self, action: #selector(onTapMenuOptions), for: .touchUpInside)
+    let settings = SettingsLayoutManager(_overlayView)
+    settings.createAndAdjustLayout(config: menuOptionsProps)
+    settingsButton = settings.button()
+    settingsButton.transform = CGAffineTransform(rotationAngle: isRotated ? .pi : 0)
+    settingsButton.addTarget(self, action: #selector(onTapMenuOptions), for: .touchUpInside)
     
     
-    let speedRate = SpeedRateLayoutManager(optionsItemView)
-    speedRate.createAndAdjustLayout()
-    speedRateButton = speedRate.button()
-    speedRateButton.addTarget(self, action: #selector(onTapSpeedRate), for: .touchUpInside)
+    let playbackSpeed = PlayBackSpeedLayoutManager(settingsStackView)
+    playbackSpeed.createAndAdjustLayout()
+    playBackSpeedButton = playbackSpeed.button()
+    playBackSpeedButton.addTarget(self, action: #selector(onTapPlaybackSpeed), for: .touchUpInside)
     
-    let quality = QualityLayoutManager(optionsItemView)
+    let quality = QualityLayoutManager(settingsStackView)
     quality.createAndAdjustLayout()
     qualityButton = quality.button()
+    qualityButton.addTarget(self, action: #selector(onTapQuality), for: .touchUpInside)
   
-    optionsItemView.axis = .horizontal
-    optionsItemView.spacing = spacing20
+    settingsStackView.axis = .horizontal
+    settingsStackView.spacing = spacing20
 
     // Create a spacer view to add space between buttons
     let trailingAnchorOptionsItemView = calculateFrameSize(size60, variantPercent02)
     
-    _overlayView.addSubview(optionsItemView)
-    optionsItemView.translatesAutoresizingMaskIntoConstraints = false
+    _overlayView.addSubview(settingsStackView)
+    settingsStackView.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      optionsItemView.trailingAnchor.constraint(lessThanOrEqualTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchorOptionsItemView),
-      optionsItemView.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: margin8)
+      settingsStackView.trailingAnchor.constraint(lessThanOrEqualTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchorOptionsItemView),
+      settingsStackView.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: margin8)
     ])
     
     let loading = UIHostingController(rootView: LoadingLayoutManager(loadingColor: loadingProps))
@@ -295,6 +301,53 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     loadingView = loading.view
     loadingView.isHidden = !self.loading
     addSubview(loadingView)
+    
+    let speedRateModalTitle: String = speedRateModalProps?["title"] as? String ?? "Playback Speed"
+    let speedRateModal = UIHostingController(
+      rootView: ModalLayoutManager(
+        onClose: { [self] in
+          playBackSpeedModalView.removeFromSuperview()
+          animatedPlayPause()
+        },
+        data: speedRateData,
+        title: speedRateModalTitle,
+        onSelected: { [self] item in
+          player?.rate = item as! Float
+        },
+        onAppear: { [self] in
+          player?.pause()
+        },
+        isOpened: .constant(isOpenedModal)
+      ))
+    playBackSpeedModalView = speedRateModal.view
+    playBackSpeedModalView.frame = frame
+    playBackSpeedModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
+    playBackSpeedModalView.isHidden = !isOpenedModal
+    
+    let qualityModalTitle: String = qualityModalProps?["title"] as? String ?? "Quality"
+    let qualityData: [[String: String]] = qualityModalProps?["data"] as? [[String: String]] ?? [[:]]
+    
+    let qualityModal = UIHostingController(
+      rootView: ModalLayoutManager(
+        onClose: { [self] in
+          qualityModalView.removeFromSuperview()
+          animatedPlayPause()
+        },
+        data: qualityData,
+        title: qualityModalTitle,
+        onSelected: {item in
+          print(item)
+        },
+        onAppear: { [self] in
+          player?.pause()
+        },
+        isOpened: .constant(isOpenedModal)
+      ))
+    qualityModalView = qualityModal.view
+    qualityModalView.frame = frame
+    qualityModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
+    qualityModalView.isHidden = !isOpenedModal
+
     
     player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
@@ -408,7 +461,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers, .allowAirPlay])
       try AVAudioSession.sharedInstance().setActive(true)
     } catch {
-      print("cant able to enable audio background session", error)
+      onError?(["error": "cant able to enable audio background session \(error)"])
     }
   }
   
@@ -493,36 +546,35 @@ extension RNVideoPlayerView {
     animation.duration = 0.1
     
     let rotationAngle: CGFloat = isRotated ? .pi : 0
-    UIView.animate(withDuration: 0.2) { [weak self] in
-      guard let self = self else { return }
-      self.menuOptionsButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
+    UIView.animate(withDuration: 0.2) { [self] in
+      settingsButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
     }
     
     let spacerView = UIView()
-    optionsItemView.addArrangedSubview(spacerView)
+    settingsStackView.addArrangedSubview(spacerView)
     
     if let speedRateConfig = menuOptionsItemProps?["speedRate"] as? [String: Any],
        let isHidden = speedRateConfig["hidden"] as? Bool, !isHidden {
-      optionsItemView.addArrangedSubview(speedRateButton)
+      settingsStackView.addArrangedSubview(playBackSpeedButton)
     }
     
     if let qualityConfig = menuOptionsItemProps?["quality"] as? [String: Any],
        let isHidden = qualityConfig["hidden"] as? Bool, !isHidden {
-      optionsItemView.addArrangedSubview(qualityButton)
+      settingsStackView.addArrangedSubview(qualityButton)
     }
     
     
-    speedRateButton.layer.add(animation, forKey: CATransitionType.push.rawValue)
-    self.speedRateButton.isHidden = !self.isRotated
+    playBackSpeedButton.layer.add(animation, forKey: CATransitionType.push.rawValue)
+    self.playBackSpeedButton.isHidden = !self.isRotated
     qualityButton.layer.add(animation, forKey: CATransitionType.push.rawValue)
     self.qualityButton.isHidden = !self.isRotated
     
-    self.optionsItemView.isHidden = !self.isRotated
+    self.settingsStackView.isHidden = !self.isRotated
     
     self.title.isHidden = self.isRotated
 
     if (!isRotated) {
-      optionsItemView.arrangedSubviews.forEach {
+      settingsStackView.arrangedSubviews.forEach {
         $0.removeFromSuperview()
       }
     }
@@ -536,14 +588,16 @@ extension RNVideoPlayerView {
     onFullScreenTapped?([:])
   }
   
-  @objc private func onTapSpeedRate() {
-    print("is tapped")
-//    modalMenu.isHidden = false
-    let animation = CATransition()
-    animation.type = .fade
-
-//    menu.layer.add(animation, forKey: CATransitionType.push.rawValue)
-//    sideMenu.addArrangedSubview(spacerView)
+  @objc private func onTapPlaybackSpeed() {
+    isOpenedModal = true
+    playBackSpeedModalView.isHidden = false
+    _overlayView.addSubview(playBackSpeedModalView)
+  }
+  
+  @objc private func onTapQuality() {
+    isOpenedModal = true
+    qualityModalView.isHidden = false
+    _overlayView.addSubview(qualityModalView)
   }
 }
 
@@ -586,16 +640,16 @@ extension RNVideoPlayerView {
   }
   
   private func animatedPlayPause() {
-    let animation = UIViewPropertyAnimator(duration: variantPercent02, curve: .easeInOut) { [self] in
-      playPauseButton.transform = CGAffineTransform(scaleX: variantPercent08, y: variantPercent08)
+//    let animation = UIViewPropertyAnimator(duration: variantPercent02, curve: .easeInOut) { [self] in
+//      playPauseButton.transform = CGAffineTransform(scaleX: variantPercent08, y: variantPercent08)
       playPauseButton.setImage(UIImage(systemName: player?.rate == 0 ? "play.fill" : "pause"), for: .normal)
-    }
+//    }
     
-    animation.addCompletion { _ in
-      UIView.animate(withDuration: 0.2) {
-        self.playPauseButton.transform = .identity
-      }
-    }
-    animation.startAnimation()
+//    animation.addCompletion { _ in
+//      UIView.animate(withDuration: 0.2) {
+//        self.playPauseButton.transform = .identity
+//      }
+//    }
+//    animation.startAnimation()
   }
 }
