@@ -125,18 +125,22 @@ export const RNPlayerVideo = ({
             {
               name: 'Auto',
               value: '',
+              id: 'auto',
             },
             {
               name: 'High Quality',
               value: '',
+              id: 'highQuality',
             },
             {
               name: 'Medium Quality',
               value: '',
+              id: 'mediumQuality',
             },
             {
               name: 'Low Quality',
               value: '',
+              id: 'lowQuality',
             },
           ],
         }}

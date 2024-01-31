@@ -317,6 +317,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         onAppear: { [self] in
           player?.pause()
         },
+        initialSelected: "normal",
         isOpened: .constant(isOpenedModal)
       ))
     playBackSpeedModalView = speedRateModal.view
@@ -341,6 +342,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         onAppear: { [self] in
           player?.pause()
         },
+        initialSelected: "auto",
         isOpened: .constant(isOpenedModal)
       ))
     qualityModalView = qualityModal.view

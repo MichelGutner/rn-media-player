@@ -16,14 +16,13 @@ struct ModalLayoutManager: View {
   let title: String
   var onSelected: (Any) -> Void
   var onAppear: () -> Void
+  var initialSelected: String
 
   @Binding var isOpened: Bool
-  @State var selected = "1"
+  @State var selected = ""
   @State var offset = UIScreen.main.bounds.height
   
   var body: some View {
-    
-    
     ZStack {
       Color(.black).opacity(0.1).onTapGesture {
         hidden()
@@ -33,7 +32,7 @@ struct ModalLayoutManager: View {
         
         ForEach(data, id: \.self) { item in
           Button(action: {
-            self.selected = item["value"]!
+            self.selected = item["id"]!
             if let value = Float(item["value"] ?? "") {
               onSelected(value)
               hidden()
@@ -44,7 +43,7 @@ struct ModalLayoutManager: View {
               ZStack {
                 Circle().stroke(Color.white, lineWidth: 1).frame(width: 12, height: 12)
                 
-                if self.selected == item["value"] {
+                if self.selected == item["id"] {
                   Circle()
                     .fill(Color.white)
                     .frame(width: 6, height: 6)
@@ -66,6 +65,7 @@ struct ModalLayoutManager: View {
       .shadow(color: Color.white, radius: 0.4, x: 0.1, y: 0.1)
       .offset(x: 0, y: offset)
       .onAppear {
+        self.selected = self.initialSelected
         withAnimation(.interactiveSpring(dampingFraction: 1.0)) {
           self.offset = 0
           isOpened = false
