@@ -18,6 +18,10 @@ class RNVideoPlayer: RCTViewManager {
 
 @available(iOS 13.0, *)
 class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
+  private var hasCalledSetup = false
+  private var player: AVPlayer?
+  private var timeObserver: Any?
+  
   private var isRotated = false
   private var isSeeking: Bool = false
   private var loading = true
@@ -28,7 +32,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var _overlayView: UIView!
   private var menuOptionsView = UIView()
   private var settingsStackView = UIStackView()
-  private var menu = UIStackView()
   private var loadingView = UIView()
   private var playBackSpeedModalView = UIView()
   private var qualityModalView = UIView()
@@ -55,10 +58,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var videoTimeForChange: Double?
   private var playerLayer: AVPlayerLayer!
   
-  private var hasCalledSetup = false
-  private var player: AVPlayer?
-  private var timeObserver: Any?
-  
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onReady: RCTDirectEventBlock?
@@ -69,6 +68,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onBuffer: RCTDirectEventBlock?
   @objc var onBufferCompleted: RCTDirectEventBlock?
   @objc var onGoBackTapped: RCTDirectEventBlock?
+  
   @objc var timeValueForChange: NSNumber? = 0
   @objc var fullScreen: Bool = false
   
@@ -91,9 +91,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var source: String = "" {
     didSet {
       do {
-        if source == "" {
-          self.player?.replaceCurrentItem(with: nil)
-          return
+        if source.isEmpty {
+         return
         }
         
         let verificatedUrlString = try verifyUrl(urlString: source)
@@ -110,7 +109,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         periodTimeObserver()
         
       } catch {
-        self.onError?(["error": "Error on get url: error type is \(error)"])
+        self.onError?(["url": "Error on get url: error type is \(error)"])
       }
     }
   }
@@ -134,17 +133,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       self.onUpdatePlayerLayer(resizeMode)
     }
   }
-  
-  
-  // this function must be return a url error when trigger a invalid url
-  func verifyUrl(urlString: String?) throws -> URL {
-    if let urlString = urlString, let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
-      return url
-    } else {
-      throw VideoPlayerError.invalidURL
-    }
-  }
-  
+
   override func layoutSubviews() {
     if hasCalledSetup {
       videoPlayerSubView()
@@ -165,6 +154,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _view.addSubview(_subView)
     _subView.frame = bounds
     
+  
+
+  
     _overlayView = UIView()
     _overlayView.backgroundColor = UIColor(white: 0, alpha: 0.4)
     _subView.addSubview(_overlayView)
@@ -172,31 +164,41 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _overlayView.isHidden = loading
     _overlayView.reactZIndex = 2
     
+    let doubleTapVeiw = UIHostingController(rootView: OverlayLayoutManager(onTapBackward: {[self] in
+      onTapBackwardTime()
+    }, onTapForward: { [self] in
+      onTapFowardTime()
+    }))
+    doubleTapVeiw.view.frame = _subView.frame
+    _overlayView.addSubview(doubleTapVeiw.view)
+//    doubleTapVeiw.view.isHidden = loading
+    doubleTapVeiw.view.backgroundColor = .clear
+    
     // player
     onChangeOrientation(fullScreen)
     _subView.layer.addSublayer(playerLayer)
-    
-    // PlayPause
+//
+//    // PlayPause
     let playPause = PlayPauseLayoutManager(avPlayer, _overlayView)
     playPause.crateAndAdjustLayout(config: playPauseProps)
     playPauseButton = playPause.button()
     playPauseButton.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
-    
+//
     // add forward button
     let forward = ForwardLayoutManager(_overlayView)
     forward.createAndAdjustLayout(config: forwardProps)
     forwardButton = forward.button()
     forwardButton.addTarget(self, action: #selector(onTapFowardTime), for: .touchUpInside)
-    
+
     // add backward button
     let backward = BackwardLayoutManager(_overlayView)
     backward.createAndAdjustLayout(config: backwardProps)
     backwardButton = backward.button()
     backwardButton.addTarget(self, action: #selector(onTapBackwardTime), for: .touchUpInside)
-    
-    let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent01)
+
+    let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent10)
     // seek slider label
-    let trailingAnchor = calculateFrameSize(size45, variantPercent02)
+    let trailingAnchor = calculateFrameSize(size45, variantPercent20)
     let labelDurationProps = labelDurationProps
     let labelDurationTextColor = labelDurationProps?["color"] as? String
     labelDuration.textColor = transformStringIntoUIColor(color: labelDurationTextColor)
@@ -210,7 +212,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       labelDuration.trailingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchor),
       labelDuration.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -3)
     ])
-    
+
     let labelProgressProps = labelProgressProps
     let labelProgressTextColor = labelProgressProps?["color"] as? String
     labelProgress.textColor = transformStringIntoUIColor(color: labelProgressTextColor)
@@ -222,13 +224,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     labelProgress.isHidden = true
     _overlayView.addSubview(labelProgress)
     labelProgress.translatesAutoresizingMaskIntoConstraints = false
-    
+
     title.text = videoTitle
     title.numberOfLines = 2
-    
-    let titleSize = calculateFrameSize(size14, variantPercent01)
+
+    let titleSize = calculateFrameSize(size14, variantPercent10)
     let titleColor = titleProps?["color"] as? String
-    
+
     title.textColor = transformStringIntoUIColor(color: titleColor)
     title.font = UIFont.systemFont(ofSize: titleSize)
     //    title.isHidden = titleHidden ?? false
@@ -237,17 +239,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     NSLayoutConstraint.activate([
       title.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: size45),
       title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: margin8),
-      title.widthAnchor.constraint(lessThanOrEqualTo: _overlayView.safeAreaLayoutGuide.widthAnchor, multiplier: variantPercent06)
+      title.widthAnchor.constraint(lessThanOrEqualTo: _overlayView.safeAreaLayoutGuide.widthAnchor, multiplier: variantPercent60)
     ])
-    
+
     let goBack = GoBackLayoutManager(_overlayView)
     goBack.createAndAdjustLayout(config: goBackProps)
     goBackButton = goBack.button()
     goBackButton.addTarget(self, action: #selector(onTapGoback), for: .touchUpInside)
-    
+
     // seek slider
     _overlayView.addSubview(seekSlider)
-    let seekTrailingAnchor = calculateFrameSize(size90, variantPercent02)
+    let seekTrailingAnchor = calculateFrameSize(size90, variantPercent20)
     configureThumb(sliderProps)
     seekSlider.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
@@ -256,52 +258,52 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       seekSlider.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -3),
     ])
     seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
-    
+
     let fullScreen = FullScreenLayoutManager(_overlayView)
     fullScreen.createAndAdjustLayout(config: fullScreenProps)
     fullScreenButton = fullScreen.button()
     fullScreenButton.setBackgroundImage(UIImage(systemName: fullScreenImage ?? "arrow.up.left.and.arrow.down.right"), for: .normal)
     fullScreenButton.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
-    
-    
+
+
     // add more option
     let settings = SettingsLayoutManager(_overlayView)
     settings.createAndAdjustLayout(config: menuOptionsProps)
     settingsButton = settings.button()
     settingsButton.transform = CGAffineTransform(rotationAngle: isRotated ? .pi : 0)
     settingsButton.addTarget(self, action: #selector(onTapMenuOptions), for: .touchUpInside)
-    
-    
+
+
     let playbackSpeed = PlayBackSpeedLayoutManager(settingsStackView)
     playbackSpeed.createAndAdjustLayout()
     playBackSpeedButton = playbackSpeed.button()
     playBackSpeedButton.addTarget(self, action: #selector(onTapPlaybackSpeed), for: .touchUpInside)
-    
+
     let quality = QualityLayoutManager(settingsStackView)
     quality.createAndAdjustLayout()
     qualityButton = quality.button()
     qualityButton.addTarget(self, action: #selector(onTapQuality), for: .touchUpInside)
-  
+
     settingsStackView.axis = .horizontal
     settingsStackView.spacing = spacing20
 
     // Create a spacer view to add space between buttons
-    let trailingAnchorOptionsItemView = calculateFrameSize(size60, variantPercent02)
-    
+    let trailingAnchorOptionsItemView = calculateFrameSize(size60, variantPercent20)
+
     _overlayView.addSubview(settingsStackView)
     settingsStackView.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       settingsStackView.trailingAnchor.constraint(lessThanOrEqualTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchorOptionsItemView),
       settingsStackView.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: margin8)
     ])
-    
+
     let loading = UIHostingController(rootView: LoadingLayoutManager(loadingColor: loadingProps))
     loading.view.frame = bounds
     loading.view.backgroundColor = .clear
     loadingView = loading.view
     loadingView.isHidden = !self.loading
     addSubview(loadingView)
-    
+
     let speedRateModalTitle: String = speedRateModalProps?["title"] as? String ?? "Playback Speed"
     let speedRateModal = UIHostingController(
       rootView: ModalLayoutManager(
@@ -317,17 +319,18 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         onAppear: { [self] in
           player?.pause()
         },
-        initialSelected: "normal",
+        initialSelected: "Normal",
         isOpened: .constant(isOpenedModal)
       ))
     playBackSpeedModalView = speedRateModal.view
     playBackSpeedModalView.frame = frame
     playBackSpeedModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
     playBackSpeedModalView.isHidden = !isOpenedModal
-    
+
     let qualityModalTitle: String = qualityModalProps?["title"] as? String ?? "Quality"
+    let initialQualitySelected: String = qualityModalProps?["initialQualitySelected"] as! String
     let qualityData: [[String: String]] = qualityModalProps?["data"] as? [[String: String]] ?? [[:]]
-    
+
     let qualityModal = UIHostingController(
       rootView: ModalLayoutManager(
         onClose: { [self] in
@@ -336,20 +339,21 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         },
         data: qualityData,
         title: qualityModalTitle,
-        onSelected: {item in
-          print(item)
+        onSelected: { [self] url in
+          changePlaybackQuality(URL(string: url as! String)!)
+          qualityModalView.removeFromSuperview()
+          onLoadingManager(hideLoading: false)
         },
         onAppear: { [self] in
           player?.pause()
         },
-        initialSelected: "auto",
+        initialSelected: initialQualitySelected,
         isOpened: .constant(isOpenedModal)
       ))
     qualityModalView = qualityModal.view
     qualityModalView.frame = frame
     qualityModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
     qualityModalView.isHidden = !isOpenedModal
-
     
     player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
@@ -410,14 +414,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     if keyPath == "status", let player = player {
       if player.status == .readyToPlay {
         loading = false
-        loadingView.isHidden = true
-        _overlayView.isHidden = false
+        onLoadingManager(hideLoading: true)
         onLoaded?(["duration": player.currentItem?.duration.seconds as Any])
         onReady?(["ready": true])
       } else if player.status == .failed {
-        onError?(["error": "Failed to load video \(player.status)"])
+        self.onError?(extractPlayerErrors(player.currentItem))
       } else if player.status == .unknown {
-        onError?(["error": "Unknown to load video \(player.status)"])
+        self.onError?(extractPlayerErrors(player.currentItem))
       }
     }
   }
@@ -441,16 +444,14 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         translationX: xPosition + seekSlider.frame.origin.x,
         y: seekSlider.frame.minY - size20
       )
-    } else {
-      print("No thumb image available")
     }
-
+    
     if seconds.isNaN == false {
       let seekTime = CMTime(value: CMTimeValue(seconds), timescale: 1)
       self.player?.seek(to: seekTime, completionHandler: { [self] completed in
         if completed {
           self.isSeeking = false
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: {
             self.labelProgress.isHidden = true
           })
         }
@@ -467,17 +468,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-//  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-//    if let touch = touches.first {
-//      _subView.subviews.forEach {$0.isHidden = false}
-//    }
-//  }
-//
-//  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-//    DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
-//      _subView.subviews.forEach {$0.isHidden = true}
-//    })
-//  }
+  //  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+  //    if let touch = touches.first {
+  //      _subView.subviews.forEach {$0.isHidden = false}
+  //    }
+  //  }
+  //
+  //  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+  //    DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
+  //      _subView.subviews.forEach {$0.isHidden = true}
+  //    })
+  //  }
 }
 
 enum Resize: String {
@@ -552,9 +553,6 @@ extension RNVideoPlayerView {
       settingsButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
     }
     
-    let spacerView = UIView()
-    settingsStackView.addArrangedSubview(spacerView)
-    
     if let speedRateConfig = menuOptionsItemProps?["speedRate"] as? [String: Any],
        let isHidden = speedRateConfig["hidden"] as? Bool, !isHidden {
       settingsStackView.addArrangedSubview(playBackSpeedButton)
@@ -574,7 +572,7 @@ extension RNVideoPlayerView {
     self.settingsStackView.isHidden = !self.isRotated
     
     self.title.isHidden = self.isRotated
-
+    
     if (!isRotated) {
       settingsStackView.arrangedSubviews.forEach {
         $0.removeFromSuperview()
@@ -603,7 +601,6 @@ extension RNVideoPlayerView {
   }
 }
 
-// utillites methods
 @available(iOS 13.0, *)
 extension RNVideoPlayerView {
   func videoGravity(_ videoResize: Resize) -> AVLayerVideoGravity  {
@@ -641,17 +638,47 @@ extension RNVideoPlayerView {
     seekSlider.setThumbImage(circleImage, for: .highlighted)
   }
   
-  private func animatedPlayPause() {
-//    let animation = UIViewPropertyAnimator(duration: variantPercent02, curve: .easeInOut) { [self] in
-//      playPauseButton.transform = CGAffineTransform(scaleX: variantPercent08, y: variantPercent08)
-      playPauseButton.setImage(UIImage(systemName: player?.rate == 0 ? "play.fill" : "pause"), for: .normal)
-//    }
+  private func changePlaybackQuality(_ url: URL) {
+    let currentTime = player?.currentItem?.currentTime() ?? CMTime.zero
+    let asset = AVURLAsset(url: url)
+    let newPlayerItem = AVPlayerItem(asset: asset)
     
-//    animation.addCompletion { _ in
-//      UIView.animate(withDuration: 0.2) {
-//        self.playPauseButton.transform = .identity
-//      }
-//    }
-//    animation.startAnimation()
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: { [self] in
+      player?.replaceCurrentItem(with: newPlayerItem)
+      newPlayerItem.addObserver(self, forKeyPath: "status", options: [.new], context: nil)
+      
+      var playerItemStatusObservation: NSKeyValueObservation?
+      playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { [weak self] (item, _) in
+        guard item.status == .readyToPlay else {
+          self?.onError?(extractPlayerErrors(item))
+          return
+        }
+        
+        
+        self?.player?.seek(to: currentTime)
+        self?.onLoadingManager(hideLoading: true)
+        self?.player?.play()
+        self?.animatedPlayPause()
+        playerItemStatusObservation?.invalidate()
+      }
+    })
+  }
+
+  private func animatedPlayPause() {
+    playPauseButton.setImage(UIImage(systemName: player?.rate == 0 ? "play.fill" : "pause"), for: .normal)
+  }
+  
+  private func onLoadingManager(hideLoading: Bool) {
+    loadingView.isHidden = hideLoading
+    _overlayView.isHidden = !hideLoading
+//    doubleTapVeiw.view.isHidden = !hideLoading
+  }
+  
+  private func verifyUrl(urlString: String?) throws -> URL {
+    if let urlString = urlString, let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
+      return url
+    } else {
+      throw VideoPlayerError.invalidURL
+    }
   }
 }

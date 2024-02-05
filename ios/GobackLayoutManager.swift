@@ -17,7 +17,7 @@ class GoBackLayoutManager {
   }
   
   public func createAndAdjustLayout(config: NSDictionary?) {
-    let size = calculateFrameSize(size22, variantPercent01)
+    let size = calculateFrameSize(size22, variantPercent10)
     let color = config?["color"] as? String
     let isHidden = config?["hidden"] as? Bool
     

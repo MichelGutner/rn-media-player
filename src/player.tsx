@@ -62,7 +62,8 @@ export const RNPlayerVideo = ({
       <VPlayer
         // forwardProps={{color: '#ffffff', image: 'forward15'}}
         style={{...StyleSheet.absoluteFillObject, overflow: 'hidden'}}
-        source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+        // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+        source="https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4"
         // source="https://content.jwplatform.com/videos/MGAxJ46m-aoHq8DIe.mp4"
         paused={paused}
         rate={rate}
@@ -76,7 +77,7 @@ export const RNPlayerVideo = ({
         resizeMode={resizeMode}
         timeValueForChange={10}
         lockControls={true}
-        onError={e => console.log(e.nativeEvent.error)}
+        onError={e => console.log('native Error', e.nativeEvent)}
         menuOptionsItemProps={{
           speedRate: {
             hidden: false,
@@ -121,26 +122,37 @@ export const RNPlayerVideo = ({
         }}
         qualityModalProps={{
           title: 'Quality',
+          initialQualitySelected: 'Low Quality',
           data: [
             {
-              name: 'Auto',
-              value: '',
-              id: 'auto',
+              name: 'Very High Quality',
+              value:
+                'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
+              id: 'veryHighQuality',
             },
             {
               name: 'High Quality',
-              value: '',
+              value:
+                'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
               id: 'highQuality',
             },
             {
               name: 'Medium Quality',
-              value: '',
+              value:
+                'https://content.jwplatform.com/videos/MGAxJ46m-zZbIuxVJ.mp4',
               id: 'mediumQuality',
             },
             {
               name: 'Low Quality',
-              value: '',
+              value:
+                'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
               id: 'lowQuality',
+            },
+            {
+              name: 'Very Low Quality',
+              value:
+                'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
+              id: 'veryLowQuality',
             },
           ],
         }}

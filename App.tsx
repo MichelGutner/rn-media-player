@@ -19,12 +19,12 @@ function App(): JSX.Element {
   //     setIsFull(!isFull);
   //   }, 12000);
   // }, [isFull]);
-  const resizeMode = isFull ? 'cover' : 'contain';
+  const resizeMode = isFull ? 'contain' : 'contain';
   return (
     <RNPlayerVideo
-      isFullScreen={isFull}
+      isFullScreen={true}
       // style={{height}}
-      style={{height: isFull ? height : 350, zIndex: 2}}
+      style={{height: !isFull ? height : 350, zIndex: 2}}
       onFullScreen={() => setIsFull(!isFull)}
       resizeMode={resizeMode}
       paused={false}

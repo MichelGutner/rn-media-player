@@ -14,7 +14,7 @@ struct LoadingLayoutManager: View {
   @State var isLoading : Bool = false
   
   var body: some View {
-    let size = calculateFrameSize(size22, variantPercent02)
+    let size = calculateFrameSize(size22, variantPercent20)
     let loadingColor = loadingColor?["color"]
     let color = Color(transformStringIntoUIColor(color: loadingColor as? String))
 

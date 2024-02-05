@@ -17,7 +17,7 @@ class SettingsLayoutManager {
   }
   
   public func createAndAdjustLayout(config: NSDictionary?) {
-    let trailingAnchor = calculateFrameSize(size20, variantPercent02)
+    let trailingAnchor = calculateFrameSize(size20, variantPercent20)
     let color = config?["color"] as? String
     let isHidden = config?["hidden"] as? Bool
     

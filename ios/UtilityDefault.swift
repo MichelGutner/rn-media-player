@@ -20,13 +20,14 @@ public var size45 = CGFloat(45)
 public var size90 = CGFloat(90)
 public var size60 = CGFloat(60)
 
-public var variantPercent02 = CGFloat(0.2)
-public var variantPercent01 = CGFloat(0.1)
-public var variantPercent06 = CGFloat(0.6)
-public var variantPercent08 = CGFloat(0.8)
+public var variantPercent10 = CGFloat(0.1)
+public var variantPercent20 = CGFloat(0.2)
+public var variantPercent40 = CGFloat(0.4)
+public var variantPercent60 = CGFloat(0.6)
+public var variantPercent80 = CGFloat(0.8)
 
 public var spacing20 = CGFloat(20)
 
-public var margin8 = calculateFrameSize(size8, variantPercent01)
+public var margin8 = calculateFrameSize(size8, variantPercent10)
 
-public var size20v02 = calculateFrameSize(size20, variantPercent02)
+public var size20v02 = calculateFrameSize(size20, variantPercent20)

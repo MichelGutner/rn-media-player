@@ -19,9 +19,9 @@ class ForwardLayoutManager {
   
   
   public func createAndAdjustLayout(config: NSDictionary?) {
-    let size = calculateFrameSize(size30, variantPercent01)
+    let size = calculateFrameSize(size30, variantPercent10)
     
-    let layoutPosition = uiView.bounds.width * variantPercent02
+    let layoutPosition = uiView.bounds.width * variantPercent20
     configureLayoutForward(config)
     uiView.addSubview(_button)
     
