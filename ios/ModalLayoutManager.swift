@@ -96,7 +96,7 @@ struct ModalLayoutManager: View {
   }
   
   public func hidden() {
-    DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
       withAnimation(.interactiveSpring(dampingFraction: 2.0)) {
         offset = UIScreen.main.bounds.height
         onClose()

@@ -5,18 +5,18 @@ struct DoubleTapSeek: View {
   @State private var tappedQuantity: Int = 0
   @State private var isTapped: Bool = false
   @State private var showArrows: [Bool] = [false, false, false]
-  @State private var resetDuration: TimeInterval = 0.7 // Set the duration after which tappedQuantity will reset
+  @State private var resetDuration: TimeInterval = 0.7
   @State private var resetTimer: Timer?
   
   var isForward: Bool = false
   var onTap: () -> Void
-  
+  var seekableValue: Int = 10
 
   
   var body: some View {
     Circle()
-      .fill(Color.black).opacity(0.5)
-      .scaleEffect(4, anchor: isForward ? .leading : .trailing)
+      .fill(Color.black).opacity(0.3)
+      .scaleEffect(3, anchor: isForward ? .leading : .trailing)
       .opacity(isTapped ? 1 : 0)
       .overlay(
         HStack {
@@ -31,7 +31,7 @@ struct DoubleTapSeek: View {
             .font(.title)
             .rotationEffect(.init(degrees: isForward ? 180 : 0))
             
-            Text("\(tappedQuantity * 15) segundos")
+            Text("\(tappedQuantity * seekableValue) segundos")
               .font(.caption)
               .fontWeight(.semibold)
               .foregroundColor(.white)

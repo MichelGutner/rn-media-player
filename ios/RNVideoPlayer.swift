@@ -35,6 +35,11 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var loadingView = UIView()
   private var playBackSpeedModalView = UIView()
   private var qualityModalView = UIView()
+  
+  private var downloadView = UIView()
+  private var qualityView = UIView()
+  private var playbackSpeedView = UIView()
+  
   private var imagePlayPause: String = ""
   
   private var fullScreenImage: String!
@@ -52,8 +57,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var fullScreenButton = UIButton()
   private var settingsButton = UIButton()
   private var goBackButton = UIButton()
-  private var playBackSpeedButton = UIButton()
-  private var qualityButton = UIButton()
   
   private var videoTimeForChange: Double?
   private var playerLayer: AVPlayerLayer!
@@ -68,6 +71,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onBuffer: RCTDirectEventBlock?
   @objc var onBufferCompleted: RCTDirectEventBlock?
   @objc var onGoBackTapped: RCTDirectEventBlock?
+  @objc var onVideoDownloaded: RCTDirectEventBlock?
   
   @objc var timeValueForChange: NSNumber? = 0
   @objc var fullScreen: Bool = false
@@ -92,7 +96,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     didSet {
       do {
         if source.isEmpty {
-         return
+          return
         }
         
         let verificatedUrlString = try verifyUrl(urlString: source)
@@ -133,7 +137,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       self.onUpdatePlayerLayer(resizeMode)
     }
   }
-
+  
   override func layoutSubviews() {
     if hasCalledSetup {
       videoPlayerSubView()
@@ -154,9 +158,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _view.addSubview(_subView)
     _subView.frame = bounds
     
-  
-
-  
+    
+    
+    
     _overlayView = UIView()
     _overlayView.backgroundColor = UIColor(white: 0, alpha: 0.4)
     _subView.addSubview(_overlayView)
@@ -164,38 +168,40 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _overlayView.isHidden = loading
     _overlayView.reactZIndex = 2
     
-    let doubleTapVeiw = UIHostingController(rootView: OverlayLayoutManager(onTapBackward: {[self] in
-      onTapBackwardTime()
-    }, onTapForward: { [self] in
-      onTapFowardTime()
-    }))
+    let doubleTapVeiw = UIHostingController(rootView: DoubleTapViewLayoutManager(
+      onTapBackward: {[self] in
+        onTapBackwardTime()
+      },
+      onTapForward: { [self] in
+        onTapFowardTime()
+      }))
     doubleTapVeiw.view.frame = _subView.frame
     _overlayView.addSubview(doubleTapVeiw.view)
-//    doubleTapVeiw.view.isHidden = loading
+    //    doubleTapVeiw.view.isHidden = loading
     doubleTapVeiw.view.backgroundColor = .clear
     
     // player
     onChangeOrientation(fullScreen)
     _subView.layer.addSublayer(playerLayer)
-//
-//    // PlayPause
+    //
+    //    // PlayPause
     let playPause = PlayPauseLayoutManager(avPlayer, _overlayView)
     playPause.crateAndAdjustLayout(config: playPauseProps)
     playPauseButton = playPause.button()
     playPauseButton.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
-//
+    //
     // add forward button
-    let forward = ForwardLayoutManager(_overlayView)
-    forward.createAndAdjustLayout(config: forwardProps)
-    forwardButton = forward.button()
-    forwardButton.addTarget(self, action: #selector(onTapFowardTime), for: .touchUpInside)
-
-    // add backward button
-    let backward = BackwardLayoutManager(_overlayView)
-    backward.createAndAdjustLayout(config: backwardProps)
-    backwardButton = backward.button()
-    backwardButton.addTarget(self, action: #selector(onTapBackwardTime), for: .touchUpInside)
-
+    //    let forward = ForwardLayoutManager(_overlayView)
+    //    forward.createAndAdjustLayout(config: forwardProps)
+    //    forwardButton = forward.button()
+    //    forwardButton.addTarget(self, action: #selector(onTapFowardTime), for: .touchUpInside)
+    //
+    //    // add backward button
+    //    let backward = BackwardLayoutManager(_overlayView)
+    //    backward.createAndAdjustLayout(config: backwardProps)
+    //    backwardButton = backward.button()
+    //    backwardButton.addTarget(self, action: #selector(onTapBackwardTime), for: .touchUpInside)
+    
     let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent10)
     // seek slider label
     let trailingAnchor = calculateFrameSize(size45, variantPercent20)
@@ -212,7 +218,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       labelDuration.trailingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchor),
       labelDuration.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -3)
     ])
-
+    
     let labelProgressProps = labelProgressProps
     let labelProgressTextColor = labelProgressProps?["color"] as? String
     labelProgress.textColor = transformStringIntoUIColor(color: labelProgressTextColor)
@@ -224,13 +230,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     labelProgress.isHidden = true
     _overlayView.addSubview(labelProgress)
     labelProgress.translatesAutoresizingMaskIntoConstraints = false
-
+    
     title.text = videoTitle
     title.numberOfLines = 2
-
+    
     let titleSize = calculateFrameSize(size14, variantPercent10)
     let titleColor = titleProps?["color"] as? String
-
+    
     title.textColor = transformStringIntoUIColor(color: titleColor)
     title.font = UIFont.systemFont(ofSize: titleSize)
     //    title.isHidden = titleHidden ?? false
@@ -241,12 +247,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: margin8),
       title.widthAnchor.constraint(lessThanOrEqualTo: _overlayView.safeAreaLayoutGuide.widthAnchor, multiplier: variantPercent60)
     ])
-
+    
     let goBack = GoBackLayoutManager(_overlayView)
     goBack.createAndAdjustLayout(config: goBackProps)
     goBackButton = goBack.button()
     goBackButton.addTarget(self, action: #selector(onTapGoback), for: .touchUpInside)
-
+    
     // seek slider
     _overlayView.addSubview(seekSlider)
     let seekTrailingAnchor = calculateFrameSize(size90, variantPercent20)
@@ -258,52 +264,59 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       seekSlider.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -3),
     ])
     seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
-
+    
     let fullScreen = FullScreenLayoutManager(_overlayView)
     fullScreen.createAndAdjustLayout(config: fullScreenProps)
     fullScreenButton = fullScreen.button()
     fullScreenButton.setBackgroundImage(UIImage(systemName: fullScreenImage ?? "arrow.up.left.and.arrow.down.right"), for: .normal)
     fullScreenButton.addTarget(self, action: #selector(onToggleOrientation), for: .touchUpInside)
-
-
+    
+    
     // add more option
     let settings = SettingsLayoutManager(_overlayView)
     settings.createAndAdjustLayout(config: menuOptionsProps)
     settingsButton = settings.button()
     settingsButton.transform = CGAffineTransform(rotationAngle: isRotated ? .pi : 0)
     settingsButton.addTarget(self, action: #selector(onTapMenuOptions), for: .touchUpInside)
-
-
-    let playbackSpeed = PlayBackSpeedLayoutManager(settingsStackView)
-    playbackSpeed.createAndAdjustLayout()
-    playBackSpeedButton = playbackSpeed.button()
-    playBackSpeedButton.addTarget(self, action: #selector(onTapPlaybackSpeed), for: .touchUpInside)
-
-    let quality = QualityLayoutManager(settingsStackView)
-    quality.createAndAdjustLayout()
-    qualityButton = quality.button()
-    qualityButton.addTarget(self, action: #selector(onTapQuality), for: .touchUpInside)
-
+    
+    
+    let playbackSpeed = UIHostingController(rootView: IconLayoutManager(
+      imageName: "chart.bar.fill", onTap: { [self] in
+        onTapPlaybackSpeed()
+      }
+    ))
+    playbackSpeed.view.backgroundColor = .clear
+    playbackSpeedView = playbackSpeed.view
+    
+    let quality = UIHostingController(rootView: IconLayoutManager(
+      imageName: "chart.bar.fill", onTap: { [self] in
+        onTapQuality()
+      }
+    ))
+    
+    quality.view.backgroundColor = .clear
+    qualityView = quality.view
+    
     settingsStackView.axis = .horizontal
     settingsStackView.spacing = spacing20
-
+    
     // Create a spacer view to add space between buttons
     let trailingAnchorOptionsItemView = calculateFrameSize(size60, variantPercent20)
-
+    
     _overlayView.addSubview(settingsStackView)
     settingsStackView.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       settingsStackView.trailingAnchor.constraint(lessThanOrEqualTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchorOptionsItemView),
       settingsStackView.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: margin8)
     ])
-
+    
     let loading = UIHostingController(rootView: LoadingLayoutManager(loadingColor: loadingProps))
     loading.view.frame = bounds
     loading.view.backgroundColor = .clear
     loadingView = loading.view
     loadingView.isHidden = !self.loading
     addSubview(loadingView)
-
+    
     let speedRateModalTitle: String = speedRateModalProps?["title"] as? String ?? "Playback Speed"
     let speedRateModal = UIHostingController(
       rootView: ModalLayoutManager(
@@ -326,11 +339,11 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     playBackSpeedModalView.frame = frame
     playBackSpeedModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
     playBackSpeedModalView.isHidden = !isOpenedModal
-
+    
     let qualityModalTitle: String = qualityModalProps?["title"] as? String ?? "Quality"
     let initialQualitySelected: String = qualityModalProps?["initialQualitySelected"] as! String
     let qualityData: [[String: String]] = qualityModalProps?["data"] as? [[String: String]] ?? [[:]]
-
+    
     let qualityModal = UIHostingController(
       rootView: ModalLayoutManager(
         onClose: { [self] in
@@ -354,6 +367,26 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     qualityModalView.frame = frame
     qualityModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
     qualityModalView.isHidden = !isOpenedModal
+    
+    
+    let download = UIHostingController(rootView: IconLayoutManager(
+      imageName: "arrow.down.to.line",
+      onTap: { [self] in
+        downloadVideo(
+          from: urlOfCurrentlyPlayingInPlayer(player: player!)!,
+          title: videoTitle,
+          completion: { [self] (file, error) in
+            if let filePath = file?.path {
+              onVideoDownloaded?(["filePath": filePath as Any])
+            } else {
+              onError?(["download": error?.localizedDescription as Any])
+            }
+          })
+      }
+    ))
+    
+    download.view.backgroundColor = .clear
+    downloadView = download.view
     
     player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
@@ -553,25 +586,34 @@ extension RNVideoPlayerView {
       settingsButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
     }
     
+    if let downloadConfig = menuOptionsItemProps?["download"] as? [String: Any],
+       let isHidden = downloadConfig["hidden"] as? Bool, !isHidden {
+      settingsStackView.addArrangedSubview(downloadView)
+    }
+    
+    
     if let speedRateConfig = menuOptionsItemProps?["speedRate"] as? [String: Any],
        let isHidden = speedRateConfig["hidden"] as? Bool, !isHidden {
-      settingsStackView.addArrangedSubview(playBackSpeedButton)
+      settingsStackView.addArrangedSubview(playbackSpeedView)
     }
     
     if let qualityConfig = menuOptionsItemProps?["quality"] as? [String: Any],
        let isHidden = qualityConfig["hidden"] as? Bool, !isHidden {
-      settingsStackView.addArrangedSubview(qualityButton)
+      settingsStackView.addArrangedSubview(qualityView)
     }
     
+    downloadView.layer.add(animation, forKey: CATransitionType.push.rawValue)
+    downloadView.isHidden = !isRotated
     
-    playBackSpeedButton.layer.add(animation, forKey: CATransitionType.push.rawValue)
-    self.playBackSpeedButton.isHidden = !self.isRotated
-    qualityButton.layer.add(animation, forKey: CATransitionType.push.rawValue)
-    self.qualityButton.isHidden = !self.isRotated
+    playbackSpeedView.layer.add(animation, forKey: CATransitionType.push.rawValue)
+    playbackSpeedView.isHidden = !isRotated
     
-    self.settingsStackView.isHidden = !self.isRotated
+    qualityView.layer.add(animation, forKey: CATransitionType.push.rawValue)
+    qualityView.isHidden = !isRotated
     
-    self.title.isHidden = self.isRotated
+    settingsStackView.isHidden = !isRotated
+    
+    title.isHidden = isRotated
     
     if (!isRotated) {
       settingsStackView.arrangedSubviews.forEach {
@@ -663,7 +705,7 @@ extension RNVideoPlayerView {
       }
     })
   }
-
+  
   private func animatedPlayPause() {
     playPauseButton.setImage(UIImage(systemName: player?.rate == 0 ? "play.fill" : "pause"), for: .normal)
   }
@@ -671,7 +713,7 @@ extension RNVideoPlayerView {
   private func onLoadingManager(hideLoading: Bool) {
     loadingView.isHidden = hideLoading
     _overlayView.isHidden = !hideLoading
-//    doubleTapVeiw.view.isHidden = !hideLoading
+    //    doubleTapVeiw.view.isHidden = !hideLoading
   }
   
   private func verifyUrl(urlString: String?) throws -> URL {
@@ -680,5 +722,9 @@ extension RNVideoPlayerView {
     } else {
       throw VideoPlayerError.invalidURL
     }
+  }
+  
+  func urlOfCurrentlyPlayingInPlayer(player : AVPlayer) -> URL? {
+    return ((player.currentItem?.asset) as? AVURLAsset)?.url
   }
 }

@@ -63,8 +63,8 @@ export const RNPlayerVideo = ({
         // forwardProps={{color: '#ffffff', image: 'forward15'}}
         style={{...StyleSheet.absoluteFillObject, overflow: 'hidden'}}
         // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
-        source="https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4"
-        // source="https://content.jwplatform.com/videos/MGAxJ46m-aoHq8DIe.mp4"
+        source="https://content.jwplatform.com/videos/MGAxJ46m-aoHq8DIe.mp4"
+        // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         paused={paused}
         rate={rate}
         videoTitle={
@@ -83,6 +83,9 @@ export const RNPlayerVideo = ({
             hidden: false,
           },
           quality: {
+            hidden: false,
+          },
+          download: {
             hidden: false,
           },
         }}
@@ -165,6 +168,9 @@ export const RNPlayerVideo = ({
         onBuffer={
           e => undefined
           // console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)
+        }
+        onVideoDownloaded={e =>
+          console.log(`VIDEO DOWNLOADED ${JSON.stringify(e.nativeEvent)}`)
         }
         // disableNativeControls={{
         //   disableSeek: true,

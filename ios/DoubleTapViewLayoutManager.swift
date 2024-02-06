@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct OverlayLayoutManager : View {
+struct DoubleTapViewLayoutManager : View {
   var onTapBackward: () -> Void
   var onTapForward: () -> Void
   
