@@ -10,7 +10,7 @@ import SwiftUI
 import AVKit
 
 @available(iOS 13.0, *)
-struct ModalLayoutManager: View {
+struct ModalManager: View {
   let onClose: () -> ()
   let data: [[String: String]]
   let title: String

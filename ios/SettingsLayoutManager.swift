@@ -18,6 +18,7 @@ class SettingsLayoutManager {
   
   public func createAndAdjustLayout(config: NSDictionary?) {
     let trailingAnchor = calculateFrameSize(size20, variantPercent20)
+    let size = calculateFrameSize(size24, variantPercent30)
     let color = config?["color"] as? String
     let isHidden = config?["hidden"] as? Bool
     
@@ -29,9 +30,9 @@ class SettingsLayoutManager {
     _button.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
       _button.trailingAnchor.constraint(equalTo: _view.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchor),
-      _button.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _view.layoutMarginsGuide.topAnchor, constant: margin8),
-      _button.widthAnchor.constraint(equalToConstant: size20v02),
-      _button.heightAnchor.constraint(equalToConstant: size20v02)
+      _button.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _view.layoutMarginsGuide.topAnchor, constant: 5),
+      _button.widthAnchor.constraint(equalToConstant: size),
+      _button.heightAnchor.constraint(equalToConstant: size)
     ])
   }
   

@@ -9,13 +9,13 @@ import Foundation
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct LoadingLayoutManager: View {
-  let loadingColor: NSDictionary?
+struct LoadingManager: View {
+  let config: NSDictionary?
   @State var isLoading : Bool = false
   
   var body: some View {
     let size = calculateFrameSize(size22, variantPercent20)
-    let loadingColor = loadingColor?["color"]
+    let loadingColor = config?["color"]
     let color = Color(transformStringIntoUIColor(color: loadingColor as? String))
 
     

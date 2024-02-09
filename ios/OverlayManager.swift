@@ -9,9 +9,17 @@ import Foundation
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct DoubleTapViewLayoutManager : View {
+struct OverlayManager : View {
   var onTapBackward: () -> Void
   var onTapForward: () -> Void
+  
+  var onTapFullScreen: () -> Void
+  var isFullScreen: Bool
+  
+  var onTapExit: () -> Void
+  var videoTile: String
+  
+  var onTapSettings: () -> Void
   
   var body: some View {
     ZStack {
@@ -28,7 +36,15 @@ struct DoubleTapViewLayoutManager : View {
         }
       }
       
+      
     }
     .edgesIgnoringSafeArea(Edge.Set.all)
+    .overlay(
+      GeometryReader { _ in
+        FullScreenMAnager(isFullScreen: isFullScreen, onTap: onTapFullScreen)
+        HeaderManager(onTap: onTapExit, title: videoTile, onTapSettings: onTapSettings)
+        
+      }
+    )
   }
 }

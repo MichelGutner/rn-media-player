@@ -67,9 +67,7 @@ export const RNPlayerVideo = ({
         // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         paused={paused}
         rate={rate}
-        videoTitle={
-          'Game of Thrones Game of Thrones Game of Thrones Game of Thrones Game of Thrones Game of Thrones'
-        }
+        videoTitle={'Game of Thrones'}
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
         onVideoProgress={data => setCurrentTime(data.nativeEvent)}
         // onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
@@ -78,17 +76,6 @@ export const RNPlayerVideo = ({
         timeValueForChange={10}
         lockControls={true}
         onError={e => console.log('native Error', e.nativeEvent)}
-        menuOptionsItemProps={{
-          speedRate: {
-            hidden: false,
-          },
-          quality: {
-            hidden: false,
-          },
-          download: {
-            hidden: false,
-          },
-        }}
         loadingProps={{
           color: '#aca5a5a7',
         }}
@@ -108,7 +95,7 @@ export const RNPlayerVideo = ({
         // labelProgressProps={{
         //   color: '#ce0808',
         // }}
-        // menuOptionsProps={{
+        // settingsSymbolProps={{
         //   color: '#ce0808',
         // }}
         // fullScreenProps={{
@@ -120,6 +107,20 @@ export const RNPlayerVideo = ({
         // goBackProps={{
         //   color: '#ce0808',
         // }}
+        settingsItemsSymbolProps={{
+          download: {
+            color: '#fbf7f7',
+            hidden: false,
+          },
+          quality: {
+            // color: '#581212',
+            hidden: false,
+          },
+          speedRate: {
+            color: '#d80d0d',
+            hidden: false,
+          },
+        }}
         speedRateModalProps={{
           title: 'Speed Rate',
         }}
@@ -159,9 +160,12 @@ export const RNPlayerVideo = ({
             },
           ],
         }}
-        onMoreOptionsTapped={() => console.log('MORE OPTIONS TAPPED')}
+        onSettingsTapped={() => console.log('MORE OPTIONS TAPPED')}
         onFullScreenTapped={onFullScreen}
         onGoBackTapped={() => console.log('GO BACK TAPPED')}
+        onDownloadVideoTapped={() => console.log('onDownloadVideoTapped')}
+        onPlaybackSpeedTapped={() => console.log('onPlaybackSpeedTapped')}
+        onQualityTapped={() => console.log('onQualityTapped')}
         // onBufferCompleted={e =>
         //   console.log(`BUFFER COMPLETED ${JSON.stringify(e.nativeEvent)}`)
         // }
@@ -172,13 +176,6 @@ export const RNPlayerVideo = ({
         onVideoDownloaded={e =>
           console.log(`VIDEO DOWNLOADED ${JSON.stringify(e.nativeEvent)}`)
         }
-        // disableNativeControls={{
-        //   disableSeek: true,
-        //   disableVolume: true,
-        //   disableFullScreen: true,
-        //   disableMoreOptions: true,
-        // }}
-        // loading={loading}
       />
     </View>
   );

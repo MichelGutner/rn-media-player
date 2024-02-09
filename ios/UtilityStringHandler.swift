@@ -44,7 +44,7 @@ public func stringFromTimeInterval(interval: TimeInterval = 0) -> String {
 }
 
 
-func transformRgbaIntoUIColor(color hexColor: String) -> UIColor? {
+private func transformRgbaIntoUIColor(color hexColor: String) -> UIColor? {
   if let index = hexColor.index(hexColor.startIndex, offsetBy: 4, limitedBy: hexColor.endIndex) {
     let removeAllSpecialCharacters = hexColor[index...]
     let numericData = removeAllSpecialCharacters.components(separatedBy: CharacterSet(charactersIn: "0123456789.").inverted)

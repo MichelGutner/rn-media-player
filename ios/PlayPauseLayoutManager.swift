@@ -24,7 +24,7 @@ class PlayPauseLayoutManager {
     let tintColor = config?["color"] as? String
     let isHidden = config?["hidden"] as? Bool
     
-    let size = (calculateFrameSize(size30, variantPercent20) + size20)
+    let size = (calculateFrameSize(size30, variantPercent40) + size20)
     
     _button.tintColor = transformStringIntoUIColor(color: tintColor)
     _button.isHidden = isHidden ?? false

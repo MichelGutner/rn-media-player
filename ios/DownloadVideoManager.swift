@@ -1,5 +1,4 @@
 import Foundation
-import PhotosUI
 
 public func downloadVideo(from url: URL, title: String = "video", completion: @escaping (URL?, Error?) -> Void) {
   let documentsUrl:URL =  FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!

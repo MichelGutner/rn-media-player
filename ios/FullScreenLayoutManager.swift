@@ -18,6 +18,7 @@ class FullScreenLayoutManager {
   
   public func createAndAdjustLayout(config: NSDictionary?) {
     let trailingAnchor = calculateFrameSize(size20, variantPercent20)
+    let size = calculateFrameSize(size20, variantPercent20)
     let fullScreenProps = config
     let color = fullScreenProps?["color"] as? String
     let isHidden = fullScreenProps?["hidden"] as? Bool
@@ -31,8 +32,8 @@ class FullScreenLayoutManager {
     NSLayoutConstraint.activate([
       _button.trailingAnchor.constraint(equalTo: _view.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchor),
       _button.bottomAnchor.constraint(equalTo: _view.layoutMarginsGuide.bottomAnchor),
-      _button.widthAnchor.constraint(equalToConstant: size20v02),
-      _button.heightAnchor.constraint(equalToConstant: size20v02)
+      _button.widthAnchor.constraint(equalToConstant: size),
+      _button.heightAnchor.constraint(equalToConstant: size)
     ])
   }
   
