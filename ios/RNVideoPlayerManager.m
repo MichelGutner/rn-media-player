@@ -13,11 +13,17 @@
 RCT_EXPORT_VIEW_PROPERTY(source, NSString);
 RCT_EXPORT_VIEW_PROPERTY(paused, BOOL);
 RCT_EXPORT_VIEW_PROPERTY(rate, float)
+RCT_EXPORT_VIEW_PROPERTY(startTime, float)
+RCT_EXPORT_VIEW_PROPERTY(fullScreen, BOOL)
+RCT_EXPORT_VIEW_PROPERTY(videoTitle, NSString)
+RCT_EXPORT_VIEW_PROPERTY(resizeMode, NSString)
+RCT_EXPORT_VIEW_PROPERTY(advanceValue, NSNumber)
+RCT_EXPORT_VIEW_PROPERTY(suffixAdvanceValue, NSString)
+
+
 RCT_EXPORT_VIEW_PROPERTY(onVideoProgress, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onLoaded, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onCompleted, RCTBubblingEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(fullScreen, BOOL)
-RCT_EXPORT_VIEW_PROPERTY(advanceValue, NSNumber)
 RCT_EXPORT_VIEW_PROPERTY(onSettingsTapped, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onFullScreenTapped, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onGoBackTapped, RCTDirectEventBlock)
@@ -29,9 +35,6 @@ RCT_EXPORT_VIEW_PROPERTY(onVideoDownloaded, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onDownloadVideoTapped, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onPlaybackSpeedTapped, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onQualityTapped, RCTDirectEventBlock)
-
-RCT_EXPORT_VIEW_PROPERTY(videoTitle, NSString)
-RCT_EXPORT_VIEW_PROPERTY(resizeMode, NSString)
 
 RCT_EXPORT_VIEW_PROPERTY(sliderProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(forwardProps, NSDictionary)

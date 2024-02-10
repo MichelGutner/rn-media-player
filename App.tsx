@@ -28,6 +28,7 @@ function App(): JSX.Element {
       onFullScreen={() => setIsFull(!isFull)}
       resizeMode={resizeMode}
       paused={false}
+      startTime={150}
     />
   );
 }

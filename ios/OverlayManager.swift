@@ -17,6 +17,7 @@ struct OverlayManager : View {
   var onTapFullScreen: () -> Void
   var isFullScreen: Bool
   var fullScreenConfig: NSDictionary?
+  var suffixAdvanceValue: String
   
   var onTapExit: () -> Void
   
@@ -29,11 +30,12 @@ struct OverlayManager : View {
         HStack(spacing: size60) {
           DoubleTapSeek(onTap:  {
             onTapBackward()
-          }, advanceValue: advanceValue)
+          },
+          advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue)
           
           DoubleTapSeek(isForward: true, onTap:  {
             onTapForward()
-          }, advanceValue: advanceValue)
+          }, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue)
         }
       }
       

@@ -11,6 +11,7 @@ struct DoubleTapSeek: View {
   var isForward: Bool = false
   var onTap: () -> Void
   var advanceValue: Int = 10
+  var suffixAdvanceValue: String
 
   
   var body: some View {
@@ -31,10 +32,11 @@ struct DoubleTapSeek: View {
             .font(.title)
             .rotationEffect(.init(degrees: isForward ? 180 : 0))
             
-            Text("\(tappedQuantity * advanceValue) segundos")
+            Text("\(tappedQuantity * advanceValue) ".appending(suffixAdvanceValue))
               .font(.caption)
               .fontWeight(.semibold)
               .foregroundColor(.white)
+ 
           }
         }
       )

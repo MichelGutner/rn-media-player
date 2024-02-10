@@ -66,6 +66,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onQualityTapped: RCTDirectEventBlock?
   
   @objc var advanceValue: NSNumber? = 0
+  @objc var suffixAdvanceValue: String? = "seconds"
   @objc var fullScreen: Bool = false
   
   @objc var sliderProps: NSDictionary? = [:]
@@ -128,6 +129,16 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
+  @objc var startTime: Float = 0.0 {
+    didSet {
+      player?
+        .currentItem?.seek(
+          to: CMTime(seconds: Double(startTime), preferredTimescale: 1),
+          completionHandler: nil
+        )
+    }
+  }
+  
   override func layoutSubviews() {
     if hasCalledSetup {
       videoPlayerSubView()
@@ -167,6 +178,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       },
       isFullScreen: fullScreen,
       fullScreenConfig: fullScreenProps,
+      suffixAdvanceValue: suffixAdvanceValue!,
       onTapExit: onTapGoback,
       onTapSettings: { [self] in
         onTapMenuOptions()
@@ -174,10 +186,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     ))
     overlayControls.view.frame = _subView.frame
     _overlayView.addSubview(overlayControls.view)
-    //    doubleTapVeiw.view.isHidden = loading
     overlayControls.view.backgroundColor = .clear
     
-    // player
     onChangeOrientation(fullScreen)
     _subView.layer.addSublayer(playerLayer)
     //
@@ -187,8 +197,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     playPauseButton = playPause.button()
     playPauseButton.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
     
-    let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent20)
     // seek slider label
+    let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent20)
     let trailingAnchor = calculateFrameSize(size50, variantPercent40)
     let labelDurationProps = labelDurationProps
     let labelDurationTextColor = labelDurationProps?["color"] as? String

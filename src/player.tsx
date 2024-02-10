@@ -24,6 +24,7 @@ export const RNPlayerVideo = ({
   resizeMode,
   loading,
   paused,
+  startTime,
 }: {
   style: ViewStyle;
   isFullScreen: boolean;
@@ -44,6 +45,7 @@ export const RNPlayerVideo = ({
         // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         paused={paused}
         rate={rate}
+        startTime={startTime}
         videoTitle={'Title de test'}
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
         onVideoProgress={data => setCurrentTime(data.nativeEvent)}
