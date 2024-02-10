@@ -13,7 +13,7 @@ public func downloadVideo(from url: URL, title: String = "video", completion: @e
   let task = session.downloadTask(with: request) { (tempLocalUrl, response, error) in
     if let tempLocalUrl = tempLocalUrl, error == nil {
       
-      if let statusCode = (response as? HTTPURLResponse)?.statusCode {
+      if ((response as? HTTPURLResponse)?.statusCode) != nil {
         completion(destinationFileUrl, nil)
       }
       

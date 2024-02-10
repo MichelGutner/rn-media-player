@@ -1,7 +1,7 @@
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct SettingsSymbolsLayoutManager: View {
+struct SettingsSymbolManager: View {
   var imageName: String
   var onTap: () -> Void
   var config: NSDictionary?
@@ -11,7 +11,6 @@ struct SettingsSymbolsLayoutManager: View {
   
   var body: some View {
     VStack {
-      let size = calculateFrameSize(size20, variantPercent60)
       let configColor = config?["color"]
       let color = Color(transformStringIntoUIColor(color: configColor as? String))
       

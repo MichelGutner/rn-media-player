@@ -182,7 +182,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _subView.layer.addSublayer(playerLayer)
     //
     //    // PlayPause
-    let playPause = PlayPauseLayoutManager(avPlayer, _overlayView)
+    let playPause = PlayPauseManager(avPlayer, _overlayView)
     playPause.crateAndAdjustLayout(config: playPauseProps)
     playPauseButton = playPause.button()
     playPauseButton.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
@@ -315,21 +315,21 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     qualityModalView.isHidden = !isOpenedModal
     
     let configQualitySymbolProps = settingsItemsSymbolProps?["quality"] as! NSDictionary
-    let qualitySymbol = UIHostingController(rootView: SettingsSymbolsLayoutManager(imageName: "chart.bar.fill", onTap: { [self] in
+    let qualitySymbol = UIHostingController(rootView: SettingsSymbolManager(imageName: "chart.bar.fill", onTap: { [self] in
       onTapQuality()
     },config: configQualitySymbolProps))
     qualitySymbol.view.backgroundColor = .clear
     qualityView = qualitySymbol.view
     
     let configPlaybackSpeedSymbolProps = settingsItemsSymbolProps?["speedRate"] as! NSDictionary
-    let playbackSpeedSymbol = UIHostingController(rootView: SettingsSymbolsLayoutManager(imageName: "timer", onTap: { [self] in
+    let playbackSpeedSymbol = UIHostingController(rootView: SettingsSymbolManager(imageName: "timer", onTap: { [self] in
       onTapPlaybackSpeed()
     }, config: configPlaybackSpeedSymbolProps))
     playbackSpeedSymbol.view.backgroundColor = .clear
     playbackSpeedView = playbackSpeedSymbol.view
     
     let configDownloadSymbolProps = settingsItemsSymbolProps?["download"] as! NSDictionary
-    let downloadSymbol = UIHostingController(rootView: SettingsSymbolsLayoutManager(
+    let downloadSymbol = UIHostingController(rootView: SettingsSymbolManager(
       imageName: "arrow.down.to.line",
       onTap: { [self] in
         downloadVideo(

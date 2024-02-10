@@ -7,7 +7,7 @@
 
 import Foundation
 
-class SeekSliderLayoutManager {
+class SeekSliderManager {
   private var _view: UIView
   private var _seekSlider = UISlider(frame: .zero)
   private var circleImage: UIImage!
