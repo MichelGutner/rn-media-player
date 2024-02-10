@@ -32,8 +32,6 @@ struct HeaderManager : View {
           isSettingsTapped.toggle()
         }, size: dynamicSize, isTapped: !isSettingsTapped)
       }
-      
-      
     }
     .padding(.leading, 20)
     .padding(.trailing, 20)

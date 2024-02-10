@@ -27,6 +27,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var isSeeking: Bool = false
   private var loading = true
   private var isOpenedModal = false
+  private var playerIsFinished = false
   
   private var _view: UIView!
   private var _subView: UIView!
@@ -38,6 +39,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var downloadView = UIView()
   private var qualityView = UIView()
   private var playbackSpeedView = UIView()
+  private var watchAgainView = UIView()
   
   private var imagePlayPause: String = ""
   private var url: URL?
@@ -181,7 +183,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       suffixAdvanceValue: suffixAdvanceValue!,
       onTapExit: onTapGoback,
       onTapSettings: { [self] in
-        onTapMenuOptions()
+        onTapSettings()
       }
     ))
     overlayControls.view.frame = _subView.frame
@@ -358,6 +360,23 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     downloadSymbol.view.backgroundColor = .clear
     downloadView = downloadSymbol.view
     
+    let watchAgain = UIHostingController(rootView: WatchAgainManager(onTap: { value in
+      avPlayer.seek(to: CMTime(value: CMTimeValue(value), timescale: 1), completionHandler: { [self] completed in
+        onFinishedPlayback(false)
+      })
+    }))
+    watchAgain.view.backgroundColor = .black
+    watchAgain.view.frame = _overlayView.frame
+    watchAgainView = watchAgain.view
+    _overlayView.addSubview(watchAgainView)
+    watchAgainView.isHidden = true
+    watchAgainView.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      watchAgainView.centerXAnchor.constraint(equalTo: _overlayView.centerXAnchor),
+      watchAgainView.centerYAnchor.constraint(equalTo: _overlayView.centerYAnchor)
+    ])
+    
+    
     player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
       self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem
@@ -366,7 +385,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private func periodTimeObserver() {
     let interval = CMTime(value: 1, timescale: 2)
-    timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
+    timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] _ in
       self?.updatePlayerTime()
     }
   }
@@ -395,8 +414,11 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private func removePeriodicTimeObserver() {
     guard let timeObserver = timeObserver else { return }
-    player?.removeTimeObserver(timeObserver)
-    self.timeObserver = nil
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: { [self] in
+      onFinishedPlayback(true)
+    })
+//    player?.removeTimeObserver(timeObserver)
+//    self.timeObserver = nil
   }
   
   override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
@@ -429,8 +451,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   @objc private func itemDidFinishPlaying(_ notification: Notification) {
-    self.onCompleted?(["completed": true])
     self.removePeriodicTimeObserver()
+    self.onCompleted?(["completed": true])
   }
   
   @objc func seekSliderChanged(_ seekSlider: UISlider) {
@@ -542,7 +564,7 @@ extension RNVideoPlayerView {
     })
   }
   
-  @objc private func onTapMenuOptions() {
+  @objc private func onTapSettings() {
     onSettingsTapped?([:])
     isRotated.toggle()
     
@@ -679,6 +701,11 @@ extension RNVideoPlayerView {
     //    doubleTapVeiw.view.isHidden = !hideLoading
   }
   
+  private func onFinishedPlayback(_ hidePlayPause: Bool) {
+    playPauseButton.isHidden = hidePlayPause
+    watchAgainView.isHidden = !hidePlayPause
+  }
+  
   private func verifyUrl(urlString: String?) throws -> URL {
     if let urlString = urlString, let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
       return url
@@ -687,7 +714,7 @@ extension RNVideoPlayerView {
     }
   }
   
-  func urlOfCurrentlyPlayingInPlayer(player : AVPlayer) -> URL? {
+  private func urlOfCurrentlyPlayingInPlayer(player : AVPlayer) -> URL? {
     return ((player.currentItem?.asset) as? AVURLAsset)?.url
   }
 }

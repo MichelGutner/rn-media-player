@@ -20,6 +20,7 @@
 		DB0C9DD42B23C85300B7D598 /* videoTimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */; };
 		DB3BDEC92B76567E00834EDB /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB3BDEC82B76567E00834EDB /* SettingsManager.swift */; };
 		DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */; };
+		DB6459FD2B77AD33000E54AD /* WatchAgainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB6459FC2B77AD33000E54AD /* WatchAgainManager.swift */; };
 		DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */; };
 		DB7821512B4E486D0022DCE8 /* SeekSliderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821502B4E486D0022DCE8 /* SeekSliderManager.swift */; };
 		DBAAB1952B66863900BE5FD7 /* LoadingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1942B66863900BE5FD7 /* LoadingManager.swift */; };
@@ -71,6 +72,7 @@
 		DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = videoTimerManager.swift; sourceTree = "<group>"; };
 		DB3BDEC82B76567E00834EDB /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 		DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapSeek.swift; sourceTree = "<group>"; };
+		DB6459FC2B77AD33000E54AD /* WatchAgainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchAgainManager.swift; sourceTree = "<group>"; };
 		DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityImageHandler.swift; sourceTree = "<group>"; };
 		DB7821502B4E486D0022DCE8 /* SeekSliderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekSliderManager.swift; sourceTree = "<group>"; };
 		DBAAB1942B66863900BE5FD7 /* LoadingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingManager.swift; sourceTree = "<group>"; };
@@ -238,6 +240,7 @@
 				DBC2BA862B74646D00648252 /* FullScreenManager.swift */,
 				DBC2BA882B7469AB00648252 /* HeaderManager.swift */,
 				DB3BDEC82B76567E00834EDB /* SettingsManager.swift */,
+				DB6459FC2B77AD33000E54AD /* WatchAgainManager.swift */,
 			);
 			name = Customs;
 			sourceTree = "<group>";
@@ -561,6 +564,7 @@
 				DBCD42EB2B6B3DCB0099DFEF /* AutoQualityPlayerManager.swift in Sources */,
 				DBC2BA782B6FF70900648252 /* PlaybackErrorManager.swift in Sources */,
 				DBC2BA872B74646D00648252 /* FullScreenManager.swift in Sources */,
+				DB6459FD2B77AD33000E54AD /* WatchAgainManager.swift in Sources */,
 				DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */,
 				DB0C9DCD2B23AB6900B7D598 /* UtilityStringHandler.swift in Sources */,
 				DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */,

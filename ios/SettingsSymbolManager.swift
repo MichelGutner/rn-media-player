@@ -14,10 +14,7 @@ struct SettingsSymbolManager: View {
       let configColor = config?["color"]
       let color = Color(transformStringIntoUIColor(color: configColor as? String))
       
-      Button(action: {
-        onTap()
-        print(dynamicFontSize)
-      }) {
+      Button(action: onTap) {
         Image(systemName: imageName)
           .font(.system(size: dynamicFontSize))
           .foregroundColor(color)

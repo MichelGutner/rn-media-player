@@ -7,9 +7,10 @@
 
 import Foundation
 import SwiftUI
+import AVKit
 
 @available(iOS 13.0, *)
-struct OverlayManager : View {
+struct OverlayManager : View {  
   var onTapBackward: () -> Void
   var onTapForward: () -> Void
   var advanceValue: Int
@@ -18,9 +19,8 @@ struct OverlayManager : View {
   var isFullScreen: Bool
   var fullScreenConfig: NSDictionary?
   var suffixAdvanceValue: String
-  
+
   var onTapExit: () -> Void
-  
   var onTapSettings: () -> Void
   
   var body: some View {
@@ -46,7 +46,6 @@ struct OverlayManager : View {
       GeometryReader { _ in
         FullScreenMAnager(isFullScreen: isFullScreen, onTap: onTapFullScreen, config: fullScreenConfig)
         HeaderManager(onTap: onTapExit, onTapSettings: onTapSettings)
-        
       }
     )
   }
