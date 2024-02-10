@@ -11,12 +11,12 @@ import AVKit
 
 @available(iOS 13.0, *)
 struct ModalManager: View {
-  let onClose: () -> ()
-  let data: [[String: String]]
-  let title: String
+  var data: [[String: String]]
+  var title: String
   var onSelected: (Any) -> Void
   var onAppear: () -> Void
   var initialSelected: String
+  var completionHandler: () -> ()
   
   @Binding var isOpened: Bool
   @State var selected = ""
@@ -28,7 +28,7 @@ struct ModalManager: View {
         hidden()
       }.edgesIgnoringSafeArea(Edge.Set.all)
       
-      VStack(alignment: .leading, spacing: calculateFrameSize(16, variantPercent20)) {
+      VStack(alignment: .leading, spacing: calculateFrameSize(size16, variantPercent20)) {
         HStack {
           Text(title).foregroundColor(.white).frame(width: UIScreen.main.bounds.width / 2, alignment: .leading)
           Button (action: {
@@ -72,6 +72,7 @@ struct ModalManager: View {
             }
           }
         }
+        .fixedSize(horizontal: true, vertical: true)
       }
       .padding(.leading)
       .padding(.trailing)
@@ -92,15 +93,14 @@ struct ModalManager: View {
       }
       
     }
-    .padding()
   }
   
   public func hidden() {
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-      withAnimation(.interactiveSpring(dampingFraction: 2.0)) {
-        offset = UIScreen.main.bounds.height
-        onClose()
-      }
+    withAnimation(.interactiveSpring(dampingFraction: 1.0)) {
+      offset = UIScreen.main.bounds.height
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
+        completionHandler()
     })
   }
 }

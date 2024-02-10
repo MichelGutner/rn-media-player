@@ -278,10 +278,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     let speedRateModalTitle: String = speedRateModalProps?["title"] as? String ?? "Playback Speed"
     let speedRateModal = UIHostingController(
       rootView: ModalManager(
-        onClose: { [self] in
-          playBackSpeedModalView.removeFromSuperview()
-          animatedPlayPause()
-        },
         data: speedRateData,
         title: speedRateModalTitle,
         onSelected: { [self] item in
@@ -291,6 +287,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
           player?.pause()
         },
         initialSelected: "Normal",
+        completionHandler: { [self] in
+          playBackSpeedModalView.removeFromSuperview()
+          animatedPlayPause()
+        },
         isOpened: .constant(isOpenedModal)
       ))
     playBackSpeedModalView = speedRateModal.view
@@ -304,10 +304,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     let qualityModal = UIHostingController(
       rootView: ModalManager(
-        onClose: { [self] in
-          qualityModalView.removeFromSuperview()
-          animatedPlayPause()
-        },
         data: qualityData,
         title: qualityModalTitle,
         onSelected: { [self] url in
@@ -319,6 +315,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
           player?.pause()
         },
         initialSelected: initialQualitySelected,
+        completionHandler: { [self] in
+          qualityModalView.removeFromSuperview()
+          animatedPlayPause()
+        },
         isOpened: .constant(isOpenedModal)
       ))
     qualityModalView = qualityModal.view
@@ -372,8 +372,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     watchAgainView.isHidden = true
     watchAgainView.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      watchAgainView.centerXAnchor.constraint(equalTo: _overlayView.centerXAnchor),
-      watchAgainView.centerYAnchor.constraint(equalTo: _overlayView.centerYAnchor)
+      watchAgainView.centerXAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.centerXAnchor),
+      watchAgainView.safeAreaLayoutGuide.centerYAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.centerYAnchor)
     ])
     
     
