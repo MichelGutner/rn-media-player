@@ -31,12 +31,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var _view: UIView!
   private var _subView: UIView!
   private var _overlayView: UIView!
-  private var menuOptionsView = UIView()
   private var settingsStackView = UIStackView()
   private var loadingView = UIView()
   private var playBackSpeedModalView = UIView()
   private var qualityModalView = UIView()
-  
   private var downloadView = UIView()
   private var qualityView = UIView()
   private var playbackSpeedView = UIView()
@@ -51,9 +49,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var seekSlider = UISlider(frame: .zero)
   
   private var playPauseButton = UIButton()
-  private var forwardButton = UIButton()
-  private var backwardButton = UIButton()
-  private var settingsButton = UIButton()
   
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
@@ -70,12 +65,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onDownloadVideoTapped: RCTDirectEventBlock?
   @objc var onQualityTapped: RCTDirectEventBlock?
   
-  @objc var timeValueForChange: NSNumber? = 0
+  @objc var advanceValue: NSNumber? = 0
   @objc var fullScreen: Bool = false
   
   @objc var sliderProps: NSDictionary? = [:]
-  @objc var forwardProps: NSDictionary? = [:]
-  @objc var backwardProps: NSDictionary? = [:]
   @objc var playPauseProps: NSDictionary? = [:]
   @objc var labelProgressProps: NSDictionary? = [:]
   @objc var labelDurationProps: NSDictionary? = [:]
@@ -168,13 +161,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       },
       onTapForward: { [self] in
         onTapFowardTime()
-      },
+      }, advanceValue: advanceValue as! Int,
       onTapFullScreen: { [self] in
         onToggleOrientation()
       },
       isFullScreen: fullScreen,
+      fullScreenConfig: fullScreenProps,
       onTapExit: onTapGoback,
-      videoTile: videoTitle,
       onTapSettings: { [self] in
         onTapMenuOptions()
       }
@@ -193,18 +186,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     playPause.crateAndAdjustLayout(config: playPauseProps)
     playPauseButton = playPause.button()
     playPauseButton.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
-    //
-    // add forward button
-    //    let forward = ForwardLayoutManager(_overlayView)
-    //    forward.createAndAdjustLayout(config: forwardProps)
-    //    forwardButton = forward.button()
-    //    forwardButton.addTarget(self, action: #selector(onTapFowardTime), for: .touchUpInside)
-    //
-    //    // add backward button
-    //    let backward = BackwardLayoutManager(_overlayView)
-    //    backward.createAndAdjustLayout(config: backwardProps)
-    //    backwardButton = backward.button()
-    //    backwardButton.addTarget(self, action: #selector(onTapBackwardTime), for: .touchUpInside)
     
     let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent20)
     // seek slider label
@@ -236,22 +217,21 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     playbackProgress.translatesAutoresizingMaskIntoConstraints = false
 
 
-//    title.text = videoTitle
-//    title.numberOfLines = 2
-//    
-//    let titleSize = calculateFrameSize(size14, variantPercent10)
-//    let titleColor = titleProps?["color"] as? String
-//    
-//    title.textColor = transformStringIntoUIColor(color: titleColor)
-//    title.font = UIFont.systemFont(ofSize: titleSize)
-//    //    title.isHidden = titleHidden ?? false
-//    _overlayView.addSubview(title)
-//    title.translatesAutoresizingMaskIntoConstraints = false
-//    NSLayoutConstraint.activate([
-//      title.leadingAnchor.constraint(equalTo: layoutMarginsGuide.leadingAnchor, constant: size45),
-//      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: 5),
-//      title.widthAnchor.constraint(lessThanOrEqualTo: _overlayView.safeAreaLayoutGuide.widthAnchor, multiplier: variantPercent60)
-//    ])
+    title.text = videoTitle
+    title.numberOfLines = 2
+    
+    let titleSize = calculateFrameSize(size14, variantPercent20)
+    let titleColor = titleProps?["color"] as? String
+    
+    title.textColor = transformStringIntoUIColor(color: titleColor)
+    title.font = UIFont.systemFont(ofSize: titleSize)
+    _overlayView.addSubview(title)
+    title.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor),
+      title.centerXAnchor.constraint(equalTo: _overlayView.centerXAnchor),
+      title.widthAnchor.constraint(lessThanOrEqualTo: _overlayView.safeAreaLayoutGuide.widthAnchor, multiplier: variantPercent60)
+    ])
     
     // seek slider
     _overlayView.addSubview(seekSlider)
@@ -264,14 +244,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       seekSlider.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -3),
     ])
     seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
-    
-    
-    // add more option
-//    let settings = SettingsLayoutManager(_overlayView)
-//    settings.createAndAdjustLayout(config: settingsSymbolProps)
-//    settingsButton = settings.button()
-//    settingsButton.transform = CGAffineTransform(rotationAngle: isRotated ? .pi : 0)
-//    settingsButton.addTarget(self, action: #selector(onTapMenuOptions), for: .touchUpInside)
     
     settingsStackView.axis = .horizontal
     settingsStackView.spacing = calculateFrameSize(size10, variantPercent30)
@@ -342,18 +314,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     qualityModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
     qualityModalView.isHidden = !isOpenedModal
     
-    let size = calculateFrameSize(size18, variantPercent30)
     let configQualitySymbolProps = settingsItemsSymbolProps?["quality"] as! NSDictionary
-    let qualityD = UIHostingController(rootView: SettingsSymbolsLayoutManager(imageName: "chart.bar.fill", onTap: { [self] in
+    let qualitySymbol = UIHostingController(rootView: SettingsSymbolsLayoutManager(imageName: "chart.bar.fill", onTap: { [self] in
       onTapQuality()
-    }))
-    qualityD.view.backgroundColor = .clear
-    qualityView = qualityD.view
+    },config: configQualitySymbolProps))
+    qualitySymbol.view.backgroundColor = .clear
+    qualityView = qualitySymbol.view
     
-    let configPlaybackSpeedSymProps = settingsItemsSymbolProps?["speedRate"] as! NSDictionary
+    let configPlaybackSpeedSymbolProps = settingsItemsSymbolProps?["speedRate"] as! NSDictionary
     let playbackSpeedSymbol = UIHostingController(rootView: SettingsSymbolsLayoutManager(imageName: "timer", onTap: { [self] in
       onTapPlaybackSpeed()
-    }))
+    }, config: configPlaybackSpeedSymbolProps))
     playbackSpeedSymbol.view.backgroundColor = .clear
     playbackSpeedView = playbackSpeedSymbol.view
     
@@ -544,12 +515,12 @@ extension RNVideoPlayerView {
   
   @objc private func onTapFowardTime() {
     let forward = videoTimerManager(avPlayer: player)
-    forward.advance(Double(truncating: timeValueForChange!))
+    forward.advance(Double(truncating: advanceValue!))
   }
   
   @objc private func onTapBackwardTime() {
     let backward = videoTimerManager(avPlayer: player)
-    backward.advance(-Double(truncating: timeValueForChange!))
+    backward.advance(-Double(truncating: advanceValue!))
   }
   
   @objc private func onUpdatePlayerLayer(_ resizeMode: NSString) {
@@ -570,11 +541,6 @@ extension RNVideoPlayerView {
     animation.subtype = .fromRight
     animation.duration = 0.1
     
-    let rotationAngle: CGFloat = isRotated ? .pi : 0
-    UIView.animate(withDuration: 0.2) { [self] in
-      settingsButton.transform = CGAffineTransform(rotationAngle: rotationAngle)
-    }
-
     if let downloadConfig = settingsItemsSymbolProps?["download"] as? [String: Any],
        let isHidden = downloadConfig["hidden"] as? Bool, !isHidden {
       settingsStackView.addArrangedSubview(downloadView)

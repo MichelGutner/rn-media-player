@@ -12,9 +12,9 @@ import SwiftUI
 struct FullScreenMAnager : View {
   var isFullScreen: Bool = false
   var onTap: () -> Void
+  var config: NSDictionary?
   
   @State private var dynamicFontSize: CGFloat = calculateFrameSize(size20, variantPercent30)
-  
   var body: some View {
     VStack {
       Spacer()
@@ -23,13 +23,16 @@ struct FullScreenMAnager : View {
         Button (action: {
           onTap()
         }) {
+          let color = config?["color"] as? String
+          let isHidden = config?["hidden"] as? Bool
           Image(
             systemName:
               isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right"
           )
           .font(.system(size: dynamicFontSize))
-          .foregroundColor(.white)
+          .foregroundColor(Color(transformStringIntoUIColor(color: color)))
           .rotationEffect(.init(degrees: 90))
+          .opacity(isHidden ?? false ? 0 : 1)
         }
       }
       .padding(.bottom, 12)

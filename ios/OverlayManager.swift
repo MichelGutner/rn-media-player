@@ -12,27 +12,28 @@ import SwiftUI
 struct OverlayManager : View {
   var onTapBackward: () -> Void
   var onTapForward: () -> Void
+  var advanceValue: Int
   
   var onTapFullScreen: () -> Void
   var isFullScreen: Bool
+  var fullScreenConfig: NSDictionary?
   
   var onTapExit: () -> Void
-  var videoTile: String
   
   var onTapSettings: () -> Void
   
   var body: some View {
     ZStack {
-      Color(.clear).opacity(0.4)
+      Color(.clear).opacity(variantPercent40)
       VStack {
-        HStack(spacing: 60) {
-          DoubleTapSeek {
+        HStack(spacing: size60) {
+          DoubleTapSeek(onTap:  {
             onTapBackward()
-          }
+          }, advanceValue: advanceValue)
           
-          DoubleTapSeek(isForward: true) {
+          DoubleTapSeek(isForward: true, onTap:  {
             onTapForward()
-          }
+          }, advanceValue: advanceValue)
         }
       }
       
@@ -41,8 +42,8 @@ struct OverlayManager : View {
     .edgesIgnoringSafeArea(Edge.Set.all)
     .overlay(
       GeometryReader { _ in
-        FullScreenMAnager(isFullScreen: isFullScreen, onTap: onTapFullScreen)
-        HeaderManager(onTap: onTapExit, title: videoTile, onTapSettings: onTapSettings)
+        FullScreenMAnager(isFullScreen: isFullScreen, onTap: onTapFullScreen, config: fullScreenConfig)
+        HeaderManager(onTap: onTapExit, onTapSettings: onTapSettings)
         
       }
     )
