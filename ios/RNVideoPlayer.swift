@@ -28,6 +28,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var loading = true
   private var isOpenedModal = false
   private var playerIsFinished = false
+  private var playerStatus: AVPlayer.TimeControlStatus?
   
   private var _view: UIView!
   private var _subView: UIView!
@@ -191,12 +192,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     onChangeOrientation(fullScreen)
     _subView.layer.addSublayer(playerLayer)
-    //
-    //    // PlayPause
-//    let playPause = PlayPauseManager(avPlayer, _overlayView)
-//    playPause.crateAndAdjustLayout(config: playPauseProps)
-//    playPauseButton = playPause.button()
-//    playPauseButton.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
     
     // seek slider label
     let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent20)
@@ -275,15 +270,29 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     addSubview(loadingView)
     
     let speedRateModalTitle: String = speedRateModalProps?["title"] as? String ?? "Playback Speed"
+
     let speedRateModal = UIHostingController(
       rootView: ModalManager(
         data: speedRateData,
         title: speedRateModalTitle,
         onSelected: { [self] item in
           player?.rate = item as! Float
+          if playerStatus == .playing {
+            player?.play()
+          } else {
+            player?.pause()
+          }
         },
         onAppear: { [self] in
-          player?.pause()
+          playerStatus = player?.timeControlStatus
+          if playerStatus == .playing {
+            player?.pause()
+          }
+        },
+        onDisappear: { [self] in
+          if playerStatus == .playing {
+            player?.play()
+          }
         },
         initialSelected: "Normal",
         completionHandler: { [self] in
@@ -309,9 +318,21 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
           changePlaybackQuality(URL(string: url as! String)!)
           qualityModalView.removeFromSuperview()
           onLoadingManager(hideLoading: false)
+          if playerStatus == .playing {
+            player?.play()
+          }
         },
         onAppear: { [self] in
-          player?.pause()
+          playerStatus = player?.timeControlStatus
+
+          if playerStatus == .playing {
+            player?.pause()
+          }
+        },
+        onDisappear: { [self] in
+          if playerStatus == .playing {
+            player?.play()
+          }
         },
         initialSelected: initialQualitySelected,
         completionHandler: { [self] in
@@ -677,15 +698,13 @@ extension RNVideoPlayerView {
         
         self?.player?.seek(to: currentTime)
         self?.onLoadingManager(hideLoading: true)
-        self?.player?.play()
-        self?.animatedPlayPause()
         playerItemStatusObservation?.invalidate()
       }
     })
   }
   
   private func animatedPlayPause() {
-    player?.pause()
+    print("time status", player?.timeControlStatus == .paused)
   }
   
   private func onLoadingManager(hideLoading: Bool) {

@@ -52,21 +52,21 @@ struct DoubleTapSeek: View {
         
         // Set a new timer to reset tappedQuantity
 
-          withAnimation(.easeInOut(duration: 0.2)) {
+          withAnimation(.easeInOut(duration: 0.1)) {
             self.showArrows[0] = true
           }
           
-          withAnimation(.easeInOut(duration: 0.2).delay(0.2)) {
+          withAnimation(.easeInOut(duration: 0.2).delay(0.1)) {
             self.showArrows[0] = false
             self.showArrows[1] = true
           }
           
-          withAnimation(.easeInOut(duration: 0.2).delay(0.35)) {
+          withAnimation(.easeInOut(duration: 0.2).delay(0.25)) {
             self.showArrows[1] = false
             self.showArrows[2] = true
           }
           
-          withAnimation(.easeInOut(duration: 0.2).delay(0.5)) {
+          withAnimation(.easeInOut(duration: 0.2).delay(0.35)) {
             self.showArrows[2] = false
 
           }

@@ -111,7 +111,7 @@ extension PlayPauseManager {
       status = .finished
       player.currentItem?.seek(to: CMTime(value: CMTimeValue(0), timescale: 1), completionHandler: completionHandler)
     } else {
-      if player.rate == 0  {
+      if player.timeControlStatus == .paused  {
         player.play()
         status = .playing
       } else {
@@ -129,7 +129,7 @@ extension PlayPauseManager {
       isFinished = true
       imageName = "gobackward"
     } else {
-      player.rate == 0 ? (imageName = "play.fill") : (imageName = "pause")
+      player.timeControlStatus == .paused ? (imageName = "play.fill") : (imageName = "pause")
       isFinished = false
     }
   }

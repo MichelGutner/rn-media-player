@@ -15,6 +15,7 @@ struct ModalManager: View {
   var title: String
   var onSelected: (Any) -> Void
   var onAppear: () -> Void
+  var onDisappear: () -> Void
   var initialSelected: String
   var completionHandler: (() -> Void)
   
@@ -90,6 +91,9 @@ struct ModalManager: View {
           isOpened = false
           onAppear()
         }
+      }
+      .onDisappear {
+        onDisappear()
       }
       
     }
