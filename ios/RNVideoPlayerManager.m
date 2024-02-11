@@ -10,7 +10,7 @@
 
 @interface RCT_EXTERN_MODULE(RNVideoPlayer, RCTViewManager)
 
-RCT_EXPORT_VIEW_PROPERTY(source, NSString);
+RCT_EXPORT_VIEW_PROPERTY(source, NSDictionary);
 RCT_EXPORT_VIEW_PROPERTY(paused, BOOL);
 RCT_EXPORT_VIEW_PROPERTY(rate, float)
 RCT_EXPORT_VIEW_PROPERTY(startTime, float)

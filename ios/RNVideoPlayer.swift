@@ -85,19 +85,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var settingsItemsSymbolProps: NSDictionary? = [:]
   
   // external controls
-  @objc var source: String = "" {
+  @objc var source: NSDictionary? = [:] {
     didSet {
       do {
-        if source.isEmpty {
-          return
-        }
+        let playbackUrl = source?["url"] as? String
+        let playbackTitle = source?["videoTitle"] as? String
         
-        let verificatedUrlString = try verifyUrl(urlString: source)
+        let verificatedUrlString = try verifyUrl(urlString: playbackUrl)
         player = AVPlayer(url: verificatedUrlString)
         player?.actionAtItemEnd = .none
         hasCalledSetup = true
         
-        // Adicione um observador para o status do player
         player?.addObserver(self, forKeyPath: "status", options: .new, context: nil)
         player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferEmpty", options: .new, context: nil)
         player?.currentItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
@@ -110,8 +108,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       }
     }
   }
-  
-  @objc var videoTitle: String = ""
   
   @objc var rate: Float = 0.0 {
     didSet{
@@ -150,6 +146,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private func videoPlayerSubView() {
     guard let avPlayer = player else { return }
+    let playbackTitle = source?["videoTitle"] as? String
+    
     // View
     _view = UIView()
     _view.backgroundColor = .black
@@ -222,8 +220,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _overlayView.addSubview(playbackProgress)
     playbackProgress.translatesAutoresizingMaskIntoConstraints = false
 
+    
 
-    title.text = videoTitle
+
+    title.text = playbackTitle
     title.numberOfLines = 2
     
     let titleSize = calculateFrameSize(size14, variantPercent20)
@@ -360,13 +360,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     playbackSpeedSymbol.view.backgroundColor = .clear
     playbackSpeedView = playbackSpeedSymbol.view
     
+    let downloadManager = DownloadManager()
     let configDownloadSymbolProps = settingsItemsSymbolProps?["download"] as! NSDictionary
     let downloadSymbol = UIHostingController(rootView: SettingsSymbolManager(
       imageName: "arrow.down.to.line",
       onTap: { [self] in
-        downloadVideo(
+          downloadManager.downloadVideo(
           from: urlOfCurrentlyPlayingInPlayer(player: player!)!,
-          title: videoTitle,
+          title: playbackTitle!,
+          onProgress: { progress in
+            print("progress percentage", progress)
+          },
           completion: { [self] (file, error) in
             if let filePath = file?.path {
               onVideoDownloaded?(["filePath": filePath as Any])
@@ -454,6 +458,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       if player.status == .readyToPlay {
         loading = false
         onLoadingManager(hideLoading: true)
+        _subView.subviews.forEach {$0.isHidden = true}
         onLoaded?(["duration": player.currentItem?.duration.seconds as Any])
         onReady?(["ready": true])
       } else if player.status == .failed {
@@ -507,17 +512,19 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-  //  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-  //    if let touch = touches.first {
-  //      _subView.subviews.forEach {$0.isHidden = false}
-  //    }
-  //  }
-  //
-  //  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-  //    DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
-  //      _subView.subviews.forEach {$0.isHidden = true}
-  //    })
-  //  }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+      if let touch = touches.first {
+        _subView.subviews.forEach {$0.isHidden = false}
+      }
+    }
+  
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
+        if player?.timeControlStatus == .playing {
+            _subView.subviews.forEach {$0.isHidden = true}
+        }
+      })
+    }
 }
 
 enum Resize: String {

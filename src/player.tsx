@@ -41,12 +41,14 @@ export const RNPlayerVideo = ({
       <VPlayer
         style={{...StyleSheet.absoluteFillObject, overflow: 'hidden'}}
         // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
-        source="https://content.jwplatform.com/videos/MGAxJ46m-aoHq8DIe.mp4"
+        source={{
+          url: 'https://content.jwplatform.com/videos/MGAxJ46m-aoHq8DIe.mp4',
+          videoTitle: 'Title de test',
+        }}
         // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         paused={paused}
         rate={rate}
         startTime={startTime}
-        videoTitle={'Title de test'}
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
         onVideoProgress={data => setCurrentTime(data.nativeEvent)}
         onPlayPause={event => console.log(event.nativeEvent.status)}
