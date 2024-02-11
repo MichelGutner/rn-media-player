@@ -39,7 +39,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var downloadView = UIView()
   private var qualityView = UIView()
   private var playbackSpeedView = UIView()
-  private var watchAgainView = UIView()
+  private var playPauseView = UIView()
   
   private var imagePlayPause: String = ""
   private var url: URL?
@@ -49,8 +49,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var playbackProgress = UILabel()
   
   private var seekSlider = UISlider(frame: .zero)
-  
-  private var playPauseButton = UIButton()
   
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
@@ -66,6 +64,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onPlaybackSpeedTapped: RCTDirectEventBlock?
   @objc var onDownloadVideoTapped: RCTDirectEventBlock?
   @objc var onQualityTapped: RCTDirectEventBlock?
+  @objc var onPlayPause: RCTDirectEventBlock?
   
   @objc var advanceValue: NSNumber? = 0
   @objc var suffixAdvanceValue: String? = "seconds"
@@ -194,10 +193,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _subView.layer.addSublayer(playerLayer)
     //
     //    // PlayPause
-    let playPause = PlayPauseManager(avPlayer, _overlayView)
-    playPause.crateAndAdjustLayout(config: playPauseProps)
-    playPauseButton = playPause.button()
-    playPauseButton.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
+//    let playPause = PlayPauseManager(avPlayer, _overlayView)
+//    playPause.crateAndAdjustLayout(config: playPauseProps)
+//    playPauseButton = playPause.button()
+//    playPauseButton.addTarget(self, action: #selector(onTappedPlayPause), for: .touchUpInside)
     
     // seek slider label
     let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent20)
@@ -360,20 +359,19 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     downloadSymbol.view.backgroundColor = .clear
     downloadView = downloadSymbol.view
     
-    let watchAgain = UIHostingController(rootView: WatchAgainManager(onTap: { value in
-      avPlayer.seek(to: CMTime(value: CMTimeValue(value), timescale: 1), completionHandler: { [self] completed in
-        onFinishedPlayback(false)
-      })
+    let playpause = UIHostingController(rootView: PlayPauseManager(player: avPlayer, onTap: { [self] value in
+      onPlayPause?(["status": value])
     }))
-    watchAgain.view.backgroundColor = .black
-    watchAgain.view.frame = _overlayView.frame
-    watchAgainView = watchAgain.view
-    _overlayView.addSubview(watchAgainView)
-    watchAgainView.isHidden = true
-    watchAgainView.translatesAutoresizingMaskIntoConstraints = false
+    playpause.view.backgroundColor = UIColor(white: 0, alpha: 0.3)
+    playpause.view.layer.cornerRadius = size14
+    playpause.view.frame = _overlayView.frame
+    playPauseView = playpause.view
+    _overlayView.addSubview(playPauseView)
+    playPauseView.isHidden = false
+    playPauseView.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      watchAgainView.centerXAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.centerXAnchor),
-      watchAgainView.safeAreaLayoutGuide.centerYAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.centerYAnchor)
+      playPauseView.centerXAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.centerXAnchor),
+      playPauseView.safeAreaLayoutGuide.centerYAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.centerYAnchor)
     ])
     
     
@@ -414,11 +412,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private func removePeriodicTimeObserver() {
     guard let timeObserver = timeObserver else { return }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: { [self] in
-      onFinishedPlayback(true)
-    })
-//    player?.removeTimeObserver(timeObserver)
-//    self.timeObserver = nil
   }
   
   override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
@@ -692,18 +685,12 @@ extension RNVideoPlayerView {
   }
   
   private func animatedPlayPause() {
-    playPauseButton.setImage(UIImage(systemName: player?.rate == 0 ? "play.fill" : "pause"), for: .normal)
+    player?.pause()
   }
   
   private func onLoadingManager(hideLoading: Bool) {
     loadingView.isHidden = hideLoading
     _overlayView.isHidden = !hideLoading
-    //    doubleTapVeiw.view.isHidden = !hideLoading
-  }
-  
-  private func onFinishedPlayback(_ hidePlayPause: Bool) {
-    playPauseButton.isHidden = hidePlayPause
-    watchAgainView.isHidden = !hidePlayPause
   }
   
   private func verifyUrl(urlString: String?) throws -> URL {

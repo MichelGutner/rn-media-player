@@ -16,7 +16,7 @@ struct ModalManager: View {
   var onSelected: (Any) -> Void
   var onAppear: () -> Void
   var initialSelected: String
-  var completionHandler: () -> ()
+  var completionHandler: (() -> Void)
   
   @Binding var isOpened: Bool
   @State var selected = ""

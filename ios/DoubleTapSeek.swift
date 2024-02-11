@@ -17,7 +17,7 @@ struct DoubleTapSeek: View {
   var body: some View {
     Circle()
       .fill(Color.black).opacity(0.3)
-      .scaleEffect(3, anchor: isForward ? .leading : .trailing)
+      .scaleEffect(2.6, anchor: isForward ? .leading : .trailing)
       .opacity(isTapped ? 1 : 0)
       .overlay(
         HStack {

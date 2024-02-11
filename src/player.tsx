@@ -49,6 +49,7 @@ export const RNPlayerVideo = ({
         videoTitle={'Title de test'}
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
         onVideoProgress={data => setCurrentTime(data.nativeEvent)}
+        onPlayPause={event => console.log(event.nativeEvent.status)}
         // onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
         fullScreen={isFullScreen}
         resizeMode={resizeMode}

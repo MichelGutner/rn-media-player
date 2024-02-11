@@ -44,7 +44,7 @@ struct OverlayManager : View {
     .edgesIgnoringSafeArea(Edge.Set.all)
     .overlay(
       GeometryReader { _ in
-        FullScreenMAnager(isFullScreen: isFullScreen, onTap: onTapFullScreen, config: fullScreenConfig)
+        FullScreenManager(isFullScreen: isFullScreen, onTap: onTapFullScreen, config: fullScreenConfig)
         HeaderManager(onTap: onTapExit, onTapSettings: onTapSettings)
       }
     )

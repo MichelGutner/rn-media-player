@@ -1,49 +1,140 @@
-//
-//  playPause.swift
-//  RNVideoPlayer
-//
-//  Created by Michel Gutner on 01/01/24.
-//
-
 import Foundation
+import SwiftUI
 import AVKit
-import UIKit
 
 @available(iOS 13.0, *)
-class PlayPauseManager {
-  private var _button = UIButton()
-  private weak var _player: AVPlayer!
-  private var _view: UIView!
+class PlayerObserver: ObservableObject {
+  @Published var isFinishedPlaying = false
   
-  init(_ player: AVPlayer!, _ view: UIView!) {
-    self._player = player
-    self._view = view
+  @objc func itemDidFinishPlaying(_ notification: Notification) {
+    isFinishedPlaying = true
   }
   
-  public func crateAndAdjustLayout(config: NSDictionary?) {
-    let tintColor = config?["color"] as? String
-    let isHidden = config?["hidden"] as? Bool
-    
-    let size = (calculateFrameSize(size30, variantPercent40) + size20)
-    
-    _button.tintColor = transformStringIntoUIColor(color: tintColor)
-    _button.isHidden = isHidden ?? false
-    _button.backgroundColor = UIColor(white: 0, alpha: 0.4)
-    _button.layer.cornerRadius = size16
-    _view.addSubview(_button)
-    _button.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      _button.centerXAnchor.constraint(equalTo: _view.layoutMarginsGuide.centerXAnchor),
-      _button.safeAreaLayoutGuide.centerYAnchor.constraint(equalTo: _view.layoutMarginsGuide.centerYAnchor),
-      _button.widthAnchor.constraint(equalToConstant: size),
-      _button.heightAnchor.constraint(equalToConstant:  size),
-    ])
-    if _button.imageView?.layer.sublayers == nil {
-      _button.setImage(UIImage(systemName: _player.rate == 0 ? "play.fill" : "pause"), for: .normal)
+  @objc func playerItemNewAcessLogEntry(_ notification: Notification) {
+    guard let player = notification.object as? AVPlayerItem else { return }
+//    if player.rate > 0 {
+//        print("Player is playing")
+//        // Your logic when the player is playing
+//    } else {
+//        print("Player is paused")
+//        // Your logic when the player is paused
+//    }
+  }
+}
+
+@available(iOS 13.0, *)
+struct PlayPauseManager : View {
+  var player: AVPlayer
+  var onTap: (String) -> Void
+  
+  @ObservedObject private var playerObserver = PlayerObserver()
+  @State private var dynamicSize: CGFloat = calculateFrameSize(size22, variantPercent30)
+  @State private var imageName: String = ""
+  @State private var isFinished: Bool = false
+  @State private var status: PlayingStatus = .paused
+  
+  var body: some View {
+    VStack(alignment: .center) {
+      HStack {
+        Button(action: {
+          onPlaybackManager(completionHandler: { completed in
+            if completed {
+              updateImage()
+            }
+          })
+        }) {
+          Image(systemName: imageName)
+            .foregroundColor(.white)
+            .font(.system(size: dynamicSize))
+        }
+      }
+    }
+    .padding(.horizontal, 20)
+    .padding(.vertical, 16)
+    .fixedSize(horizontal: true, vertical: true)
+    .onAppear {
+      updateImage()
+      
+      NotificationCenter.default.addObserver(
+        playerObserver,
+        selector: #selector(playerObserver.playerItemNewAcessLogEntry(_:)),
+        name: .AVPlayerItemNewAccessLogEntry,
+        object: player.currentItem
+      )
+      
+      NotificationCenter.default.addObserver(
+        playerObserver,
+        selector: #selector(PlayerObserver.itemDidFinishPlaying(_:)),
+        name: .AVPlayerItemDidPlayToEndTime,
+        object: player.currentItem
+      )
+      
+      NotificationCenter.default.addObserver(
+        forName: UIApplication.willChangeStatusBarOrientationNotification,
+        object: nil,
+        queue: .main
+      ) { _ in
+        updateDynamicSize()
+        updateImage()
+      }
+    }
+    .onReceive(playerObserver.$isFinishedPlaying) { isFinishedPlaying in
+      if isFinishedPlaying {
+        isFinished = true
+        imageName = "gobackward"
+        status = .finished
+      }
     }
   }
+  
+}
 
-  public func button() -> UIButton {
-    return _button
+enum PlayingStatus: String {
+  case playing, paused, finished
+}
+
+@available(iOS 13.0, *)
+extension PlayPauseManager {
+  func PlayingStatusManager(_ status: PlayingStatus) -> String {
+    switch (status) {
+    case .playing:
+      return "isPlaying"
+    case .paused:
+      return "isPaused"
+    case .finished:
+      return "isFinished"
+    }
+  }
+  
+  func onPlaybackManager(completionHandler: @escaping (Bool) -> Void) {
+    if isFinished {
+      status = .finished
+      player.currentItem?.seek(to: CMTime(value: CMTimeValue(0), timescale: 1), completionHandler: completionHandler)
+    } else {
+      if player.rate == 0  {
+        player.play()
+        status = .playing
+      } else {
+        player.pause()
+        status = .paused
+      }
+    }
+    updateImage()
+    onTap(PlayingStatusManager(status))
+  }
+  
+  func updateImage() {
+    guard let currentIem = player.currentItem else { return }
+    if player.currentTime().seconds >= (currentIem.duration.seconds - 3) {
+      isFinished = true
+      imageName = "gobackward"
+    } else {
+      player.rate == 0 ? (imageName = "play.fill") : (imageName = "pause")
+      isFinished = false
+    }
+  }
+  
+  func updateDynamicSize() {
+    dynamicSize = calculateFrameSize(size20, variantPercent30)
   }
 }

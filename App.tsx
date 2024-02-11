@@ -12,8 +12,7 @@ import {RNPlayerVideo} from './src/player';
 function App(): JSX.Element {
   const {height} = useWindowDimensions();
   const [isFull, setIsFull] = useState(false);
-  // console.log('🚀 ~ file: App.tsx:15 ~ App ~ isFull:', isFull);
-  // console.log('🚀 ~ file: App.tsx:14 ~ App ~ isFull:', isFull);
+
   // useEffect(() => {
   //   setTimeout(() => {
   //     setIsFull(!isFull);
@@ -28,7 +27,7 @@ function App(): JSX.Element {
       onFullScreen={() => setIsFull(!isFull)}
       resizeMode={resizeMode}
       paused={false}
-      startTime={150}
+      startTime={50}
     />
   );
 }

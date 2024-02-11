@@ -35,6 +35,7 @@ RCT_EXPORT_VIEW_PROPERTY(onVideoDownloaded, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onDownloadVideoTapped, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onPlaybackSpeedTapped, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onQualityTapped, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onPlayPause, RCTDirectEventBlock)
 
 RCT_EXPORT_VIEW_PROPERTY(sliderProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(forwardProps, NSDictionary)

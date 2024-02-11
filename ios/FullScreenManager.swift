@@ -9,12 +9,13 @@ import Foundation
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct FullScreenMAnager : View {
+struct FullScreenManager : View {
   var isFullScreen: Bool = false
   var onTap: () -> Void
   var config: NSDictionary?
   
   @State private var dynamicFontSize: CGFloat = calculateFrameSize(size20, variantPercent30)
+  
   var body: some View {
     VStack {
       Spacer()
