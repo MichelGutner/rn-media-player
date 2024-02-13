@@ -160,53 +160,91 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _subView.frame = bounds
     
     _overlayView = UIView()
-    _overlayView.backgroundColor = UIColor(white: 0, alpha: 0.4)
     _subView.addSubview(_overlayView)
     _overlayView.frame = _subView.frame
     _overlayView.isHidden = loading
     _overlayView.reactZIndex = 2
     
-    let overlayControls = UIHostingController(rootView: OverlayManager(
-      onTapBackward: {[self] in
-        onTapBackwardTime()
-      },
-      onTapForward: { [self] in
-        onTapFowardTime()
-      }, advanceValue: advanceValue as! Int,
-      onTapFullScreen: { [self] in
-        onToggleOrientation()
+    // MARK: - DoubleTap Controls
+    let test = UIHostingController(rootView: ControlsManager(
+      avPlayer: player!,
+      videoTitle: playbackTitle!,
+      onTapGesture: { [self] visible in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [self] in
+          seekSlider.isHidden = visible
+        })
+        
       },
       isFullScreen: fullScreen,
-      fullScreenConfig: fullScreenProps,
+      onTapFullScreen: onToggleOrientation,
+      configFullScreen: fullScreenProps,
+      onTapForward: onTapFowardTime,
+      onTapBackward: onTapBackwardTime,
+      advanceValue: advanceValue as! Int,
       suffixAdvanceValue: suffixAdvanceValue!,
+      isFinished: {
+        print("testing")
+      },
+      onTapSettings: onTapSettings,
       onTapExit: onTapGoback,
-      onTapSettings: { [self] in
-        onTapSettings()
+      onTapPlayPause: { [self] value in
+        onPlayPause?(value) 
       }
     ))
-    overlayControls.view.frame = _subView.frame
-    _overlayView.addSubview(overlayControls.view)
-    overlayControls.view.backgroundColor = .clear
+    test.view.frame = _subView.frame
+    test.view.backgroundColor = .clear
+    _overlayView.addSubview(test.view)
+//    let doubleTapControls = UIHostingController(
+//      rootView: DoubleTapManager(
+//        onTapBackward: onTapBackwardTime,
+//        onTapForward: onTapFowardTime,
+//        isFinished: { [self] in
+//          _overlayView.isHidden = false
+//        },
+//        advanceValue: advanceValue as! Int,
+//        suffixAdvanceValue: suffixAdvanceValue!
+//      ))
+//
+//    doubleTapControls.view.frame = _subView.frame
+//    doubleTapControls.view.backgroundColor = .clear
+//    doubleTapControls.view.reactZIndex = 3
+//    _subView.addSubview(doubleTapControls.view)
+//
+//
+//    let overlayControls = UIHostingController(rootView: OverlayManager(
+//      onTapFullScreen: { [self] in
+//        onToggleOrientation()
+//      },
+//      isFullScreen: fullScreen,
+//      fullScreenConfig: fullScreenProps,
+//      onTapExit: onTapGoback,
+//      onTapSettings: { [self] in
+//        onTapSettings()
+//      }
+//    ))
+//    overlayControls.view.frame = _subView.frame
+//    _overlayView.addSubview(overlayControls.view)
+//    overlayControls.view.backgroundColor = .clear
     
     onChangeOrientation(fullScreen)
     _subView.layer.addSublayer(playerLayer)
     
     // seek slider label
     let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent20)
-    let trailingAnchor = calculateFrameSize(size50, variantPercent40)
-    let labelDurationProps = labelDurationProps
-    let labelDurationTextColor = labelDurationProps?["color"] as? String
-    playbackDuration.textColor = transformStringIntoUIColor(color: labelDurationTextColor)
-    playbackDuration.font = UIFont.systemFont(ofSize: sizeLabelSeekSlider)
-    if playbackDuration.text == nil {
-      playbackDuration.text = stringFromTimeInterval(interval: 0)
-    }
-    _overlayView.addSubview(playbackDuration)
-    playbackDuration.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      playbackDuration.trailingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchor),
-      playbackDuration.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -3)
-    ])
+//    let trailingAnchor = calculateFrameSize(size50, variantPercent40)
+//    let labelDurationProps = labelDurationProps
+//    let labelDurationTextColor = labelDurationProps?["color"] as? String
+//    playbackDuration.textColor = transformStringIntoUIColor(color: labelDurationTextColor)
+//    playbackDuration.font = UIFont.systemFont(ofSize: sizeLabelSeekSlider)
+//    if playbackDuration.text == nil {
+//      playbackDuration.text = stringFromTimeInterval(interval: 0)
+//    }
+//    _overlayView.addSubview(playbackDuration)
+//    playbackDuration.translatesAutoresizingMaskIntoConstraints = false
+//    NSLayoutConstraint.activate([
+//      playbackDuration.trailingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchor),
+//      playbackDuration.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -3)
+//    ])
     
     let labelProgressProps = labelProgressProps
     let labelProgressTextColor = labelProgressProps?["color"] as? String
@@ -223,22 +261,22 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
 
 
-    title.text = playbackTitle
-    title.numberOfLines = 2
-    
-    let titleSize = calculateFrameSize(size14, variantPercent20)
-    let titleColor = titleProps?["color"] as? String
-    
-    title.textColor = transformStringIntoUIColor(color: titleColor)
-    title.font = UIFont.systemFont(ofSize: titleSize)
-    _overlayView.addSubview(title)
-    title.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor),
-      title.centerXAnchor.constraint(equalTo: _overlayView.centerXAnchor),
-      title.widthAnchor.constraint(lessThanOrEqualTo: _overlayView.safeAreaLayoutGuide.widthAnchor, multiplier: variantPercent60)
-    ])
-    
+//    title.text = playbackTitle
+//    title.numberOfLines = 2
+//
+//    let titleSize = calculateFrameSize(size14, variantPercent20)
+//    let titleColor = titleProps?["color"] as? String
+//
+//    title.textColor = transformStringIntoUIColor(color: titleColor)
+//    title.font = UIFont.systemFont(ofSize: titleSize)
+//    _overlayView.addSubview(title)
+//    title.translatesAutoresizingMaskIntoConstraints = false
+//    NSLayoutConstraint.activate([
+//      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor),
+//      title.centerXAnchor.constraint(equalTo: _overlayView.centerXAnchor),
+//      title.widthAnchor.constraint(lessThanOrEqualTo: _overlayView.safeAreaLayoutGuide.widthAnchor, multiplier: variantPercent60)
+//    ])
+//
     // seek slider
     _overlayView.addSubview(seekSlider)
     let seekTrailingAnchor = calculateFrameSize(size100, variantPercent30)
@@ -384,22 +422,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     downloadSymbol.view.backgroundColor = .clear
     downloadView = downloadSymbol.view
     
-    let playpause = UIHostingController(rootView: PlayPauseManager(player: avPlayer, onTap: { [self] value in
-      onPlayPause?(["status": value])
-    }))
-    playpause.view.backgroundColor = UIColor(white: 0, alpha: 0.3)
-    playpause.view.layer.cornerRadius = size14
-    playpause.view.frame = _overlayView.frame
-    playPauseView = playpause.view
-    _overlayView.addSubview(playPauseView)
-    playPauseView.isHidden = false
-    playPauseView.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      playPauseView.centerXAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.centerXAnchor),
-      playPauseView.safeAreaLayoutGuide.centerYAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.centerYAnchor)
-    ])
-    
-    
     player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
       self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem
@@ -458,7 +480,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       if player.status == .readyToPlay {
         loading = false
         onLoadingManager(hideLoading: true)
-        _subView.subviews.forEach {$0.isHidden = true}
         onLoaded?(["duration": player.currentItem?.duration.seconds as Any])
         onReady?(["ready": true])
       } else if player.status == .failed {
@@ -512,19 +533,19 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-      if let touch = touches.first {
-        _subView.subviews.forEach {$0.isHidden = false}
-      }
-    }
-  
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
-        if player?.timeControlStatus == .playing {
-            _subView.subviews.forEach {$0.isHidden = true}
-        }
-      })
-    }
+//    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+//      if let touch = touches.first {
+//        _subView.subviews.forEach {$0.isHidden = false}
+//      }
+//    }
+//
+//    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+//      DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
+//        if player?.timeControlStatus == .playing {
+//            _subView.subviews.forEach {$0.isHidden = true}
+//        }
+//      })
+//    }
 }
 
 enum Resize: String {
@@ -566,12 +587,12 @@ extension RNVideoPlayerView {
     animatedPlayPause()
   }
   
-  @objc private func onTapFowardTime() {
+  @objc private func onTapFowardTime(_ advancedValue: Int) {
     let forward = videoTimerManager(avPlayer: player)
     forward.advance(Double(truncating: advanceValue!))
   }
   
-  @objc private func onTapBackwardTime() {
+  @objc private func onTapBackwardTime(_ advancedValue: Int) {
     let backward = videoTimerManager(avPlayer: player)
     backward.advance(-Double(truncating: advanceValue!))
   }

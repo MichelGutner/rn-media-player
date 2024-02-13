@@ -12,9 +12,11 @@ import SwiftUI
 struct HeaderManager : View {
   var onTap: () -> Void
   var onTapSettings: () -> Void
+  var title: String
   @State private var isSettingsTapped: Bool = false
   
-  @State private var dynamicSize = calculateFrameSize(size20, variantPercent30)
+  @State private var dynamicSize = dynamicSize18v30
+  @State private var dynamicTitleSize = calculateFrameSize(size14, variantPercent20)
   
   var body: some View {
     VStack {
@@ -27,11 +29,14 @@ struct HeaderManager : View {
             .foregroundColor(.white)
         }
         Spacer()
+        Text(title).font(.system(size: dynamicTitleSize)).foregroundColor(.white)
+        Spacer()
         SettingsManager(onTap: {
           onTapSettings()
           isSettingsTapped.toggle()
         }, size: dynamicSize, isTapped: !isSettingsTapped)
       }
+      Spacer()
     }
     .padding(.leading, 20)
     .padding(.trailing, 20)
@@ -44,6 +49,7 @@ struct HeaderManager : View {
   }
   
   private func updateDynamicSize() {
-    dynamicSize = calculateFrameSize(size20, variantPercent30)
+    dynamicSize = dynamicSize18v30
+    dynamicTitleSize = calculateFrameSize(size10, variantPercent20)
   }
 }

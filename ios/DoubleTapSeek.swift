@@ -9,14 +9,15 @@ struct DoubleTapSeek: View {
   @State private var resetTimer: Timer?
   
   var isForward: Bool = false
-  var onTap: () -> Void
+  var onTap: (Int) -> Void
   var advanceValue: Int = 10
   var suffixAdvanceValue: String
-
+  var isFinished: () -> Void
+  
   
   var body: some View {
     Circle()
-      .fill(Color.black).opacity(0.3)
+      .fill(Color.black).opacity(variantPercent10)
       .scaleEffect(2.6, anchor: isForward ? .leading : .trailing)
       .opacity(isTapped ? 1 : 0)
       .overlay(
@@ -25,7 +26,7 @@ struct DoubleTapSeek: View {
             HStack(spacing: 0) {
               ForEach((0...2).reversed(), id: \.self) { index in
                 Image(systemName: "arrowtriangle.backward.fill")
-                  .opacity(showArrows[index] ? 1 : 0.1)
+                  .opacity(showArrows[index] ? 1 : 0)
                   .foregroundColor(.white)
               }
             }
@@ -34,9 +35,9 @@ struct DoubleTapSeek: View {
             
             Text("\(tappedQuantity * advanceValue) ".appending(suffixAdvanceValue))
               .font(.caption)
-              .fontWeight(.semibold)
+              .fontWeight(.bold)
               .foregroundColor(.white)
- 
+            
           }
         }
       )
@@ -45,36 +46,36 @@ struct DoubleTapSeek: View {
       .onTapGesture(count: isTapped ? 1 : 2) {
         self.isTapped = true
         tappedQuantity += 1
-        onTap()
+        onTap(tappedQuantity * advanceValue)
         
         // Invalidate the existing timer
         resetTimer?.invalidate()
         
         // Set a new timer to reset tappedQuantity
-
-          withAnimation(.easeInOut(duration: 0.1)) {
-            self.showArrows[0] = true
-          }
+        
+        withAnimation(.easeInOut(duration: 0.1)) {
+          self.showArrows[0] = true
+        }
+        
+        withAnimation(.easeInOut(duration: 0.2).delay(0.1)) {
+          self.showArrows[0] = false
+          self.showArrows[1] = true
+        }
+        
+        withAnimation(.easeInOut(duration: 0.2).delay(0.25)) {
+          self.showArrows[1] = false
+          self.showArrows[2] = true
+        }
+        
+        withAnimation(.easeInOut(duration: 0.2).delay(0.35)) {
+          self.showArrows[2] = false
           
-          withAnimation(.easeInOut(duration: 0.2).delay(0.1)) {
-            self.showArrows[0] = false
-            self.showArrows[1] = true
-          }
-          
-          withAnimation(.easeInOut(duration: 0.2).delay(0.25)) {
-            self.showArrows[1] = false
-            self.showArrows[2] = true
-          }
-          
-          withAnimation(.easeInOut(duration: 0.2).delay(0.35)) {
-            self.showArrows[2] = false
-
-          }
+        }
         resetTimer = Timer.scheduledTimer(withTimeInterval: resetDuration, repeats: false) { _ in
           self.isTapped = false
           tappedQuantity = 0
+          isFinished()
         }
       }
-    
   }
 }

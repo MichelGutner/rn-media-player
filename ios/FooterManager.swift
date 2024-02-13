@@ -7,20 +7,29 @@
 
 import Foundation
 import SwiftUI
+import AVKit
 
 @available(iOS 13.0, *)
-struct FullScreenManager : View {
+struct FooterManager : View {
+  @ObservedObject private var playbackObserver = PlayerObserver()
+  @State private var dynamicFontSize: CGFloat = dynamicSize18v30
+  @State private var dynamicDurationTextSize: CGFloat = calculateFrameSize(size10, variantPercent20)
+  @State private var playbackDuration: Double = 0.0
+  
+  var avPlayer: AVPlayer
   var isFullScreen: Bool = false
   var onTap: () -> Void
   var config: NSDictionary?
   
-  @State private var dynamicFontSize: CGFloat = calculateFrameSize(size20, variantPercent30)
   
   var body: some View {
     VStack {
       Spacer()
       HStack {
         Spacer()
+        Text(stringFromTimeInterval(interval: playbackDuration))
+          .foregroundColor(.white)
+          .font(.system(size: dynamicDurationTextSize))
         Button (action: {
           onTap()
         }) {
@@ -43,10 +52,25 @@ struct FullScreenManager : View {
       NotificationCenter.default.addObserver(forName: UIApplication.willChangeStatusBarOrientationNotification, object: nil, queue: .main) { _ in
         updateDynamicFontSize()
       }
+      NotificationCenter.default.addObserver(
+        playbackObserver,
+        selector: #selector(PlayerObserver.playbackItemDuration(_:)),
+        name: .AVPlayerItemNewAccessLogEntry,
+        object: avPlayer.currentItem
+      )
+    }
+    .onReceive(playbackObserver.$playbackDuration) { duration in
+      if duration != 0.0 {
+        playbackDuration = duration
+      }
+      if  avPlayer.currentItem?.duration.seconds != 0.0 {
+        playbackDuration = (avPlayer.currentItem?.duration.seconds)!
+      }
     }
   }
   
   private func updateDynamicFontSize() {
-    dynamicFontSize = calculateFrameSize(size20, variantPercent30)
+    dynamicFontSize = dynamicSize18v30
+    dynamicDurationTextSize = calculateFrameSize(size10, variantPercent20)
   }
 }

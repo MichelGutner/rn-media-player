@@ -21,6 +21,9 @@
 		DB3BDEC92B76567E00834EDB /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB3BDEC82B76567E00834EDB /* SettingsManager.swift */; };
 		DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */; };
 		DB6459FD2B77AD33000E54AD /* PlayPauseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB6459FC2B77AD33000E54AD /* PlayPauseManager.swift */; };
+		DB645A032B79B7DC000E54AD /* ControlsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB645A022B79B7DC000E54AD /* ControlsManager.swift */; };
+		DB645A052B79C3B9000E54AD /* SeekManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB645A042B79C3B9000E54AD /* SeekManager.swift */; };
+		DB645A072B79D24E000E54AD /* PlaybackObservable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB645A062B79D24E000E54AD /* PlaybackObservable.swift */; };
 		DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */; };
 		DB7821512B4E486D0022DCE8 /* SeekSliderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821502B4E486D0022DCE8 /* SeekSliderManager.swift */; };
 		DBAAB1952B66863900BE5FD7 /* LoadingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1942B66863900BE5FD7 /* LoadingManager.swift */; };
@@ -30,7 +33,7 @@
 		DBC2BA7A2B7050EE00648252 /* OverlayManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC2BA792B7050EE00648252 /* OverlayManager.swift */; };
 		DBC2BA7E2B71267800648252 /* DownloadVideoManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC2BA7D2B71267800648252 /* DownloadVideoManager.swift */; };
 		DBC2BA802B71290100648252 /* SettingsSymbolManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC2BA7F2B71290100648252 /* SettingsSymbolManager.swift */; };
-		DBC2BA872B74646D00648252 /* FullScreenManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC2BA862B74646D00648252 /* FullScreenManager.swift */; };
+		DBC2BA872B74646D00648252 /* FooterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC2BA862B74646D00648252 /* FooterManager.swift */; };
 		DBC2BA892B7469AB00648252 /* HeaderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC2BA882B7469AB00648252 /* HeaderManager.swift */; };
 		DBCD42E72B69E3180099DFEF /* data.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCD42E62B69E3180099DFEF /* data.swift */; };
 		DBCD42EB2B6B3DCB0099DFEF /* AutoQualityPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCD42EA2B6B3DCB0099DFEF /* AutoQualityPlayerManager.swift */; };
@@ -72,6 +75,9 @@
 		DB3BDEC82B76567E00834EDB /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 		DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapSeek.swift; sourceTree = "<group>"; };
 		DB6459FC2B77AD33000E54AD /* PlayPauseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayPauseManager.swift; sourceTree = "<group>"; };
+		DB645A022B79B7DC000E54AD /* ControlsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlsManager.swift; sourceTree = "<group>"; };
+		DB645A042B79C3B9000E54AD /* SeekManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekManager.swift; sourceTree = "<group>"; };
+		DB645A062B79D24E000E54AD /* PlaybackObservable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackObservable.swift; sourceTree = "<group>"; };
 		DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityImageHandler.swift; sourceTree = "<group>"; };
 		DB7821502B4E486D0022DCE8 /* SeekSliderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekSliderManager.swift; sourceTree = "<group>"; };
 		DBAAB1942B66863900BE5FD7 /* LoadingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingManager.swift; sourceTree = "<group>"; };
@@ -81,7 +87,7 @@
 		DBC2BA792B7050EE00648252 /* OverlayManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayManager.swift; sourceTree = "<group>"; };
 		DBC2BA7D2B71267800648252 /* DownloadVideoManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadVideoManager.swift; sourceTree = "<group>"; };
 		DBC2BA7F2B71290100648252 /* SettingsSymbolManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSymbolManager.swift; sourceTree = "<group>"; };
-		DBC2BA862B74646D00648252 /* FullScreenManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullScreenManager.swift; sourceTree = "<group>"; };
+		DBC2BA862B74646D00648252 /* FooterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FooterManager.swift; sourceTree = "<group>"; };
 		DBC2BA882B7469AB00648252 /* HeaderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderManager.swift; sourceTree = "<group>"; };
 		DBCD42E62B69E3180099DFEF /* data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = data.swift; sourceTree = "<group>"; };
 		DBCD42EA2B6B3DCB0099DFEF /* AutoQualityPlayerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoQualityPlayerManager.swift; sourceTree = "<group>"; };
@@ -234,10 +240,12 @@
 				DBAAB1962B67275000BE5FD7 /* ModalManager.swift */,
 				DBC2BA792B7050EE00648252 /* OverlayManager.swift */,
 				DBC2BA7F2B71290100648252 /* SettingsSymbolManager.swift */,
-				DBC2BA862B74646D00648252 /* FullScreenManager.swift */,
+				DBC2BA862B74646D00648252 /* FooterManager.swift */,
 				DBC2BA882B7469AB00648252 /* HeaderManager.swift */,
 				DB3BDEC82B76567E00834EDB /* SettingsManager.swift */,
 				DB6459FC2B77AD33000E54AD /* PlayPauseManager.swift */,
+				DB645A022B79B7DC000E54AD /* ControlsManager.swift */,
+				DB645A042B79C3B9000E54AD /* SeekManager.swift */,
 			);
 			name = Customs;
 			sourceTree = "<group>";
@@ -248,6 +256,7 @@
 				DB0C9DD32B23C85300B7D598 /* videoTimerManager.swift */,
 				DBCD42EA2B6B3DCB0099DFEF /* AutoQualityPlayerManager.swift */,
 				DBC2BA7D2B71267800648252 /* DownloadVideoManager.swift */,
+				DB645A062B79D24E000E54AD /* PlaybackObservable.swift */,
 			);
 			name = Video;
 			sourceTree = "<group>";
@@ -559,9 +568,10 @@
 				DBD7188A2B54CA9B008ED0AD /* UtilityDynamicSize.swift in Sources */,
 				DBCD42EB2B6B3DCB0099DFEF /* AutoQualityPlayerManager.swift in Sources */,
 				DBC2BA782B6FF70900648252 /* PlaybackErrorManager.swift in Sources */,
-				DBC2BA872B74646D00648252 /* FullScreenManager.swift in Sources */,
+				DBC2BA872B74646D00648252 /* FooterManager.swift in Sources */,
 				DB6459FD2B77AD33000E54AD /* PlayPauseManager.swift in Sources */,
 				DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */,
+				DB645A072B79D24E000E54AD /* PlaybackObservable.swift in Sources */,
 				DB0C9DCD2B23AB6900B7D598 /* UtilityStringHandler.swift in Sources */,
 				DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */,
 				D02E142D2AF08CF6003D0472 /* RNVideoPlayer.swift in Sources */,
@@ -569,9 +579,11 @@
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				DBC2BA7A2B7050EE00648252 /* OverlayManager.swift in Sources */,
 				DBCD42E72B69E3180099DFEF /* data.swift in Sources */,
+				DB645A052B79C3B9000E54AD /* SeekManager.swift in Sources */,
 				DB3BDEC92B76567E00834EDB /* SettingsManager.swift in Sources */,
 				DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */,
 				DB0C9DD42B23C85300B7D598 /* videoTimerManager.swift in Sources */,
+				DB645A032B79B7DC000E54AD /* ControlsManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -770,10 +782,7 @@
 					"-DFOLLY_MOBILE=1",
 					"-DFOLLY_USE_LIBCPP=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 			};
@@ -843,10 +852,7 @@
 					"-DFOLLY_MOBILE=1",
 					"-DFOLLY_USE_LIBCPP=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;

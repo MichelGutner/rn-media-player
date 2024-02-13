@@ -3,26 +3,6 @@ import SwiftUI
 import AVKit
 
 @available(iOS 13.0, *)
-class PlayerObserver: ObservableObject {
-  @Published var isFinishedPlaying = false
-  
-  @objc func itemDidFinishPlaying(_ notification: Notification) {
-    isFinishedPlaying = true
-  }
-  
-  @objc func playerItemNewAcessLogEntry(_ notification: Notification) {
-    guard let player = notification.object as? AVPlayerItem else { return }
-//    if player.rate > 0 {
-//        print("Player is playing")
-//        // Your logic when the player is playing
-//    } else {
-//        print("Player is paused")
-//        // Your logic when the player is paused
-//    }
-  }
-}
-
-@available(iOS 13.0, *)
 struct PlayPauseManager : View {
   var player: AVPlayer
   var onTap: (String) -> Void
@@ -32,11 +12,15 @@ struct PlayPauseManager : View {
   @State private var imageName: String = ""
   @State private var isFinished: Bool = false
   @State private var status: PlayingStatus = .paused
+  @State private var isTapped: Bool = false
   
   var body: some View {
-    VStack(alignment: .center) {
+    VStack {
+      Spacer()
       HStack {
+        Spacer()
         Button(action: {
+          isTapped.toggle()
           onPlaybackManager(completionHandler: { completed in
             if completed {
               updateImage()
@@ -47,21 +31,17 @@ struct PlayPauseManager : View {
             .foregroundColor(.white)
             .font(.system(size: dynamicSize))
         }
+        .padding(size16)
+        .background(Color(.black).opacity(0.2))
+        .cornerRadius(.infinity)
+        Spacer()
       }
+      .fixedSize(horizontal: true, vertical: true)
+      Spacer()
     }
-    .padding(.horizontal, 20)
-    .padding(.vertical, 16)
-    .fixedSize(horizontal: true, vertical: true)
+
     .onAppear {
       updateImage()
-      
-      NotificationCenter.default.addObserver(
-        playerObserver,
-        selector: #selector(playerObserver.playerItemNewAcessLogEntry(_:)),
-        name: .AVPlayerItemNewAccessLogEntry,
-        object: player.currentItem
-      )
-      
       NotificationCenter.default.addObserver(
         playerObserver,
         selector: #selector(PlayerObserver.itemDidFinishPlaying(_:)),
@@ -129,7 +109,7 @@ extension PlayPauseManager {
       isFinished = true
       imageName = "gobackward"
     } else {
-      player.timeControlStatus == .paused ? (imageName = "play.fill") : (imageName = "pause")
+      player.timeControlStatus == .paused ? (imageName = "play.fill") : (imageName = "pause.fill")
       isFinished = false
     }
   }
