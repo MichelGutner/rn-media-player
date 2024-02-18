@@ -32,7 +32,7 @@ public func transformStringIntoUIColor(color: String?) -> UIColor {
 
 public func stringFromTimeInterval(interval: TimeInterval = 0) -> String {
   guard !interval.isInfinite, !interval.isNaN else {
-    return String(format: "%02d:%02d", 0, 0, 0)
+    return String(format: "%02d:%02d:%02d", 0, 0, 0)
   }
   
   let interval = Int(interval)

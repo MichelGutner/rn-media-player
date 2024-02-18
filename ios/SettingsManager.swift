@@ -12,7 +12,6 @@ import SwiftUI
 struct SettingsManager: View {
     var onTap: () -> Void
     var size: CGFloat
-    var isTapped: Bool
 
     var body: some View {
         Button(action: {

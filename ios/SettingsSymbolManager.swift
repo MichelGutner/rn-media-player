@@ -6,7 +6,7 @@ struct SettingsSymbolManager: View {
   var onTap: () -> Void
   var config: NSDictionary?
   
-  @State private var dynamicFontSize: CGFloat = dynamicSize18v30
+  @State private var dynamicFontSize: CGFloat = calculateFrameSize(size18, variantPercent30)
 
   
   var body: some View {
@@ -29,6 +29,6 @@ struct SettingsSymbolManager: View {
   }
 
   private func updateDynamicFontSize() {
-    dynamicFontSize = dynamicSize18v30
+    dynamicFontSize = calculateFrameSize(size18, variantPercent30)
   }
 }

@@ -11,9 +11,10 @@ import AVKit
 
 @available(iOS 13.0, *)
 struct ControlsManager: View {
+  var safeAreaInsets: UIEdgeInsets
   var avPlayer: AVPlayer
   var videoTitle: String
-  var onTapGesture: (Bool) -> Void
+  var onTapGestureBackdrop: (Bool) -> Void
   
   @State private var isTapped: Bool = false
   
@@ -38,65 +39,67 @@ struct ControlsManager: View {
   // MARK: -- PlayPause
   var onTapPlayPause: ([String: Any]) -> Void
   
+  var onAppearOverlay: () -> Void
+  var onDisappearOverlay: () -> Void
+  
+  
   var body: some View {
     ZStack {
-      GeometryReader { _ in
-        DoubleTapManager(
-          onTapBackward: { value in
-            isTapped = true
-            onTapBackward(value)
-          },
-          onTapForward: { value in
-            isTapped = true
-            onTapForward(value)
-          },
-          isFinished: {
-            isFinished()
-          },
-          advanceValue: advanceValue,
-          suffixAdvanceValue: suffixAdvanceValue
-        )
-        .background(Color(.black).opacity(isTapped ? 0 : 0.3))
-        .edgesIgnoringSafeArea(.all)
-        .onTapGesture {
-          isTapped.toggle()
-          onTapGesture(isTapped)
-        }
-        .foregroundColor(.white)
-        .overlay(
-          GeometryReader { geometry in
-            Group {
-              if !isTapped {
-                OverlayManager(
-                  videoTitle: videoTitle,
-                  onTapFullScreen: onTapFullScreen,
-                  isFullScreen: isFullScreen,
-                  onTapExit: onTapExit,
-                  onTapSettings: onTapSettings,
-                  avPlayer: avPlayer,
-                  onTapPlayPause: { status in
-                    onTapPlayPause(status)
-                    onToggleDisplayOverlay()
-
-                  },
-                  onAppearOverlay: {
-                    onToggleDisplayOverlay()
-                  },
-                  onDisappearOverlay: {}
-                )
-              }
-            }
-          }
-        )
+      DoubleTapManager(
+        onTapBackward: { value in
+          isTapped = true
+          onTapBackward(value)
+        },
+        onTapForward: { value in
+          isTapped = true
+          onTapForward(value)
+        },
+        isFinished: {
+          isFinished()
+        },
+        advanceValue: advanceValue,
+        suffixAdvanceValue: suffixAdvanceValue
+      )
+      .background(Color(.black).opacity(isTapped ? 0 : 0.3))
+      .edgesIgnoringSafeArea(.all)
+      .onTapGesture {
+        isTapped.toggle()
+        onTapGestureBackdrop(isTapped)
       }
+      .foregroundColor(.white)
+      .overlay(
+        Group {
+          OverlayManager(
+            safeAreaInsets: self.safeAreaInsets,
+            videoTitle: videoTitle,
+            onTapFullScreen: onTapFullScreen,
+            isFullScreen: isFullScreen,
+            onTapExit: onTapExit,
+            onTapSettings: onTapSettings,
+            avPlayer: avPlayer,
+            onTapPlayPause: { status in
+              onTapPlayPause(status)
+              onToggleDisplayOverlay()
+            },
+            onAppearOverlay: {
+              onToggleDisplayOverlay()
+              onAppearOverlay()
+            },
+            onDisappearOverlay: {
+              onDisappearOverlay()
+            }
+          )
+          .padding(8)
+        }
+      )
     }
   }
   private func onToggleDisplayOverlay() {
-    DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: {
+    DispatchQueue.main.asyncAfter(wallDeadline: .now() + 3, execute: {
       if (avPlayer.timeControlStatus != .paused) {
         withAnimation(.easeInOut) {
           isTapped = true
-          onTapGesture(true)
+          onTapGestureBackdrop(true)
         }
       }
     })

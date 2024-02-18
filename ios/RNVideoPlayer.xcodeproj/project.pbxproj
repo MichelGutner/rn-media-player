@@ -22,10 +22,10 @@
 		DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */; };
 		DB6459FD2B77AD33000E54AD /* PlayPauseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB6459FC2B77AD33000E54AD /* PlayPauseManager.swift */; };
 		DB645A032B79B7DC000E54AD /* ControlsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB645A022B79B7DC000E54AD /* ControlsManager.swift */; };
-		DB645A052B79C3B9000E54AD /* SeekManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB645A042B79C3B9000E54AD /* SeekManager.swift */; };
 		DB645A072B79D24E000E54AD /* PlaybackObservable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB645A062B79D24E000E54AD /* PlaybackObservable.swift */; };
 		DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */; };
 		DB7821512B4E486D0022DCE8 /* SeekSliderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB7821502B4E486D0022DCE8 /* SeekSliderManager.swift */; };
+		DB9667322B7D6281001A97E0 /* SeekSliderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9667312B7D6281001A97E0 /* SeekSliderView.swift */; };
 		DBAAB1952B66863900BE5FD7 /* LoadingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1942B66863900BE5FD7 /* LoadingManager.swift */; };
 		DBAAB1972B67275000BE5FD7 /* ModalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1962B67275000BE5FD7 /* ModalManager.swift */; };
 		DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */; };
@@ -76,10 +76,10 @@
 		DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapSeek.swift; sourceTree = "<group>"; };
 		DB6459FC2B77AD33000E54AD /* PlayPauseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayPauseManager.swift; sourceTree = "<group>"; };
 		DB645A022B79B7DC000E54AD /* ControlsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlsManager.swift; sourceTree = "<group>"; };
-		DB645A042B79C3B9000E54AD /* SeekManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekManager.swift; sourceTree = "<group>"; };
 		DB645A062B79D24E000E54AD /* PlaybackObservable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackObservable.swift; sourceTree = "<group>"; };
 		DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityImageHandler.swift; sourceTree = "<group>"; };
 		DB7821502B4E486D0022DCE8 /* SeekSliderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekSliderManager.swift; sourceTree = "<group>"; };
+		DB9667312B7D6281001A97E0 /* SeekSliderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekSliderView.swift; sourceTree = "<group>"; };
 		DBAAB1942B66863900BE5FD7 /* LoadingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingManager.swift; sourceTree = "<group>"; };
 		DBAAB1962B67275000BE5FD7 /* ModalManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalManager.swift; sourceTree = "<group>"; usesTabs = 0; };
 		DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDefault.swift; sourceTree = "<group>"; };
@@ -245,7 +245,7 @@
 				DB3BDEC82B76567E00834EDB /* SettingsManager.swift */,
 				DB6459FC2B77AD33000E54AD /* PlayPauseManager.swift */,
 				DB645A022B79B7DC000E54AD /* ControlsManager.swift */,
-				DB645A042B79C3B9000E54AD /* SeekManager.swift */,
+				DB9667312B7D6281001A97E0 /* SeekSliderView.swift */,
 			);
 			name = Customs;
 			sourceTree = "<group>";
@@ -561,6 +561,7 @@
 				DBAAB1952B66863900BE5FD7 /* LoadingManager.swift in Sources */,
 				DBC2BA7E2B71267800648252 /* DownloadVideoManager.swift in Sources */,
 				DB7821512B4E486D0022DCE8 /* SeekSliderManager.swift in Sources */,
+				DB9667322B7D6281001A97E0 /* SeekSliderView.swift in Sources */,
 				D02E142F2AF08E73003D0472 /* RNVideoPlayerManager.m in Sources */,
 				DBC2BA892B7469AB00648252 /* HeaderManager.swift in Sources */,
 				DBAAB1972B67275000BE5FD7 /* ModalManager.swift in Sources */,
@@ -579,7 +580,6 @@
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				DBC2BA7A2B7050EE00648252 /* OverlayManager.swift in Sources */,
 				DBCD42E72B69E3180099DFEF /* data.swift in Sources */,
-				DB645A052B79C3B9000E54AD /* SeekManager.swift in Sources */,
 				DB3BDEC92B76567E00834EDB /* SettingsManager.swift in Sources */,
 				DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */,
 				DB0C9DD42B23C85300B7D598 /* videoTimerManager.swift in Sources */,

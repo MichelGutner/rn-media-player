@@ -42,7 +42,7 @@ export const RNPlayerVideo = ({
         style={{...StyleSheet.absoluteFillObject, overflow: 'hidden'}}
         // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         source={{
-          url: 'https://content.jwplatform.com/videos/MGAxJ46m-aoHq8DIe.mp4',
+          url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
           videoTitle: 'Title de test',
         }}
         // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"

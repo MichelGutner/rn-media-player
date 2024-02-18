@@ -12,14 +12,15 @@ import AVFoundation
 class PlayerObserver: ObservableObject {
   @Published var isFinishedPlaying = false
   @Published var playbackDuration = 0.0
- 
+  @Published var playbackCurrentTime = 0.0
+  
   @objc func itemDidFinishPlaying(_ notification: Notification) {
     isFinishedPlaying = true
   }
   
   @objc func playbackItemDuration(_ notification: Notification) {
     guard let item = notification.object as? AVPlayerItem else { return }
-    print("playback", playbackDuration)
     playbackDuration = item.duration.seconds
+    playbackCurrentTime = item.currentTime().seconds
   }
 }

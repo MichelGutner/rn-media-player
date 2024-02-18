@@ -15,7 +15,7 @@ struct HeaderManager : View {
   var title: String
   @State private var isSettingsTapped: Bool = false
   
-  @State private var dynamicSize = dynamicSize18v30
+  @State private var dynamicSize = calculateFrameSize(size18, variantPercent30)
   @State private var dynamicTitleSize = calculateFrameSize(size14, variantPercent20)
   
   var body: some View {
@@ -34,12 +34,11 @@ struct HeaderManager : View {
         SettingsManager(onTap: {
           onTapSettings()
           isSettingsTapped.toggle()
-        }, size: dynamicSize, isTapped: !isSettingsTapped)
+        }, size: dynamicSize)
       }
       Spacer()
     }
-    .padding(.leading, 20)
-    .padding(.trailing, 20)
+
     .padding(.top, 16)
     .onAppear {
       NotificationCenter.default.addObserver(forName: UIApplication.willChangeStatusBarOrientationNotification, object: nil, queue: .main) { _ in
@@ -49,7 +48,7 @@ struct HeaderManager : View {
   }
   
   private func updateDynamicSize() {
-    dynamicSize = dynamicSize18v30
+    dynamicSize = calculateFrameSize(size18, variantPercent30)
     dynamicTitleSize = calculateFrameSize(size10, variantPercent20)
   }
 }

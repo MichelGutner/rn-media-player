@@ -101,7 +101,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         player?.currentItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
         player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferFull", options: .new, context: nil)
         playerLayer = AVPlayerLayer(player: player)
-        periodTimeObserver()
+//        periodTimeObserver()
         
       } catch {
         self.onError?(["url": "Error on get url: error type is \(error)"])
@@ -166,13 +166,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _overlayView.reactZIndex = 2
     
     // MARK: - DoubleTap Controls
+    
     let test = UIHostingController(rootView: ControlsManager(
-      avPlayer: player!,
+      safeAreaInsets: safeAreaInsets,
+      avPlayer: avPlayer,
       videoTitle: playbackTitle!,
-      onTapGesture: { [self] visible in
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [self] in
-          seekSlider.isHidden = visible
-        })
+      onTapGestureBackdrop: { [self] visible in
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [self] in
+//          if !isSeeking {
+//            seekSlider.isHidden = visible
+//          }
+//        })
         
       },
       isFullScreen: fullScreen,
@@ -189,6 +193,14 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       onTapExit: onTapGoback,
       onTapPlayPause: { [self] value in
         onPlayPause?(value) 
+      },
+      onAppearOverlay: { [self] in
+        seekSlider.isHidden = false
+      },
+      onDisappearOverlay: { [self] in
+        if !isSeeking {
+          seekSlider.isHidden = true
+        }
       }
     ))
     test.view.frame = _subView.frame
@@ -258,36 +270,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _overlayView.addSubview(playbackProgress)
     playbackProgress.translatesAutoresizingMaskIntoConstraints = false
 
-    
-
-
-//    title.text = playbackTitle
-//    title.numberOfLines = 2
-//
-//    let titleSize = calculateFrameSize(size14, variantPercent20)
-//    let titleColor = titleProps?["color"] as? String
-//
-//    title.textColor = transformStringIntoUIColor(color: titleColor)
-//    title.font = UIFont.systemFont(ofSize: titleSize)
-//    _overlayView.addSubview(title)
-//    title.translatesAutoresizingMaskIntoConstraints = false
-//    NSLayoutConstraint.activate([
-//      title.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor),
-//      title.centerXAnchor.constraint(equalTo: _overlayView.centerXAnchor),
-//      title.widthAnchor.constraint(lessThanOrEqualTo: _overlayView.safeAreaLayoutGuide.widthAnchor, multiplier: variantPercent60)
-//    ])
-//
     // seek slider
-    _overlayView.addSubview(seekSlider)
-    let seekTrailingAnchor = calculateFrameSize(size100, variantPercent30)
-    configureThumb(sliderProps)
-    seekSlider.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      seekSlider.leadingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.leadingAnchor),
-      seekSlider.trailingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -seekTrailingAnchor),
-      seekSlider.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -3),
-    ])
-    seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
+//    _overlayView.addSubview(seekSlider)
+//    let seekTrailingAnchor = calculateFrameSize(size100, variantPercent30)
+//    configureThumb(sliderProps)
+//    seekSlider.translatesAutoresizingMaskIntoConstraints = false
+//    NSLayoutConstraint.activate([
+//      seekSlider.leadingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.leadingAnchor),
+//      seekSlider.trailingAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -seekTrailingAnchor),
+//      seekSlider.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -10),
+//    ])
+//    seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
     
     settingsStackView.axis = .horizontal
     settingsStackView.spacing = calculateFrameSize(size10, variantPercent30)
@@ -307,82 +300,82 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     loadingView.isHidden = !self.loading
     addSubview(loadingView)
     
-    let speedRateModalTitle: String = speedRateModalProps?["title"] as? String ?? "Playback Speed"
-
-    let speedRateModal = UIHostingController(
-      rootView: ModalManager(
-        data: speedRateData,
-        title: speedRateModalTitle,
-        onSelected: { [self] item in
-          player?.rate = item as! Float
-          if playerStatus == .playing {
-            player?.play()
-          } else {
-            player?.pause()
-          }
-        },
-        onAppear: { [self] in
-          playerStatus = player?.timeControlStatus
-          if playerStatus == .playing {
-            player?.pause()
-          }
-        },
-        onDisappear: { [self] in
-          if playerStatus == .playing {
-            player?.play()
-          }
-        },
-        initialSelected: "Normal",
-        completionHandler: { [self] in
-          playBackSpeedModalView.removeFromSuperview()
-          animatedPlayPause()
-        },
-        isOpened: .constant(isOpenedModal)
-      ))
-    playBackSpeedModalView = speedRateModal.view
-    playBackSpeedModalView.frame = frame
-    playBackSpeedModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
-    playBackSpeedModalView.isHidden = !isOpenedModal
+//    let speedRateModalTitle: String = speedRateModalProps?["title"] as? String ?? "Playback Speed"
+//
+//    let speedRateModal = UIHostingController(
+//      rootView: ModalManager(
+//        data: speedRateData,
+//        title: speedRateModalTitle,
+//        onSelected: { [self] item in
+//          player?.rate = item as! Float
+//          if playerStatus == .playing {
+//            player?.play()
+//          } else {
+//            player?.pause()
+//          }
+//        },
+//        onAppear: { [self] in
+//          playerStatus = player?.timeControlStatus
+//          if playerStatus == .playing {
+//            player?.pause()
+//          }
+//        },
+//        onDisappear: { [self] in
+//          if playerStatus == .playing {
+//            player?.play()
+//          }
+//        },
+//        initialSelected: "Normal",
+//        completionHandler: { [self] in
+//          playBackSpeedModalView.removeFromSuperview()
+//          animatedPlayPause()
+//        }, children: (),
+//        isOpened: .constant(isOpenedModal)
+//      ))
+//    playBackSpeedModalView = speedRateModal.view
+//    playBackSpeedModalView.frame = frame
+//    playBackSpeedModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
+//    playBackSpeedModalView.isHidden = !isOpenedModal
     
     let qualityModalTitle: String = qualityModalProps?["title"] as? String ?? "Quality"
     let initialQualitySelected: String = qualityModalProps?["initialQualitySelected"] as! String
     let qualityData: [[String: String]] = qualityModalProps?["data"] as? [[String: String]] ?? [[:]]
     
-    let qualityModal = UIHostingController(
-      rootView: ModalManager(
-        data: qualityData,
-        title: qualityModalTitle,
-        onSelected: { [self] url in
-          changePlaybackQuality(URL(string: url as! String)!)
-          qualityModalView.removeFromSuperview()
-          onLoadingManager(hideLoading: false)
-          if playerStatus == .playing {
-            player?.play()
-          }
-        },
-        onAppear: { [self] in
-          playerStatus = player?.timeControlStatus
-
-          if playerStatus == .playing {
-            player?.pause()
-          }
-        },
-        onDisappear: { [self] in
-          if playerStatus == .playing {
-            player?.play()
-          }
-        },
-        initialSelected: initialQualitySelected,
-        completionHandler: { [self] in
-          qualityModalView.removeFromSuperview()
-          animatedPlayPause()
-        },
-        isOpened: .constant(isOpenedModal)
-      ))
-    qualityModalView = qualityModal.view
-    qualityModalView.frame = frame
-    qualityModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
-    qualityModalView.isHidden = !isOpenedModal
+//    let qualityModal = UIHostingController(
+//      rootView: ModalManager(
+//        data: qualityData,
+//        title: qualityModalTitle,
+//        onSelected: { [self] url in
+//          changePlaybackQuality(URL(string: url as! String)!)
+//          qualityModalView.removeFromSuperview()
+//          onLoadingManager(hideLoading: false)
+//          if playerStatus == .playing {
+//            player?.play()
+//          }
+//        },
+//        onAppear: { [self] in
+//          playerStatus = player?.timeControlStatus
+//
+//          if playerStatus == .playing {
+//            player?.pause()
+//          }
+//        },
+//        onDisappear: { [self] in
+//          if playerStatus == .playing {
+//            player?.play()
+//          }
+//        },
+//        initialSelected: initialQualitySelected,
+//        completionHandler: { [self] in
+//          qualityModalView.removeFromSuperview()
+//          animatedPlayPause()
+//        }, children: (),
+//        isOpened: .constant(isOpenedModal)
+//      ))
+//    qualityModalView = qualityModal.view
+//    qualityModalView.frame = frame
+//    qualityModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
+//    qualityModalView.isHidden = !isOpenedModal
     
     let configQualitySymbolProps = settingsItemsSymbolProps?["quality"] as! NSDictionary
     let qualitySymbol = UIHostingController(rootView: SettingsSymbolManager(imageName: "chart.bar.fill", onTap: { [self] in
@@ -428,37 +421,37 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     )
   }
   
-  private func periodTimeObserver() {
-    let interval = CMTime(value: 1, timescale: 2)
-    timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] _ in
-      self?.updatePlayerTime()
-    }
-  }
-  
-  private func updatePlayerTime() {
-    let time = videoTimerManager(avPlayer: player)
-    let currentTime = time.getCurrentTimeInSeconds()
-    let duration = time.getDurationTimeInSeconds()
-    guard let currentItem = player?.currentItem else { return }
-    
-    let loadedTimeRanges = currentItem.loadedTimeRanges
-    if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
-      let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
-      let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
-      self.onVideoProgress?(["progress": currentTime, "bufferedDuration": bufferedStart + bufferedDuration])
-    }
-    
-    playbackDuration.text = stringFromTimeInterval(interval: duration)
-    playbackProgress.text = stringFromTimeInterval(interval: currentTime)
-    
-    if self.isSeeking == false {
-      self.seekSlider.value = Float(currentTime/duration)
-    }
-  }
+//  private func periodTimeObserver() {
+//    let interval = CMTime(value: 1, timescale: 2)
+//    timeObserver = player?.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] _ in
+//      self?.updatePlayerTime()
+//    }
+//  }
+//
+//  private func updatePlayerTime() {
+//    let time = videoTimerManager(avPlayer: player)
+//    let currentTime = time.getCurrentTimeInSeconds()
+//    let duration = time.getDurationTimeInSeconds()
+//    guard let currentItem = player?.currentItem else { return }
+//
+//    let loadedTimeRanges = currentItem.loadedTimeRanges
+//    if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
+//      let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
+//      let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
+//      self.onVideoProgress?(["progress": currentTime, "bufferedDuration": bufferedStart + bufferedDuration])
+//    }
+//
+//    playbackDuration.text = stringFromTimeInterval(interval: duration)
+//    playbackProgress.text = stringFromTimeInterval(interval: currentTime)
+//
+//    if self.isSeeking == false {
+//      self.seekSlider.value = Float(currentTime/duration)
+//    }
+//  }
   
   
   private func removePeriodicTimeObserver() {
-    guard let timeObserver = timeObserver else { return }
+//    guard let timeObserver = timeObserver else { return }
   }
   
   override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
@@ -495,34 +488,34 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     self.onCompleted?(["completed": true])
   }
   
-  @objc func seekSliderChanged(_ seekSlider: UISlider) {
-    self.isSeeking = true
-    playbackProgress.isHidden = false
-    
-    guard let duration = self.player?.currentItem?.duration else { return }
-    let seconds : Float64 = Double(self.seekSlider.value) * CMTimeGetSeconds(duration)
-    if seekSlider.currentThumbImage != nil {
-      let thumbRect = seekSlider.thumbRect(forBounds: seekSlider.bounds, trackRect: seekSlider.trackRect(forBounds: seekSlider.bounds), value: seekSlider.value)
-      let xPosition = thumbRect.origin.x
-      
-      playbackProgress.transform = CGAffineTransform(
-        translationX: xPosition + seekSlider.frame.origin.x,
-        y: seekSlider.frame.minY - size20
-      )
-    }
-    
-    if seconds.isNaN == false {
-      let seekTime = CMTime(value: CMTimeValue(seconds), timescale: 1)
-      self.player?.seek(to: seekTime, completionHandler: { [self] completed in
-        if completed {
-          self.isSeeking = false
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: {
-            self.playbackProgress.isHidden = true
-          })
-        }
-      })
-    }
-  }
+//  @objc func seekSliderChanged(_ seekSlider: UISlider) {
+//    self.isSeeking = true
+//    playbackProgress.isHidden = false
+//    guard let duration = self.player?.currentItem?.duration else { return }
+//    let seconds : Float64 = Double(self.seekSlider.value) * CMTimeGetSeconds(duration)
+//
+//    if seekSlider.currentThumbImage != nil {
+//      let thumbRect = seekSlider.thumbRect(forBounds: seekSlider.bounds, trackRect: seekSlider.trackRect(forBounds: seekSlider.bounds), value: seekSlider.value)
+//      let xPosition = thumbRect.origin.x - 20
+//      
+//      playbackProgress.transform = CGAffineTransform(
+//        translationX: xPosition + seekSlider.frame.origin.x,
+//        y: seekSlider.frame.minY - size20
+//      )
+//    }
+//    
+//    if seconds.isNaN == false {
+//      let seekTime = CMTime(value: CMTimeValue(seconds), timescale: 1)
+//      self.player?.seek(to: seekTime, completionHandler: { [self] completed in
+//        
+//        if completed {
+//          isSeeking = false
+//          playbackProgress.isHidden = true
+//          seekSlider.isHidden = true
+//        }
+//      })
+//    }
+//  }
   
   private func enableAudioSession() {
     do {
