@@ -30,6 +30,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var playerIsFinished = false
   private var playerStatus: AVPlayer.TimeControlStatus?
   
+  private var settingsOpened = false
+  
   private var _view: UIView!
   private var _subView: UIView!
   private var _overlayView: UIView!
@@ -37,6 +39,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var loadingView = UIView()
   private var playBackSpeedModalView = UIView()
   private var qualityModalView = UIView()
+  private var settingsModalView = UIView()
   private var downloadView = UIView()
   private var qualityView = UIView()
   private var playbackSpeedView = UIView()
@@ -178,6 +181,11 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 //          }
 //        })
         
+      }, onVideoProgress: { data in
+        self.onVideoProgress?(data)
+      },
+      onSettingItemTapped: { item in
+        print("item", item)
       },
       isFullScreen: fullScreen,
       onTapFullScreen: onToggleOrientation,
@@ -258,17 +266,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 //      playbackDuration.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.bottomAnchor, constant: -3)
 //    ])
     
-    let labelProgressProps = labelProgressProps
-    let labelProgressTextColor = labelProgressProps?["color"] as? String
-    playbackProgress.textColor = transformStringIntoUIColor(color: labelProgressTextColor)
-    playbackProgress.font = UIFont.systemFont(ofSize: sizeLabelSeekSlider)
-    playbackProgress.frame = bounds
-    if playbackProgress.text == nil {
-      playbackProgress.text = stringFromTimeInterval(interval: 0)
-    }
-    playbackProgress.isHidden = true
-    _overlayView.addSubview(playbackProgress)
-    playbackProgress.translatesAutoresizingMaskIntoConstraints = false
+//    let labelProgressProps = labelProgressProps
+//    let labelProgressTextColor = labelProgressProps?["color"] as? String
+//    playbackProgress.textColor = transformStringIntoUIColor(color: labelProgressTextColor)
+//    playbackProgress.font = UIFont.systemFont(ofSize: sizeLabelSeekSlider)
+//    playbackProgress.frame = bounds
+//    if playbackProgress.text == nil {
+//      playbackProgress.text = stringFromTimeInterval(interval: 0)
+//    }
+//    playbackProgress.isHidden = true
+//    _overlayView.addSubview(playbackProgress)
+//    playbackProgress.translatesAutoresizingMaskIntoConstraints = false
 
     // seek slider
 //    _overlayView.addSubview(seekSlider)
@@ -282,16 +290,16 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 //    ])
 //    seekSlider.addTarget(self, action: #selector(self.seekSliderChanged(_:)), for: .valueChanged)
     
-    settingsStackView.axis = .horizontal
-    settingsStackView.spacing = calculateFrameSize(size10, variantPercent30)
-    
-    let trailingAnchorOptionsItemView = calculateFrameSize(size55, variantPercent20)
-    _overlayView.addSubview(settingsStackView)
-    settingsStackView.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      settingsStackView.trailingAnchor.constraint(lessThanOrEqualTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchorOptionsItemView),
-      settingsStackView.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: margin8)
-    ])
+//    settingsStackView.axis = .horizontal
+//    settingsStackView.spacing = calculateFrameSize(size10, variantPercent30)
+//
+//    let trailingAnchorOptionsItemView = calculateFrameSize(size55, variantPercent20)
+//    _overlayView.addSubview(settingsStackView)
+//    settingsStackView.translatesAutoresizingMaskIntoConstraints = false
+//    NSLayoutConstraint.activate([
+//      settingsStackView.trailingAnchor.constraint(lessThanOrEqualTo: _overlayView.layoutMarginsGuide.trailingAnchor, constant: -trailingAnchorOptionsItemView),
+//      settingsStackView.safeAreaLayoutGuide.topAnchor.constraint(equalTo: _overlayView.layoutMarginsGuide.topAnchor, constant: margin8)
+//    ])
     
     let loading = UIHostingController(rootView: LoadingManager(config: loadingProps))
     loading.view.frame = bounds
@@ -377,48 +385,100 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 //    qualityModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
 //    qualityModalView.isHidden = !isOpenedModal
     
-    let configQualitySymbolProps = settingsItemsSymbolProps?["quality"] as! NSDictionary
-    let qualitySymbol = UIHostingController(rootView: SettingsSymbolManager(imageName: "chart.bar.fill", onTap: { [self] in
-      onTapQuality()
-    },config: configQualitySymbolProps))
-    qualitySymbol.view.backgroundColor = .clear
-    qualityView = qualitySymbol.view
+//    let configQualitySymbolProps = settingsItemsSymbolProps?["quality"] as! NSDictionary
+//    let qualitySymbol = UIHostingController(rootView: SettingsSymbolManager(imageName: "chart.bar.fill", onTap: { [self] in
+//      onTapQuality()
+//    },config: configQualitySymbolProps))
+//    qualitySymbol.view.backgroundColor = .clear
+//    qualityView = qualitySymbol.view
+//
+//    let configPlaybackSpeedSymbolProps = settingsItemsSymbolProps?["speedRate"] as! NSDictionary
+//    let playbackSpeedSymbol = UIHostingController(rootView: SettingsSymbolManager(imageName: "timer", onTap: { [self] in
+//      onTapPlaybackSpeed()
+//    }, config: configPlaybackSpeedSymbolProps))
+//    playbackSpeedSymbol.view.backgroundColor = .clear
+//    playbackSpeedView = playbackSpeedSymbol.view
+//
+//    let downloadManager = DownloadManager()
+//    let configDownloadSymbolProps = settingsItemsSymbolProps?["download"] as! NSDictionary
+//    let downloadSymbol = UIHostingController(rootView: SettingsSymbolManager(
+//      imageName: "arrow.down.to.line",
+//      onTap: { [self] in
+//          downloadManager.downloadVideo(
+//          from: urlOfCurrentlyPlayingInPlayer(player: player!)!,
+//          title: playbackTitle!,
+//          onProgress: { progress in
+//            print("progress percentage", progress)
+//          },
+//          completion: { [self] (file, error) in
+//            if let filePath = file?.path {
+//              onVideoDownloaded?(["filePath": filePath as Any])
+//            } else {
+//              onError?(["download": error?.localizedDescription as Any])
+//            }
+//          })
+//      },
+//      config: configDownloadSymbolProps
+//    ))
+//    downloadSymbol.view.backgroundColor = .clear
+//    downloadView = downloadSymbol.view
     
-    let configPlaybackSpeedSymbolProps = settingsItemsSymbolProps?["speedRate"] as! NSDictionary
-    let playbackSpeedSymbol = UIHostingController(rootView: SettingsSymbolManager(imageName: "timer", onTap: { [self] in
-      onTapPlaybackSpeed()
-    }, config: configPlaybackSpeedSymbolProps))
-    playbackSpeedSymbol.view.backgroundColor = .clear
-    playbackSpeedView = playbackSpeedSymbol.view
-    
-    let downloadManager = DownloadManager()
-    let configDownloadSymbolProps = settingsItemsSymbolProps?["download"] as! NSDictionary
-    let downloadSymbol = UIHostingController(rootView: SettingsSymbolManager(
-      imageName: "arrow.down.to.line",
-      onTap: { [self] in
-          downloadManager.downloadVideo(
-          from: urlOfCurrentlyPlayingInPlayer(player: player!)!,
-          title: playbackTitle!,
-          onProgress: { progress in
-            print("progress percentage", progress)
-          },
-          completion: { [self] (file, error) in
-            if let filePath = file?.path {
-              onVideoDownloaded?(["filePath": filePath as Any])
-            } else {
-              onError?(["download": error?.localizedDescription as Any])
-            }
-          })
+    let modalSettings = UIHostingController(rootView: ModalManager(
+      onAppear: {},
+      onDisappear: {},
+      completionHandler: { [self] in
+        settingsOpened = false
+        settingsModalView.removeFromSuperview()
+        player?.play()
       },
-      config: configDownloadSymbolProps
+      content: {
+        ModalSettingsView(data: settingsData, onSelected: { [self] item in
+          let itemSelected = ESettingsOptions(rawValue: item)
+          onSettingsItemSelected(itemSelected!)
+        })
+      })
+    )
+    modalSettings.view.frame = frame
+    modalSettings.view.backgroundColor = UIColor(white: 0, alpha: 0.3)
+    settingsModalView = modalSettings.view
+    if settingsOpened {
+      _overlayView.addSubview(settingsModalView)
+    }
+
+    
+    let modalQuality = UIHostingController(rootView: ModalManager(
+      onAppear: {},
+      onDisappear: {},
+      completionHandler: {},
+      content: {
+        ModalOptionsView(data: qualityOptionsData, onSelected: { [self] item in
+//          let itemSelected = ESettingsOptions(rawValue: item as! String)
+//          onSettingsItemSelected(itemSelected!)
+        })}
     ))
-    downloadSymbol.view.backgroundColor = .clear
-    downloadView = downloadSymbol.view
+    modalQuality.view.frame = frame
+    modalQuality.view.backgroundColor = UIColor(white: 0, alpha: 0.3)
+    qualityModalView = modalQuality.view
+    qualityModalView.isHidden = true
+    _overlayView.addSubview(qualityModalView)
+    
+    
     
     player?.currentItem?.addObserver(self, forKeyPath: "status", options: [], context: nil)
     NotificationCenter.default.addObserver(
       self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem
     )
+  }
+  
+  private func onSettingsItemSelected(_ item: ESettingsOptions) {
+    switch(item) {
+    case .quality:
+      return print("quality clicked")
+    case .playbackSpeed:
+      return print("playback speeed clicked")
+    case .moreOptions:
+      return print("more options clicked")
+    }
   }
   
 //  private func periodTimeObserver() {
@@ -488,35 +548,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     self.onCompleted?(["completed": true])
   }
   
-//  @objc func seekSliderChanged(_ seekSlider: UISlider) {
-//    self.isSeeking = true
-//    playbackProgress.isHidden = false
-//    guard let duration = self.player?.currentItem?.duration else { return }
-//    let seconds : Float64 = Double(self.seekSlider.value) * CMTimeGetSeconds(duration)
-//
-//    if seekSlider.currentThumbImage != nil {
-//      let thumbRect = seekSlider.thumbRect(forBounds: seekSlider.bounds, trackRect: seekSlider.trackRect(forBounds: seekSlider.bounds), value: seekSlider.value)
-//      let xPosition = thumbRect.origin.x - 20
-//      
-//      playbackProgress.transform = CGAffineTransform(
-//        translationX: xPosition + seekSlider.frame.origin.x,
-//        y: seekSlider.frame.minY - size20
-//      )
-//    }
-//    
-//    if seconds.isNaN == false {
-//      let seekTime = CMTime(value: CMTimeValue(seconds), timescale: 1)
-//      self.player?.seek(to: seekTime, completionHandler: { [self] completed in
-//        
-//        if completed {
-//          isSeeking = false
-//          playbackProgress.isHidden = true
-//          seekSlider.isHidden = true
-//        }
-//      })
-//    }
-//  }
-  
   private func enableAudioSession() {
     do {
       try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers, .allowAirPlay])
@@ -525,30 +556,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       onError?(["error": "cant able to enable audio background session \(error)"])
     }
   }
-  
-//    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-//      if let touch = touches.first {
-//        _subView.subviews.forEach {$0.isHidden = false}
-//      }
-//    }
-//
-//    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-//      DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: { [self] in
-//        if player?.timeControlStatus == .playing {
-//            _subView.subviews.forEach {$0.isHidden = true}
-//        }
-//      })
-//    }
 }
 
-enum Resize: String {
-  case contain, cover, stretch
-}
-
-enum VideoPlayerError: Error {
-  case invalidURL
-  case invalidPlayer
-}
 
 
 // player method from bridge
@@ -601,47 +610,9 @@ extension RNVideoPlayerView {
   
   @objc private func onTapSettings() {
     onSettingsTapped?([:])
-    isRotated.toggle()
-    
-    let animation = CATransition()
-    animation.type = .moveIn
-    animation.subtype = .fromRight
-    animation.duration = 0.1
-    
-    if let downloadConfig = settingsItemsSymbolProps?["download"] as? [String: Any],
-       let isHidden = downloadConfig["hidden"] as? Bool, !isHidden {
-      settingsStackView.addArrangedSubview(downloadView)
-    }
-    
-    
-    if let speedRateConfig = settingsItemsSymbolProps?["speedRate"] as? [String: Any],
-       let isHidden = speedRateConfig["hidden"] as? Bool, !isHidden {
-      settingsStackView.addArrangedSubview(playbackSpeedView)
-    }
-    
-    if let qualityConfig = settingsItemsSymbolProps?["quality"] as? [String: Any],
-       let isHidden = qualityConfig["hidden"] as? Bool, !isHidden {
-      settingsStackView.addArrangedSubview(qualityView)
-    }
-    
-    downloadView.layer.add(animation, forKey: CATransitionType.push.rawValue)
-    downloadView.isHidden = !isRotated
-    
-    playbackSpeedView.layer.add(animation, forKey: CATransitionType.push.rawValue)
-    playbackSpeedView.isHidden = !isRotated
-    
-    qualityView.layer.add(animation, forKey: CATransitionType.push.rawValue)
-    qualityView.isHidden = !isRotated
-    
-    settingsStackView.isHidden = !isRotated
-    
-    title.isHidden = isRotated
-    
-    if (!isRotated) {
-      settingsStackView.arrangedSubviews.forEach {
-        $0.removeFromSuperview()
-      }
-    }
+    settingsOpened = true
+    _overlayView.addSubview(settingsModalView)
+    player?.pause()
   }
   
   @objc private func onTapGoback() {
@@ -660,7 +631,7 @@ extension RNVideoPlayerView {
   
   @objc private func onTapQuality() {
     isOpenedModal = true
-    qualityModalView.isHidden = false
+    qualityView.isHidden = false
     _overlayView.addSubview(qualityModalView)
   }
 }
@@ -729,8 +700,16 @@ extension RNVideoPlayerView {
   }
   
   private func onLoadingManager(hideLoading: Bool) {
-    loadingView.isHidden = hideLoading
-    _overlayView.isHidden = !hideLoading
+    print("duration", player?.currentItem?.duration.seconds.isNaN == false)
+    DispatchQueue.main.async { [weak self] in
+        guard let self = self else { return }
+        
+        if let duration = self.player?.currentItem?.duration, !duration.seconds.isNaN {
+            self.loadingView.isHidden = hideLoading
+            self._overlayView.isHidden = !hideLoading
+        }
+    }
+
   }
   
   private func verifyUrl(urlString: String?) throws -> URL {

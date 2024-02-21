@@ -24,9 +24,12 @@ struct OverlayManager : View {
 
   var onAppearOverlay: () -> Void
   var onDisappearOverlay: () -> Void
+  var onVideoProgress: ([String: Any]) -> Void
+  var onSettingItemTapped: (String) -> Void
 
   @ObservedObject private var playbackObserver = PlayerObserver()
   @State private var playbackDuration: Double = 0
+  @State private var playbackProgress: Double = 0
   @State private var isFinished: Bool = false
   @State private var status: PlayingStatus = .paused
   @State private var timeObserver: Any?
@@ -39,37 +42,25 @@ struct OverlayManager : View {
   @State private var dynamicDurationTextSize: CGFloat = calculateFrameSize(size8, variantPercent20)
   @State private var dynamicTitleSize = calculateFrameSize(size14, variantPercent20)
 
-  @State private var sliderValue = 0.0
   @GestureState private var isDraggingSlider: Bool = false
-  @State private var progress: CGFloat = 0
+  @State private var sliderProgress: CGFloat = 0
   @State private var lastDraggedProgress: CGFloat = 0
   @State private var isSeeking: Bool = false
   
-//  private var onSelectedOptionsItem: (Any) -> Void
   @State private var selectedItemOptions: String = ""
-  
+  @State private var openedSettingsModal: Bool = false
   
   var body: some View {
     ZStack {
       HeaderControlsView()
       MiddleControlsView()
       FooterControlsView()
-      ModalManager(
-        data: [["name": "x", "value": "x"]],
-        title: "Configurações",
-        onAppear: {},
-        onDisappear: {},
-        completionHandler: {},
-        children: {
-          ModalOptionsView([["name": "x", "value": "x"]])
-        },
-        isOpened: .constant(true)
-      )
     }
     .onAppear {
       periodicTimeObserver()
       onAppearOverlay()
       updateImage()
+      
       NotificationCenter.default.addObserver(
         playbackObserver,
         selector: #selector(PlayerObserver.itemDidFinishPlaying(_:)),
@@ -133,7 +124,7 @@ struct OverlayManager : View {
         }) {
           Image(systemName: playPauseimageName)
             .foregroundColor(.white)
-            .font(.system(size: dynamicFontSize))
+            .font(.system(size: dynamicFontSize + 4))
         }
         .padding(size16)
         .background(Color(.black).opacity(0.2))
@@ -168,10 +159,12 @@ struct OverlayManager : View {
         if duration != 0.0 {
           playbackDuration = duration
         }
-        if  avPlayer.currentItem?.duration.seconds != 0.0 {
-          playbackDuration = (avPlayer.currentItem?.duration.seconds)!
-          progress = avPlayer.currentTime().seconds / (avPlayer.currentItem?.duration.seconds)!
-          lastDraggedProgress = progress
+        guard let currentItem = avPlayer.currentItem else { return }
+        if  currentItem.duration.seconds != 0.0 {
+          playbackDuration = currentItem.duration.seconds
+          
+          sliderProgress = avPlayer.currentTime().seconds / (avPlayer.currentItem?.duration.seconds)!
+          lastDraggedProgress = sliderProgress
         }
       }
   }
@@ -183,6 +176,7 @@ struct OverlayManager : View {
     Button(action: {
         withAnimation(.linear(duration: 0.2)) {
             onTapSettings()
+//          openedSettingsModal.toggle()
         }
     }) {
         Image(systemName: "gear")
@@ -225,7 +219,7 @@ struct OverlayManager : View {
         
         Rectangle()
           .fill(.red)
-          .frame(width: max(safeAreaWidth * progress, 0))
+          .frame(width: max(safeAreaWidth * sliderProgress, 0))
           .cornerRadius(8)
         HStack {}
           .overlay(
@@ -234,7 +228,7 @@ struct OverlayManager : View {
               .frame(width: 15, height: 15)
               .frame(width: 50, height: 50)
               .contentShape(Rectangle())
-              .offset(x: safeAreaWidth * progress)
+              .offset(x: safeAreaWidth * sliderProgress)
               .gesture(
                 DragGesture()
                   .updating($isDraggingSlider, body: { _, out, _ in
@@ -243,15 +237,15 @@ struct OverlayManager : View {
                   .onChanged({ value in
                     let translationX: CGFloat = value.translation.width
                     let calculatedProgress = (translationX / safeAreaWidth) + lastDraggedProgress
-                    progress = max(min(calculatedProgress, 1), 0)
+                    sliderProgress = max(min(calculatedProgress, 1), 0)
                     isSeeking = true
                   })
                   .onEnded({ value in
-                    lastDraggedProgress = progress
+                    lastDraggedProgress = sliderProgress
                     
                     if let currentItem = avPlayer.currentItem {
                       let duration = currentItem.duration.seconds
-                      let targetTime = duration * progress
+                      let targetTime = duration * sliderProgress
                       let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
                               
                       avPlayer.seek(to: targetCMTime)
@@ -269,45 +263,79 @@ struct OverlayManager : View {
   
   @ViewBuilder
   func VideoTimeLineView() -> some View {
-    Text("\(stringFromTimeInterval(interval: avPlayer.currentTime().seconds)) / \(stringFromTimeInterval(interval: playbackDuration))")
+    Text(stringFromTimeInterval(interval: playbackDuration))
       .foregroundColor(.white)
       .font(.system(size: dynamicDurationTextSize))
       .padding(.leading, 8)
   }
   
+//  @ViewBuilder
+//  func ModalOptionsView(_ data: [[String: Any]]) -> some View {
+//    ScrollView(showsIndicators: false) {
+//      VStack {
+//        ForEach(data, id: \.self) { item in
+//          Button(action: {
+////            hidden()
+//            if let floatValue = Float(item["value"] ?? "")  {
+////              onSelected(floatValue)
+//            } else {
+////              onSelected(item["value"] as Any)
+//            }
+//            self.selectedItemOptions = item["name"]!
+//
+//          }) {
+//
+//            HStack {
+//              ZStack {
+//                Circle().stroke(Color.white, lineWidth: 1).frame(width: 12, height: 12)
+//
+//                if self.selectedItemOptions == item["name"]! {
+//                  Circle()
+//                    .fill(Color.white)
+//                    .frame(width: 6, height: 6)
+//                }
+//              }
+//              .fixedSize(horizontal: false, vertical: true)
+//
+//              Text("\(item["name"] ?? "")").foregroundColor(.white)
+//            }
+//            .frame(width: UIScreen.main.bounds.width * 0.7, alignment: .leading)
+//          }
+//          .disabled(selectedItemOptions == item["name"]!)
+//        }
+//      }
+//    }
+//  }
+  
   @ViewBuilder
-  func ModalOptionsView(_ data: [[String: String]]) -> some View {
+  func SettingsOptions(_ data: [[String: String]]) -> some View {
     ScrollView(showsIndicators: false) {
       VStack {
         ForEach(data, id: \.self) { item in
+          let imageType = SettingsOptionsImage(rawValue: item["name"]!)
+          let imageName = settingsImageManager(imageType!)
+          
+          
           Button(action: {
-            hidden()
-            if let floatValue = Float(item["value"] ?? "")  {
-//              onSelected(floatValue)
-            } else {
-//              onSelected(item["value"] as Any)
-            }
-            self.selectedItemOptions = item["name"]!
-            
+            openedSettingsModal = false
+            onSettingItemTapped(item["name"]!)
           }) {
-            
             HStack {
-              ZStack {
-                Circle().stroke(Color.white, lineWidth: 1).frame(width: 12, height: 12)
-                
-                if self.selectedItemOptions == item["name"] {
-                  Circle()
-                    .fill(Color.white)
-                    .frame(width: 6, height: 6)
-                }
-              }
-              .fixedSize(horizontal: false, vertical: true)
+              Image(systemName: imageName)
+                .foregroundColor(.primary)
               
-              Text("\(item["name"] ?? "")").foregroundColor(.white)
+              Text(item["name"]!)
+                .padding(.leading, 18)
+                .foregroundColor(.primary)
+              
+              Spacer()
+              
+              Image(systemName: "chevron.forward")
+                .foregroundColor(.primary)
             }
-            .frame(width: UIScreen.main.bounds.width / 2, alignment: .leading)
+            .padding(.bottom, 16)
+            .frame(width: UIScreen.main.bounds.width * 0.7, alignment: .leading)
           }
-          .disabled(selectedItemOptions == item["name"])
         }
       }
     }
@@ -316,14 +344,33 @@ struct OverlayManager : View {
   
   // functions
   private func periodicTimeObserver() {
-    timeObserver = avPlayer.addPeriodicTimeObserver(forInterval: .init(seconds: 1, preferredTimescale: 1), queue: .main) { [self] time in
-        if let currentPlayerItem = avPlayer.currentItem {
-          let duration = currentPlayerItem.duration.seconds
-          let currentProgress = avPlayer.currentTime().seconds
-          progress = currentProgress / duration
-          playbackDuration = duration
-        }
+    timeObserver = avPlayer.addPeriodicTimeObserver(forInterval: .init(seconds: 1, preferredTimescale: 1), queue: .main) { [self] _ in
+      updatePlayerTime()
+    }
+  }
+  
+  private func updatePlayerTime() {
+    guard let currentItem = avPlayer.currentItem else { return }
+    let currentTime = currentItem.currentTime().seconds
+    let duration = currentItem.duration.seconds
+    
+    let loadedTimeRanges = currentItem.loadedTimeRanges
+    if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
+      let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
+      let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
+      onVideoProgress(["progress": currentTime, "bufferedDuration": bufferedStart + bufferedDuration])
+    }
+    if currentTime < duration {
+      playbackProgress = currentTime
+      sliderProgress = currentTime / duration
+      playbackDuration = duration
+    } else {
+      if let duration = avPlayer.currentItem?.duration, !duration.seconds.isNaN {
+        playPauseimageName = "gobackward"
+        status = .finished
+        isFinished = true
       }
+    }
   }
   
   private func updateDynamicSize() {
@@ -347,6 +394,7 @@ struct OverlayManager : View {
     if isFinished {
       status = .finished
       avPlayer.currentItem?.seek(to: CMTime(value: CMTimeValue(0), timescale: 1), completionHandler: completionHandler)
+      avPlayer.play()
     } else {
       if avPlayer.timeControlStatus == .paused  {
         avPlayer.play()
@@ -371,6 +419,23 @@ struct OverlayManager : View {
     }
   }
   
+  private func settingsImageManager(_ settingsOptionsType: SettingsOptionsImage) -> String {
+    switch(settingsOptionsType) {
+    case .quality:
+      return "slider.horizontal.3"
+    case .playbackSpeedRate:
+      return "timer"
+    case .gear:
+      return "gear"
+    }
+  }
+}
+
+@available(iOS 13.0, *)
+enum SettingsOptionsImage: String {
+  case quality,
+       playbackSpeedRate,
+       gear
 }
 
 @available(iOS 13.0, *)

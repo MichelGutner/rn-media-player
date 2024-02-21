@@ -11,58 +11,52 @@ import AVKit
 
 @available(iOS 13.0, *)
 struct ModalManager<Content: View>: View {
-  var data: [[String: String]]
-  var title: String
+  @Environment(\.colorScheme) var colorScheme
+  
   var onAppear: () -> Void
   var onDisappear: () -> Void
   var completionHandler: (() -> Void)
-  var children: () -> Content
-  
-  @Binding var isOpened: Bool
+  var content: () -> Content
+
   @State var offset = UIScreen.main.bounds.height
   
   var body: some View {
     ZStack {
-      Color(.black).opacity(0.1).onTapGesture {
+      Color(.black).opacity(0.001).onTapGesture {
         hidden()
-      }.edgesIgnoringSafeArea(Edge.Set.all)
+      }
+      .edgesIgnoringSafeArea(Edge.Set.all)
       
       VStack(alignment: .leading, spacing: calculateFrameSize(size16, variantPercent20)) {
         HStack(alignment: .center) {
           Spacer()
-          Rectangle().frame(width: UIScreen.main.bounds.width * 0.07, height: 4).foregroundColor(Color.white)
-          Spacer()
           Button (action: {
             hidden()
           }) {
-            Image(systemName: "xmark").foregroundColor(Color.white)
+            Image(systemName: "xmark").foregroundColor(Color.primary)
           }
         }
         .padding(.top, 12)
-        .padding(.bottom, 4)
-        HStack {
-          Text(title)
-            .foregroundColor(.white)
-          Spacer()
+        ScrollView(showsIndicators: false) {
+          VStack {
+            content()
+          }
+          .padding(.trailing, 12)
+          .padding(.leading, 12)
         }
-        children()
       }
       .fixedSize(horizontal: true, vertical: true)
       .padding(.leading)
       .padding(.trailing)
       .padding(.bottom)
-      .background(Color.gray.opacity(0.8))
-      .cornerRadius(12)
-      .shadow(color: Color.white, radius: 0.4, x: 0.1, y: 0.1)
+      .background(colorScheme == .light ? Color.white : Color.black)
+      .cornerRadius(16)
+      .shadow(color: Color.secondary, radius: 0.4, x: 0.1, y: 0.1)
       .offset(x: 0, y: offset)
       .onAppear {
-        if isOpened {
-          withAnimation(.interactiveSpring(dampingFraction: 1.0)) {
-            
-            self.offset = 0
-            isOpened = false
-            onAppear()
-          }
+        withAnimation(.interactiveSpring(dampingFraction: 1.0)) {
+          self.offset = 0
+          onAppear()
         }
       }
       .onDisappear {
@@ -73,11 +67,11 @@ struct ModalManager<Content: View>: View {
   }
   
   public func hidden() {
-    withAnimation(.interactiveSpring(dampingFraction: 1.0)) {
+    withAnimation(.interactiveSpring(dampingFraction: 1.3)) {
       offset = UIScreen.main.bounds.height
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
-        completionHandler()
+      completionHandler()
     })
   }
 }

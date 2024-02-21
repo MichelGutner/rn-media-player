@@ -15,6 +15,8 @@ struct ControlsManager: View {
   var avPlayer: AVPlayer
   var videoTitle: String
   var onTapGestureBackdrop: (Bool) -> Void
+  var onVideoProgress: ([String: Any]) -> Void
+  var onSettingItemTapped: (String) -> Void
   
   @State private var isTapped: Bool = false
   
@@ -87,7 +89,9 @@ struct ControlsManager: View {
             },
             onDisappearOverlay: {
               onDisappearOverlay()
-            }
+            },
+            onVideoProgress: onVideoProgress,
+            onSettingItemTapped: onSettingItemTapped
           )
           .padding(8)
         }
