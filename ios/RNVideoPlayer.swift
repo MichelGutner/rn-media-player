@@ -424,12 +424,20 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 //    downloadView = downloadSymbol.view
     
     let modalSettings = UIHostingController(rootView: ModalManager(
-      onAppear: {},
-      onDisappear: {},
+      onAppear: { [self] in
+        playerStatus = player?.timeControlStatus
+        if playerStatus == .playing {
+          player?.pause()
+        }
+      },
+      onDisappear: { [self] in
+        if playerStatus == .playing {
+          player?.play()
+        }
+      },
       completionHandler: { [self] in
         settingsOpened = false
         settingsModalView.removeFromSuperview()
-        player?.play()
       },
       content: {
         ModalSettingsView(data: settingsData, onSelected: { [self] item in
@@ -612,7 +620,6 @@ extension RNVideoPlayerView {
     onSettingsTapped?([:])
     settingsOpened = true
     _overlayView.addSubview(settingsModalView)
-    player?.pause()
   }
   
   @objc private func onTapGoback() {

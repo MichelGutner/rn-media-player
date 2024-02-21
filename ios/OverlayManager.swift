@@ -124,7 +124,7 @@ struct OverlayManager : View {
         }) {
           Image(systemName: playPauseimageName)
             .foregroundColor(.white)
-            .font(.system(size: dynamicFontSize + 4))
+            .font(.system(size: dynamicFontSize + 5))
         }
         .padding(size16)
         .background(Color(.black).opacity(0.2))
@@ -162,7 +162,6 @@ struct OverlayManager : View {
         guard let currentItem = avPlayer.currentItem else { return }
         if  currentItem.duration.seconds != 0.0 {
           playbackDuration = currentItem.duration.seconds
-          
           sliderProgress = avPlayer.currentTime().seconds / (avPlayer.currentItem?.duration.seconds)!
           lastDraggedProgress = sliderProgress
         }
@@ -176,7 +175,6 @@ struct OverlayManager : View {
     Button(action: {
         withAnimation(.linear(duration: 0.2)) {
             onTapSettings()
-//          openedSettingsModal.toggle()
         }
     }) {
         Image(systemName: "gear")
@@ -268,44 +266,6 @@ struct OverlayManager : View {
       .font(.system(size: dynamicDurationTextSize))
       .padding(.leading, 8)
   }
-  
-//  @ViewBuilder
-//  func ModalOptionsView(_ data: [[String: Any]]) -> some View {
-//    ScrollView(showsIndicators: false) {
-//      VStack {
-//        ForEach(data, id: \.self) { item in
-//          Button(action: {
-////            hidden()
-//            if let floatValue = Float(item["value"] ?? "")  {
-////              onSelected(floatValue)
-//            } else {
-////              onSelected(item["value"] as Any)
-//            }
-//            self.selectedItemOptions = item["name"]!
-//
-//          }) {
-//
-//            HStack {
-//              ZStack {
-//                Circle().stroke(Color.white, lineWidth: 1).frame(width: 12, height: 12)
-//
-//                if self.selectedItemOptions == item["name"]! {
-//                  Circle()
-//                    .fill(Color.white)
-//                    .frame(width: 6, height: 6)
-//                }
-//              }
-//              .fixedSize(horizontal: false, vertical: true)
-//
-//              Text("\(item["name"] ?? "")").foregroundColor(.white)
-//            }
-//            .frame(width: UIScreen.main.bounds.width * 0.7, alignment: .leading)
-//          }
-//          .disabled(selectedItemOptions == item["name"]!)
-//        }
-//      }
-//    }
-//  }
   
   @ViewBuilder
   func SettingsOptions(_ data: [[String: String]]) -> some View {
@@ -414,7 +374,9 @@ struct OverlayManager : View {
       isFinished = true
       playPauseimageName = "gobackward"
     } else {
-      avPlayer.timeControlStatus == .paused ? (playPauseimageName = "play.fill") : (playPauseimageName = "pause.fill")
+      withAnimation(.easeInOut(duration: 0.1)) {
+        avPlayer.timeControlStatus == .paused ? (playPauseimageName = "play.fill") : (playPauseimageName = "pause.fill")
+      }
       isFinished = false
     }
   }
