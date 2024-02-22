@@ -31,6 +31,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var playerStatus: AVPlayer.TimeControlStatus?
   
   private var settingsOpened = false
+  private var optionsData: [HashableItem] = []
+  private var initialSettingsOptionsItem: String = ""
+  private var selectedItem: String = ""
   
   private var _view: UIView!
   private var _subView: UIView!
@@ -181,7 +184,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 //          }
 //        })
         
-      }, onVideoProgress: { data in
+      },
+      onVideoProgress: { data in
         self.onVideoProgress?(data)
       },
       onSettingItemTapped: { item in
@@ -214,43 +218,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     test.view.frame = _subView.frame
     test.view.backgroundColor = .clear
     _overlayView.addSubview(test.view)
-//    let doubleTapControls = UIHostingController(
-//      rootView: DoubleTapManager(
-//        onTapBackward: onTapBackwardTime,
-//        onTapForward: onTapFowardTime,
-//        isFinished: { [self] in
-//          _overlayView.isHidden = false
-//        },
-//        advanceValue: advanceValue as! Int,
-//        suffixAdvanceValue: suffixAdvanceValue!
-//      ))
-//
-//    doubleTapControls.view.frame = _subView.frame
-//    doubleTapControls.view.backgroundColor = .clear
-//    doubleTapControls.view.reactZIndex = 3
-//    _subView.addSubview(doubleTapControls.view)
-//
-//
-//    let overlayControls = UIHostingController(rootView: OverlayManager(
-//      onTapFullScreen: { [self] in
-//        onToggleOrientation()
-//      },
-//      isFullScreen: fullScreen,
-//      fullScreenConfig: fullScreenProps,
-//      onTapExit: onTapGoback,
-//      onTapSettings: { [self] in
-//        onTapSettings()
-//      }
-//    ))
-//    overlayControls.view.frame = _subView.frame
-//    _overlayView.addSubview(overlayControls.view)
-//    overlayControls.view.backgroundColor = .clear
     
     onChangeOrientation(fullScreen)
     _subView.layer.addSublayer(playerLayer)
     
     // seek slider label
-    let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent20)
+//    let sizeLabelSeekSlider = calculateFrameSize(size10, variantPercent20)
 //    let trailingAnchor = calculateFrameSize(size50, variantPercent40)
 //    let labelDurationProps = labelDurationProps
 //    let labelDurationTextColor = labelDurationProps?["color"] as? String
@@ -424,26 +397,27 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 //    downloadView = downloadSymbol.view
     
     let modalSettings = UIHostingController(rootView: ModalManager(
-      onAppear: { [self] in
-        playerStatus = player?.timeControlStatus
-        if playerStatus == .playing {
-          player?.pause()
-        }
-      },
-      onDisappear: { [self] in
-        if playerStatus == .playing {
-          player?.play()
-        }
-      },
-      completionHandler: { [self] in
+      onModalAppear: {},
+      onModalDisappear: {},
+      onModalCompletion: { [self] in
         settingsOpened = false
         settingsModalView.removeFromSuperview()
       },
-      content: {
-        ModalSettingsView(data: settingsData, onSelected: { [self] item in
-          let itemSelected = ESettingsOptions(rawValue: item)
-          onSettingsItemSelected(itemSelected!)
-        })
+      modalContent: {
+        SettingsModalView(
+          settingsData: settingsData,
+          onSettingSelected: { [self] item in
+            settingsOpened = false
+            settingsModalView.removeFromSuperview()
+            print("item", item)
+            let itemSelected = ESettingsOptions(rawValue: item)
+            onSettingsItemSelected(itemSelected!)
+
+            DispatchQueue.main.asyncAfter(deadline: .now(), execute: { [self] in
+              _overlayView.addSubview(qualityModalView)
+              isOpenedModal = true
+            })
+          })
       })
     )
     modalSettings.view.frame = frame
@@ -455,20 +429,41 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 
     
     let modalQuality = UIHostingController(rootView: ModalManager(
-      onAppear: {},
-      onDisappear: {},
-      completionHandler: {},
-      content: {
-        ModalOptionsView(data: qualityOptionsData, onSelected: { [self] item in
+      onModalAppear: { [self] in
+        playerStatus = player?.timeControlStatus
+        if playerStatus == .playing {
+          player?.pause()
+        }
+      },
+      onModalDisappear: { [self] in
+        if playerStatus == .playing {
+          player?.play()
+        }
+      },
+      onModalCompletion: { [self] in
+        isOpenedModal = false
+        qualityModalView.removeFromSuperview()
+      },
+      modalContent: { [self] in
+        ModalOptionsView(
+          data: optionsData,
+          onSelected: { [self] item in
+            selectedItem = item.name
 //          let itemSelected = ESettingsOptions(rawValue: item as! String)
 //          onSettingsItemSelected(itemSelected!)
-        })}
+            
+          },
+          initialSelectedItem: initialSettingsOptionsItem,
+          selectedItem: selectedItem
+        )
+      }
     ))
     modalQuality.view.frame = frame
     modalQuality.view.backgroundColor = UIColor(white: 0, alpha: 0.3)
     qualityModalView = modalQuality.view
-    qualityModalView.isHidden = true
-    _overlayView.addSubview(qualityModalView)
+    if isOpenedModal {
+      _overlayView.addSubview(qualityModalView)
+    }
     
     
     
@@ -481,9 +476,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private func onSettingsItemSelected(_ item: ESettingsOptions) {
     switch(item) {
     case .quality:
-      return print("quality clicked")
+      optionsData = qualityOptionsData.reversed()
+      initialSettingsOptionsItem = "360p"
+      return
     case .playbackSpeed:
-      return print("playback speeed clicked")
+      optionsData = playbackSpeedData
+      initialSettingsOptionsItem = "Normal"
+      return
     case .moreOptions:
       return print("more options clicked")
     }

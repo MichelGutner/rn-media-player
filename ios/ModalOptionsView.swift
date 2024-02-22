@@ -9,30 +9,34 @@ import Foundation
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct ModalOptionsView : View {
-  var data: [HashbleItem] = []
-  var onSelected: (Any) -> Void
+struct ModalOptionsView: View {
+  var data: [HashableItem]
+  var onSelected: (HashableItem) -> Void
+  var initialSelectedItem: String
+  var selectedItem: String
   
-  @State var selectedItem = ""
+  @State private var selected: String
+  
+  init(data: [HashableItem], onSelected: @escaping (HashableItem) -> Void, initialSelectedItem: String, selectedItem: String) {
+    self.data = data
+    self.onSelected = onSelected
+    self.initialSelectedItem = initialSelectedItem
+    self.selectedItem = selectedItem
+    _selected = State(initialValue: selectedItem)
+  }
   
   var body: some View {
-    ForEach(data, id: \.self) { [self] item in
-      Button(action: {
-        //                        hidden()
-        if let floatValue = Float(item.value ?? "")  {
-          onSelected(floatValue)
-        } else {
-          onSelected(item.value as Any)
-        }
-        selectedItem = item.name
-      }) {
-        
-        Group {
+    VStack {
+      ForEach(data, id: \.self) { item in
+        Button(action: {
+          onSelected(item)
+          selected = item.name
+        }) {
           if let enabled = item.enabled, enabled {
             HStack {
               ZStack {
                 Circle().stroke(Color.primary, lineWidth: 1).frame(width: 12, height: 12)
-                if selectedItem == item.name {
+                if selected == item.name {
                   Circle()
                     .fill(Color.primary)
                     .frame(width: 6, height: 6)
@@ -40,15 +44,18 @@ struct ModalOptionsView : View {
               }
               .padding(.trailing, 18)
               .fixedSize(horizontal: false, vertical: true)
-              
               Text("\(item.name)").foregroundColor(.primary)
             }
             .frame(minWidth: UIScreen.main.bounds.width * 0.3, maxWidth: UIScreen.main.bounds.width * 0.6, alignment: .leading)
-            .fixedSize(horizontal: true, vertical: true)
           }
         }
+        .disabled(selected == item.name)
       }
-      .disabled(selectedItem == item.name)
+    }
+    .onAppear {
+      if selected.isEmpty {
+        selected = initialSelectedItem
+      }
     }
     .frame(maxHeight: UIScreen.main.bounds.height / 2)
     .fixedSize(horizontal: true, vertical: true)

@@ -18,7 +18,7 @@ class PlayerObserver: ObservableObject {
     isFinishedPlaying = true
   }
   
-  @objc func playbackItemDuration(_ notification: Notification) {
+  @objc func playbackItem(_ notification: Notification) {
     guard let item = notification.object as? AVPlayerItem else { return }
     playbackDuration = item.duration.seconds
     playbackCurrentTime = item.currentTime().seconds

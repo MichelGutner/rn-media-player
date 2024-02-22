@@ -1,5 +1,5 @@
 //
-//  ModalSettingsView.swift
+//  SettingsModalView.swift
 //  RNVideoPlayer
 //
 //  Created by Michel Gutner on 20/02/24.
@@ -9,27 +9,32 @@ import Foundation
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct ModalSettingsView : View {
-  var data: [HashbleItem] = []
-  var onSelected: (String) -> Void
+struct SettingsModalView: View {
+  var settingsData: [HashableItem] = []
+  var onSettingSelected: (String) -> Void
+  
+  init(settingsData: [HashableItem], onSettingSelected: @escaping (String) -> Void) {
+    self.settingsData = settingsData
+    self.onSettingSelected = onSettingSelected
+  }
   
   var body: some View {
-    ForEach(data, id: \.self) { item in
-      let imageType = ESettingsOptions(rawValue: item.value!)
-      let imageName = settingsImageManager(imageType!)
-      
+    ForEach(settingsData, id: \.self) { setting in
+      let imageType = ESettingsOptions(rawValue: setting.value!)
+      let imageName = settingsImage(for: imageType!)
       
       Group {
-        if let enabled = item.enabled, enabled {
+        if let isEnabled = setting.enabled, isEnabled {
           Button(action: {
-            onSelected(item.value!)
+            onSettingSelected(setting.value!)
           }) {
             HStack {
               Image(systemName: imageName)
                 .foregroundColor(.primary)
               
-              Text(item.name)
+              Text(setting.name)
                 .padding(.leading, 18)
+                .padding(.trailing, 18)
                 .foregroundColor(.primary)
               
               Spacer()
@@ -37,18 +42,17 @@ struct ModalSettingsView : View {
               Image(systemName: "chevron.forward")
                 .foregroundColor(.primary)
             }
-            .padding(.bottom, 16)
+            .padding(.bottom, 18)
             .frame(minWidth: UIScreen.main.bounds.width * 0.4, maxWidth: UIScreen.main.bounds.width * 0.6, alignment: .leading)
-            .fixedSize(horizontal: true, vertical: true)
           }
         }
       }
     }
-    .fixedSize(horizontal: true, vertical: true)
+    .fixedSize(horizontal: false, vertical: true)
   }
   
-  private func settingsImageManager(_ settingsOptionsType: ESettingsOptions) -> String {
-    switch(settingsOptionsType) {
+  private func settingsImage(for optionType: ESettingsOptions) -> String {
+    switch optionType {
     case .quality:
       return "slider.horizontal.3"
     case .playbackSpeed:

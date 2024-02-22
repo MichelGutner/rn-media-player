@@ -18,7 +18,7 @@ function App(): JSX.Element {
   //     setIsFull(!isFull);
   //   }, 12000);
   // }, [isFull]);
-  const resizeMode = isFull ? 'contain' : 'contain';
+  const resizeMode = isFull ? 'cover' : 'contain';
   return (
     <RNPlayerVideo
       isFullScreen={isFull}

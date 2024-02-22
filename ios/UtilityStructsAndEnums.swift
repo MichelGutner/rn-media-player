@@ -9,7 +9,7 @@ import Foundation
 
 
 @available(iOS 13.0, *)
-public struct HashbleItem: Hashable {
+public struct HashableItem: Hashable {
   var name: String
   var value: String?
   var enabled: Bool?

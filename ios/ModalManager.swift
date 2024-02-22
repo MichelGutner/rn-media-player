@@ -5,44 +5,41 @@
 //  Created by Michel Gutner on 28/01/24.
 //
 
-import Foundation
 import SwiftUI
-import AVKit
 
 @available(iOS 13.0, *)
 struct ModalManager<Content: View>: View {
   @Environment(\.colorScheme) var colorScheme
   
-  var onAppear: () -> Void
-  var onDisappear: () -> Void
-  var completionHandler: (() -> Void)
-  var content: () -> Content
-
-  @State var offset = UIScreen.main.bounds.height
+  var onModalAppear: () -> Void
+  var onModalDisappear: () -> Void
+  var onModalCompletion: () -> Void
+  var modalContent: () -> Content
+  
+  @State private var modalOffset = UIScreen.main.bounds.height
   
   var body: some View {
     ZStack {
-      Color(.black).opacity(0.001).onTapGesture {
-        hidden()
-      }
-      .edgesIgnoringSafeArea(Edge.Set.all)
+      Color(.black).opacity(0.001)
+        .onTapGesture {
+          hideModal()
+        }
+        .edgesIgnoringSafeArea(.all)
       
       VStack(alignment: .leading, spacing: calculateFrameSize(size16, variantPercent20)) {
         HStack(alignment: .center) {
           Spacer()
-          Button (action: {
-            hidden()
-          }) {
+          Button(action: hideModal) {
             Image(systemName: "xmark").foregroundColor(Color.primary)
           }
         }
         .padding(.top, 12)
-        ScrollView(showsIndicators: false) {
+        
+        ScrollView {
           VStack {
-            content()
+            modalContent()
           }
-          .padding(.trailing, 12)
-          .padding(.leading, 12)
+          .padding([.leading, .trailing, .bottom], 12)
         }
       }
       .fixedSize(horizontal: true, vertical: true)
@@ -52,26 +49,26 @@ struct ModalManager<Content: View>: View {
       .background(colorScheme == .light ? Color.white : Color.black)
       .cornerRadius(16)
       .shadow(color: Color.secondary, radius: 0.4, x: 0.1, y: 0.1)
-      .offset(x: 0, y: offset)
+      .offset(x: 0, y: modalOffset)
       .onAppear {
         withAnimation(.interactiveSpring(dampingFraction: 1.0)) {
-          self.offset = 0
-          onAppear()
+          modalOffset = 0
+          onModalAppear()
         }
       }
       .onDisappear {
-        onDisappear()
+        onModalDisappear()
+        modalOffset = UIScreen.main.bounds.height
       }
-      
     }
   }
   
-  public func hidden() {
-    withAnimation(.interactiveSpring(dampingFraction: 1.3)) {
-      offset = UIScreen.main.bounds.height
+  func hideModal() {
+    withAnimation(.interactiveSpring(dampingFraction: 1.5)) {
+      modalOffset = UIScreen.main.bounds.height
     }
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
-      completionHandler()
-    })
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+      onModalCompletion()
+    }
   }
 }

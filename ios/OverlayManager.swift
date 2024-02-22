@@ -43,12 +43,14 @@ struct OverlayManager : View {
   @State private var dynamicTitleSize = calculateFrameSize(size14, variantPercent20)
 
   @GestureState private var isDraggingSlider: Bool = false
-  @State private var sliderProgress: CGFloat = 0
+  @State private var sliderProgress = 0.0
   @State private var lastDraggedProgress: CGFloat = 0
   @State private var isSeeking: Bool = false
   
   @State private var selectedItemOptions: String = ""
   @State private var openedSettingsModal: Bool = false
+  @State private var buffering = 0.0
+  
   
   var body: some View {
     ZStack {
@@ -164,6 +166,13 @@ struct OverlayManager : View {
           playbackDuration = currentItem.duration.seconds
           sliderProgress = avPlayer.currentTime().seconds / (avPlayer.currentItem?.duration.seconds)!
           lastDraggedProgress = sliderProgress
+          
+          let loadedTimeRanges = currentItem.loadedTimeRanges
+          if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
+            let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
+            let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
+            buffering = (bufferedStart + bufferedDuration) / playbackDuration
+          }
         }
       }
   }
@@ -211,14 +220,20 @@ struct OverlayManager : View {
         let safeAreaWidth = UIScreen.main.bounds.inset(by: safeAreaInsets).width
         
         Rectangle()
-          .fill(.gray)
+          .fill(.gray).opacity(0.1)
           .frame(width: safeAreaWidth)
           .cornerRadius(8)
         
         Rectangle()
-          .fill(.red)
-          .frame(width: max(safeAreaWidth * sliderProgress, 0))
+          .fill(.white).opacity(0.6)
+          .frame(width: safeAreaWidth * buffering)
           .cornerRadius(8)
+        
+        Rectangle()
+          .fill(.red)
+          .frame(width: safeAreaWidth * sliderProgress)
+          .cornerRadius(8)
+        
         HStack {}
           .overlay(
             Circle()
@@ -240,7 +255,6 @@ struct OverlayManager : View {
                   })
                   .onEnded({ value in
                     lastDraggedProgress = sliderProgress
-                    
                     if let currentItem = avPlayer.currentItem {
                       let duration = currentItem.duration.seconds
                       let targetTime = duration * sliderProgress
@@ -318,12 +332,16 @@ struct OverlayManager : View {
     if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
       let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
       let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
+      buffering = (bufferedStart + bufferedDuration) / duration
       onVideoProgress(["progress": currentTime, "bufferedDuration": bufferedStart + bufferedDuration])
     }
     if currentTime < duration {
       playbackProgress = currentTime
-      sliderProgress = currentTime / duration
       playbackDuration = duration
+      
+      if !isSeeking {
+        sliderProgress = currentTime / duration
+      }
     } else {
       if let duration = avPlayer.currentItem?.duration, !duration.seconds.isNaN {
         playPauseimageName = "gobackward"

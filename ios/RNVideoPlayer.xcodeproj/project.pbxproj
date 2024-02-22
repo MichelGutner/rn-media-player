@@ -29,7 +29,7 @@
 		DBAAB1952B66863900BE5FD7 /* LoadingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1942B66863900BE5FD7 /* LoadingManager.swift */; };
 		DBAAB1972B67275000BE5FD7 /* ModalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1962B67275000BE5FD7 /* ModalManager.swift */; };
 		DBB3FEB12B85509F00AD8E55 /* ModalOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB02B85509F00AD8E55 /* ModalOptionsView.swift */; };
-		DBB3FEB32B8595FE00AD8E55 /* ModalSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB22B8595FE00AD8E55 /* ModalSettingsView.swift */; };
+		DBB3FEB32B8595FE00AD8E55 /* SettingsModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB22B8595FE00AD8E55 /* SettingsModalView.swift */; };
 		DBB3FEB52B85A48F00AD8E55 /* UtilityStructsAndEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */; };
 		DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */; };
 		DBC2BA782B6FF70900648252 /* PlaybackErrorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC2BA772B6FF70900648252 /* PlaybackErrorManager.swift */; };
@@ -86,7 +86,7 @@
 		DBAAB1942B66863900BE5FD7 /* LoadingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingManager.swift; sourceTree = "<group>"; };
 		DBAAB1962B67275000BE5FD7 /* ModalManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalManager.swift; sourceTree = "<group>"; usesTabs = 0; };
 		DBB3FEB02B85509F00AD8E55 /* ModalOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalOptionsView.swift; sourceTree = "<group>"; };
-		DBB3FEB22B8595FE00AD8E55 /* ModalSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalSettingsView.swift; sourceTree = "<group>"; };
+		DBB3FEB22B8595FE00AD8E55 /* SettingsModalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModalView.swift; sourceTree = "<group>"; };
 		DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityStructsAndEnums.swift; sourceTree = "<group>"; };
 		DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDefault.swift; sourceTree = "<group>"; };
 		DBC2BA772B6FF70900648252 /* PlaybackErrorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackErrorManager.swift; sourceTree = "<group>"; };
@@ -254,7 +254,7 @@
 				DB645A022B79B7DC000E54AD /* ControlsManager.swift */,
 				DB9667312B7D6281001A97E0 /* SeekSliderView.swift */,
 				DBB3FEB02B85509F00AD8E55 /* ModalOptionsView.swift */,
-				DBB3FEB22B8595FE00AD8E55 /* ModalSettingsView.swift */,
+				DBB3FEB22B8595FE00AD8E55 /* SettingsModalView.swift */,
 			);
 			name = Customs;
 			sourceTree = "<group>";
@@ -587,7 +587,7 @@
 				D02E142D2AF08CF6003D0472 /* RNVideoPlayer.swift in Sources */,
 				DBB3FEB12B85509F00AD8E55 /* ModalOptionsView.swift in Sources */,
 				DBB3FEB52B85A48F00AD8E55 /* UtilityStructsAndEnums.swift in Sources */,
-				DBB3FEB32B8595FE00AD8E55 /* ModalSettingsView.swift in Sources */,
+				DBB3FEB32B8595FE00AD8E55 /* SettingsModalView.swift in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				DBC2BA7A2B7050EE00648252 /* OverlayManager.swift in Sources */,

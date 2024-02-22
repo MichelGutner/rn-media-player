@@ -50,7 +50,7 @@ export const RNPlayerVideo = ({
         rate={rate}
         startTime={startTime}
         onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
-        onVideoProgress={data => setCurrentTime(data.nativeEvent)}
+        // onVideoProgress={data => console.log(data.nativeEvent)}
         onPlayPause={event => console.log(event.nativeEvent.status)}
         // onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
         fullScreen={isFullScreen}

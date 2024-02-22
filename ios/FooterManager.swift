@@ -74,7 +74,7 @@ struct FooterManager : View {
       }
       NotificationCenter.default.addObserver(
         playbackObserver,
-        selector: #selector(PlayerObserver.playbackItemDuration(_:)),
+        selector: #selector(PlayerObserver.playbackItem(_:)),
         name: .AVPlayerItemNewAccessLogEntry,
         object: avPlayer.currentItem
       )
