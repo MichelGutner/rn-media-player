@@ -21,6 +21,7 @@ struct OverlayManager : View {
   var onTapSettings: () -> Void
   var avPlayer : AVPlayer
   var onTapPlayPause: ([String: Any]) -> Void
+  @State var isLoading: Bool
 
   var onAppearOverlay: () -> Void
   var onDisappearOverlay: () -> Void
@@ -124,9 +125,13 @@ struct OverlayManager : View {
             }
           })
         }) {
-          Image(systemName: playPauseimageName)
-            .foregroundColor(.white)
-            .font(.system(size: dynamicFontSize + 5))
+          if isLoading {
+            LoadingManager(config: [:])
+          } else {
+            Image(systemName: playPauseimageName)
+              .foregroundColor(.white)
+              .font(.system(size: dynamicFontSize + 5))
+          }
         }
         .padding(size16)
         .background(Color(.black).opacity(0.2))
@@ -176,8 +181,7 @@ struct OverlayManager : View {
         }
       }
   }
-  
-  
+
   // Components
   @ViewBuilder
   func SettingsView() -> some View {
@@ -286,7 +290,7 @@ struct OverlayManager : View {
     ScrollView(showsIndicators: false) {
       VStack {
         ForEach(data, id: \.self) { item in
-          let imageType = SettingsOptionsImage(rawValue: item["name"]!)
+          let imageType = ESettingsOptions(rawValue: item["name"]!)
           let imageName = settingsImageManager(imageType!)
           
           
@@ -325,6 +329,7 @@ struct OverlayManager : View {
   
   private func updatePlayerTime() {
     guard let currentItem = avPlayer.currentItem else { return }
+    
     let currentTime = currentItem.currentTime().seconds
     let duration = currentItem.duration.seconds
     
@@ -348,6 +353,10 @@ struct OverlayManager : View {
         status = .finished
         isFinished = true
       }
+    }
+    
+    if let duration = avPlayer.currentItem?.duration, !duration.seconds.isNaN {
+      isLoading = false
     }
   }
   
@@ -399,23 +408,16 @@ struct OverlayManager : View {
     }
   }
   
-  private func settingsImageManager(_ settingsOptionsType: SettingsOptionsImage) -> String {
+  private func settingsImageManager(_ settingsOptionsType: ESettingsOptions) -> String {
     switch(settingsOptionsType) {
     case .quality:
       return "slider.horizontal.3"
-    case .playbackSpeedRate:
+    case .playbackSpeed:
       return "timer"
-    case .gear:
+    case .moreOptions:
       return "gear"
     }
   }
-}
-
-@available(iOS 13.0, *)
-enum SettingsOptionsImage: String {
-  case quality,
-       playbackSpeedRate,
-       gear
 }
 
 @available(iOS 13.0, *)
@@ -438,4 +440,10 @@ struct DoubleTapManager : View {
     }
     .edgesIgnoringSafeArea(Edge.Set.all)
   }
+}
+
+
+@available(iOS 13.0, *)
+struct Controls {
+  
 }

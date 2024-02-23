@@ -47,11 +47,8 @@ struct DoubleTapSeek: View {
         self.isTapped = true
         tappedQuantity += 1
         onTap(tappedQuantity * advanceValue)
-        
-        // Invalidate the existing timer
+
         resetTimer?.invalidate()
-        
-        // Set a new timer to reset tappedQuantity
         
         withAnimation(.easeInOut(duration: 0.1)) {
           self.showArrows[0] = true

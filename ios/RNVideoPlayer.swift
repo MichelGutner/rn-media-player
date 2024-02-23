@@ -32,8 +32,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private var settingsOpened = false
   private var optionsData: [HashableItem] = []
-  private var initialSettingsOptionsItem: String = ""
+  private var initialQualitySelected: String = ""
   private var selectedItem: String = ""
+  private var videoQualities: [VideoQualityData] = []
   
   private var _view: UIView!
   private var _subView: UIView!
@@ -144,8 +145,14 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   
   override func layoutSubviews() {
+    guard let player = player else {return}
+    let playbackUrl = source?["url"] as? String
+    let playerView = UIHostingController(rootView: CustomView(playerUrl: playbackUrl!, player: player))
+    playerView.view.frame = frame
+    playerView.view.backgroundColor = .black
+    addSubview(playerView.view)
     if hasCalledSetup {
-      videoPlayerSubView()
+//      videoPlayerSubView()
       enableAudioSession()
     }
   }
@@ -168,7 +175,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     _overlayView = UIView()
     _subView.addSubview(_overlayView)
     _overlayView.frame = _subView.frame
-    _overlayView.isHidden = loading
+//    _overlayView.isHidden = loading
     _overlayView.reactZIndex = 2
     
     // MARK: - DoubleTap Controls
@@ -189,8 +196,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         self.onVideoProgress?(data)
       },
       onSettingItemTapped: { item in
-        print("item", item)
-      },
+//        print("item", item)
+      }, isLoading: self.loading,
       isFullScreen: fullScreen,
       onTapFullScreen: onToggleOrientation,
       configFullScreen: fullScreenProps,
@@ -199,7 +206,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       advanceValue: advanceValue as! Int,
       suffixAdvanceValue: suffixAdvanceValue!,
       isFinished: {
-        print("testing")
+//        print("testing")
       },
       onTapSettings: onTapSettings,
       onTapExit: onTapGoback,
@@ -279,7 +286,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     loading.view.backgroundColor = .clear
     loadingView = loading.view
     loadingView.isHidden = !self.loading
-    addSubview(loadingView)
+//    addSubview(loadingView)
     
 //    let speedRateModalTitle: String = speedRateModalProps?["title"] as? String ?? "Playback Speed"
 //
@@ -317,11 +324,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 //    playBackSpeedModalView.frame = frame
 //    playBackSpeedModalView.backgroundColor = UIColor(white: 0, alpha: 0.3)
 //    playBackSpeedModalView.isHidden = !isOpenedModal
-    
-    let qualityModalTitle: String = qualityModalProps?["title"] as? String ?? "Quality"
-    let initialQualitySelected: String = qualityModalProps?["initialQualitySelected"] as! String
-    let qualityData: [[String: String]] = qualityModalProps?["data"] as? [[String: String]] ?? [[:]]
-    
+//
+    initialQualitySelected = qualityModalProps?["initialSelected"] as! String
+    if let data = qualityModalProps?["data"] as? [[String: Any]] {
+      videoQualities = data.map { VideoQualityData(dictionary: $0) }
+    }
+
 //    let qualityModal = UIHostingController(
 //      rootView: ModalManager(
 //        data: qualityData,
@@ -409,7 +417,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
           onSettingSelected: { [self] item in
             settingsOpened = false
             settingsModalView.removeFromSuperview()
-            print("item", item)
             let itemSelected = ESettingsOptions(rawValue: item)
             onSettingsItemSelected(itemSelected!)
 
@@ -446,14 +453,14 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       },
       modalContent: { [self] in
         ModalOptionsView(
-          data: optionsData,
+          data: videoQualities,
           onSelected: { [self] item in
             selectedItem = item.name
-//          let itemSelected = ESettingsOptions(rawValue: item as! String)
-//          onSettingsItemSelected(itemSelected!)
-            
+            changePlaybackQuality(URL(string: item.value)!)
+            qualityModalView.removeFromSuperview()
+            isOpenedModal = false
           },
-          initialSelectedItem: initialSettingsOptionsItem,
+          initialSelectedItem: initialQualitySelected,
           selectedItem: selectedItem
         )
       }
@@ -476,12 +483,11 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private func onSettingsItemSelected(_ item: ESettingsOptions) {
     switch(item) {
     case .quality:
-      optionsData = qualityOptionsData.reversed()
-      initialSettingsOptionsItem = "360p"
+//      optionsData = qualityOptionsData.reversed()
       return
     case .playbackSpeed:
       optionsData = playbackSpeedData
-      initialSettingsOptionsItem = "Normal"
+      initialQualitySelected = "Normal"
       return
     case .moreOptions:
       return print("more options clicked")
@@ -538,8 +544,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
     if keyPath == "status", let player = player {
       if player.status == .readyToPlay {
-        loading = false
-        onLoadingManager(hideLoading: true)
+        self.loading = false
+//        onLoadingManager(hideLoading: true)
         onLoaded?(["duration": player.currentItem?.duration.seconds as Any])
         onReady?(["ready": true])
       } else if player.status == .failed {
@@ -576,7 +582,6 @@ extension RNVideoPlayerView {
     } else {
       player?.play()
     }
-    animatedPlayPause()
   }
   
   @objc private func onChangeRate(_ rate: Float) {
@@ -593,7 +598,6 @@ extension RNVideoPlayerView {
     } else {
       player?.pause()
     }
-    animatedPlayPause()
   }
   
   @objc private func onTapFowardTime(_ advancedValue: Int) {
@@ -682,10 +686,11 @@ extension RNVideoPlayerView {
     let asset = AVURLAsset(url: url)
     let newPlayerItem = AVPlayerItem(asset: asset)
     
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1, execute: { [self] in
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: { [self] in
       player?.replaceCurrentItem(with: newPlayerItem)
-      newPlayerItem.addObserver(self, forKeyPath: "status", options: [.new], context: nil)
+      player?.seek(to: currentTime)
       
+      newPlayerItem.addObserver(self, forKeyPath: "status", options: [.new], context: nil)
       var playerItemStatusObservation: NSKeyValueObservation?
       playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { [weak self] (item, _) in
         guard item.status == .readyToPlay else {
@@ -693,20 +698,13 @@ extension RNVideoPlayerView {
           return
         }
         
-        
-        self?.player?.seek(to: currentTime)
-        self?.onLoadingManager(hideLoading: true)
+        self?.loading = false
         playerItemStatusObservation?.invalidate()
       }
     })
   }
   
-  private func animatedPlayPause() {
-    print("time status", player?.timeControlStatus == .paused)
-  }
-  
   private func onLoadingManager(hideLoading: Bool) {
-    print("duration", player?.currentItem?.duration.seconds.isNaN == false)
     DispatchQueue.main.async { [weak self] in
         guard let self = self else { return }
         

@@ -92,7 +92,6 @@ struct FooterManager : View {
   }
   
   private func updateDynamicFontSize() {
-    print("TESTing")
     sliderValue = 150.0
     dynamicFontSize = calculateFrameSize(size18, variantPercent30)
     dynamicDurationTextSize = calculateFrameSize(size10, variantPercent20)
@@ -124,7 +123,6 @@ struct FooterManager : View {
                   .onChanged({ value in
                     let translationX: CGFloat = value.translation.width
                     let calculatedProgress = (translationX / (UIScreen.main.bounds.width * 0.6)) + lastDraggedProgress
-                    print("calcultated", calculatedProgress)
                     progress = max(min(calculatedProgress, 1), 0)
                   })
                   .onEnded({ value in

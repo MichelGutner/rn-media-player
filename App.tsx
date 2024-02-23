@@ -11,7 +11,7 @@ import {RNPlayerVideo} from './src/player';
 
 function App(): JSX.Element {
   const {height} = useWindowDimensions();
-  const [isFull, setIsFull] = useState(true);
+  const [isFull, setIsFull] = useState(false);
 
   // useEffect(() => {
   //   setTimeout(() => {

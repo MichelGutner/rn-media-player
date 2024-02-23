@@ -25,7 +25,7 @@ class videoTimerManager {
     return CMTimeGetSeconds(duration!)
   }
   
-  public func change(timeToChange: Double) {
+  public func change(_ timeToChange: Double) {
     guard let currentTime = _player?.currentTime() else { return }
     let seekTimeSec = CMTimeGetSeconds(currentTime).advanced(by: timeToChange)
     let seekTime = CMTime(value: CMTimeValue(seekTimeSec), timescale: 1)
@@ -34,6 +34,6 @@ class videoTimerManager {
   
   public func advance(_ time: Double) {
     let videoTimer = videoTimerManager(avPlayer: _player!)
-    videoTimer.change(timeToChange: time)
+    videoTimer.change(time)
   }
 }

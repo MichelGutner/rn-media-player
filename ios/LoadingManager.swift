@@ -12,7 +12,7 @@ import SwiftUI
 struct LoadingManager: View {
   let config: NSDictionary?
   @State var isLoading : Bool = false
-  @State var size = calculateFrameSize(size30, variantPercent20)
+  @State var size = calculateFrameSize(size24, variantPercent20)
   var body: some View {
     
     let loadingColor = config?["color"]

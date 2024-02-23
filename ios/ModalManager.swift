@@ -34,13 +34,7 @@ struct ModalManager<Content: View>: View {
           }
         }
         .padding(.top, 12)
-        
-        ScrollView {
-          VStack {
-            modalContent()
-          }
-          .padding([.leading, .trailing, .bottom], 12)
-        }
+        modalContent()
       }
       .fixedSize(horizontal: true, vertical: true)
       .padding(.leading)

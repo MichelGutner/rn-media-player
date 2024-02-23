@@ -40,12 +40,14 @@ export const RNPlayerVideo = ({
     <View style={style}>
       <VPlayer
         style={{...StyleSheet.absoluteFillObject, overflow: 'hidden'}}
-        // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
         source={{
-          url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-          videoTitle: 'Title de test',
+          url: 'https://content.jwplatform.com/videos/MGAxJ46m-zZbIuxVJ.mp4',
+          videoTile: 'testing',
         }}
-        // source="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+        // source={{
+        //   url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+        //   videoTitle: 'Title de test',
+        // }}
         paused={paused}
         rate={rate}
         startTime={startTime}
@@ -111,38 +113,67 @@ export const RNPlayerVideo = ({
           title: 'Speed Rate',
         }}
         qualityModalProps={{
-          title: 'Quality',
-          initialQualitySelected: 'Low Quality',
+          initialSelected: '240p',
           data: [
             {
-              name: 'Very High Quality',
+              name: '4320p',
               value:
                 'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
-              id: 'veryHighQuality',
+              enabled: true,
             },
             {
-              name: 'High Quality',
+              name: '2880p',
               value:
                 'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
-              id: 'highQuality',
+              enabled: true,
             },
             {
-              name: 'Medium Quality',
+              name: '2160p',
+              value:
+                'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
+              enabled: true,
+            },
+            {
+              name: '1440p',
+              value:
+                'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
+              enabled: true,
+            },
+            {
+              name: '1080p',
+              value:
+                'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
+              enabled: true,
+            },
+            {
+              name: '720p',
               value:
                 'https://content.jwplatform.com/videos/MGAxJ46m-zZbIuxVJ.mp4',
-              id: 'mediumQuality',
+              enabled: true,
             },
             {
-              name: 'Low Quality',
+              name: '480p',
               value:
                 'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
-              id: 'lowQuality',
+              enabled: true,
             },
             {
-              name: 'Very Low Quality',
+              name: '360p',
               value:
                 'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
-              id: 'veryLowQuality',
+              enabled: true,
+            },
+            {
+              name: '240p',
+              value:
+                'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
+              enabled: true,
+            },
+            {
+              name: '144p',
+              value:
+                'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
+              enabled: true,
             },
           ],
         }}

@@ -17,6 +17,7 @@ struct ControlsManager: View {
   var onTapGestureBackdrop: (Bool) -> Void
   var onVideoProgress: ([String: Any]) -> Void
   var onSettingItemTapped: (String) -> Void
+  var isLoading: Bool
   
   @State private var isTapped: Bool = false
   
@@ -71,29 +72,33 @@ struct ControlsManager: View {
       .foregroundColor(.white)
       .overlay(
         Group {
-          OverlayManager(
-            safeAreaInsets: self.safeAreaInsets,
-            videoTitle: videoTitle,
-            onTapFullScreen: onTapFullScreen,
-            isFullScreen: isFullScreen,
-            onTapExit: onTapExit,
-            onTapSettings: onTapSettings,
-            avPlayer: avPlayer,
-            onTapPlayPause: { status in
-              onTapPlayPause(status)
-              onToggleDisplayOverlay()
-            },
-            onAppearOverlay: {
-              onToggleDisplayOverlay()
-              onAppearOverlay()
-            },
-            onDisappearOverlay: {
-              onDisappearOverlay()
-            },
-            onVideoProgress: onVideoProgress,
-            onSettingItemTapped: onSettingItemTapped
-          )
-          .padding(8)
+          if !isTapped {
+            OverlayManager(
+              safeAreaInsets: self.safeAreaInsets,
+              videoTitle: videoTitle,
+              onTapFullScreen: onTapFullScreen,
+              isFullScreen: isFullScreen,
+              onTapExit: onTapExit,
+              onTapSettings: onTapSettings,
+              avPlayer: avPlayer,
+              onTapPlayPause: { status in
+                onTapPlayPause(status)
+                onToggleDisplayOverlay()
+              },
+              isLoading: isLoading,
+              onAppearOverlay: {
+                onToggleDisplayOverlay()
+                onAppearOverlay()
+              },
+              onDisappearOverlay: {
+                onDisappearOverlay()
+              },
+              onVideoProgress: onVideoProgress,
+              onSettingItemTapped: onSettingItemTapped
+            )
+            .animation(.easeInOut(duration: 0.2), value: isTapped)
+            .padding(8)
+          }
         }
       )
     }
