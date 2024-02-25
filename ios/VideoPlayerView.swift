@@ -32,14 +32,14 @@ struct VideoPlayerView: View {
   
   @State private var thumbnailsFrames: [UIImage] = []
   @State private var draggingImage: UIImage?
-  @State private var playerItemStatusObservation: NSKeyValueObservation?
   
   
-  init(size: CGSize, safeArea: EdgeInsets, url: String, player: AVPlayer) {
+  init(size: CGSize, safeArea: EdgeInsets, url: String, player: AVPlayer, thumbnails: [UIImage]) {
     self.size = size
     self.safeArea = safeArea
     self.url = url
     self.player = player
+    _thumbnailsFrames = State(initialValue: thumbnails)
 //    self.player = {
 //      if let bundle = Bundle.main.path(forResource: "Test", ofType: "mp4") {
 //        print("testing")
@@ -99,8 +99,10 @@ struct VideoPlayerView: View {
       .frame(width: videoPlayerSize.width, height: videoPlayerSize.height)
     }
     .onAppear {
+      print("thumb nails", thumbnailsFrames.count)
       guard !isObservedAdded else { return }
       updateImage()
+    
       player.addPeriodicTimeObserver(forInterval: .init(seconds: 1, preferredTimescale: 1), queue: .main) { [self] _ in
         updatePlayerTime()
       }
@@ -118,25 +120,35 @@ struct VideoPlayerView: View {
         name: .AVPlayerItemDidPlayToEndTime,
         object: player.currentItem
       )
-      playerItemStatusObservation = player.observe(\.status, options: [.new]) { [self] (item, _) in
-        guard item.status == .readyToPlay else {
-//          self?.onError?(extractPlayerErrors(item))
-          return
-        }
-        generatingThumbnailsFrames()
-      }
-      
       isObservedAdded = true
-    }
-    .onDisappear {
-      playerItemStatusObservation?.invalidate()
+      
+//      generatingThumbnailsFrames()
+      
     }
     .onReceive(playbackObserver.$isFinishedPlaying) { finished in
       if finished {
         self.isFinishedPlaying = true
       }
     }
-    
+    .onReceive(playbackObserver.$playbackDuration) { duration in
+      if duration != 0.0 {
+//        playbackDuration = duration
+      }
+      guard let currentItem = player.currentItem else { return }
+      
+      if  currentItem.duration.seconds != 0.0 {
+//        playbackDuration = currentItem.duration.seconds
+        sliderProgress = player.currentTime().seconds / (player.currentItem?.duration.seconds)!
+        lastDraggedProgress = sliderProgress
+        
+        let loadedTimeRanges = currentItem.loadedTimeRanges
+        if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
+          let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
+          let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
+          buffering = (bufferedStart + bufferedDuration) / currentItem.duration.seconds
+        }
+      }
+    }
   }
   
 
@@ -151,15 +163,25 @@ extension VideoPlayerView {
     let thumbSize: CGSize = .init(width: 200, height: 100)
     HStack {
       if let draggingImage {
-        Image(uiImage: draggingImage)
-          .resizable()
-          .aspectRatio(contentMode: .fill)
-          .frame(width: thumbSize.width, height: thumbSize.height)
-          .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
-          .overlay(
-            RoundedRectangle(cornerRadius: 15, style: .continuous)
-              .stroke(.white, lineWidth: 2)
-          )
+        VStack {
+          Image(uiImage: draggingImage)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(width: thumbSize.width, height: thumbSize.height)
+            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .overlay(
+              RoundedRectangle(cornerRadius: 15, style: .continuous)
+                .stroke(.white, lineWidth: 2)
+            )
+          Group {
+            if let currentItem =  player.currentItem {
+              Text(stringFromTimeInterval(interval: TimeInterval(truncating: (sliderProgress * currentItem.duration.seconds) as NSNumber)))
+                .font(.caption)
+                .foregroundColor(.white)
+                .fontWeight(.semibold)
+            }
+          }
+        }
       } else {
         RoundedRectangle(cornerRadius: 15, style: .continuous)
           .fill(.black)
@@ -188,11 +210,6 @@ extension VideoPlayerView {
         Rectangle()
           .fill(.gray).opacity(0.5)
           .frame(width: safeAreaWidth)
-          .cornerRadius(8)
-        
-        Rectangle()
-          .fill(.white).opacity(0.6)
-          .frame(width: safeAreaWidth * buffering)
           .cornerRadius(8)
         
         Rectangle()
@@ -258,24 +275,6 @@ extension VideoPlayerView {
       .animation(.easeInOut(duration: 0.2), value: showPlayerControls)
       .frame(height: 3)
     }
-    .onReceive(playbackObserver.$playbackDuration) { duration in
-      if duration != 0.0 {
-//        playbackDuration = duration
-      }
-      guard let currentItem = player.currentItem else { return }
-      if  currentItem.duration.seconds != 0.0 {
-//        playbackDuration = currentItem.duration.seconds
-        sliderProgress = player.currentTime().seconds / (player.currentItem?.duration.seconds)!
-        lastDraggedProgress = sliderProgress
-        
-        let loadedTimeRanges = currentItem.loadedTimeRanges
-        if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
-          let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
-          let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
-          buffering = (bufferedStart + bufferedDuration) / currentItem.duration.seconds
-        }
-      }
-    }
     .padding(.bottom, 16)
   }
   
@@ -313,7 +312,6 @@ extension VideoPlayerView {
   }
 }
 
-
 // MARK: -- Private Functions
 @available(iOS 13.0, *)
 extension VideoPlayerView {
@@ -335,7 +333,6 @@ extension VideoPlayerView {
     
   private func updatePlayerTime() {
     guard let currentItem = player.currentItem else { return }
-    
     let currentTime = currentItem.currentTime().seconds
     let duration = currentItem.duration.seconds
     
@@ -347,8 +344,6 @@ extension VideoPlayerView {
       //      onVideoProgress(["progress": currentTime, "bufferedDuration": bufferedStart + bufferedDuration])
     }
     if currentTime < duration {
-      //      playbackProgress = currentTime
-      //      playbackDuration = duration
       let calculatedProgress = currentTime / duration
       if !isSeeking {
         sliderProgress = calculatedProgress
@@ -418,42 +413,40 @@ extension VideoPlayerView {
     backward.change(-Double(timeToChange))
   }
   
-  private func generatingThumbnailsFrames() {
-      Task.detached {
-        guard let asset = await player.currentItem?.asset else { return }
-
-        do {
-          // Load the duration of the asset
-          let totalDuration = asset.duration.seconds
-          var framesTimes: [NSValue] = []
-          
-          // Generate thumbnails frames
-          let generator = AVAssetImageGenerator(asset: asset)
-          generator.appliesPreferredTrackTransform = true
-          generator.maximumSize = .init(width: 250, height: 250)
-          
-          
-          for progress in stride(from: 0, to: 4, by: 0.01) {
-            let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
-            framesTimes.append(time as NSValue)
-          }
-          
-          generator.generateCGImagesAsynchronously(forTimes: framesTimes) { requestedTime, image, _, _, error in
-            guard let cgImage = image, error == nil else {
-              // Handle the error
-              return
-            }
-            
-            DispatchQueue.main.async {
-              let uiImage = UIImage(cgImage: cgImage)
-              thumbnailsFrames.append(uiImage)
-            }
-          }
-        }
-      }
-  }
-
-
+//  private func generatingThumbnailsFrames() {
+//      Task.detached {
+//        guard let asset = await player.currentItem?.asset else { return }
+//
+//        do {
+//          // Load the duration of the asset
+//          let totalDuration = asset.duration.seconds
+//          var framesTimes: [NSValue] = []
+//
+//          // Generate thumbnails frames
+//          let generator = AVAssetImageGenerator(asset: asset)
+//          generator.appliesPreferredTrackTransform = true
+//          generator.maximumSize = .init(width: 250, height: 250)
+//
+//
+//          for progress in stride(from: 0, to: 5, by: 0.01) {
+//            let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
+//            framesTimes.append(time as NSValue)
+//          }
+//
+//          generator.generateCGImagesAsynchronously(forTimes: framesTimes) { requestedTime, image, _, _, error in
+//            guard let cgImage = image, error == nil else {
+//              // Handle the error
+//              return
+//            }
+//
+//            DispatchQueue.main.async {
+//              let uiImage = UIImage(cgImage: cgImage)
+//              thumbnailsFrames.append(uiImage)
+//            }
+//          }
+//        }
+//      }
+//  }
 }
 
 // MARK: -- CustomView
@@ -461,12 +454,13 @@ extension VideoPlayerView {
 struct CustomView : View {
   var playerUrl: String
   var player: AVPlayer
+  var thumbnails: [UIImage]
   
   var body: some View {
     GeometryReader {
       let size = $0.size
       let safeArea = $0.safeAreaInsets
-      VideoPlayerView(size: size, safeArea: safeArea, url: playerUrl, player: player)
+      VideoPlayerView(size: size, safeArea: safeArea, url: playerUrl, player: player, thumbnails: thumbnails)
     }
   }
 }

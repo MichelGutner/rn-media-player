@@ -33,6 +33,7 @@
 		DBB3FEB52B85A48F00AD8E55 /* UtilityStructsAndEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */; };
 		DBBE841F2B882D5600B8A738 /* CustomVideoPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBBE841E2B882D5600B8A738 /* CustomVideoPlayer.swift */; };
 		DBBE84222B882EBE00B8A738 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBBE84212B882EBE00B8A738 /* VideoPlayerView.swift */; };
+		DBBE84242B8B9F8B00B8A738 /* VideoSeekerThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBBE84232B8B9F8B00B8A738 /* VideoSeekerThumbnail.swift */; };
 		DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */; };
 		DBC2BA782B6FF70900648252 /* PlaybackErrorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC2BA772B6FF70900648252 /* PlaybackErrorManager.swift */; };
 		DBC2BA7A2B7050EE00648252 /* OverlayManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC2BA792B7050EE00648252 /* OverlayManager.swift */; };
@@ -92,6 +93,7 @@
 		DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityStructsAndEnums.swift; sourceTree = "<group>"; };
 		DBBE841E2B882D5600B8A738 /* CustomVideoPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomVideoPlayer.swift; sourceTree = "<group>"; };
 		DBBE84212B882EBE00B8A738 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
+		DBBE84232B8B9F8B00B8A738 /* VideoSeekerThumbnail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoSeekerThumbnail.swift; sourceTree = "<group>"; };
 		DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDefault.swift; sourceTree = "<group>"; };
 		DBC2BA772B6FF70900648252 /* PlaybackErrorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackErrorManager.swift; sourceTree = "<group>"; };
 		DBC2BA792B7050EE00648252 /* OverlayManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayManager.swift; sourceTree = "<group>"; };
@@ -261,6 +263,7 @@
 				DB9667312B7D6281001A97E0 /* SeekSliderView.swift */,
 				DBB3FEB02B85509F00AD8E55 /* ModalOptionsView.swift */,
 				DBB3FEB22B8595FE00AD8E55 /* SettingsModalView.swift */,
+				DBBE84232B8B9F8B00B8A738 /* VideoSeekerThumbnail.swift */,
 			);
 			name = Customs;
 			sourceTree = "<group>";
@@ -604,6 +607,7 @@
 				DBC2BA872B74646D00648252 /* FooterManager.swift in Sources */,
 				DB6459FD2B77AD33000E54AD /* PlayPauseManager.swift in Sources */,
 				DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */,
+				DBBE84242B8B9F8B00B8A738 /* VideoSeekerThumbnail.swift in Sources */,
 				DB645A072B79D24E000E54AD /* PlaybackObservable.swift in Sources */,
 				DB0C9DCD2B23AB6900B7D598 /* UtilityStringHandler.swift in Sources */,
 				DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */,

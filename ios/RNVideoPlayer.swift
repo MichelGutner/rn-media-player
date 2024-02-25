@@ -57,6 +57,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var playbackProgress = UILabel()
   
   private var seekSlider = UISlider(frame: .zero)
+  @State private var thumbnailsFrames: [UIImage] = []
   
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
@@ -109,7 +110,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferFull", options: .new, context: nil)
         playerLayer = AVPlayerLayer(player: player)
 //        periodTimeObserver()
-        
       } catch {
         self.onError?(["url": "Error on get url: error type is \(error)"])
       }
@@ -144,17 +144,68 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
+  var thumbFrames: [UIImage] = []
+  
   override func layoutSubviews() {
-    guard let player = player else {return}
-    let playbackUrl = source?["url"] as? String
-    let playerView = UIHostingController(rootView: CustomView(playerUrl: playbackUrl!, player: player))
-    playerView.view.frame = frame
-    playerView.view.backgroundColor = .black
-    addSubview(playerView.view)
+      backgroundColor = .black
+      guard let player = player else { return }
+      let playbackUrl = source?["url"] as? String
+      
+    generatingThumbnailsFrames(player.currentItem!) { [self] in
+        let playerView = UIHostingController(rootView: CustomView(playerUrl: playbackUrl!, player: player, thumbnails: thumbFrames))
+        playerView.view.frame = frame
+        playerView.view.backgroundColor = .black
+        addSubview(playerView.view)
+      }
+    
+    
     if hasCalledSetup {
-//      videoPlayerSubView()
-      enableAudioSession()
+        enableAudioSession()
     }
+  }
+
+  // ...
+  private func generatingThumbnailsFrames(_ currentItem: AVPlayerItem, completion: @escaping () -> Void) {
+      if thumbFrames.isEmpty {
+          Task.detached { [self] in
+              let asset = currentItem.asset
+              do {
+                  // Load the duration of the asset
+                  let totalDuration = asset.duration.seconds
+                  var framesTimes: [NSValue] = []
+                  
+                  // Generate thumbnails frames
+                  let generator = AVAssetImageGenerator(asset: asset)
+                  generator.appliesPreferredTrackTransform = true
+                  generator.maximumSize = .init(width: 250, height: 250)
+                  
+                  for progress in stride(from: 0, to: 5, by: 0.01) {
+                      let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
+                      framesTimes.append(time as NSValue)
+                  }
+                  
+                  generator.generateCGImagesAsynchronously(forTimes: framesTimes) { [self] requestedTime, image, _, _, error in
+                    let localFramesTimes = framesTimes
+                    
+                      guard let cgImage = image, error == nil else {
+                          return
+                      }
+                      
+                      DispatchQueue.main.async { [self] in
+                          let uiImage = UIImage(cgImage: cgImage)
+                          thumbFrames.append(uiImage)
+                          
+                        print("thumbFramesCount", thumbFrames.count, localFramesTimes.count)
+                        if thumbFrames.count == localFramesTimes.count {
+                              completion() // Call the completion handler
+                          }
+                      }
+                  }
+              }
+          }
+      } else {
+        completion()
+      }
   }
   
   private func videoPlayerSubView() {
