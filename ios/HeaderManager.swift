@@ -15,8 +15,8 @@ struct HeaderManager : View {
   var title: String
   @State private var isSettingsTapped: Bool = false
   
-  @State private var dynamicSize = calculateFrameSize(size18, variantPercent30)
-  @State private var dynamicTitleSize = calculateFrameSize(size14, variantPercent20)
+  @State private var dynamicSize = calculateSizeByWidth(size18, variantPercent30)
+  @State private var dynamicTitleSize = calculateSizeByWidth(size14, variantPercent20)
   
   var body: some View {
     VStack {
@@ -48,7 +48,7 @@ struct HeaderManager : View {
   }
   
   private func updateDynamicSize() {
-    dynamicSize = calculateFrameSize(size18, variantPercent30)
-    dynamicTitleSize = calculateFrameSize(size10, variantPercent20)
+    dynamicSize = calculateSizeByWidth(size18, variantPercent30)
+    dynamicTitleSize = calculateSizeByWidth(size10, variantPercent20)
   }
 }

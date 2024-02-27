@@ -114,6 +114,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         playerLayer = AVPlayerLayer(player: player)
 //        periodTimeObserver()
       } catch {
+        print("e", error)
         self.onError?(["url": "Error on get url: error type is \(error)"])
       }
     }
@@ -171,49 +172,44 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
 
-  // ...
   private func generatingThumbnailsFrames() {
     Task.detached { [self] in
-        guard let asset = await player?.currentItem?.asset else { return }
-
-        do {
-          // Load the duration of the asset
-          let totalDuration = asset.duration.seconds
-          var framesTimes: [NSValue] = []
-          print("total", totalDuration)
-
-          // Generate thumbnails frames
-          let generator = AVAssetImageGenerator(asset: asset)
-          generator.appliesPreferredTrackTransform = true
-          generator.maximumSize = .init(width: 250, height: 250)
-
-
-          for progress in await stride(from: 0, to: totalDuration / Double(thumbnailFramesSeconds * 100), by: 0.01) {
-            let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
-            framesTimes.append(time as NSValue)
+      guard let asset = await player?.currentItem?.asset else { return }
+      
+      do {
+        // Load the duration of the asset
+        let totalDuration = asset.duration.seconds
+        var framesTimes: [NSValue] = []
+        print("total", totalDuration)
+        
+        // Generate thumbnails frames
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = .init(width: 250, height: 250)
+        
+        
+        for progress in await stride(from: 0, to: totalDuration / Double(thumbnailFramesSeconds * 100), by: 0.01) {
+          let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
+          framesTimes.append(time as NSValue)
+        }
+        let localFrames = framesTimes
+        
+        generator.generateCGImagesAsynchronously(forTimes: localFrames) { requestedTime, image, _, _, error in
+          guard let cgImage = image, error == nil else {
+            // Handle the error
+            return
           }
-          let localFrames = framesTimes
           
-            generator.generateCGImagesAsynchronously(forTimes: localFrames) { requestedTime, image, _, _, error in
-              guard let cgImage = image, error == nil else {
-                // Handle the error
-                return
-              }
-              
-             
-              print("dispatch", thumbnailsFrames.count, localFrames.count)
-              DispatchQueue.main.async { [self] in
-                let uiImage = UIImage(cgImage: cgImage)
-                thumbnailsFrames.append(uiImage)
-                
-//                if thumbnailsFrames.count == localFrames.count {
-                  NotificationCenter.default.post(name: Notification.Name("frames"), object: nil, userInfo: ["frames": thumbnailsFrames])
-//                }
-              }
-              
-            }
+          DispatchQueue.main.async { [self] in
+            let uiImage = UIImage(cgImage: cgImage)
+            thumbnailsFrames.append(uiImage)
+            
+            NotificationCenter.default.post(name: Notification.Name("frames"), object: nil, userInfo: ["frames": thumbnailsFrames])
+          }
+          
         }
       }
+    }
   }
   
   private func videoPlayerSubView() {

@@ -39,9 +39,9 @@ struct OverlayManager : View {
   @State private var isTapped: Bool = false
   
 
-  @State private var dynamicFontSize: CGFloat = calculateFrameSize(size14, variantPercent30)
-  @State private var dynamicDurationTextSize: CGFloat = calculateFrameSize(size8, variantPercent20)
-  @State private var dynamicTitleSize = calculateFrameSize(size14, variantPercent20)
+  @State private var dynamicFontSize: CGFloat = calculateSizeByWidth(size14, variantPercent30)
+  @State private var dynamicDurationTextSize: CGFloat = calculateSizeByWidth(size8, variantPercent20)
+  @State private var dynamicTitleSize = calculateSizeByWidth(size14, variantPercent20)
 
   @GestureState private var isDraggingSlider: Bool = false
   @State private var sliderProgress = 0.0
@@ -361,9 +361,9 @@ struct OverlayManager : View {
   }
   
   private func updateDynamicSize() {
-    dynamicFontSize = calculateFrameSize(size14, variantPercent30)
-    dynamicDurationTextSize = calculateFrameSize(size10, variantPercent20)
-    dynamicTitleSize = calculateFrameSize(size14, variantPercent20)
+    dynamicFontSize = calculateSizeByWidth(size14, variantPercent30)
+    dynamicDurationTextSize = calculateSizeByWidth(size10, variantPercent20)
+    dynamicTitleSize = calculateSizeByWidth(size14, variantPercent20)
   }
   
   private func PlayingStatusManager(_ status: PlayingStatus) -> String {

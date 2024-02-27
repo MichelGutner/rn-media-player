@@ -12,6 +12,7 @@ import AVKit
 @available(iOS 13.0, *)
 struct CustomVideoPlayer : UIViewControllerRepresentable {
   var player: AVPlayer
+  
   func makeUIViewController(context: Context) -> AVPlayerViewController {
     let controller  = AVPlayerViewController()
     controller.player = player
@@ -22,6 +23,6 @@ struct CustomVideoPlayer : UIViewControllerRepresentable {
   }
   
   func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
-    
+    print("testing ui view")
   }
 }

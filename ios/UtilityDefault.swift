@@ -34,8 +34,8 @@ public var variantPercent80 = CGFloat(0.8)
 public var spacing20 = CGFloat(20)
 public var spacing10 = CGFloat(10)
 
-public var margin8 = calculateFrameSize(size8, variantPercent10)
+public var margin8 = calculateSizeByWidth(size8, variantPercent10)
 
-public var size20v02 = calculateFrameSize(size24, variantPercent30)
-public var dynamicSize18v30 = calculateFrameSize(size18, variantPercent30)
-public var dynamicSize24v30 = calculateFrameSize(size24, variantPercent30)
+public var size20v02 = calculateSizeByWidth(size24, variantPercent30)
+public var dynamicSize18v30 = calculateSizeByWidth(size18, variantPercent30)
+public var dynamicSize24v30 = calculateSizeByWidth(size24, variantPercent30)

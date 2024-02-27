@@ -12,8 +12,8 @@ import AVKit
 @available(iOS 13.0, *)
 struct FooterManager : View {
   @ObservedObject private var playbackObserver = PlayerObserver()
-  @State private var dynamicFontSize: CGFloat = calculateFrameSize(size18, variantPercent30)
-  @State private var dynamicDurationTextSize: CGFloat = calculateFrameSize(size10, variantPercent20)
+  @State private var dynamicFontSize: CGFloat = calculateSizeByWidth(size18, variantPercent30)
+  @State private var dynamicDurationTextSize: CGFloat = calculateSizeByWidth(size10, variantPercent20)
   @State private var playbackDuration: Double = 1.0
   @State private var sliderValue = 0.0
   
@@ -93,8 +93,8 @@ struct FooterManager : View {
   
   private func updateDynamicFontSize() {
     sliderValue = 150.0
-    dynamicFontSize = calculateFrameSize(size18, variantPercent30)
-    dynamicDurationTextSize = calculateFrameSize(size10, variantPercent20)
+    dynamicFontSize = calculateSizeByWidth(size18, variantPercent30)
+    dynamicDurationTextSize = calculateSizeByWidth(size10, variantPercent20)
   }
   
   @ViewBuilder

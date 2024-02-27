@@ -26,7 +26,7 @@ struct ModalManager<Content: View>: View {
         }
         .edgesIgnoringSafeArea(.all)
       
-      VStack(alignment: .leading, spacing: calculateFrameSize(size16, variantPercent20)) {
+      VStack(alignment: .leading, spacing: calculateSizeByWidth(size16, variantPercent20)) {
         HStack(alignment: .center) {
           Spacer()
           Button(action: hideModal) {

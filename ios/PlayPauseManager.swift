@@ -8,7 +8,7 @@ struct PlayPauseManager : View {
   var onTap: (String) -> Void
   
   @ObservedObject private var playerObserver = PlayerObserver()
-  @State private var dynamicSize: CGFloat = calculateFrameSize(size22, variantPercent30)
+  @State private var dynamicSize: CGFloat = calculateSizeByWidth(size22, variantPercent30)
   @State private var imageName: String = ""
   @State private var isFinished: Bool = false
   @State private var status: PlayingStatus = .paused
@@ -115,6 +115,6 @@ extension PlayPauseManager {
   }
   
   func updateDynamicSize() {
-    dynamicSize = calculateFrameSize(size20, variantPercent30)
+    dynamicSize = calculateSizeByWidth(size20, variantPercent30)
   }
 }

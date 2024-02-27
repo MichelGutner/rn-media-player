@@ -12,7 +12,7 @@ import Combine
 @available(iOS 13.0, *)
 struct VideoPlayerView: View {
   var size: CGSize
-  var safeArea: EdgeInsets
+  var edgeInsets: EdgeInsets
   var url: String
   
   @ObservedObject private var playbackObserver = PlayerObserver()
@@ -34,13 +34,24 @@ struct VideoPlayerView: View {
   @State private var thumbnailsFrames: [UIImage] = []
   @State private var draggingImage: UIImage?
   
+  @State private var playbackDuration: Double = 0
+  @State private var uiSafeArea: CGRect!
   
   init(size: CGSize, safeArea: EdgeInsets, url: String, player: AVPlayer, thumbnails: [UIImage]) {
     self.size = size
-    self.safeArea = safeArea
+    self.edgeInsets = safeArea
     self.url = url
     self.player = player
     _thumbnailsFrames = State(initialValue: thumbnails)
+    _uiSafeArea = State(
+      initialValue:
+        UIScreen.main.bounds.inset(by: UIEdgeInsets(
+          top: safeArea.top,
+          left: safeArea.leading,
+          bottom: safeArea.bottom,
+          right: safeArea.trailing
+        ))
+    )
   }
   
   var body: some View {
@@ -83,7 +94,23 @@ struct VideoPlayerView: View {
             }
           }
           .overlay(
-            VideoSeekerView()
+            VStack {
+              HeaderControls()
+                .opacity(showPlayerControls && !isDraggingSlider ? 1 : 0)
+                .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider)
+              Spacer()
+              VideoSeekerView()
+              HStack {
+                Spacer()
+                SettingsControl()
+                FullScreenControl()
+              }
+              .opacity(showPlayerControls && !isDraggingSlider ? 1 : 0)
+              .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider)
+              .padding(.trailing, 12)
+            }
+              .padding(.leading, 12)
+              .padding(.trailing, 12)
           )
       }
       .frame(width: videoPlayerSize.width, height: videoPlayerSize.height)
@@ -122,6 +149,7 @@ struct VideoPlayerView: View {
     .onReceive(playbackObserver.$isFinishedPlaying) { finished in
       if finished {
         self.isFinishedPlaying = true
+        updateImage()
       }
     }
     .onReceive(playbackObserver.$thumbnailsFrames) { frames in
@@ -133,12 +161,12 @@ struct VideoPlayerView: View {
     }
     .onReceive(playbackObserver.$playbackDuration) { duration in
       if duration != 0.0 {
-//        playbackDuration = duration
+        playbackDuration = duration
       }
       guard let currentItem = player.currentItem else { return }
       
       if  currentItem.duration.seconds != 0.0 {
-//        playbackDuration = currentItem.duration.seconds
+        playbackDuration = currentItem.duration.seconds
         sliderProgress = player.currentTime().seconds / (player.currentItem?.duration.seconds)!
         lastDraggedProgress = sliderProgress
         
@@ -159,8 +187,28 @@ struct VideoPlayerView: View {
 // MARK: -- View Builder
 @available(iOS 13.0, *)
 extension VideoPlayerView {
+  
   @ViewBuilder
-  func VideoSeekerThumbnailView(_ videoSize: CGSize) -> some View {
+  func HeaderControls() -> some View {
+      HStack {
+        Button (action: {
+//          onTapExit()
+        }) {
+          Image(systemName: "arrow.left")
+            .font(.system(size: 15))
+            .foregroundColor(.white)
+        }
+        .padding(.leading, 8)
+        Spacer()
+        Text("videoTitle").font(.system(size: 12)).foregroundColor(.white)
+        Spacer()
+      }
+    }
+//    .opacity(isSeeking ? 0 : 1)
+//    .animation(.easeInOut(duration: 0.2), value: isSeeking)
+
+  @ViewBuilder
+  func VideoSeekerThumbnailView() -> some View {
     let thumbSize: CGSize = .init(width: 200, height: 100)
     HStack {
       if let draggingImage {
@@ -194,87 +242,95 @@ extension VideoPlayerView {
     }
     .frame(width: thumbSize.width, height: thumbSize.height)
     .opacity(isDraggingSlider ? 1 : 0)
-    .offset(x: sliderProgress * (videoSize.width - thumbSize.width))
+    .offset(x: sliderProgress * (uiSafeArea.width - thumbSize.width))
     .animation(.easeInOut(duration: 0.2), value: isDraggingSlider)
     
   }
   
   @ViewBuilder
   func VideoSeekerView() -> some View {
+    let calculatePercentSizeSeekerView = calculateSizeByWidthWithoutRounded(0.8, 0.1) > 0.9 ? 0.9 : calculateSizeByWidthWithoutRounded(0.8, 0.1)
+    let calculateSizeDurationText = calculateSizeByWidth(size8, variantPercent10)
+    
+    let uiSafeAreaWidth = (uiSafeArea.width * calculatePercentSizeSeekerView)
     VStack(alignment: .leading) {
-      Spacer()
-      VideoSeekerThumbnailView(size)
-        .padding(.bottom, 12)
-      ZStack(alignment: .leading) {
-        let safeAreaWidth = UIScreen.main.bounds.inset(by: UIEdgeInsets(top: safeArea.top, left: safeArea.leading, bottom: safeArea.bottom, right: safeArea.trailing)).width
-  
-        Rectangle()
-          .fill(.gray).opacity(0.5)
-          .frame(width: safeAreaWidth)
-          .cornerRadius(8)
-        
-        Rectangle()
-          .fill(.red)
-          .frame(width: safeAreaWidth * sliderProgress)
-          .cornerRadius(8)
-        
-        HStack {}
-          .overlay(
-            Circle()
-              .fill(.red)
-              .frame(width: 15, height: 15)
-              .frame(width: 50, height: 50)
-              .contentShape(Rectangle())
-              .offset(x: safeAreaWidth * sliderProgress)
-              .gesture(
-                DragGesture()
-                  .updating($isDraggingSlider, body: { _, out, _ in
-                    out = true
-                  })
-                  .onChanged({ value in
-                    if let timeoutTask {
-                      timeoutTask.cancel()
-                    }
-                    let translationX: CGFloat = value.translation.width
-                    let calculatedProgress = (translationX / safeAreaWidth) + lastDraggedProgress
-                    sliderProgress = max(min(calculatedProgress, 1), 0)
-                    isSeeking = true
-                    
-                    let dragIndex = Int(sliderProgress / 0.01)
-                    if thumbnailsFrames.indices.contains(dragIndex) {
-                      draggingImage = thumbnailsFrames[dragIndex]
-                    }
-                  })
-                  .onEnded({ value in
-                    lastDraggedProgress = sliderProgress
-                    if let currentItem = player.currentItem {
-                      let duration = currentItem.duration.seconds
-                      let targetTime = duration * sliderProgress
-                      let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
+      VideoSeekerThumbnailView()
+        .padding(.bottom, 8)
+      HStack {
+        ZStack(alignment: .leading) {
+          Rectangle()
+            .fill(.gray).opacity(0.5)
+            .frame(width: uiSafeAreaWidth)
+            .cornerRadius(8)
+          
+          Rectangle()
+            .fill(.red)
+            .frame(width: uiSafeAreaWidth * sliderProgress)
+            .cornerRadius(8)
+          
+          HStack {}
+            .overlay(
+              Circle()
+                .fill(.red)
+                .frame(width: 15, height: 15)
+                .frame(width: 50, height: 50)
+                .contentShape(Rectangle())
+                .offset(x: uiSafeAreaWidth * sliderProgress)
+                .gesture(
+                  DragGesture()
+                    .updating($isDraggingSlider, body: { _, out, _ in
+                      out = true
+                    })
+                    .onChanged({ value in
+                      if let timeoutTask {
+                        timeoutTask.cancel()
+                      }
+                      let translationX: CGFloat = value.translation.width
+                      let calculatedProgress = (translationX / uiSafeAreaWidth) + lastDraggedProgress
+                      sliderProgress = max(min(calculatedProgress, 1), 0)
+                      isSeeking = true
                       
-                      if targetTime < 1 {
-                        isFinishedPlaying = false
+                      let dragIndex = Int(sliderProgress / 0.01)
+                      if thumbnailsFrames.indices.contains(dragIndex) {
+                        draggingImage = thumbnailsFrames[dragIndex]
+                      }
+                    })
+                    .onEnded({ value in
+                      lastDraggedProgress = sliderProgress
+                      if let currentItem = player.currentItem {
+                        let duration = currentItem.duration.seconds
+                        let targetTime = duration * sliderProgress
+                        let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
+                        
+                        if targetTime < 1 {
+                          isFinishedPlaying = false
+                        }
+                        
+                        player.seek(to: targetCMTime)
                       }
                       
-                      player.seek(to: targetCMTime)
-                    }
-                    
-                    if isPlaying {
-                      timeoutControls()
-                    }
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
-                      isSeeking = false
+                      if isPlaying {
+                        timeoutControls()
+                      }
+                      
+                      DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
+                        isSeeking = false
+                      })
                     })
-                  })
-              )
-          )
+                )
+            )
+        }
+        .frame(height: 3)
+        
+        Text(stringFromTimeInterval(interval: playbackDuration))
+          .font(.system(size: calculateSizeDurationText))
+          .foregroundColor(.white)
       }
       .opacity(showPlayerControls || isSeeking ? 1 : 0)
       .animation(.easeInOut(duration: 0.2), value: showPlayerControls)
-      .frame(height: 3)
+
     }
-    .padding(.bottom, 16)
+    .padding(.bottom, -10)
   }
   
   @ViewBuilder
@@ -284,7 +340,7 @@ extension VideoPlayerView {
       HStack {
         Spacer()
         Button(action: {
-          onPlaybackManager(completionHandler: { completed in
+          onPlaybackManager(seekToZeroCompletion: { completed in
             if completed {
               updateImage()
             }
@@ -309,6 +365,42 @@ extension VideoPlayerView {
     .opacity(showPlayerControls && !isDraggingSlider ? 1 : 0)
     .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider)
   }
+  
+  @ViewBuilder
+  func FullScreenControl() -> some View {
+//    let color = fullScreenConfig?["color"] as? String
+//    let isHidden = fullScreenConfig?["hidden"] as? Bool
+    
+    Button (action: {
+//      onTapFullScreen()
+    }) {
+      Image(
+        systemName:
+          true ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right"
+      )
+      .padding(8)
+    }
+    .font(.system(size: 15))
+//    .foregroundColor(Color(transformStringIntoUIColor(color: color)))
+    .foregroundColor(.white)
+    .rotationEffect(.init(degrees: 90))
+//    .opacity(isHidden ?? false ? 0 : 1)
+  }
+  
+  @ViewBuilder
+  func SettingsControl() -> some View {
+    Button(action: {
+        withAnimation(.linear(duration: 0.2)) {
+//            onTapSettings()
+        }
+    }) {
+        Image(systemName: "gear")
+            .font(.system(size: 15))
+            .foregroundColor(.white)
+            .padding(8)
+    }
+    .fixedSize(horizontal: true, vertical: true)
+  }
 }
 
 // MARK: -- Private Functions
@@ -326,7 +418,7 @@ extension VideoPlayerView {
     })
     
     if let timeoutTask {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 3 , execute: timeoutTask)
+      DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: timeoutTask)
     }
   }
     
@@ -359,17 +451,16 @@ extension VideoPlayerView {
     }
   }
   
-  private func onPlaybackManager(completionHandler: @escaping (Bool) -> Void) {
+  private func onPlaybackManager(seekToZeroCompletion: @escaping (Bool) -> Void) {
     if isFinishedPlaying {
       isFinishedPlaying = false
-      player.seek(to: .zero)
+      player.seek(to: .zero, completionHandler: seekToZeroCompletion)
       sliderProgress = .zero
       lastDraggedProgress = .zero
     } else {
       if player.timeControlStatus == .paused  {
         player.play()
         timeoutControls()
-        //        status = .playing
       } else {
         player.pause()
         if let timeoutTask {
