@@ -14,6 +14,7 @@ class PlayerObserver: ObservableObject {
   @Published var playbackDuration = 0.0
   @Published var playbackCurrentTime = 0.0
   @Published var status = AVPlayerItem.Status.unknown
+  @Published var thumbnailsFrames: [UIImage] = []
   
   @objc func itemDidFinishPlaying(_ notification: Notification) {
     isFinishedPlaying = true
@@ -24,5 +25,9 @@ class PlayerObserver: ObservableObject {
     playbackDuration = item.duration.seconds
     playbackCurrentTime = item.currentTime().seconds
     status = item.status
+  }
+  
+  @objc func generatedThumbnailFrames(_ notification: Notification) {
+    thumbnailsFrames = (notification.userInfo?["frames"] as? [UIImage])!
   }
 }

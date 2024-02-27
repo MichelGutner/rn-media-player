@@ -57,7 +57,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var playbackProgress = UILabel()
   
   private var seekSlider = UISlider(frame: .zero)
-  @State private var thumbnailsFrames: [UIImage] = []
+  private var thumbnailsFrames: [UIImage] = []
+  
+  private var playerView = UIView()
   
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onLoaded: RCTBubblingEventBlock?
@@ -78,6 +80,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var advanceValue: NSNumber? = 0
   @objc var suffixAdvanceValue: String? = "seconds"
   @objc var fullScreen: Bool = false
+  @objc var thumbnailFramesSeconds: Float = 1.0
   
   @objc var sliderProps: NSDictionary? = [:]
   @objc var playPauseProps: NSDictionary? = [:]
@@ -116,6 +119,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
+  private var observer = PlayerObserver()
+  
   @objc var rate: Float = 0.0 {
     didSet{
       self.onChangeRate(rate)
@@ -143,21 +148,23 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         )
     }
   }
-  
-  var thumbFrames: [UIImage] = []
-  
+
   override func layoutSubviews() {
       backgroundColor = .black
       guard let player = player else { return }
       let playbackUrl = source?["url"] as? String
       
-    generatingThumbnailsFrames(player.currentItem!) { [self] in
-        let playerView = UIHostingController(rootView: CustomView(playerUrl: playbackUrl!, player: player, thumbnails: thumbFrames))
-        playerView.view.frame = frame
-        playerView.view.backgroundColor = .black
-        addSubview(playerView.view)
-      }
     
+    let playerView = UIHostingController(rootView: CustomView(playerUrl: playbackUrl!, player: player, thumbnails: thumbnailsFrames))
+    playerView.view.frame = frame
+    playerView.view.backgroundColor = .black
+    addSubview(playerView.view)
+        
+    NotificationCenter.default.addObserver(forName: UIApplication.willChangeStatusBarOrientationNotification, object: nil, queue: .main) { [self] notification in
+      DispatchQueue.main.async { [self] in
+        NotificationCenter.default.post(name: Notification.Name("frames"), object: nil, userInfo: ["frames": thumbnailsFrames])
+      }
+    }
     
     if hasCalledSetup {
         enableAudioSession()
@@ -165,46 +172,47 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
 
   // ...
-  private func generatingThumbnailsFrames(_ currentItem: AVPlayerItem, completion: @escaping () -> Void) {
-      if thumbFrames.isEmpty {
-          Task.detached { [self] in
-              let asset = currentItem.asset
-              do {
-                  // Load the duration of the asset
-                  let totalDuration = asset.duration.seconds
-                  var framesTimes: [NSValue] = []
-                  
-                  // Generate thumbnails frames
-                  let generator = AVAssetImageGenerator(asset: asset)
-                  generator.appliesPreferredTrackTransform = true
-                  generator.maximumSize = .init(width: 250, height: 250)
-                  
-                  for progress in stride(from: 0, to: 5, by: 0.01) {
-                      let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
-                      framesTimes.append(time as NSValue)
-                  }
-                  
-                  generator.generateCGImagesAsynchronously(forTimes: framesTimes) { [self] requestedTime, image, _, _, error in
-                    let localFramesTimes = framesTimes
-                    
-                      guard let cgImage = image, error == nil else {
-                          return
-                      }
-                      
-                      DispatchQueue.main.async { [self] in
-                          let uiImage = UIImage(cgImage: cgImage)
-                          thumbFrames.append(uiImage)
-                          
-                        print("thumbFramesCount", thumbFrames.count, localFramesTimes.count)
-                        if thumbFrames.count == localFramesTimes.count {
-                              completion() // Call the completion handler
-                          }
-                      }
-                  }
-              }
+  private func generatingThumbnailsFrames() {
+    Task.detached { [self] in
+        guard let asset = await player?.currentItem?.asset else { return }
+
+        do {
+          // Load the duration of the asset
+          let totalDuration = asset.duration.seconds
+          var framesTimes: [NSValue] = []
+          print("total", totalDuration)
+
+          // Generate thumbnails frames
+          let generator = AVAssetImageGenerator(asset: asset)
+          generator.appliesPreferredTrackTransform = true
+          generator.maximumSize = .init(width: 250, height: 250)
+
+
+          for progress in await stride(from: 0, to: totalDuration / Double(thumbnailFramesSeconds * 100), by: 0.01) {
+            let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
+            framesTimes.append(time as NSValue)
           }
-      } else {
-        completion()
+          let localFrames = framesTimes
+          
+            generator.generateCGImagesAsynchronously(forTimes: localFrames) { requestedTime, image, _, _, error in
+              guard let cgImage = image, error == nil else {
+                // Handle the error
+                return
+              }
+              
+             
+              print("dispatch", thumbnailsFrames.count, localFrames.count)
+              DispatchQueue.main.async { [self] in
+                let uiImage = UIImage(cgImage: cgImage)
+                thumbnailsFrames.append(uiImage)
+                
+//                if thumbnailsFrames.count == localFrames.count {
+                  NotificationCenter.default.post(name: Notification.Name("frames"), object: nil, userInfo: ["frames": thumbnailsFrames])
+//                }
+              }
+              
+            }
+        }
       }
   }
   
@@ -599,6 +607,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 //        onLoadingManager(hideLoading: true)
         onLoaded?(["duration": player.currentItem?.duration.seconds as Any])
         onReady?(["ready": true])
+        generatingThumbnailsFrames()
       } else if player.status == .failed {
         self.onError?(extractPlayerErrors(player.currentItem))
       } else if player.status == .unknown {

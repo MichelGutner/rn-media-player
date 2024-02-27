@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AVKit
+import Combine
 
 @available(iOS 13.0, *)
 struct VideoPlayerView: View {
@@ -40,20 +41,9 @@ struct VideoPlayerView: View {
     self.url = url
     self.player = player
     _thumbnailsFrames = State(initialValue: thumbnails)
-//    self.player = {
-//      if let bundle = Bundle.main.path(forResource: "Test", ofType: "mp4") {
-//        print("testing")
-//        let url = URL(fileURLWithPath: bundle)
-//        return AVPlayer(url: url)
-//      } else {
-//        print("hoje não", url)
-//        return AVPlayer(url: URL(string: url)!)
-//      }
-//    }()
   }
   
   var body: some View {
-    
     VStack {
       let videoPlayerSize: CGSize = .init(width: size.width, height: size.height)
       
@@ -99,10 +89,8 @@ struct VideoPlayerView: View {
       .frame(width: videoPlayerSize.width, height: videoPlayerSize.height)
     }
     .onAppear {
-      print("thumb nails", thumbnailsFrames.count)
       guard !isObservedAdded else { return }
       updateImage()
-    
       player.addPeriodicTimeObserver(forInterval: .init(seconds: 1, preferredTimescale: 1), queue: .main) { [self] _ in
         updatePlayerTime()
       }
@@ -120,15 +108,28 @@ struct VideoPlayerView: View {
         name: .AVPlayerItemDidPlayToEndTime,
         object: player.currentItem
       )
+      
+      NotificationCenter.default.addObserver(
+        playbackObserver,
+        selector: #selector(PlayerObserver.generatedThumbnailFrames(_:)),
+        name: Notification.Name("frames"),
+        object: nil
+      )
+
+
       isObservedAdded = true
-      
-//      generatingThumbnailsFrames()
-      
     }
     .onReceive(playbackObserver.$isFinishedPlaying) { finished in
       if finished {
         self.isFinishedPlaying = true
       }
+    }
+    .onReceive(playbackObserver.$thumbnailsFrames) { frames in
+        DispatchQueue.main.async {
+            if !frames.isEmpty {
+              self.thumbnailsFrames = frames
+            }
+        }
     }
     .onReceive(playbackObserver.$playbackDuration) { duration in
       if duration != 0.0 {
@@ -234,14 +235,12 @@ extension VideoPlayerView {
                     if let timeoutTask {
                       timeoutTask.cancel()
                     }
-                    
                     let translationX: CGFloat = value.translation.width
                     let calculatedProgress = (translationX / safeAreaWidth) + lastDraggedProgress
                     sliderProgress = max(min(calculatedProgress, 1), 0)
                     isSeeking = true
                     
                     let dragIndex = Int(sliderProgress / 0.01)
-                    
                     if thumbnailsFrames.indices.contains(dragIndex) {
                       draggingImage = thumbnailsFrames[dragIndex]
                     }
@@ -358,10 +357,6 @@ extension VideoPlayerView {
         isFinishedPlaying = true
       }
     }
-    
-    //    if let duration = avPlayer.currentItem?.duration, !duration.seconds.isNaN {
-    //      isLoading = false
-    //    }
   }
   
   private func onPlaybackManager(completionHandler: @escaping (Bool) -> Void) {
@@ -412,41 +407,6 @@ extension VideoPlayerView {
     let backward = videoTimerManager(avPlayer: player)
     backward.change(-Double(timeToChange))
   }
-  
-//  private func generatingThumbnailsFrames() {
-//      Task.detached {
-//        guard let asset = await player.currentItem?.asset else { return }
-//
-//        do {
-//          // Load the duration of the asset
-//          let totalDuration = asset.duration.seconds
-//          var framesTimes: [NSValue] = []
-//
-//          // Generate thumbnails frames
-//          let generator = AVAssetImageGenerator(asset: asset)
-//          generator.appliesPreferredTrackTransform = true
-//          generator.maximumSize = .init(width: 250, height: 250)
-//
-//
-//          for progress in stride(from: 0, to: 5, by: 0.01) {
-//            let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
-//            framesTimes.append(time as NSValue)
-//          }
-//
-//          generator.generateCGImagesAsynchronously(forTimes: framesTimes) { requestedTime, image, _, _, error in
-//            guard let cgImage = image, error == nil else {
-//              // Handle the error
-//              return
-//            }
-//
-//            DispatchQueue.main.async {
-//              let uiImage = UIImage(cgImage: cgImage)
-//              thumbnailsFrames.append(uiImage)
-//            }
-//          }
-//        }
-//      }
-//  }
 }
 
 // MARK: -- CustomView

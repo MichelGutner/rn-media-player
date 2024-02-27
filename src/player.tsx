@@ -45,9 +45,10 @@ export const RNPlayerVideo = ({
           videoTile: 'testing',
         }}
         // source={{
-        //   url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+        //   url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         //   videoTitle: 'Title de test',
         // }}
+        // thumbnailFramesSeconds={1}
         paused={paused}
         rate={rate}
         startTime={startTime}

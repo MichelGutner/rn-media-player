@@ -28,6 +28,7 @@
 		DB9667322B7D6281001A97E0 /* SeekSliderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB9667312B7D6281001A97E0 /* SeekSliderView.swift */; };
 		DBAAB1952B66863900BE5FD7 /* LoadingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1942B66863900BE5FD7 /* LoadingManager.swift */; };
 		DBAAB1972B67275000BE5FD7 /* ModalManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1962B67275000BE5FD7 /* ModalManager.swift */; };
+		DBAFFD462B8D6DF000992F1A /* NotificationDefaultObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAFFD452B8D6DF000992F1A /* NotificationDefaultObserver.swift */; };
 		DBB3FEB12B85509F00AD8E55 /* ModalOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB02B85509F00AD8E55 /* ModalOptionsView.swift */; };
 		DBB3FEB32B8595FE00AD8E55 /* SettingsModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB22B8595FE00AD8E55 /* SettingsModalView.swift */; };
 		DBB3FEB52B85A48F00AD8E55 /* UtilityStructsAndEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */; };
@@ -88,6 +89,7 @@
 		DB9667312B7D6281001A97E0 /* SeekSliderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekSliderView.swift; sourceTree = "<group>"; };
 		DBAAB1942B66863900BE5FD7 /* LoadingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingManager.swift; sourceTree = "<group>"; };
 		DBAAB1962B67275000BE5FD7 /* ModalManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalManager.swift; sourceTree = "<group>"; usesTabs = 0; };
+		DBAFFD452B8D6DF000992F1A /* NotificationDefaultObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationDefaultObserver.swift; sourceTree = "<group>"; };
 		DBB3FEB02B85509F00AD8E55 /* ModalOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalOptionsView.swift; sourceTree = "<group>"; };
 		DBB3FEB22B8595FE00AD8E55 /* SettingsModalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModalView.swift; sourceTree = "<group>"; };
 		DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityStructsAndEnums.swift; sourceTree = "<group>"; };
@@ -226,6 +228,7 @@
 		DB0C9DCB2B23AB3F00B7D598 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				DBAFFD442B8D6A7D00992F1A /* VideoPlayerNotification */,
 				DBBE84202B882EA900B8A738 /* VideoPlayerView */,
 				DBBE841D2B882D3D00B8A738 /* VideoPlayerController */,
 				DBC044822B4B5AD900888241 /* Native */,
@@ -277,6 +280,14 @@
 				DB645A062B79D24E000E54AD /* PlaybackObservable.swift */,
 			);
 			name = Video;
+			sourceTree = "<group>";
+		};
+		DBAFFD442B8D6A7D00992F1A /* VideoPlayerNotification */ = {
+			isa = PBXGroup;
+			children = (
+				DBAFFD452B8D6DF000992F1A /* NotificationDefaultObserver.swift */,
+			);
+			path = VideoPlayerNotification;
 			sourceTree = "<group>";
 		};
 		DBBE841D2B882D3D00B8A738 /* VideoPlayerController */ = {
@@ -597,6 +608,7 @@
 				DB7821512B4E486D0022DCE8 /* SeekSliderManager.swift in Sources */,
 				DB9667322B7D6281001A97E0 /* SeekSliderView.swift in Sources */,
 				D02E142F2AF08E73003D0472 /* RNVideoPlayerManager.m in Sources */,
+				DBAFFD462B8D6DF000992F1A /* NotificationDefaultObserver.swift in Sources */,
 				DBC2BA892B7469AB00648252 /* HeaderManager.swift in Sources */,
 				DBAAB1972B67275000BE5FD7 /* ModalManager.swift in Sources */,
 				DBC2BA802B71290100648252 /* SettingsSymbolManager.swift in Sources */,
