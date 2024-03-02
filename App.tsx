@@ -27,7 +27,7 @@ function App(): JSX.Element {
   // }, [isFull]);
   const resizeMode = isFull ? 'cover' : 'contain';
   return (
-    <View style={{backgroundColor: 'blue', zIndex: 99999}}>
+    <View>
       <RNPlayerVideo
         isFullScreen={isFull}
         // style={{height}}

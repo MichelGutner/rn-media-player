@@ -12,7 +12,7 @@ import Combine
 @available(iOS 13.0, *)
 struct VideoPlayerView: View {
   var size: CGSize
-  private var onTapFullScreenControl: (Bool) -> Void
+  var onTapFullScreenControl: (Bool) -> Void
   
   @ObservedObject private var playbackObserver = PlayerObserver()
   
@@ -21,6 +21,7 @@ struct VideoPlayerView: View {
   @State private var isPlaying: Bool = true
   @State private var timeoutTask: DispatchWorkItem?
   @State private var playPauseimageName: String = "pause.fill"
+
   
   @GestureState private var isDraggingSlider: Bool = false
   @State private var sliderProgress = 0.0
@@ -43,12 +44,14 @@ struct VideoPlayerView: View {
     size: CGSize,
     player: AVPlayer,
     thumbnails: [UIImage],
-    onTapFullScreenControl: @escaping (Bool) -> Void
+    onTapFullScreenControl: @escaping (Bool) -> Void,
+    isFullScreen: Bool
   ) {
     self.size = size
     self.player = player
     self.onTapFullScreenControl = onTapFullScreenControl
     _thumbnailsFrames = State(initialValue: thumbnails)
+    _isFullScreen = State(wrappedValue: isFullScreen)
   }
   
   var body: some View {
@@ -119,6 +122,7 @@ struct VideoPlayerView: View {
     }
     .onAppear {
       guard !isObservedAdded else { return }
+      print("isFull \(isFullScreen)")
       updateImage()
       player.addPeriodicTimeObserver(forInterval: .init(seconds: 1, preferredTimescale: 1), queue: .main) { [self] _ in
         updatePlayerTime()
@@ -140,11 +144,10 @@ struct VideoPlayerView: View {
       
       NotificationCenter.default.addObserver(
         playbackObserver,
-        selector: #selector(PlayerObserver.generatedThumbnailFrames(_:)),
+        selector: #selector(PlayerObserver.getThumbnailFrames(_:)),
         name: Notification.Name("frames"),
         object: nil
       )
-
 
       isObservedAdded = true
     }
@@ -372,7 +375,7 @@ extension VideoPlayerView {
       isFullScreen.toggle()
       self.onTapFullScreenControl(isFullScreen)
     }) {
-      DefaultImage( isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+      DefaultImage(isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
     }
 //    .foregroundColor(Color(transformStringIntoUIColor(color: color)))
     .rotationEffect(.init(degrees: 90))
@@ -515,6 +518,7 @@ struct CustomView : View {
   var player: AVPlayer
   var thumbnails: [UIImage]
   var onTapFullScreenControl: (Bool) -> Void
+  var isFullScreen: Bool
   
   var body: some View {
     GeometryReader {
@@ -524,7 +528,8 @@ struct CustomView : View {
         size: size,
         player: player,
         thumbnails: thumbnails,
-        onTapFullScreenControl: onTapFullScreenControl
+        onTapFullScreenControl: onTapFullScreenControl,
+        isFullScreen: isFullScreen
       )
     }
   }

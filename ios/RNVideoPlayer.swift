@@ -172,39 +172,51 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         )
     }
   }
-  var isFullScreen = false
-  private var videoPlayerViewController = UIViewController()
-  private var videoPlayerView = UIView()
   
+  private var isFullScreen = false
+  private var videoPlayerView = UIView()
+
   @objc func toggleFullScreen(_ fullScreen: Bool) {
-    guard let reactViewController = reactViewController() else { return }
-    isFullScreen = fullScreen
     if fullScreen {
-      DispatchQueue.main.asyncAfter(deadline: .now(), execute: { [self] in
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: { [self] in
+        videoPlayerView.removeFromSuperview()
+        
         videoPlayerView.frame = UIScreen.main.bounds
+        superview?.addSubview(videoPlayerView)
       })
     } else {
-      DispatchQueue.main.asyncAfter(deadline: .now(), execute: { [self] in
-        videoPlayerView.frame = frame
-      })
+      videoPlayerView.removeFromSuperview()
+      videoPlayerView.frame = frame
+      superview?.addSubview(videoPlayerView)
     }
+    
+    isFullScreen = fullScreen
   }
-  
-  override func layoutSubviews() {
-    guard let player = player else { return }
-//    let playbackUrl = source?["url"] as? String
 
-    let playerView = UIHostingController(rootView: CustomView(player: player, thumbnails: thumbnailsFrames, onTapFullScreenControl: { [self] state in
-//      onFullScreenTapped?([:])
-      toggleFullScreen(state)
-    }))
-    videoPlayerView = playerView.view
+  override func layoutSubviews() {
+      guard let player = player else { return }
+
+      let playerView = UIHostingController(
+          rootView: CustomView(
+              player: player,
+              thumbnails: thumbnailsFrames,
+              onTapFullScreenControl: { [self] state in
+                  toggleFullScreen(state)
+              },
+              isFullScreen: isFullScreen
+          )
+      )
+      videoPlayerView = playerView.view
+    
     if videoPlayerView.frame == .zero {
       videoPlayerView.frame = frame
+      superview?.addSubview(playerView.view)
     }
-    videoPlayerView.backgroundColor = .black
-    superview?.addSubview(playerView.view)
-  
+    
+      videoPlayerView.backgroundColor = .black
+    
+      
+    
     NotificationCenter.default.addObserver(forName: UIApplication.willChangeStatusBarOrientationNotification, object: nil, queue: .main) { [self] notification in
       DispatchQueue.main.async { [self] in
         NotificationCenter.default.post(name: Notification.Name("frames"), object: nil, userInfo: ["frames": thumbnailsFrames])
@@ -220,28 +232,29 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 
   @objc private func orientationDidChange() {
       let currentOrientation = UIDevice.current.orientation
-      videoPlayerView.removeFromSuperview()
-
+      let userInterfaceIdiom = UIDevice.current.userInterfaceIdiom
+    videoPlayerView.removeFromSuperview()
+    
       switch currentOrientation {
       case .portrait:
-          DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
-            UIView.animate(withDuration: 0.35, delay: 0, options: .curveEaseInOut, animations: { [self] in
-                  videoPlayerView.transform = .identity
-                  videoPlayerView.frame = frame
-                  superview?.addSubview(videoPlayerView)
-              })
-          }
+        DispatchQueue.main.asyncAfter(deadline: .now(), execute: { [self] in
+            toggleFullScreen(false)
+        })
       case .landscapeLeft, .landscapeRight:
-          DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
-            UIView.animate(withDuration: 0.35, delay: 0, options: .curveEaseInOut, animations: { [self] in
-                  videoPlayerView.frame = UIScreen.main.bounds
-                  superview?.addSubview(videoPlayerView)
+          if enterInFullScreenWhenDeviceRotated && userInterfaceIdiom != .pad {
+              DispatchQueue.main.asyncAfter(deadline: .now(), execute: { [self] in
+                  toggleFullScreen(true)
               })
+          } else {
+            DispatchQueue.main.asyncAfter(deadline: .now(), execute: { [self] in
+                toggleFullScreen(false)
+            })
           }
       default:
           break
       }
   }
+
 
 
   private func generatingThumbnailsFrames() {

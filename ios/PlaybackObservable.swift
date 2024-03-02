@@ -15,7 +15,7 @@ class PlayerObserver: ObservableObject {
   @Published var playbackCurrentTime = 0.0
   @Published var status = AVPlayerItem.Status.unknown
   @Published var thumbnailsFrames: [UIImage] = []
-  @Published var isFullScreen: Bool = false
+  @Published var configs: [String: Any]? = nil
   
   @objc func itemDidFinishPlaying(_ notification: Notification) {
     isFinishedPlaying = true
@@ -28,10 +28,11 @@ class PlayerObserver: ObservableObject {
     status = item.status
   }
   
-  @objc func generatedThumbnailFrames(_ notification: Notification) {
+  @objc func getThumbnailFrames(_ notification: Notification) {
     thumbnailsFrames = (notification.userInfo?["frames"] as? [UIImage])!
   }
-  @objc func onFullScreen(_ notification: Notification) {
-    isFullScreen = (notification.userInfo?["fullScreen"] as? Bool)!
+  
+  @objc func getConfig(_ notification: Notification) {
+    configs = (notification.userInfo?["configs"] as? [String: Any])!
   }
 }
