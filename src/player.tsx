@@ -25,7 +25,7 @@ export const RNPlayerVideo = ({
   loading,
   paused,
   startTime,
-  didEnterInFullScreenWhenDeviceRotated,
+  enterInFullScreenWhenDeviceRotated,
 }: {
   style: ViewStyle;
   isFullScreen: boolean;
@@ -52,9 +52,7 @@ export const RNPlayerVideo = ({
       // thumbnailFramesSeconds={1}
       paused={paused}
       rate={rate}
-      didEnterInFullScreenWhenDeviceRotated={
-        didEnterInFullScreenWhenDeviceRotated
-      }
+      enterInFullScreenWhenDeviceRotated={enterInFullScreenWhenDeviceRotated}
       startTime={startTime}
       onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
       // onVideoProgress={data => console.log(data.nativeEvent)}

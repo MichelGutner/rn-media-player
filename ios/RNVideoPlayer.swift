@@ -104,7 +104,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 //    }
 //  }
   @objc var thumbnailFramesSeconds: Float = 1.0
-  @objc var didEnterInFullScreenWhenDeviceRotated: Bool = false
+  @objc var enterInFullScreenWhenDeviceRotated: Bool = false
   
   @objc var sliderProps: NSDictionary? = [:]
   @objc var playPauseProps: NSDictionary? = [:]
@@ -177,7 +177,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   @objc func toggleFullScreen(_ fullScreen: Bool) {
     guard let reactViewController = reactViewController() else { return }
-    
+    isFullScreen = fullScreen
     if fullScreen {
       if !videoPlayerViewController.isBeingPresented {
         reactViewController.present(videoPlayerViewController, animated: true, completion: nil)
@@ -231,7 +231,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       case .portrait:
           toggleFullScreen(false)
       case .landscapeLeft, .landscapeRight:
-          if didEnterInFullScreenWhenDeviceRotated && !videoPlayerViewController.isBeingPresented {
+          if enterInFullScreenWhenDeviceRotated && !videoPlayerViewController.isBeingPresented && !isFullScreen {
               guard let reactViewController = reactViewController() else { return }
               reactViewController.dismiss(animated: true, completion: nil)
               DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in

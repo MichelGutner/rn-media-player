@@ -36,7 +36,7 @@ function App(): JSX.Element {
         resizeMode={resizeMode}
         paused={false}
         startTime={4}
-        didEnterInFullScreenWhenDeviceRotated={true}
+        enterInFullScreenWhenDeviceRotated={true}
       />
       <TouchableOpacity onPress={() => console.log('oi')}>
         <Text>Olá Mundo</Text>

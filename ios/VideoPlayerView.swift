@@ -12,7 +12,6 @@ import Combine
 @available(iOS 13.0, *)
 struct VideoPlayerView: View {
   var size: CGSize
-  var edgeInsets: EdgeInsets
   private var onTapFullScreenControl: (Bool) -> Void
   
   @ObservedObject private var playbackObserver = PlayerObserver()
@@ -30,37 +29,26 @@ struct VideoPlayerView: View {
   @State private var buffering = 0.0
   @State private var isFinishedPlaying: Bool = false
   @State private var isObservedAdded: Bool = false
+  @State private var isSeekingByDoubleTap: Bool = false
   
   @State private var thumbnailsFrames: [UIImage] = []
   @State private var draggingImage: UIImage?
   
   @State private var playbackDuration: Double = 0
-  @State private var uiSafeArea: CGRect!
   @State private var videoPlayerSize: CGSize!
   
   @State private var isFullScreen: Bool = false
   
   init(
     size: CGSize,
-    safeArea: EdgeInsets,
     player: AVPlayer,
     thumbnails: [UIImage],
     onTapFullScreenControl: @escaping (Bool) -> Void
   ) {
     self.size = size
-    self.edgeInsets = safeArea
     self.player = player
     self.onTapFullScreenControl = onTapFullScreenControl
     _thumbnailsFrames = State(initialValue: thumbnails)
-    _uiSafeArea = State(
-      initialValue:
-        UIScreen.main.bounds.inset(by: UIEdgeInsets(
-          top: safeArea.top,
-          left: safeArea.leading,
-          bottom: safeArea.bottom,
-          right: safeArea.trailing
-        ))
-    )
   }
   
   var body: some View {
@@ -84,12 +72,14 @@ struct VideoPlayerView: View {
             DoubleTapManager(
               onTapBackward: { value in
                 backwardTime(Double(value))
+                isSeekingByDoubleTap = true
               },
               onTapForward: { value in
                 forwardTime(Double(value))
+                isSeekingByDoubleTap = true
               },
               isFinished: {
-//                isFinished()
+                isSeekingByDoubleTap = false
               },
               advanceValue: 15,
               suffixAdvanceValue: "seconds"
@@ -107,8 +97,8 @@ struct VideoPlayerView: View {
           .overlay(
             VStack {
               HeaderControls()
-                .opacity(showPlayerControls && !isDraggingSlider ? 1 : 0)
-                .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider)
+                .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
+                .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
               Spacer()
               VideoSeekerView()
               HStack {
@@ -116,11 +106,12 @@ struct VideoPlayerView: View {
                 SettingsControl()
                 FullScreenControl()
               }
-              .opacity(showPlayerControls && !isDraggingSlider ? 1 : 0)
-              .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider)
+              .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
+              .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
             }
-              .padding(.leading, 12)
-              .padding(.trailing, 12)
+              .padding(.leading)
+              .padding(.trailing)
+//              .padding(.top, 12)
           )
       }
       .frame(width: videoPlayerSize.width, height: videoPlayerSize.height)
@@ -205,9 +196,7 @@ extension VideoPlayerView {
         Button (action: {
 //          onTapExit()
         }) {
-          Image(systemName: "arrow.left")
-            .font(.system(size: 15))
-            .foregroundColor(.white)
+          DefaultImage("arrow.left")
         }
         .padding(.leading, 8)
         Spacer()
@@ -251,17 +240,15 @@ extension VideoPlayerView {
     }
     .frame(width: thumbSize.width, height: thumbSize.height)
     .opacity(isDraggingSlider ? 1 : 0)
-    .offset(x: sliderProgress * (uiSafeArea.width - thumbSize.width))
+    .offset(x: sliderProgress * (size.width - thumbSize.width))
     .animation(.easeInOut(duration: 0.2), value: isDraggingSlider)
     
   }
   
   @ViewBuilder
   func VideoSeekerView() -> some View {
-    let calculatePercentSizeSeekerView = calculateSizeByWidthWithoutRounded(0.8, 0.1) > 0.9 ? 0.9 : calculateSizeByWidthWithoutRounded(0.8, 0.1)
     let calculateSizeDurationText = calculateSizeByWidth(size8, variantPercent10)
-    
-    let uiSafeAreaWidth = (uiSafeArea.width * calculatePercentSizeSeekerView)
+
     VStack(alignment: .leading) {
       VideoSeekerThumbnailView()
         .padding(.bottom, 8)
@@ -269,12 +256,12 @@ extension VideoPlayerView {
         ZStack(alignment: .leading) {
           Rectangle()
             .fill(.gray).opacity(0.5)
-            .frame(width: uiSafeAreaWidth)
+            .frame(width: size.width)
             .cornerRadius(8)
           
           Rectangle()
             .fill(.red)
-            .frame(width: uiSafeAreaWidth * sliderProgress)
+            .frame(width: size.width * sliderProgress)
             .cornerRadius(8)
           
           HStack {}
@@ -283,8 +270,9 @@ extension VideoPlayerView {
                 .fill(.red)
                 .frame(width: 15, height: 15)
                 .frame(width: 50, height: 50)
+                .opacity(isSeekingByDoubleTap ? 0.001 : 1)
                 .contentShape(Rectangle())
-                .offset(x: uiSafeAreaWidth * sliderProgress)
+                .offset(x: size.width * sliderProgress)
                 .gesture(
                   DragGesture()
                     .updating($isDraggingSlider, body: { _, out, _ in
@@ -295,7 +283,7 @@ extension VideoPlayerView {
                         timeoutTask.cancel()
                       }
                       let translationX: CGFloat = value.translation.width
-                      let calculatedProgress = (translationX / uiSafeAreaWidth) + lastDraggedProgress
+                      let calculatedProgress = (translationX / size.width) + lastDraggedProgress
                       sliderProgress = max(min(calculatedProgress, 1), 0)
                       isSeeking = true
                       
@@ -331,15 +319,14 @@ extension VideoPlayerView {
         }
         .frame(height: 3)
         
-        Text(stringFromTimeInterval(interval: playbackDuration))
-          .font(.system(size: calculateSizeDurationText))
-          .foregroundColor(.white)
+//        Text(stringFromTimeInterval(interval: playbackDuration))
+//          .font(.system(size: calculateSizeDurationText))
+//          .foregroundColor(.white)
       }
-      .opacity(showPlayerControls || isSeeking ? 1 : 0)
-      .animation(.easeInOut(duration: 0.2), value: showPlayerControls)
+      .opacity(showPlayerControls || isSeeking || isSeekingByDoubleTap ? 1 : 0)
+      .animation(.easeInOut(duration: 0.2), value: showPlayerControls || isSeekingByDoubleTap || isSeeking)
 
     }
-    .padding(.bottom, -10)
   }
   
   @ViewBuilder
@@ -360,20 +347,19 @@ extension VideoPlayerView {
 //          } else {
             Image(systemName: playPauseimageName)
               .foregroundColor(.white)
-              .font(.system(size: 20 + 5))
+              .font(.system(size: size30))
+              .padding(size16)
 //          }
         }
-        .frame(minWidth: 25, minHeight: 25)
-        .padding(size16)
-        .background(Color(.black).opacity(0.2))
+        .background(Color(.black).opacity(0.4))
         .cornerRadius(.infinity)
         Spacer()
       }
       .fixedSize(horizontal: true, vertical: true)
       Spacer()
     }
-    .opacity(showPlayerControls && !isDraggingSlider ? 1 : 0)
-    .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider)
+    .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
+    .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
   }
   
   @ViewBuilder
@@ -383,18 +369,11 @@ extension VideoPlayerView {
 //    let isHidden = fullScreenConfig?["hidden"] as? Bool
     
     Button (action: {
-      isFullScreen.toggle()
       self.onTapFullScreenControl(true)
     }) {
-      Image(
-        systemName:
-          true ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right"
-      )
-      .padding(8)
+      DefaultImage( isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
     }
-    .font(.system(size: 15))
 //    .foregroundColor(Color(transformStringIntoUIColor(color: color)))
-    .foregroundColor(.white)
     .rotationEffect(.init(degrees: 90))
 //    .opacity(isHidden ?? false ? 0 : 1)
   }
@@ -406,12 +385,17 @@ extension VideoPlayerView {
 //            onTapSettings()
         }
     }) {
-        Image(systemName: "gear")
-            .font(.system(size: 15))
-            .foregroundColor(.white)
-            .padding(8)
+      DefaultImage("gear")
     }
     .fixedSize(horizontal: true, vertical: true)
+  }
+  
+  @ViewBuilder
+  func DefaultImage(_ name: String) -> some View {
+    Image(systemName: name)
+      .font(.system(size: 25))
+      .foregroundColor(.white)
+      .padding(8)
   }
 }
 
@@ -522,8 +506,13 @@ struct CustomView : View {
   var body: some View {
     GeometryReader {
       let size = $0.size
-      let safeArea = $0.safeAreaInsets
-      VideoPlayerView(size: size, safeArea: safeArea, player: player, thumbnails: thumbnails, onTapFullScreenControl: onTapFullScreenControl)
+      
+      VideoPlayerView(
+        size: size,
+        player: player,
+        thumbnails: thumbnails,
+        onTapFullScreenControl: onTapFullScreenControl
+      )
     }
   }
 }
@@ -540,13 +529,12 @@ class VideoPlayerViewController: UIViewController {
   private var safeAreaInsets: UIEdgeInsets
 
   init(player: AVPlayer, thumbnails: [UIImage], onTapFullScreenControl: @escaping (Bool) -> Void, safeAreaInsets: UIEdgeInsets) {
-        
-        self.player = player
+    self.player = player
     self.thumbnails = thumbnails
     self.onTapFullScreenControl = onTapFullScreenControl
     self.safeAreaInsets = safeAreaInsets
     super.init(nibName: nil, bundle: nil)
-    }
+  }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -556,31 +544,39 @@ class VideoPlayerViewController: UIViewController {
     super.viewDidLoad()
     
     view.backgroundColor = .black
-    view.frame = UIScreen.main.bounds.inset(by: safeAreaInsets)
+//    view.frame = UIScreen.main.bounds.inset(by: safeAreaInsets)
     
-    let playerView = UIHostingController(rootView:  VideoPlayerView(size: UIScreen.main.bounds.inset(by: safeAreaInsets).size, safeArea: EdgeInsets(top: safeAreaInsets.top, leading: safeAreaInsets.left, bottom: safeAreaInsets.bottom, trailing: safeAreaInsets.right), player: player!, thumbnails: thumbnails, onTapFullScreenControl: { [self] _ in
-      onTapFullScreenControl(false)
-    }))
+    let playerView = UIHostingController(
+      rootView: CustomView(
+        player: player!,
+        thumbnails: thumbnails,
+        onTapFullScreenControl: { [self] _ in
+          onTapFullScreenControl(false)
+        }
+      )
+    )
+    
     playerView.view.frame =  UIScreen.main.bounds
     view.addSubview(playerView.view)
   }
-  
-//  override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-//      super.viewWillTransition(to: size, with: coordinator)
-//
-//      // Update the frame size when the device orientation changes
-//      coordinator.animate(alongsideTransition: { _ in
-//          self.view.frame = CGRect(origin: .zero, size: size)
-//          self.view.subviews.forEach { subview in
-//              subview.frame = self.view.bounds
-//          }
-//
-//          // Update AVPlayerLayer frame
-//          if let playerLayer = self.view.layer.sublayers?.first as? AVPlayerLayer {
-//              playerLayer.frame = self.view.bounds
-//          }
-//      }, completion: nil)
-//  }
+
+  override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+      super.viewWillTransition(to: size, with: coordinator)
+
+      // Update the frame size when the device orientation changes
+      coordinator.animate(alongsideTransition: { _ in
+          self.view.frame = CGRect(origin: .zero, size: size)
+          self.view.subviews.forEach { subview in
+            print("self \(self.view.bounds)")
+              subview.frame = self.view.bounds
+          }
+
+          // Update AVPlayerLayer frame
+          if let playerLayer = self.view.layer.sublayers?.first as? AVPlayerLayer {
+              playerLayer.frame = self.view.bounds
+          }
+      }, completion: nil)
+  }
 
     deinit {
         // Stop playback and release resources when the view controller is deallocated
