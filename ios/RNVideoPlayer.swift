@@ -77,10 +77,34 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onQualityTapped: RCTDirectEventBlock?
   @objc var onPlayPause: RCTDirectEventBlock?
   
+  private var viewController: RCTWrapperViewController?
+  
   @objc var advanceValue: NSNumber? = 0
   @objc var suffixAdvanceValue: String? = "seconds"
-  @objc var fullScreen: Bool = false
+//  @objc var fullScreen: Bool = false {
+//    didSet {
+//      guard let reactViewController = reactViewController() else { return }
+//
+//      if fullScreen {
+//         // Assuming VideoPlayerViewController is the Swift class you provided
+//        let videoPlayerViewController = VideoPlayerViewController(player: player!, thumbnails: thumbnailsFrames, onTapFullScreenControl: { [self] state in
+////          onFullScreenTapped?([:])
+//          toggleFullScreen(state)
+//        }, safeAreaInsets: safeAreaInsets)
+//
+//         // Set the desired modal presentation style
+//                 videoPlayerViewController.modalPresentationStyle = .fullScreen
+//                 videoPlayerViewController.modalTransitionStyle = .crossDissolve
+//
+//         // Present VideoPlayerViewController on the React Native view controller
+//        reactViewController.present(videoPlayerViewController, animated: true, completion: {})
+//      } else {
+//        reactViewController.dismiss(animated: true, completion: nil)
+//      }
+//    }
+//  }
   @objc var thumbnailFramesSeconds: Float = 1.0
+  @objc var didEnterInFullScreenWhenDeviceRotated: Bool = false
   
   @objc var sliderProps: NSDictionary? = [:]
   @objc var playPauseProps: NSDictionary? = [:]
@@ -112,7 +136,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         player?.currentItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
         player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferFull", options: .new, context: nil)
         playerLayer = AVPlayerLayer(player: player)
-//        periodTimeObserver()
       } catch {
         print("e", error)
         self.onError?(["url": "Error on get url: error type is \(error)"])
@@ -149,29 +172,77 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         )
     }
   }
-
-  override func layoutSubviews() {
-      backgroundColor = .black
-      guard let player = player else { return }
-      let playbackUrl = source?["url"] as? String
-      
+  var isFullScreen = false
+  private var videoPlayerViewController = UIViewController()
+  
+  @objc func toggleFullScreen(_ fullScreen: Bool) {
+    guard let reactViewController = reactViewController() else { return }
     
-    let playerView = UIHostingController(rootView: CustomView(playerUrl: playbackUrl!, player: player, thumbnails: thumbnailsFrames))
+    if fullScreen {
+      if !videoPlayerViewController.isBeingPresented {
+        reactViewController.present(videoPlayerViewController, animated: true, completion: nil)
+      }
+    } else {
+      reactViewController.dismiss(animated: true, completion: nil)
+    }
+  }
+  
+  override func layoutSubviews() {
+    guard let player = player else { return }
+//    let playbackUrl = source?["url"] as? String
+    
+       // Assuming VideoPlayerViewController is the Swift class you provided
+    videoPlayerViewController = VideoPlayerViewController(player: player, thumbnails: thumbnailsFrames, onTapFullScreenControl: { [self] state in
+      //          onFullScreenTapped?([:])
+      toggleFullScreen(state)
+    }, safeAreaInsets: safeAreaInsets)
+    
+    // Set the desired modal presentation style
+    videoPlayerViewController.modalPresentationStyle = .custom
+    videoPlayerViewController.modalTransitionStyle = .crossDissolve
+    
+    let playerView = UIHostingController(rootView: CustomView(player: player, thumbnails: thumbnailsFrames, onTapFullScreenControl: { [self] state in
+//      onFullScreenTapped?([:])
+      toggleFullScreen(state)
+    }))
     playerView.view.frame = frame
     playerView.view.backgroundColor = .black
     addSubview(playerView.view)
-        
+    
+
+    
     NotificationCenter.default.addObserver(forName: UIApplication.willChangeStatusBarOrientationNotification, object: nil, queue: .main) { [self] notification in
       DispatchQueue.main.async { [self] in
         NotificationCenter.default.post(name: Notification.Name("frames"), object: nil, userInfo: ["frames": thumbnailsFrames])
       }
     }
     
+    NotificationCenter.default.addObserver(self, selector: #selector(orientationDidChange), name: UIDevice.orientationDidChangeNotification, object: nil)
+    
     if hasCalledSetup {
-        enableAudioSession()
+      enableAudioSession()
     }
   }
+  
+  @objc private func orientationDidChange() {
+      let currentOrientation = UIDevice.current.orientation
 
+      switch currentOrientation {
+      case .portrait:
+          toggleFullScreen(false)
+      case .landscapeLeft, .landscapeRight:
+          if didEnterInFullScreenWhenDeviceRotated && !videoPlayerViewController.isBeingPresented {
+              guard let reactViewController = reactViewController() else { return }
+              reactViewController.dismiss(animated: true, completion: nil)
+              DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
+                  toggleFullScreen(true)
+              }
+          }
+      default:
+          // Handle other orientations if needed
+          break
+      }
+  }
   private func generatingThumbnailsFrames() {
     Task.detached { [self] in
       guard let asset = await player?.currentItem?.asset else { return }
@@ -180,7 +251,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         // Load the duration of the asset
         let totalDuration = asset.duration.seconds
         var framesTimes: [NSValue] = []
-        print("total", totalDuration)
         
         // Generate thumbnails frames
         let generator = AVAssetImageGenerator(asset: asset)
@@ -253,7 +323,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       onSettingItemTapped: { item in
 //        print("item", item)
       }, isLoading: self.loading,
-      isFullScreen: fullScreen,
+//      isFullScreen: fullScreen,
       onTapFullScreen: onToggleOrientation,
       configFullScreen: fullScreenProps,
       onTapForward: onTapFowardTime,
@@ -281,7 +351,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     test.view.backgroundColor = .clear
     _overlayView.addSubview(test.view)
     
-    onChangeOrientation(fullScreen)
+//    onChangeOrientation(fullScreen)
     _subView.layer.addSublayer(playerLayer)
     
     // seek slider label
@@ -717,7 +787,7 @@ extension RNVideoPlayerView {
   
   private func onChangeOrientation(_ fullscreen: Bool) {
     guard let playerLayer = playerLayer else { return }
-    playerLayer.frame = fullScreen ? bounds : _overlayView.bounds.inset(by: safeAreaInsets)
+//    playerLayer.frame = fullScreen ? bounds : _overlayView.bounds.inset(by: safeAreaInsets)
   }
   
   private func configureThumb(_ config: NSDictionary?) {

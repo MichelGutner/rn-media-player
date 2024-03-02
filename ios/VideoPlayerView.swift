@@ -13,7 +13,7 @@ import Combine
 struct VideoPlayerView: View {
   var size: CGSize
   var edgeInsets: EdgeInsets
-  var url: String
+  private var onTapFullScreenControl: (Bool) -> Void
   
   @ObservedObject private var playbackObserver = PlayerObserver()
   
@@ -36,12 +36,21 @@ struct VideoPlayerView: View {
   
   @State private var playbackDuration: Double = 0
   @State private var uiSafeArea: CGRect!
+  @State private var videoPlayerSize: CGSize!
   
-  init(size: CGSize, safeArea: EdgeInsets, url: String, player: AVPlayer, thumbnails: [UIImage]) {
+  @State private var isFullScreen: Bool = false
+  
+  init(
+    size: CGSize,
+    safeArea: EdgeInsets,
+    player: AVPlayer,
+    thumbnails: [UIImage],
+    onTapFullScreenControl: @escaping (Bool) -> Void
+  ) {
     self.size = size
     self.edgeInsets = safeArea
-    self.url = url
     self.player = player
+    self.onTapFullScreenControl = onTapFullScreenControl
     _thumbnailsFrames = State(initialValue: thumbnails)
     _uiSafeArea = State(
       initialValue:
@@ -60,6 +69,7 @@ struct VideoPlayerView: View {
       
       ZStack {
         CustomVideoPlayer(player: player)
+          .edgesIgnoringSafeArea(Edge.Set.all)
           .overlay(
             Rectangle()
               .fill(Color.black.opacity(0.4))
@@ -68,6 +78,7 @@ struct VideoPlayerView: View {
               .overlay(
                 PlaybackControls()
               )
+              .edgesIgnoringSafeArea(Edge.Set.all)
           )
           .overlay(
             DoubleTapManager(
@@ -107,13 +118,13 @@ struct VideoPlayerView: View {
               }
               .opacity(showPlayerControls && !isDraggingSlider ? 1 : 0)
               .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider)
-              .padding(.trailing, 12)
             }
               .padding(.leading, 12)
               .padding(.trailing, 12)
           )
       }
       .frame(width: videoPlayerSize.width, height: videoPlayerSize.height)
+      
     }
     .onAppear {
       guard !isObservedAdded else { return }
@@ -204,8 +215,6 @@ extension VideoPlayerView {
         Spacer()
       }
     }
-//    .opacity(isSeeking ? 0 : 1)
-//    .animation(.easeInOut(duration: 0.2), value: isSeeking)
 
   @ViewBuilder
   func VideoSeekerThumbnailView() -> some View {
@@ -354,6 +363,7 @@ extension VideoPlayerView {
               .font(.system(size: 20 + 5))
 //          }
         }
+        .frame(minWidth: 25, minHeight: 25)
         .padding(size16)
         .background(Color(.black).opacity(0.2))
         .cornerRadius(.infinity)
@@ -368,11 +378,13 @@ extension VideoPlayerView {
   
   @ViewBuilder
   func FullScreenControl() -> some View {
+
 //    let color = fullScreenConfig?["color"] as? String
 //    let isHidden = fullScreenConfig?["hidden"] as? Bool
     
     Button (action: {
-//      onTapFullScreen()
+      isFullScreen.toggle()
+      self.onTapFullScreenControl(true)
     }) {
       Image(
         systemName:
@@ -503,15 +515,75 @@ extension VideoPlayerView {
 // MARK: -- CustomView
 @available(iOS 13.0, *)
 struct CustomView : View {
-  var playerUrl: String
   var player: AVPlayer
   var thumbnails: [UIImage]
+  var onTapFullScreenControl: (Bool) -> Void
   
   var body: some View {
     GeometryReader {
       let size = $0.size
       let safeArea = $0.safeAreaInsets
-      VideoPlayerView(size: size, safeArea: safeArea, url: playerUrl, player: player, thumbnails: thumbnails)
+      VideoPlayerView(size: size, safeArea: safeArea, player: player, thumbnails: thumbnails, onTapFullScreenControl: onTapFullScreenControl)
     }
   }
 }
+
+
+import UIKit
+import AVFoundation
+
+@available(iOS 13.0, *)
+class VideoPlayerViewController: UIViewController {
+  private var player: AVPlayer?
+  private var thumbnails: [UIImage]
+  private var onTapFullScreenControl: (Bool) -> Void
+  private var safeAreaInsets: UIEdgeInsets
+
+  init(player: AVPlayer, thumbnails: [UIImage], onTapFullScreenControl: @escaping (Bool) -> Void, safeAreaInsets: UIEdgeInsets) {
+        
+        self.player = player
+    self.thumbnails = thumbnails
+    self.onTapFullScreenControl = onTapFullScreenControl
+    self.safeAreaInsets = safeAreaInsets
+    super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    
+    view.backgroundColor = .black
+    view.frame = UIScreen.main.bounds.inset(by: safeAreaInsets)
+    
+    let playerView = UIHostingController(rootView:  VideoPlayerView(size: UIScreen.main.bounds.inset(by: safeAreaInsets).size, safeArea: EdgeInsets(top: safeAreaInsets.top, leading: safeAreaInsets.left, bottom: safeAreaInsets.bottom, trailing: safeAreaInsets.right), player: player!, thumbnails: thumbnails, onTapFullScreenControl: { [self] _ in
+      onTapFullScreenControl(false)
+    }))
+    playerView.view.frame =  UIScreen.main.bounds
+    view.addSubview(playerView.view)
+  }
+  
+//  override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+//      super.viewWillTransition(to: size, with: coordinator)
+//
+//      // Update the frame size when the device orientation changes
+//      coordinator.animate(alongsideTransition: { _ in
+//          self.view.frame = CGRect(origin: .zero, size: size)
+//          self.view.subviews.forEach { subview in
+//              subview.frame = self.view.bounds
+//          }
+//
+//          // Update AVPlayerLayer frame
+//          if let playerLayer = self.view.layer.sublayers?.first as? AVPlayerLayer {
+//              playerLayer.frame = self.view.bounds
+//          }
+//      }, completion: nil)
+//  }
+
+    deinit {
+        // Stop playback and release resources when the view controller is deallocated
+    }
+}
+

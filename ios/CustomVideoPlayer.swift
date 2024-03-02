@@ -17,12 +17,11 @@ struct CustomVideoPlayer : UIViewControllerRepresentable {
     let controller  = AVPlayerViewController()
     controller.player = player
     controller.showsPlaybackControls = false
-    controller.player?.automaticallyWaitsToMinimizeStalling = true
-
+    
     return controller
   }
   
   func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
-    print("testing ui view")
+    uiViewController.videoGravity = .resizeAspectFill
   }
 }

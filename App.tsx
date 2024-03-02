@@ -6,7 +6,14 @@
  */
 
 import React, {useState} from 'react';
-import {SafeAreaView, useWindowDimensions} from 'react-native';
+import {
+  Button,
+  SafeAreaView,
+  Text,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import {RNPlayerVideo} from './src/player';
 
 function App(): JSX.Element {
@@ -20,15 +27,21 @@ function App(): JSX.Element {
   // }, [isFull]);
   const resizeMode = isFull ? 'cover' : 'contain';
   return (
-    <RNPlayerVideo
-      isFullScreen={isFull}
-      // style={{height}}
-      style={{height: isFull ? height : 350, zIndex: 2}}
-      onFullScreen={() => setIsFull(!isFull)}
-      resizeMode={resizeMode}
-      paused={false}
-      startTime={50}
-    />
+    <View style={{backgroundColor: 'blue', zIndex: 99999}}>
+      <RNPlayerVideo
+        isFullScreen={isFull}
+        // style={{height}}
+        style={{height: 350}}
+        onFullScreen={() => setIsFull(!isFull)}
+        resizeMode={resizeMode}
+        paused={false}
+        startTime={4}
+        didEnterInFullScreenWhenDeviceRotated={true}
+      />
+      <TouchableOpacity onPress={() => console.log('oi')}>
+        <Text>Olá Mundo</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
