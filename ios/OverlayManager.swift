@@ -441,9 +441,3 @@ struct DoubleTapManager : View {
     .edgesIgnoringSafeArea(Edge.Set.all)
   }
 }
-
-
-@available(iOS 13.0, *)
-struct Controls {
-  
-}

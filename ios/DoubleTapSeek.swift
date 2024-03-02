@@ -18,7 +18,7 @@ struct DoubleTapSeek: View {
   var body: some View {
     Circle()
       .fill(Color.black).opacity(variantPercent10)
-      .scaleEffect(2.6, anchor: isForward ? .leading : .trailing)
+      .scaleEffect(2, anchor: isForward ? .leading : .trailing)
       .opacity(isTapped ? 1 : 0)
       .overlay(
         HStack {
@@ -46,7 +46,7 @@ struct DoubleTapSeek: View {
       .onTapGesture(count: isTapped ? 1 : 2) {
         self.isTapped = true
         tappedQuantity += 1
-        onTap(tappedQuantity * advanceValue)
+        onTap(advanceValue)
 
         resetTimer?.invalidate()
         

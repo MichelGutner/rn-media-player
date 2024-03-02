@@ -31,7 +31,7 @@ function App(): JSX.Element {
       <RNPlayerVideo
         isFullScreen={isFull}
         // style={{height}}
-        style={{height: 350}}
+        style={{height: 350, overflow: 'hidden'}}
         onFullScreen={() => setIsFull(!isFull)}
         resizeMode={resizeMode}
         paused={false}

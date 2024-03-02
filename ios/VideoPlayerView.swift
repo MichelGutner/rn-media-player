@@ -369,7 +369,8 @@ extension VideoPlayerView {
 //    let isHidden = fullScreenConfig?["hidden"] as? Bool
     
     Button (action: {
-      self.onTapFullScreenControl(true)
+      isFullScreen.toggle()
+      self.onTapFullScreenControl(isFullScreen)
     }) {
       DefaultImage( isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
     }
@@ -486,13 +487,25 @@ extension VideoPlayerView {
   }
   
   private func forwardTime(_ timeToChange: Double) {
-    let forward = videoTimerManager(avPlayer: player)
-    forward.change(timeToChange)
+    guard let currentItem = player.currentItem else { return }
+    let currentTime = CMTimeGetSeconds(player.currentTime())
+    
+    let newTime = max(currentTime + timeToChange, 0)
+    player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
+                toleranceBefore: .zero,
+                toleranceAfter: .zero,
+                completionHandler: { _ in })
   }
   
   private func backwardTime(_ timeToChange: Double) {
-    let backward = videoTimerManager(avPlayer: player)
-    backward.change(-Double(timeToChange))
+    guard let currentItem = player.currentItem else { return }
+
+    let currentTime = CMTimeGetSeconds(player.currentTime())
+    let newTime = max(currentTime - timeToChange, 0)
+    player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
+                toleranceBefore: .zero,
+                toleranceAfter: .zero,
+                completionHandler: { _ in })
   }
 }
 
@@ -515,71 +528,5 @@ struct CustomView : View {
       )
     }
   }
-}
-
-
-import UIKit
-import AVFoundation
-
-@available(iOS 13.0, *)
-class VideoPlayerViewController: UIViewController {
-  private var player: AVPlayer?
-  private var thumbnails: [UIImage]
-  private var onTapFullScreenControl: (Bool) -> Void
-  private var safeAreaInsets: UIEdgeInsets
-
-  init(player: AVPlayer, thumbnails: [UIImage], onTapFullScreenControl: @escaping (Bool) -> Void, safeAreaInsets: UIEdgeInsets) {
-    self.player = player
-    self.thumbnails = thumbnails
-    self.onTapFullScreenControl = onTapFullScreenControl
-    self.safeAreaInsets = safeAreaInsets
-    super.init(nibName: nil, bundle: nil)
-  }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    
-    view.backgroundColor = .black
-//    view.frame = UIScreen.main.bounds.inset(by: safeAreaInsets)
-    
-    let playerView = UIHostingController(
-      rootView: CustomView(
-        player: player!,
-        thumbnails: thumbnails,
-        onTapFullScreenControl: { [self] _ in
-          onTapFullScreenControl(false)
-        }
-      )
-    )
-    
-    playerView.view.frame =  UIScreen.main.bounds
-    view.addSubview(playerView.view)
-  }
-
-  override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
-      super.viewWillTransition(to: size, with: coordinator)
-
-      // Update the frame size when the device orientation changes
-      coordinator.animate(alongsideTransition: { _ in
-          self.view.frame = CGRect(origin: .zero, size: size)
-          self.view.subviews.forEach { subview in
-            print("self \(self.view.bounds)")
-              subview.frame = self.view.bounds
-          }
-
-          // Update AVPlayerLayer frame
-          if let playerLayer = self.view.layer.sublayers?.first as? AVPlayerLayer {
-              playerLayer.frame = self.view.bounds
-          }
-      }, completion: nil)
-  }
-
-    deinit {
-        // Stop playback and release resources when the view controller is deallocated
-    }
 }
 

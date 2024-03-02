@@ -174,43 +174,37 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   }
   var isFullScreen = false
   private var videoPlayerViewController = UIViewController()
+  private var videoPlayerView = UIView()
   
   @objc func toggleFullScreen(_ fullScreen: Bool) {
     guard let reactViewController = reactViewController() else { return }
     isFullScreen = fullScreen
     if fullScreen {
-      if !videoPlayerViewController.isBeingPresented {
-        reactViewController.present(videoPlayerViewController, animated: true, completion: nil)
-      }
+      DispatchQueue.main.asyncAfter(deadline: .now(), execute: { [self] in
+        videoPlayerView.frame = UIScreen.main.bounds
+      })
     } else {
-      reactViewController.dismiss(animated: true, completion: nil)
+      DispatchQueue.main.asyncAfter(deadline: .now(), execute: { [self] in
+        videoPlayerView.frame = frame
+      })
     }
   }
   
   override func layoutSubviews() {
     guard let player = player else { return }
 //    let playbackUrl = source?["url"] as? String
-    
-       // Assuming VideoPlayerViewController is the Swift class you provided
-    videoPlayerViewController = VideoPlayerViewController(player: player, thumbnails: thumbnailsFrames, onTapFullScreenControl: { [self] state in
-      //          onFullScreenTapped?([:])
-      toggleFullScreen(state)
-    }, safeAreaInsets: safeAreaInsets)
-    
-    // Set the desired modal presentation style
-    videoPlayerViewController.modalPresentationStyle = .custom
-    videoPlayerViewController.modalTransitionStyle = .crossDissolve
-    
+
     let playerView = UIHostingController(rootView: CustomView(player: player, thumbnails: thumbnailsFrames, onTapFullScreenControl: { [self] state in
 //      onFullScreenTapped?([:])
       toggleFullScreen(state)
     }))
-    playerView.view.frame = frame
-    playerView.view.backgroundColor = .black
-    addSubview(playerView.view)
-    
-
-    
+    videoPlayerView = playerView.view
+    if videoPlayerView.frame == .zero {
+      videoPlayerView.frame = frame
+    }
+    videoPlayerView.backgroundColor = .black
+    superview?.addSubview(playerView.view)
+  
     NotificationCenter.default.addObserver(forName: UIApplication.willChangeStatusBarOrientationNotification, object: nil, queue: .main) { [self] notification in
       DispatchQueue.main.async { [self] in
         NotificationCenter.default.post(name: Notification.Name("frames"), object: nil, userInfo: ["frames": thumbnailsFrames])
@@ -223,26 +217,33 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       enableAudioSession()
     }
   }
-  
+
   @objc private func orientationDidChange() {
       let currentOrientation = UIDevice.current.orientation
+      videoPlayerView.removeFromSuperview()
 
       switch currentOrientation {
       case .portrait:
-          toggleFullScreen(false)
+          DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
+            UIView.animate(withDuration: 0.35, delay: 0, options: .curveEaseInOut, animations: { [self] in
+                  videoPlayerView.transform = .identity
+                  videoPlayerView.frame = frame
+                  superview?.addSubview(videoPlayerView)
+              })
+          }
       case .landscapeLeft, .landscapeRight:
-          if enterInFullScreenWhenDeviceRotated && !videoPlayerViewController.isBeingPresented && !isFullScreen {
-              guard let reactViewController = reactViewController() else { return }
-              reactViewController.dismiss(animated: true, completion: nil)
-              DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
-                  toggleFullScreen(true)
-              }
+          DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
+            UIView.animate(withDuration: 0.35, delay: 0, options: .curveEaseInOut, animations: { [self] in
+                  videoPlayerView.frame = UIScreen.main.bounds
+                  superview?.addSubview(videoPlayerView)
+              })
           }
       default:
-          // Handle other orientations if needed
           break
       }
   }
+
+
   private func generatingThumbnailsFrames() {
     Task.detached { [self] in
       guard let asset = await player?.currentItem?.asset else { return }
@@ -850,7 +851,7 @@ extension RNVideoPlayerView {
     }
   }
   
-  private func urlOfCurrentlyPlayingInPlayer(player : AVPlayer) -> URL? {
+  private func urlOfCurrentPlayerItem(player : AVPlayer) -> URL? {
     return ((player.currentItem?.asset) as? AVURLAsset)?.url
   }
 }
