@@ -13,6 +13,7 @@ import Combine
 struct VideoPlayerView: View {
   var size: CGSize
   var onTapFullScreenControl: (Bool) -> Void
+  var onTapSettingsControl: () -> Void
   
   @ObservedObject private var playbackObserver = PlayerObserver()
   
@@ -21,6 +22,24 @@ struct VideoPlayerView: View {
   @State private var isPlaying: Bool = true
   @State private var timeoutTask: DispatchWorkItem?
   @State private var playPauseimageName: String = "pause.fill"
+  
+  
+  @State private var openedSettingsModal: Bool = false
+  @State private var openedOptionsQuality: Bool = false
+  @State private var openedOptionsSpeed: Bool = false
+  
+  @State private var optionsData: [OptionSelection] = []
+  @State private var initialSelectedItem: String = ""
+  @State private var initialQualitySelected: String = ""
+  
+  @State private var initialSpeedSelected: String = ""
+  
+  @State private var selectedQuality: String = ""
+  @State private var selectedSpeed: String = ""
+
+  @State private var videoQualities: [OptionSelection] = []
+  @State private var videoSpeeds: [OptionSelection] = []
+  
 
   
   @GestureState private var isDraggingSlider: Bool = false
@@ -41,23 +60,41 @@ struct VideoPlayerView: View {
   @State private var isFullScreen: Bool = false
   
   init(
-    size: CGSize,
-    player: AVPlayer,
-    thumbnails: [UIImage],
-    onTapFullScreenControl: @escaping (Bool) -> Void,
-    isFullScreen: Bool
+      size: CGSize,
+      player: AVPlayer,
+      thumbnails: [UIImage],
+      onTapFullScreenControl: @escaping (Bool) -> Void,
+      isFullScreen: Bool,
+      onTapSettingsControl: @escaping () -> Void,
+      videoQualities: [OptionSelection],
+      initialQualitySelected: String,
+      videoSpeeds: [OptionSelection],
+      initialSpeedSelected: String,
+      selectedQuality: String,
+      selectedSpeed: String,
+      settingsModalOpened: Bool,
+      openedOptionsQualities: Bool,
+      openedOptionsSpeed: Bool
   ) {
-    self.size = size
-    self.player = player
-    self.onTapFullScreenControl = onTapFullScreenControl
-    _thumbnailsFrames = State(initialValue: thumbnails)
-    _isFullScreen = State(wrappedValue: isFullScreen)
+      self.size = size
+      self.player = player
+      self.onTapFullScreenControl = onTapFullScreenControl
+      self.onTapSettingsControl = onTapSettingsControl
+      _thumbnailsFrames = State(initialValue: thumbnails)
+      _isFullScreen = State(wrappedValue: isFullScreen)
+      _videoQualities = State(initialValue: videoQualities)
+      _videoSpeeds = State(initialValue: videoSpeeds)
+      _initialQualitySelected = State(initialValue: selectedQuality.isEmpty ? initialQualitySelected : selectedQuality)
+      _initialSpeedSelected = State(initialValue: selectedSpeed.isEmpty ? initialSpeedSelected : selectedSpeed)
+      _openedSettingsModal = State(initialValue: settingsModalOpened)
+      _openedOptionsQuality = State(initialValue: openedOptionsQualities)
+      _openedOptionsSpeed = State(initialValue: openedOptionsSpeed)
+      _playbackObserver = ObservedObject(initialValue: PlayerObserver())
   }
   
   var body: some View {
     VStack {
       let videoPlayerSize: CGSize = .init(width: size.width, height: size.height)
-      
       ZStack {
         CustomVideoPlayer(player: player)
           .edgesIgnoringSafeArea(Edge.Set.all)
@@ -115,6 +152,69 @@ struct VideoPlayerView: View {
               .padding(.leading)
               .padding(.trailing)
 //              .padding(.top, 12)
+          )
+          .overlay(
+            Group {
+              if openedSettingsModal {
+                ModalManager(
+                  onModalAppear: {},
+                  onModalDisappear: {
+                    resetModalState()
+                  },
+                  onModalCompletion: { [self] in
+                    openedSettingsModal = false
+                    self.notificationPostModal(userInfo: ["opened": openedSettingsModal])
+                    self.notificationPostModal(userInfo: ["\(ESettingsOptions.speeds)Opened": false])
+                    self.notificationPostModal(userInfo: ["\(ESettingsOptions.qualities)Opened": false])
+                  },
+                  modalContent: {
+                    Group {
+                      if openedOptionsQuality {
+                        ModalOptionsView(
+                          size: size,
+                          data: videoQualities,
+                          onSelected: { [self] item in
+                            selectedQuality = item.name
+                            //                        changePlaybackQuality(URL(string: item.value)!)
+                            //                        qualityModalView.removeFromSuperview()
+                            //                        isOpenedModal = false
+                            self.notificationPostModal(userInfo: ["optionsQualitySelected": item.name, "\(ESettingsOptions.qualities)Opened": false])
+                          },
+                          initialSelectedItem: initialQualitySelected,
+                          selectedItem: selectedQuality
+                        )
+                      } else if openedOptionsSpeed {
+                        ModalOptionsView(
+                          size: size,
+                          data: videoSpeeds,
+                          onSelected: { [self] item in
+                            selectedSpeed = item.name
+                            //                        changePlaybackQuality(URL(string: item.value)!)
+                            //                        qualityModalView.removeFromSuperview()
+                            //                        isOpenedModal = false
+                            self.notificationPostModal(userInfo: ["optionsSpeedSelected": item.name, "\(ESettingsOptions.speeds)Opened": false])
+                          },
+                          initialSelectedItem: initialSpeedSelected,
+                          selectedItem: selectedSpeed
+                        )
+                      } else {
+                        SettingsModalView(
+                          settingsData: settingsData,
+                          onSettingSelected: { [self] item in
+                            let option = ESettingsOptions(rawValue: item)
+                            self.optionsItemSelected(option!)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
+                              if let optionItem = option {
+                                self.notificationPostModal(userInfo: ["\(optionItem)Opened": true])
+                              }
+                            })
+                          })
+                        
+                      }
+                    }
+                  })
+              }
+            }
           )
       }
       .frame(width: videoPlayerSize.width, height: videoPlayerSize.height)
@@ -192,7 +292,6 @@ struct VideoPlayerView: View {
 // MARK: -- View Builder
 @available(iOS 13.0, *)
 extension VideoPlayerView {
-  
   @ViewBuilder
   func HeaderControls() -> some View {
       HStack {
@@ -386,7 +485,8 @@ extension VideoPlayerView {
   func SettingsControl() -> some View {
     Button(action: {
         withAnimation(.linear(duration: 0.2)) {
-//            onTapSettings()
+          openedSettingsModal = true
+          notificationPostModal(userInfo: ["opened": openedSettingsModal])
         }
     }) {
       DefaultImage("gear")
@@ -510,6 +610,30 @@ extension VideoPlayerView {
                 toleranceAfter: .zero,
                 completionHandler: { _ in })
   }
+  
+  private func resetModalState() {
+    openedSettingsModal = false
+    openedOptionsQuality = false
+    openedOptionsSpeed = false
+  }
+  
+  private func notificationPostModal(userInfo: [String: Any]) {
+    NotificationCenter.default.post(name: Notification.Name("modal"), object: nil, userInfo: userInfo)
+  }
+  
+  private func optionsItemSelected(_ item: ESettingsOptions) {
+    switch(item) {
+    case .qualities:
+      openedOptionsQuality = true
+      
+      return
+    case .speeds:
+      openedOptionsSpeed = true
+      return
+    case .moreOptions:
+      return print("more options clicked")
+    }
+  }
 }
 
 // MARK: -- CustomView
@@ -519,6 +643,18 @@ struct CustomView : View {
   var thumbnails: [UIImage]
   var onTapFullScreenControl: (Bool) -> Void
   var isFullScreen: Bool
+  var onTapSettingsControl: () -> Void
+  var videoQualities: [OptionSelection]
+  var initialQualitySelected: String
+  var videoSpeeds: [OptionSelection]
+  var initialSpeedSelected: String
+  var selectedQuality: String
+  var selectedSpeed: String
+  var settingsModalOpened: Bool
+  var openedOptionsQualities: Bool
+  var openedOptionsSpeed: Bool
+
+  
   
   var body: some View {
     GeometryReader {
@@ -529,9 +665,41 @@ struct CustomView : View {
         player: player,
         thumbnails: thumbnails,
         onTapFullScreenControl: onTapFullScreenControl,
-        isFullScreen: isFullScreen
+        isFullScreen: isFullScreen,
+        onTapSettingsControl: onTapSettingsControl,
+        videoQualities: videoQualities,
+        initialQualitySelected: initialQualitySelected,
+        videoSpeeds: videoSpeeds,
+        initialSpeedSelected: initialSpeedSelected,
+        selectedQuality: selectedQuality,
+        selectedSpeed: selectedSpeed,
+        settingsModalOpened: settingsModalOpened,
+        openedOptionsQualities: openedOptionsQualities,
+        openedOptionsSpeed: openedOptionsSpeed
       )
     }
   }
 }
 
+
+@available(iOS 13.0, *)
+struct DoubleTapManager : View {
+  var onTapBackward: (Int) -> Void
+  var onTapForward: (Int) -> Void
+  var isFinished: () -> Void
+  var advanceValue: Int
+  var suffixAdvanceValue: String
+  
+  var body: some View {
+    ZStack {
+      Color(.clear).opacity(variantPercent10)
+      VStack {
+        HStack(spacing: size60) {
+          DoubleTapSeek(onTap:  onTapBackward, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: isFinished)
+          DoubleTapSeek(isForward: true, onTap:  onTapForward, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: isFinished)
+        }
+      }
+    }
+    .edgesIgnoringSafeArea(Edge.Set.all)
+  }
+}

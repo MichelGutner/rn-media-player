@@ -17,22 +17,15 @@ import {
 import {RNPlayerVideo} from './src/player';
 
 function App(): JSX.Element {
-  const {height} = useWindowDimensions();
   const [isFull, setIsFull] = useState(false);
-
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     setIsFull(!isFull);
-  //   }, 12000);
-  // }, [isFull]);
+  console.log('🚀 ~ App ~ isFull:', isFull);
   const resizeMode = isFull ? 'cover' : 'contain';
+
   return (
     <View>
       <RNPlayerVideo
-        isFullScreen={isFull}
-        // style={{height}}
         style={{height: 350, overflow: 'hidden'}}
-        onFullScreen={() => setIsFull(!isFull)}
+        onFullScreen={e => setIsFull(e)}
         resizeMode={resizeMode}
         paused={false}
         startTime={4}

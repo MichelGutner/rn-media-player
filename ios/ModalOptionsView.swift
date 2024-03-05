@@ -10,14 +10,16 @@ import SwiftUI
 
 @available(iOS 13.0, *)
 struct ModalOptionsView: View {
-  var data: [VideoQualityData]
-  var onSelected: (VideoQualityData) -> Void
+  var size: CGSize
+  var data: [OptionSelection]
+  var onSelected: (OptionSelection) -> Void
   var initialSelectedItem: String
   var selectedItem: String
   
   @State private var selected: String
   
-  init(data: [VideoQualityData], onSelected: @escaping (VideoQualityData) -> Void, initialSelectedItem: String, selectedItem: String) {
+  init(size: CGSize, data: [OptionSelection], onSelected: @escaping (OptionSelection) -> Void, initialSelectedItem: String, selectedItem: String) {
+    self.size = size
     self.data = data
     self.onSelected = onSelected
     self.initialSelectedItem = initialSelectedItem
@@ -47,19 +49,20 @@ struct ModalOptionsView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 Text("\(item.name)").foregroundColor(.primary)
               }
-              .frame(minWidth: UIScreen.main.bounds.width * 0.3, maxWidth: UIScreen.main.bounds.width * 0.6, alignment: .leading)
+              .frame(minWidth: UIScreen.main.bounds.width * 0.3, maxWidth: UIScreen.main.bounds.width * 0.6,alignment: .leading)
+            
             }
           }
           .disabled(selected == item.name)
         }
       }
     }
+    .frame(maxHeight: size.height * 0.7)
     .onAppear {
       if selected.isEmpty {
         selected = initialSelectedItem
       }
     }
-    .frame(height: UIScreen.main.bounds.height / 2)
-//    .fixedSize(horizontal: true, vertical: true)
+    .fixedSize(horizontal: true, vertical: true)
   }
 }

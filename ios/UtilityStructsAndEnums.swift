@@ -17,8 +17,8 @@ public struct HashableItem: Hashable {
 
 @available(iOS 13.0, *)
 enum ESettingsOptions: String {
-  case quality,
-       playbackSpeed,
+  case qualities,
+       speeds,
        moreOptions
 }
 

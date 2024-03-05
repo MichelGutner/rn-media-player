@@ -30,9 +30,6 @@ struct LoadingManager: View {
           withAnimation(Animation.linear(duration: 1.0).repeatForever(autoreverses: false)) {
             isLoading.toggle()
           }
-          NotificationCenter.default.addObserver(forName: UIApplication.willChangeStatusBarOrientationNotification, object: nil, queue: .main) { _ in
-            
-          }
         }
     }
   }

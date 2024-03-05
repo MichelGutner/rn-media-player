@@ -21,7 +21,7 @@ struct SettingsModalView: View {
   var body: some View {
     ForEach(settingsData, id: \.self) { setting in
       let imageType = ESettingsOptions(rawValue: setting.value!)
-      let imageName = settingsImage(for: imageType!)
+      let imageName = settingsImage(for: imageType ?? .qualities)
       
       Group {
         if let isEnabled = setting.enabled, isEnabled {
@@ -43,7 +43,9 @@ struct SettingsModalView: View {
                 .foregroundColor(.primary)
             }
             .padding(.bottom, 18)
-            .frame(minWidth: UIScreen.main.bounds.width * 0.4, maxWidth: UIScreen.main.bounds.width * 0.6, alignment: .leading)
+            .padding(.leading, 8)
+            .padding(.trailing, 8)
+            .frame(minWidth: UIScreen.main.bounds.width * 0.5, maxWidth: UIScreen.main.bounds.width * 0.7, alignment: .leading)
           }
         }
       }
@@ -53,9 +55,9 @@ struct SettingsModalView: View {
   
   private func settingsImage(for optionType: ESettingsOptions) -> String {
     switch optionType {
-    case .quality:
+    case .qualities:
       return "slider.horizontal.3"
-    case .playbackSpeed:
+    case .speeds:
       return "timer"
     case .moreOptions:
       return "gear"

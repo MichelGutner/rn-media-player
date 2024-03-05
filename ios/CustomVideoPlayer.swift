@@ -17,6 +17,7 @@ struct CustomVideoPlayer : UIViewControllerRepresentable {
     let controller  = AVPlayerViewController()
     controller.player = player
     controller.showsPlaybackControls = false
+  
     
     return controller
   }

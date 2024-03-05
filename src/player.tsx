@@ -29,7 +29,7 @@ export const RNPlayerVideo = ({
 }: {
   style: ViewStyle;
   isFullScreen: boolean;
-  onFullScreen: () => void;
+  onFullScreen: (fullScreen: Boolean) => void;
   loading: boolean;
 }): JSX.Element => {
   const [pause, setPause] = useState(false);
@@ -112,31 +112,58 @@ export const RNPlayerVideo = ({
           hidden: false,
         },
       }}
-      speedRateModalProps={{
-        title: 'Speed Rate',
+      speeds={{
+        initialSelected: 'Normal',
+        data: [
+          {
+            name: '0.25x',
+            value: '0.25',
+            enabled: false,
+          },
+          {
+            name: '0.5x',
+            value: '0.5',
+            enabled: true,
+          },
+          {
+            name: 'Normal',
+            value: '1',
+            enabled: true,
+          },
+          {
+            name: '1.5x',
+            value: '1.5',
+            enabled: true,
+          },
+          {
+            name: '2x',
+            value: '2',
+            enabled: true,
+          },
+        ],
       }}
-      qualityModalProps={{
+      qualities={{
         initialSelected: '240p',
         data: [
           {
             name: '4320p',
             value: 'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
-            enabled: true,
+            enabled: false,
           },
           {
             name: '2880p',
             value: 'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
-            enabled: true,
+            enabled: false,
           },
           {
             name: '2160p',
             value: 'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
-            enabled: true,
+            enabled: false,
           },
           {
             name: '1440p',
             value: 'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
-            enabled: true,
+            enabled: false,
           },
           {
             name: '1080p',
@@ -176,7 +203,9 @@ export const RNPlayerVideo = ({
         ],
       }}
       onSettingsTapped={() => console.log('MORE OPTIONS TAPPED')}
-      onFullScreenTapped={onFullScreen}
+      onFullScreenTapped={({nativeEvent}) =>
+        onFullScreen(nativeEvent.fullScreen)
+      }
       onGoBackTapped={() => console.log('GO BACK TAPPED')}
       onDownloadVideoTapped={() => console.log('onDownloadVideoTapped')}
       onPlaybackSpeedTapped={() => console.log('onPlaybackSpeedTapped')}
