@@ -9,7 +9,7 @@ import Foundation
 import AVFoundation
 
 @available(iOS 13.0, *)
-class PlayerObserver: ObservableObject {
+class PlaybackObserver: ObservableObject {
   @Published var isFinishedPlaying = false
   @Published var playbackDuration = 0.0
   @Published var playbackCurrentTime = 0.0

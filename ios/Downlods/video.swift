@@ -1,12 +1,19 @@
+//
+//  VideoPlayerView.swift
+//  RNVideoPlayer
+//
+//  Created by Michel Gutner on 20/01/24.
+//
+
 import Foundation
 
-class DownloadManager: NSObject, URLSessionDownloadDelegate {
+class DownloadFileManager: NSObject, URLSessionDownloadDelegate {
   private var downloadTask: URLSessionDownloadTask!
   private var completion: ((URL?, Error?) -> Void)?
   private var onProgress: ((Float) -> Void)?
   private var destinationFileUrl: URL?
   
-  func downloadVideo(from url: URL, title: String = "video", onProgress: @escaping (Float) -> Void, completion: @escaping (URL?, Error?) -> Void) {
+  func video(from url: URL, title: String = "video", onProgress: @escaping (Float) -> Void, completion: @escaping (URL?, Error?) -> Void) {
     self.completion = completion
     self.onProgress = onProgress
     let documentsUrl: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!

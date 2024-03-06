@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct SettingsModalView: View {
+struct SettingsContentView: View {
   var settingsData: [HashableData]
   var onSettingSelected: (String) -> Void
   

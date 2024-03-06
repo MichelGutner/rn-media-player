@@ -93,9 +93,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var source: NSDictionary? = [:] {
     didSet {
       do {
-        let playbackUrl = source?["url"] as? String
-        let playbackTitle = source?["videoTitle"] as? String
-        
+        let playbackUrl = source?["url"] as? String        
         let verificatedUrlString = try verifyUrl(urlString: playbackUrl)
         player = AVPlayer(url: verificatedUrlString)
         player?.actionAtItemEnd = .none
@@ -113,7 +111,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-  private var observer = PlayerObserver()
+  private var observer = PlaybackObserver()
   
   @objc var rate: Float = 0.0 {
     didSet{
@@ -218,12 +216,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
               openedOptionsSpeed: openedOptionsSpeed,
               openedOptionsMoreOptions: openedOptionsMoreOptions,
               isActiveAutoPlay: autoPlay,
-              isActiveLoop: false
-              
+              isActiveLoop: loop
           )
       )
     videoPlayerView = playerView.view
     videoPlayerView.backgroundColor = .black
+    videoPlayerView.clipsToBounds = true
     
     if videoPlayerView.frame == .zero {
       if frame.height > UIScreen.main.bounds.height {
@@ -239,6 +237,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     NotificationCenter.default.addObserver(forName: Notification.Name("modal"), object: nil, queue: .main) { [self] modalNotification in
       if let optionsQualitySelected = (modalNotification.userInfo?["optionsQualitySelected"] as? String) {
         self.selectedQuality = optionsQualitySelected
+      }
+      
+      if let qualityUrlToChange = modalNotification.userInfo?["qualityUrl"] as? String {
+        changePlaybackQuality(URL(string: qualityUrlToChange)!)
       }
       
       if let optionsSpeedSelected = (modalNotification.userInfo?["optionsSpeedSelected"] as? String) {
@@ -386,7 +388,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 //      }
 //    ))
     
-    let loading = UIHostingController(rootView: LoadingManager(config: loadingProps))
+    let loading = UIHostingController(rootView: CustomLoading(config: loadingProps))
     loading.view.frame = bounds
     loading.view.backgroundColor = .clear
     loadingView = loading.view

@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct ModalOptionsView: View {
+struct OptionsContentView: View {
   var size: CGSize
   var data: [HashableData]
   var onSelected: (HashableData) -> Void

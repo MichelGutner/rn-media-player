@@ -15,7 +15,7 @@ struct VideoPlayerView: View {
   var onTapFullScreenControl: (Bool) -> Void
   var onTapSettingsControl: () -> Void
   
-  @ObservedObject private var playbackObserver = PlayerObserver()
+  @ObservedObject private var playbackObserver = PlaybackObserver()
   
   @State private var player: AVPlayer
   @State private var showPlayerControls: Bool = false
@@ -102,7 +102,7 @@ struct VideoPlayerView: View {
     _openedOptionsQuality = State(initialValue: openedOptionsQualities)
     _openedOptionsSpeed = State(initialValue: openedOptionsSpeed)
     _openedOptionsMoreOptions = State(initialValue: openedOptionsMoreOptions)
-    _playbackObserver = ObservedObject(initialValue: PlayerObserver())
+    _playbackObserver = ObservedObject(initialValue: PlaybackObserver())
     _isActiveAutoPlay = State(initialValue: isActiveAutoPlay)
     _isActiveLoop = State(initialValue: isActiveLoop)
   }
@@ -171,7 +171,7 @@ struct VideoPlayerView: View {
           .overlay(
             Group {
               if openedSettingsModal {
-                ModalManager(
+                ModalViewController(
                   onModalAppear: {},
                   onModalDisappear: {
                     resetModalState()
@@ -187,21 +187,19 @@ struct VideoPlayerView: View {
                   modalContent: {
                     Group {
                       if openedOptionsQuality {
-                        ModalOptionsView(
+                        OptionsContentView(
                           size: size,
                           data: videoQualities,
                           onSelected: { [self] item in
                             selectedQuality = item.name
-                            //                        changePlaybackQuality(URL(string: item.value)!)
-                            //                        qualityModalView.removeFromSuperview()
-                            //                        isOpenedModal = false
-                            self.notificationPostModal(userInfo: ["optionsQualitySelected": item.name, "\(ESettingsOptions.qualities)Opened": false])
+                            self.notificationPostModal(userInfo: ["optionsQualitySelected": item.name, "\(ESettingsOptions.qualities)Opened": false, "qualityUrl": item.value])
+                            resetModalState()
                           },
                           initialSelectedItem: initialQualitySelected,
                           selectedItem: selectedQuality
                         )
                       } else if openedOptionsSpeed {
-                        ModalOptionsView(
+                        OptionsContentView(
                           size: size,
                           data: videoSpeeds,
                           onSelected: { [self] item in
@@ -215,7 +213,7 @@ struct VideoPlayerView: View {
                           selectedItem: selectedSpeed
                         )
                       } else if openedOptionsMoreOptions {
-                        VideoPlayerModalMoreOptions(
+                        MoreOptionsContentView(
                           isActiveAutoPlay: isActiveAutoPlay,
                           isActiveLoop: isActiveLoop,
                           onTapAutoPlay: { isActive in
@@ -228,7 +226,7 @@ struct VideoPlayerView: View {
                           }
                         )
                       } else {
-                        SettingsModalView(
+                        SettingsContentView(
                           settingsData: videoSettings,
                           onSettingSelected: { [self] item in
                             let option = ESettingsOptions(rawValue: item)
@@ -266,21 +264,21 @@ struct VideoPlayerView: View {
       
       NotificationCenter.default.addObserver(
         playbackObserver,
-        selector: #selector(PlayerObserver.playbackItem(_:)),
+        selector: #selector(PlaybackObserver.playbackItem(_:)),
         name: .AVPlayerItemNewAccessLogEntry,
         object: player.currentItem
       )
       
       NotificationCenter.default.addObserver(
         playbackObserver,
-        selector: #selector(PlayerObserver.itemDidFinishPlaying(_:)),
+        selector: #selector(PlaybackObserver.itemDidFinishPlaying(_:)),
         name: .AVPlayerItemDidPlayToEndTime,
         object: player.currentItem
       )
       
       NotificationCenter.default.addObserver(
         playbackObserver,
-        selector: #selector(PlayerObserver.getThumbnailFrames(_:)),
+        selector: #selector(PlaybackObserver.getThumbnailFrames(_:)),
         name: Notification.Name("frames"),
         object: nil
       )

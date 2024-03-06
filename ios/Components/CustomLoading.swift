@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct LoadingManager: View {
+struct CustomLoading: View {
   let config: NSDictionary?
   @State var isLoading : Bool = false
   @State var size = calculateSizeByWidth(size24, variantPercent20)

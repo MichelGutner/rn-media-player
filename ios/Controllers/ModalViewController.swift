@@ -8,7 +8,7 @@
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct ModalManager<Content: View>: View {
+struct ModalViewController<Content: View>: View {
   @Environment(\.colorScheme) var colorScheme
   
   var onModalAppear: () -> Void
@@ -20,7 +20,7 @@ struct ModalManager<Content: View>: View {
   
   var body: some View {
     ZStack {
-      Color(.black).opacity(0.001)
+      Color(.black).opacity(0.3)
         .onTapGesture {
           hideModal()
         }

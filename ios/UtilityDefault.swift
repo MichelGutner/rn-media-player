@@ -7,6 +7,14 @@
 
 import Foundation
 
+struct StaticSize {
+  static let s30: CGFloat = 30
+  static let s18: CGFloat = 18
+  static let s8: CGFloat = 8
+  static let s16: CGFloat = 16
+  static let s55: CGFloat = 55
+}
+
 public var size30 = CGFloat(30)
 public var size18 = CGFloat(18)
 public var size20 = CGFloat(20)

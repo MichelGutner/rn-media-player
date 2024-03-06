@@ -13,7 +13,7 @@ import AVFoundation
  @abstract   auto manager quality of videos using observe bit rate
  @abstract WIP - not working 100%.
  */
-class AutoQualityPlayerManager {
+class QualityViewController {
   private var player: AVPlayer?
   private var playerItem: AVPlayerItem?
   

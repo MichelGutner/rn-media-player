@@ -43,14 +43,14 @@ export const RNPlayerVideo = ({
     // <View style={style}>
     <VPlayer
       style={{...style, overflow: 'hidden'}}
-      // source={{
-      //   url: 'https://content.jwplatform.com/videos/MGAxJ46m-zZbIuxVJ.mp4',
-      //   videoTile: 'testing',
-      // }}
       source={{
-        url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-        videoTitle: 'Title de test',
+        url: 'https://content.jwplatform.com/videos/MGAxJ46m-zZbIuxVJ.mp4',
+        videoTile: 'testing',
       }}
+      // source={{
+      //   url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      //   videoTitle: 'Title de test',
+      // }}
       // thumbnailFramesSeconds={1}
       paused={paused}
       rate={rate}

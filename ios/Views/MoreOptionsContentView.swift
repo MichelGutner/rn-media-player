@@ -8,7 +8,7 @@
 import SwiftUI
 
 @available(iOS 13.0, *)
-struct VideoPlayerModalMoreOptions: View {
+struct MoreOptionsContentView: View {
   @State private var isActiveAutoPlay: Bool = true
   @State private var isActiveLoop: Bool = false
   var onTapAutoPlay: (Bool) -> Void
@@ -23,13 +23,10 @@ struct VideoPlayerModalMoreOptions: View {
   }
   
     var body: some View {
-      ScrollView {
         VStack {
           SectionAutoPlayView()
           SectionLoopView()
         }
-      }
-      
     }
   
   @ViewBuilder
