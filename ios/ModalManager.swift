@@ -36,13 +36,14 @@ struct ModalManager<Content: View>: View {
         .padding(.top, 12)
         modalContent()
       }
-      .fixedSize(horizontal: true, vertical: true)
+      .fixedSize(horizontal: false, vertical: true)
       .padding(.leading)
       .padding(.trailing)
       .padding(.bottom)
       .background(colorScheme == .light ? Color.white : Color.black)
       .cornerRadius(16)
       .shadow(color: Color.secondary, radius: 0.4, x: 0.1, y: 0.1)
+      .frame(minWidth: UIScreen.main.bounds.width * 0.3, maxWidth: UIScreen.main.bounds.width * 0.6, alignment: .leading)
       .offset(x: 0, y: modalOffset)
       .onAppear {
         withAnimation(.interactiveSpring(dampingFraction: 1.0)) {

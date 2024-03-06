@@ -26,6 +26,8 @@ export const RNPlayerVideo = ({
   paused,
   startTime,
   enterInFullScreenWhenDeviceRotated,
+  autoPlay,
+  loop,
 }: {
   style: ViewStyle;
   isFullScreen: boolean;
@@ -53,6 +55,8 @@ export const RNPlayerVideo = ({
       paused={paused}
       rate={rate}
       enterInFullScreenWhenDeviceRotated={enterInFullScreenWhenDeviceRotated}
+      autoPlay={autoPlay}
+      loop={loop}
       startTime={startTime}
       onLoaded={({nativeEvent}) => setLoadData(nativeEvent)}
       // onVideoProgress={data => console.log(data.nativeEvent)}
@@ -118,7 +122,7 @@ export const RNPlayerVideo = ({
           {
             name: '0.25x',
             value: '0.25',
-            enabled: false,
+            enabled: true,
           },
           {
             name: '0.5x',
@@ -199,6 +203,25 @@ export const RNPlayerVideo = ({
             value:
               'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
             enabled: true,
+          },
+        ],
+      }}
+      settings={{
+        data: [
+          {
+            name: 'Qualidades',
+            enabled: true,
+            value: 'qualities',
+          },
+          {
+            name: 'Playback Speeds',
+            enabled: true,
+            value: 'speeds',
+          },
+          {
+            name: 'More Options',
+            enabled: true,
+            value: 'moreOptions',
           },
         ],
       }}

@@ -24,12 +24,14 @@ function App(): JSX.Element {
   return (
     <View>
       <RNPlayerVideo
-        style={{height: 350, overflow: 'hidden'}}
+        style={{height: 550, overflow: 'hidden'}}
         onFullScreen={e => setIsFull(e)}
         resizeMode={resizeMode}
         paused={false}
-        startTime={4}
+        startTime={158}
         enterInFullScreenWhenDeviceRotated={true}
+        autoPlay={false}
+        loop={false}
       />
       <TouchableOpacity onPress={() => console.log('oi')}>
         <Text>Olá Mundo</Text>

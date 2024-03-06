@@ -31,15 +31,16 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var playerStatus: AVPlayer.TimeControlStatus?
   
   private var settingsOpened = false
-  private var optionsData: [OptionSelection] = []
+  private var optionsData: [HashableData] = []
   
   private var initialQualitySelected = ""
   private var initialSpeedSelected = ""
   private var selectedQuality: String = ""
   private var selectedSpeed: String = ""
   
-  private var videoQualities: [OptionSelection] = []
-  private var videoSpeeds: [OptionSelection] = []
+  private var videoQualities: [HashableData] = []
+  private var videoSpeeds: [HashableData] = []
+  private var videoSettings: [HashableData] = []
   
   private var loadingView = UIView()
   private var url: URL?
@@ -72,6 +73,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 
   @objc var thumbnailFramesSeconds: Float = 1.0
   @objc var enterInFullScreenWhenDeviceRotated: Bool = false
+  @objc var autoPlay: Bool = true
+  @objc var loop: Bool = false
   
   @objc var sliderProps: NSDictionary? = [:]
   @objc var playPauseProps: NSDictionary? = [:]
@@ -84,7 +87,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var loadingProps: NSDictionary? = [:]
   @objc var speeds: NSDictionary? = [:]
   @objc var qualities: NSDictionary? = [:]
-  @objc var settingsItemsSymbolProps: NSDictionary? = [:]
+  @objc var settings: NSDictionary? = [:]
   
   // external controls
   @objc var source: NSDictionary? = [:] {
@@ -144,6 +147,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var videoPlayerView = UIView()
   private var openedOptionsQualities: Bool = false
   private var openedOptionsSpeed: Bool = false
+  private var openedOptionsMoreOptions: Bool = false
 
   @objc func toggleFullScreen(_ fullScreen: Bool) {
     if fullScreen {
@@ -155,7 +159,13 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       })
     } else {
       videoPlayerView.removeFromSuperview()
-      videoPlayerView.frame = frame
+      
+      if frame.height > UIScreen.main.bounds.height {
+        videoPlayerView.frame = UIScreen.main.bounds
+      } else {
+        videoPlayerView.frame = frame
+      }
+      
       superview?.addSubview(videoPlayerView)
     }
     
@@ -176,11 +186,15 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
     
     if let qualitiesData = qualities?["data"] as? [[String: Any]] {
-      videoQualities = qualitiesData.map { OptionSelection(dictionary: $0) }
+      videoQualities = qualitiesData.map { HashableData(dictionary: $0) }
     }
     
     if let speedsData = speeds?["data"] as? [[String: Any]] {
-      videoSpeeds = speedsData.map { OptionSelection(dictionary: $0) }
+      videoSpeeds = speedsData.map { HashableData(dictionary: $0) }
+    }
+    
+    if let settingsData = settings?["data"] as? [[String: Any]] {
+      self.videoSettings = settingsData.map { HashableData(dictionary: $0) }
     }
     
       let playerView = UIHostingController(
@@ -191,6 +205,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
                   toggleFullScreen(state)
               },
               isFullScreen: isFullScreen,
+              videoSettings: videoSettings,
               onTapSettingsControl: onTapSettings,
               videoQualities: videoQualities,
               initialQualitySelected: initialQualitySelected,
@@ -200,14 +215,22 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
               selectedSpeed: selectedSpeed,
               settingsModalOpened: settingsOpened,
               openedOptionsQualities: openedOptionsQualities,
-              openedOptionsSpeed: openedOptionsSpeed
+              openedOptionsSpeed: openedOptionsSpeed,
+              openedOptionsMoreOptions: openedOptionsMoreOptions,
+              isActiveAutoPlay: autoPlay,
+              isActiveLoop: false
+              
           )
       )
     videoPlayerView = playerView.view
     videoPlayerView.backgroundColor = .black
     
     if videoPlayerView.frame == .zero {
-      videoPlayerView.frame = frame
+      if frame.height > UIScreen.main.bounds.height {
+          videoPlayerView.frame = UIScreen.main.bounds
+      } else {
+          videoPlayerView.frame = frame
+      }
       superview?.addSubview(playerView.view)
     }
     
@@ -227,12 +250,19 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       }
       
       if let openedOptionsSpeed = (modalNotification.userInfo?["\(ESettingsOptions.speeds)Opened"] as? Bool) {
-        print("opened \(openedOptionsSpeed)")
         self.openedOptionsSpeed = openedOptionsSpeed
       }
       
       if let openedOptionsQualities = (modalNotification.userInfo?["\(ESettingsOptions.qualities)Opened"] as? Bool) {
         self.openedOptionsQualities = openedOptionsQualities
+      }
+      
+      if let moreOptions = (modalNotification.userInfo?["\(ESettingsOptions.moreOptions)Opened"] as? Bool) {
+        self.openedOptionsMoreOptions = moreOptions
+      }
+      
+      if let optionsAutoPlay = modalNotification.userInfo?["optionsAutoPlay"] as? Bool {
+        self.autoPlay = optionsAutoPlay
       }
       
     }
@@ -261,7 +291,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         toggleFullScreen(false)
       }
     } else {
-      if enterInFullScreenWhenDeviceRotated && userInterfaceIdiom != .pad {
+      if enterInFullScreenWhenDeviceRotated {
         DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
           toggleFullScreen(true)
         }

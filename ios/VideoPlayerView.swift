@@ -27,8 +27,9 @@ struct VideoPlayerView: View {
   @State private var openedSettingsModal: Bool = false
   @State private var openedOptionsQuality: Bool = false
   @State private var openedOptionsSpeed: Bool = false
+  @State private var openedOptionsMoreOptions: Bool = false
   
-  @State private var optionsData: [OptionSelection] = []
+  @State private var optionsData: [HashableData] = []
   @State private var initialSelectedItem: String = ""
   @State private var initialQualitySelected: String = ""
   
@@ -37,8 +38,9 @@ struct VideoPlayerView: View {
   @State private var selectedQuality: String = ""
   @State private var selectedSpeed: String = ""
 
-  @State private var videoQualities: [OptionSelection] = []
-  @State private var videoSpeeds: [OptionSelection] = []
+  @State private var videoQualities: [HashableData] = []
+  @State private var videoSpeeds: [HashableData] = []
+  @State private var videoSettings: [HashableData] = []
   
 
   
@@ -59,37 +61,50 @@ struct VideoPlayerView: View {
   
   @State private var isFullScreen: Bool = false
   
+  @State private var isActiveAutoPlay: Bool = false
+  @State private var isActiveLoop: Bool = false
+  
+  
+  
   init(
-      size: CGSize,
-      player: AVPlayer,
-      thumbnails: [UIImage],
-      onTapFullScreenControl: @escaping (Bool) -> Void,
-      isFullScreen: Bool,
-      onTapSettingsControl: @escaping () -> Void,
-      videoQualities: [OptionSelection],
-      initialQualitySelected: String,
-      videoSpeeds: [OptionSelection],
-      initialSpeedSelected: String,
-      selectedQuality: String,
-      selectedSpeed: String,
-      settingsModalOpened: Bool,
-      openedOptionsQualities: Bool,
-      openedOptionsSpeed: Bool
+    size: CGSize,
+    player: AVPlayer,
+    thumbnails: [UIImage],
+    onTapFullScreenControl: @escaping (Bool) -> Void,
+    isFullScreen: Bool,
+    videoSettings: [HashableData],
+    onTapSettingsControl: @escaping () -> Void,
+    videoQualities: [HashableData],
+    initialQualitySelected: String,
+    videoSpeeds: [HashableData],
+    initialSpeedSelected: String,
+    selectedQuality: String,
+    selectedSpeed: String,
+    settingsModalOpened: Bool,
+    openedOptionsQualities: Bool,
+    openedOptionsSpeed: Bool,
+    openedOptionsMoreOptions: Bool,
+    isActiveAutoPlay: Bool,
+    isActiveLoop: Bool
   ) {
-      self.size = size
-      self.player = player
-      self.onTapFullScreenControl = onTapFullScreenControl
-      self.onTapSettingsControl = onTapSettingsControl
-      _thumbnailsFrames = State(initialValue: thumbnails)
-      _isFullScreen = State(wrappedValue: isFullScreen)
-      _videoQualities = State(initialValue: videoQualities)
-      _videoSpeeds = State(initialValue: videoSpeeds)
-      _initialQualitySelected = State(initialValue: selectedQuality.isEmpty ? initialQualitySelected : selectedQuality)
-      _initialSpeedSelected = State(initialValue: selectedSpeed.isEmpty ? initialSpeedSelected : selectedSpeed)
-      _openedSettingsModal = State(initialValue: settingsModalOpened)
-      _openedOptionsQuality = State(initialValue: openedOptionsQualities)
-      _openedOptionsSpeed = State(initialValue: openedOptionsSpeed)
-      _playbackObserver = ObservedObject(initialValue: PlayerObserver())
+    self.size = size
+    self.player = player
+    self.onTapFullScreenControl = onTapFullScreenControl
+    self.onTapSettingsControl = onTapSettingsControl
+    _thumbnailsFrames = State(initialValue: thumbnails)
+    _isFullScreen = State(wrappedValue: isFullScreen)
+    _videoQualities = State(initialValue: videoQualities)
+    _videoSpeeds = State(initialValue: videoSpeeds)
+    _videoSettings = State(initialValue: videoSettings)
+    _initialQualitySelected = State(initialValue: selectedQuality.isEmpty ? initialQualitySelected : selectedQuality)
+    _initialSpeedSelected = State(initialValue: selectedSpeed.isEmpty ? initialSpeedSelected : selectedSpeed)
+    _openedSettingsModal = State(initialValue: settingsModalOpened)
+    _openedOptionsQuality = State(initialValue: openedOptionsQualities)
+    _openedOptionsSpeed = State(initialValue: openedOptionsSpeed)
+    _openedOptionsMoreOptions = State(initialValue: openedOptionsMoreOptions)
+    _playbackObserver = ObservedObject(initialValue: PlayerObserver())
+    _isActiveAutoPlay = State(initialValue: isActiveAutoPlay)
+    _isActiveLoop = State(initialValue: isActiveLoop)
   }
   
   var body: some View {
@@ -163,9 +178,11 @@ struct VideoPlayerView: View {
                   },
                   onModalCompletion: { [self] in
                     openedSettingsModal = false
+                    openedOptionsMoreOptions = false
                     self.notificationPostModal(userInfo: ["opened": openedSettingsModal])
                     self.notificationPostModal(userInfo: ["\(ESettingsOptions.speeds)Opened": false])
                     self.notificationPostModal(userInfo: ["\(ESettingsOptions.qualities)Opened": false])
+                    self.notificationPostModal(userInfo: ["\(ESettingsOptions.moreOptions)Opened": false])
                   },
                   modalContent: {
                     Group {
@@ -197,9 +214,22 @@ struct VideoPlayerView: View {
                           initialSelectedItem: initialSpeedSelected,
                           selectedItem: selectedSpeed
                         )
+                      } else if openedOptionsMoreOptions {
+                        VideoPlayerModalMoreOptions(
+                          isActiveAutoPlay: isActiveAutoPlay,
+                          isActiveLoop: isActiveLoop,
+                          onTapAutoPlay: { isActive in
+                            isActiveAutoPlay = isActive
+                            self.notificationPostModal(userInfo: ["optionsAutoPlay": isActive])
+                          },
+                          onTapLoop: { isActive in
+                            isActiveLoop = isActive
+                            self.notificationPostModal(userInfo: ["optionsLoop": isActive])
+                          }
+                        )
                       } else {
                         SettingsModalView(
-                          settingsData: settingsData,
+                          settingsData: videoSettings,
                           onSettingSelected: { [self] item in
                             let option = ESettingsOptions(rawValue: item)
                             self.optionsItemSelected(option!)
@@ -222,7 +252,13 @@ struct VideoPlayerView: View {
     }
     .onAppear {
       guard !isObservedAdded else { return }
-      print("isFull \(isFullScreen)")
+      
+      if isActiveAutoPlay {
+        player.play()
+      } else {
+        player.pause()
+      }
+      
       updateImage()
       player.addPeriodicTimeObserver(forInterval: .init(seconds: 1, preferredTimescale: 1), queue: .main) { [self] _ in
         updatePlayerTime()
@@ -253,6 +289,12 @@ struct VideoPlayerView: View {
     }
     .onReceive(playbackObserver.$isFinishedPlaying) { finished in
       if finished {
+        print("testing")
+        if isActiveLoop {
+          player.seek(to: .zero)
+          return
+        }
+
         self.isFinishedPlaying = true
         updateImage()
       }
@@ -555,8 +597,6 @@ extension VideoPlayerView {
     if isFinishedPlaying {
       isFinishedPlaying = false
       player.seek(to: .zero, completionHandler: seekToZeroCompletion)
-      sliderProgress = .zero
-      lastDraggedProgress = .zero
     } else {
       if player.timeControlStatus == .paused  {
         player.play()
@@ -578,7 +618,7 @@ extension VideoPlayerView {
   
   private func updateImage() {
     guard let currentIem = player.currentItem else { return }
-    if player.currentTime().seconds >= (currentIem.duration.seconds - 3) {
+    if player.currentTime().seconds >= (currentIem.duration.seconds) {
       isFinishedPlaying = true
       playPauseimageName = "gobackward"
     } else {
@@ -615,6 +655,7 @@ extension VideoPlayerView {
     openedSettingsModal = false
     openedOptionsQuality = false
     openedOptionsSpeed = false
+    openedOptionsMoreOptions = false
   }
   
   private func notificationPostModal(userInfo: [String: Any]) {
@@ -625,13 +666,13 @@ extension VideoPlayerView {
     switch(item) {
     case .qualities:
       openedOptionsQuality = true
-      
-      return
+      break
     case .speeds:
       openedOptionsSpeed = true
-      return
+      break
     case .moreOptions:
-      return print("more options clicked")
+      openedOptionsMoreOptions = true
+      break
     }
   }
 }
@@ -643,18 +684,20 @@ struct CustomView : View {
   var thumbnails: [UIImage]
   var onTapFullScreenControl: (Bool) -> Void
   var isFullScreen: Bool
+  var videoSettings: [HashableData]
   var onTapSettingsControl: () -> Void
-  var videoQualities: [OptionSelection]
+  var videoQualities: [HashableData]
   var initialQualitySelected: String
-  var videoSpeeds: [OptionSelection]
+  var videoSpeeds: [HashableData]
   var initialSpeedSelected: String
   var selectedQuality: String
   var selectedSpeed: String
   var settingsModalOpened: Bool
   var openedOptionsQualities: Bool
   var openedOptionsSpeed: Bool
-
-  
+  var openedOptionsMoreOptions: Bool
+  var isActiveAutoPlay: Bool
+  var isActiveLoop: Bool
   
   var body: some View {
     GeometryReader {
@@ -666,6 +709,7 @@ struct CustomView : View {
         thumbnails: thumbnails,
         onTapFullScreenControl: onTapFullScreenControl,
         isFullScreen: isFullScreen,
+        videoSettings: videoSettings,
         onTapSettingsControl: onTapSettingsControl,
         videoQualities: videoQualities,
         initialQualitySelected: initialQualitySelected,
@@ -675,7 +719,10 @@ struct CustomView : View {
         selectedSpeed: selectedSpeed,
         settingsModalOpened: settingsModalOpened,
         openedOptionsQualities: openedOptionsQualities,
-        openedOptionsSpeed: openedOptionsSpeed
+        openedOptionsSpeed: openedOptionsSpeed,
+        openedOptionsMoreOptions: openedOptionsMoreOptions,
+        isActiveAutoPlay: isActiveAutoPlay,
+        isActiveLoop: isActiveLoop
       )
     }
   }

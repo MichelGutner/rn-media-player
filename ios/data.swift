@@ -5,15 +5,7 @@
 //  Created by Michel Gutner on 30/01/24.
 //
 
-@available(iOS 13.0, *)
-public var settingsData: [HashableItem] = [
-  HashableItem(name: "Quality", value: "qualities", enabled: true),
-  HashableItem(name: "Playback speed", value: "speeds", enabled: true),
-  HashableItem(name: "More Options", value: "moreOptions", enabled: true)
-]
-
-
-struct OptionSelection : Hashable {
+struct HashableData : Hashable {
   let name: String
   let value: String
   let enabled: Bool
@@ -36,7 +28,7 @@ struct OptionSelection : Hashable {
     hasher.combine(enabled)
   }
   
-  static func == (lhs: OptionSelection, rhs: OptionSelection) -> Bool {
+  static func == (lhs: HashableData, rhs: HashableData) -> Bool {
     return lhs.name == rhs.name && lhs.value == rhs.value && lhs.enabled == rhs.enabled
   }
 }
