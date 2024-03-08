@@ -18,19 +18,18 @@ import {RNPlayerVideo} from './src/player';
 
 function App(): JSX.Element {
   const [isFull, setIsFull] = useState(false);
-  console.log('🚀 ~ App ~ isFull:', isFull);
   const resizeMode = isFull ? 'cover' : 'contain';
 
   return (
     <View>
       <RNPlayerVideo
-        style={{height: 550, overflow: 'hidden'}}
+        style={{height: 300}}
         onFullScreen={e => setIsFull(e)}
-        resizeMode={resizeMode}
+        // resizeMode={resizeMode}
         paused={false}
-        startTime={158}
+        startTime={0}
         enterInFullScreenWhenDeviceRotated={true}
-        autoPlay={false}
+        autoPlay={true}
         loop={false}
       />
       <TouchableOpacity onPress={() => console.log('oi')}>

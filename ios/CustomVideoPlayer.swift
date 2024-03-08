@@ -12,17 +12,18 @@ import AVKit
 @available(iOS 13.0, *)
 struct CustomVideoPlayer : UIViewControllerRepresentable {
   var player: AVPlayer
+  var videoGravity: AVLayerVideoGravity
+  
   
   func makeUIViewController(context: Context) -> AVPlayerViewController {
     let controller  = AVPlayerViewController()
     controller.player = player
     controller.showsPlaybackControls = false
-  
     
     return controller
   }
   
   func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
-    uiViewController.videoGravity = .resizeAspectFill
+    uiViewController.videoGravity = videoGravity
   }
 }

@@ -15,7 +15,7 @@ class PlaybackObserver: ObservableObject {
   @Published var playbackCurrentTime = 0.0
   @Published var status = AVPlayerItem.Status.unknown
   @Published var thumbnailsFrames: [UIImage] = []
-  @Published var configs: [String: Any]? = nil
+  @Published var currentTime: Double = 0.0
   
   @objc func itemDidFinishPlaying(_ notification: Notification) {
     isFinishedPlaying = true
@@ -28,11 +28,11 @@ class PlaybackObserver: ObservableObject {
     status = item.status
   }
   
-  @objc func getThumbnailFrames(_ notification: Notification) {
-    thumbnailsFrames = (notification.userInfo?["frames"] as? [UIImage])!
+  @objc func periodTimeObserver(_ notification: Notification) {
+    currentTime = notification.userInfo?["currentTime"] as! Double
   }
   
-  @objc func getConfig(_ notification: Notification) {
-    configs = (notification.userInfo?["configs"] as? [String: Any])!
+  @objc func getThumbnailFrames(_ notification: Notification) {
+    thumbnailsFrames = (notification.userInfo?["frames"] as? [UIImage])!
   }
 }

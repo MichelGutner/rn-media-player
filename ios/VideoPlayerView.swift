@@ -15,11 +15,12 @@ struct VideoPlayerView: View {
   var onTapFullScreenControl: (Bool) -> Void
   var onTapSettingsControl: () -> Void
   
+  
   @ObservedObject private var playbackObserver = PlaybackObserver()
   
   @State private var player: AVPlayer
   @State private var showPlayerControls: Bool = false
-  @State private var isPlaying: Bool = true
+  @State private var isPlaying: Bool? = nil
   @State private var timeoutTask: DispatchWorkItem?
   @State private var playPauseimageName: String = "pause.fill"
   
@@ -48,7 +49,7 @@ struct VideoPlayerView: View {
   @State private var sliderProgress = 0.0
   @State private var lastDraggedProgress: CGFloat = 0
   @State private var isSeeking: Bool = false
-  @State private var buffering = 0.0
+  @State private var buffering: Double = 0.0
   @State private var isFinishedPlaying: Bool = false
   @State private var isObservedAdded: Bool = false
   @State private var isSeekingByDoubleTap: Bool = false
@@ -57,18 +58,24 @@ struct VideoPlayerView: View {
   @State private var draggingImage: UIImage?
   
   @State private var playbackDuration: Double = 0
+  @State private var playbackCurrentTime: Double = 0
   @State private var videoPlayerSize: CGSize!
   
   @State private var isFullScreen: Bool = false
   
   @State private var isActiveAutoPlay: Bool = false
   @State private var isActiveLoop: Bool = false
+  @State private var videoGravity: AVLayerVideoGravity!
   
   
   
   init(
     size: CGSize,
     player: AVPlayer,
+    currentTime: Double,
+    duration: Double,
+    playbackFinished: Bool,
+    buffering: Double,
     thumbnails: [UIImage],
     onTapFullScreenControl: @escaping (Bool) -> Void,
     isFullScreen: Bool,
@@ -85,7 +92,11 @@ struct VideoPlayerView: View {
     openedOptionsSpeed: Bool,
     openedOptionsMoreOptions: Bool,
     isActiveAutoPlay: Bool,
-    isActiveLoop: Bool
+    isActiveLoop: Bool,
+    videoGravity: AVLayerVideoGravity,
+    sliderProgress: Double,
+    lastDraggedProgress: Double,
+    isPlaying: Bool?
   ) {
     self.size = size
     self.player = player
@@ -105,15 +116,21 @@ struct VideoPlayerView: View {
     _playbackObserver = ObservedObject(initialValue: PlaybackObserver())
     _isActiveAutoPlay = State(initialValue: isActiveAutoPlay)
     _isActiveLoop = State(initialValue: isActiveLoop)
+    _videoGravity = State(wrappedValue: videoGravity)
+    _isFinishedPlaying = State(initialValue: playbackFinished)
+    _isPlaying = State(wrappedValue: isPlaying)
+    
+    print("\(buffering) \(sliderProgress) \(lastDraggedProgress) \(currentTime) \(duration)")
   }
   
   var body: some View {
     VStack {
       let videoPlayerSize: CGSize = .init(width: size.width, height: size.height)
       ZStack {
-        CustomVideoPlayer(player: player)
-          .edgesIgnoringSafeArea(Edge.Set.all)
+        CustomVideoPlayer(player: player, videoGravity: videoGravity)
+          .edgesIgnoringSafeArea(isFullScreen ? Edge.Set.all : [])
           .overlay(
+            
             Rectangle()
               .fill(Color.black.opacity(0.4))
               .opacity(showPlayerControls || isDraggingSlider ? 1 : 0)
@@ -145,7 +162,7 @@ struct VideoPlayerView: View {
               showPlayerControls.toggle()
             }
             
-            if isPlaying {
+            if isPlaying == true {
               timeoutControls()
             }
           }
@@ -166,7 +183,6 @@ struct VideoPlayerView: View {
             }
               .padding(.leading)
               .padding(.trailing)
-//              .padding(.top, 12)
           )
           .overlay(
             Group {
@@ -204,10 +220,9 @@ struct VideoPlayerView: View {
                           data: videoSpeeds,
                           onSelected: { [self] item in
                             selectedSpeed = item.name
-                            //                        changePlaybackQuality(URL(string: item.value)!)
-                            //                        qualityModalView.removeFromSuperview()
-                            //                        isOpenedModal = false
-                            self.notificationPostModal(userInfo: ["optionsSpeedSelected": item.name, "\(ESettingsOptions.speeds)Opened": false])
+                            self.notificationPostModal(userInfo: ["optionsSpeedSelected": item.name, "\(ESettingsOptions.speeds)Opened": false, "speedRate": Float(item.value) as Any])
+                            resetModalState()
+                            updatePlayPauseImage()
                           },
                           initialSelectedItem: initialSpeedSelected,
                           selectedItem: selectedSpeed
@@ -250,17 +265,42 @@ struct VideoPlayerView: View {
     }
     .onAppear {
       guard !isObservedAdded else { return }
+      guard let currentItem = player.currentItem else { return }
+      let currentTime = currentItem.currentTime().seconds
+      let duration = currentItem.duration.seconds
+      
+      if !duration.isNaN {
+        playbackDuration = duration
+        playbackCurrentTime = currentTime
+        
+        sliderProgress = currentTime / duration
+        lastDraggedProgress = sliderProgress
+        
+        let loadedTimeRanges = currentItem.loadedTimeRanges
+        if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
+          let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
+          let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
+          let bufferedEnd = CMTimeGetSeconds(firstTimeRange.end)
+          buffering = (bufferedStart + bufferedDuration) / playbackDuration
+          notificationPostPlaybackInfo(userInfo: ["buffering": bufferedEnd])
+        }
+      }
       
       if isActiveAutoPlay {
-        player.play()
+        if isPlaying == nil {
+          player.play()
+        }
       } else {
         player.pause()
       }
       
-      updateImage()
-      player.addPeriodicTimeObserver(forInterval: .init(seconds: 1, preferredTimescale: 1), queue: .main) { [self] _ in
-        updatePlayerTime()
+      player.addPeriodicTimeObserver(forInterval: .init(seconds: 1, preferredTimescale: 1), queue: .main) { time in
+        updatePlayerTime(time.seconds)
       }
+      
+      
+
+      updatePlayPauseImage()
       
       NotificationCenter.default.addObserver(
         playbackObserver,
@@ -285,16 +325,14 @@ struct VideoPlayerView: View {
 
       isObservedAdded = true
     }
-    .onReceive(playbackObserver.$isFinishedPlaying) { finished in
+    .onReceive(playbackObserver.$isFinishedPlaying) { [self] finished in
       if finished {
-        print("testing")
         if isActiveLoop {
           player.seek(to: .zero)
           return
         }
-
-        self.isFinishedPlaying = true
-        updateImage()
+        
+        onFinished()
       }
     }
     .onReceive(playbackObserver.$thumbnailsFrames) { frames in
@@ -303,25 +341,6 @@ struct VideoPlayerView: View {
               self.thumbnailsFrames = frames
             }
         }
-    }
-    .onReceive(playbackObserver.$playbackDuration) { duration in
-      if duration != 0.0 {
-        playbackDuration = duration
-      }
-      guard let currentItem = player.currentItem else { return }
-      
-      if  currentItem.duration.seconds != 0.0 {
-        playbackDuration = currentItem.duration.seconds
-        sliderProgress = player.currentTime().seconds / (player.currentItem?.duration.seconds)!
-        lastDraggedProgress = sliderProgress
-        
-        let loadedTimeRanges = currentItem.loadedTimeRanges
-        if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
-          let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
-          let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
-          buffering = (bufferedStart + bufferedDuration) / currentItem.duration.seconds
-        }
-      }
     }
   }
   
@@ -362,14 +381,10 @@ extension VideoPlayerView {
               RoundedRectangle(cornerRadius: 15, style: .continuous)
                 .stroke(.white, lineWidth: 2)
             )
-          Group {
-            if let currentItem =  player.currentItem {
-              Text(stringFromTimeInterval(interval: TimeInterval(truncating: (sliderProgress * currentItem.duration.seconds) as NSNumber)))
-                .font(.caption)
-                .foregroundColor(.white)
-                .fontWeight(.semibold)
-            }
-          }
+          Text(stringFromTimeInterval(interval: TimeInterval(truncating: (sliderProgress * playbackDuration) as NSNumber)))
+            .font(.caption)
+            .foregroundColor(.white)
+            .fontWeight(.semibold)
         }
       } else {
         RoundedRectangle(cornerRadius: 15, style: .continuous)
@@ -389,7 +404,7 @@ extension VideoPlayerView {
   
   @ViewBuilder
   func VideoSeekerView() -> some View {
-    let calculateSizeDurationText = calculateSizeByWidth(size8, variantPercent10)
+//    let calculateSizeDurationText = calculateSizeByWidth(size8, variantPercent10)
 
     VStack(alignment: .leading) {
       VideoSeekerThumbnailView()
@@ -402,19 +417,24 @@ extension VideoPlayerView {
             .cornerRadius(8)
           
           Rectangle()
-            .fill(.red)
-            .frame(width: size.width * sliderProgress)
+            .fill(.white)
+            .frame(width: buffering * size.width)
+            .cornerRadius(8)
+          
+          Rectangle()
+            .fill(.blue)
+            .frame(width: size.width * sliderProgress > size.width ? size.width : size.width * sliderProgress)
             .cornerRadius(8)
           
           HStack {}
             .overlay(
               Circle()
-                .fill(.red)
+                .fill(.blue)
                 .frame(width: 15, height: 15)
                 .frame(width: 50, height: 50)
                 .opacity(isSeekingByDoubleTap ? 0.001 : 1)
                 .contentShape(Rectangle())
-                .offset(x: size.width * sliderProgress)
+                .offset(x: size.width * sliderProgress > size.width ? size.width : size.width * sliderProgress)
                 .gesture(
                   DragGesture()
                     .updating($isDraggingSlider, body: { _, out, _ in
@@ -424,6 +444,7 @@ extension VideoPlayerView {
                       if let timeoutTask {
                         timeoutTask.cancel()
                       }
+                      
                       let translationX: CGFloat = value.translation.width
                       let calculatedProgress = (translationX / size.width) + lastDraggedProgress
                       sliderProgress = max(min(calculatedProgress, 1), 0)
@@ -444,11 +465,10 @@ extension VideoPlayerView {
                         if targetTime < 1 {
                           isFinishedPlaying = false
                         }
-                        
                         player.seek(to: targetCMTime)
                       }
                       
-                      if isPlaying {
+                      if isPlaying == true {
                         timeoutControls()
                       }
                       
@@ -473,16 +493,13 @@ extension VideoPlayerView {
   
   @ViewBuilder
   func PlaybackControls() -> some View {
+    
     VStack {
       Spacer()
       HStack {
         Spacer()
         Button(action: {
-          onPlaybackManager(seekToZeroCompletion: { completed in
-            if completed {
-              updateImage()
-            }
-          })
+          onPlaybackManager()
         }) {
 //          if isLoading {
 //            LoadingManager(config: [:])
@@ -562,65 +579,76 @@ extension VideoPlayerView {
     }
   }
     
-  private func updatePlayerTime() {
+  private func updatePlayerTime(_ time: CGFloat) {
     guard let currentItem = player.currentItem else { return }
-    let currentTime = currentItem.currentTime().seconds
-    let duration = currentItem.duration.seconds
+    print("entrando")
+    playbackCurrentTime = time
+    playbackDuration = currentItem.duration.seconds
+    let calculatedProgress = playbackCurrentTime / playbackDuration
     
     let loadedTimeRanges = currentItem.loadedTimeRanges
     if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
       let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
       let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
-      buffering = (bufferedStart + bufferedDuration) / duration
-      //      onVideoProgress(["progress": currentTime, "bufferedDuration": bufferedStart + bufferedDuration])
+      let bufferedEnd = CMTimeGetSeconds(firstTimeRange.end)
+      buffering = (bufferedStart + bufferedDuration) / playbackDuration
+      notificationPostPlaybackInfo(userInfo: ["buffering": bufferedEnd])
     }
-    if currentTime < duration {
-      let calculatedProgress = currentTime / duration
-      if !isSeeking {
+    notificationPostPlaybackInfo(userInfo: ["currentTime": playbackCurrentTime, "duration": playbackDuration])
+
+      if !isSeeking && sliderProgress < 1 {
         sliderProgress = calculatedProgress
         lastDraggedProgress = sliderProgress
+        notificationPostPlaybackInfo(userInfo: ["sliderProgress": calculatedProgress, "lastDraggedProgress": calculatedProgress])
       }
-      if calculatedProgress >= 1 {
-        isFinishedPlaying = true
-        isPlaying = false
-      }
+    
+    
+    
+    if sliderProgress >= 1 {
+      onFinished()
+      
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+        if isActiveLoop {
+          resetPlaybackStatus()
+        }
+      })
+      
     } else {
-      if let duration = player.currentItem?.duration, !duration.seconds.isNaN {
-        isFinishedPlaying = true
-      }
+      isFinishedPlaying = false
+      notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
+      updatePlayPauseImage()
     }
   }
   
-  private func onPlaybackManager(seekToZeroCompletion: @escaping (Bool) -> Void) {
+  private func onPlaybackManager() {
     if isFinishedPlaying {
-      isFinishedPlaying = false
-      player.seek(to: .zero, completionHandler: seekToZeroCompletion)
+      resetPlaybackStatus()
     } else {
       if player.timeControlStatus == .paused  {
         player.play()
+        isPlaying = true
         timeoutControls()
       } else {
         player.pause()
+        isPlaying = false
         if let timeoutTask {
           timeoutTask.cancel()
         }
       }
+      notificationPostPlaybackInfo(userInfo: ["isPlaying": isPlaying])
     }
-    updateImage()
+    updatePlayPauseImage()
     
-    withAnimation(.easeInOut(duration: 0.2)) {
-      isPlaying.toggle()
-    }
-    //    onTapPlayPause(["status": PlayingStatusManager(status)])
+    
   }
   
-  private func updateImage() {
-    guard let currentIem = player.currentItem else { return }
-    if player.currentTime().seconds >= (currentIem.duration.seconds) {
-      isFinishedPlaying = true
-      playPauseimageName = "gobackward"
+  private func updatePlayPauseImage() {
+    if isFinishedPlaying {
+      withAnimation(.easeInOut(duration: 0.35)) {
+        playPauseimageName = "gobackward"
+      }
     } else {
-      withAnimation(.easeInOut(duration: 0.1)) {
+      withAnimation(.easeInOut(duration: 0.35)) {
         player.timeControlStatus == .paused ? (playPauseimageName = "play.fill") : (playPauseimageName = "pause.fill")
       }
       isFinishedPlaying = false
@@ -660,6 +688,10 @@ extension VideoPlayerView {
     NotificationCenter.default.post(name: Notification.Name("modal"), object: nil, userInfo: userInfo)
   }
   
+  private func notificationPostPlaybackInfo(userInfo: [String: Any]) {
+    NotificationCenter.default.post(name: Notification.Name("playbackInfo"), object: nil, userInfo: userInfo)
+  }
+  
   private func optionsItemSelected(_ item: ESettingsOptions) {
     switch(item) {
     case .qualities:
@@ -673,12 +705,40 @@ extension VideoPlayerView {
       break
     }
   }
+  
+  private func onFinished() {
+    player.pause()
+    isFinishedPlaying = true
+    notificationPostPlaybackInfo(userInfo: ["playbackFinished": true])
+
+    updatePlayPauseImage()
+  }
+  
+  private func resetPlaybackStatus() {
+    DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
+      isFinishedPlaying = false
+      player.play()
+    })
+  
+    sliderProgress = .zero
+    lastDraggedProgress = .zero
+    player.seek(to: .zero, completionHandler: {completed in
+      if completed {
+        updatePlayPauseImage()
+      }
+    })
+  }
 }
 
 // MARK: -- CustomView
 @available(iOS 13.0, *)
 struct CustomView : View {
   var player: AVPlayer
+  var currentTime: Double
+  var duration: Double
+  var playbackFinished: Bool
+  var buffering: Double
+  var videoGravity: AVLayerVideoGravity
   var thumbnails: [UIImage]
   var onTapFullScreenControl: (Bool) -> Void
   var isFullScreen: Bool
@@ -696,6 +756,9 @@ struct CustomView : View {
   var openedOptionsMoreOptions: Bool
   var isActiveAutoPlay: Bool
   var isActiveLoop: Bool
+  var sliderProgress: Double
+  var lastDraggedProgress: Double
+  var isPlaying: Bool?
   
   var body: some View {
     GeometryReader {
@@ -704,6 +767,10 @@ struct CustomView : View {
       VideoPlayerView(
         size: size,
         player: player,
+        currentTime: currentTime,
+        duration: duration,
+        playbackFinished: playbackFinished,
+        buffering: buffering,
         thumbnails: thumbnails,
         onTapFullScreenControl: onTapFullScreenControl,
         isFullScreen: isFullScreen,
@@ -720,7 +787,11 @@ struct CustomView : View {
         openedOptionsSpeed: openedOptionsSpeed,
         openedOptionsMoreOptions: openedOptionsMoreOptions,
         isActiveAutoPlay: isActiveAutoPlay,
-        isActiveLoop: isActiveLoop
+        isActiveLoop: isActiveLoop,
+        videoGravity: videoGravity,
+        sliderProgress: sliderProgress,
+        lastDraggedProgress: lastDraggedProgress,
+        isPlaying: isPlaying
       )
     }
   }
