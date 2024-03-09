@@ -23,6 +23,14 @@ function App(): JSX.Element {
   return (
     <View>
       <RNPlayerVideo
+        source={{
+          url: 'https://content.jwplatform.com/videos/MGAxJ46m-zZbIuxVJ.mp4',
+          videoTile: 'testing',
+        }}
+        // source={{
+        //   url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        //   videoTile: 'testing',
+        // }}
         style={{height: 300}}
         onFullScreen={e => setIsFull(e)}
         // resizeMode={resizeMode}

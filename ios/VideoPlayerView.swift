@@ -57,8 +57,8 @@ struct VideoPlayerView: View {
   @State private var thumbnailsFrames: [UIImage] = []
   @State private var draggingImage: UIImage?
   
-  @State private var playbackDuration: Double = 0
-  @State private var playbackCurrentTime: Double = 0
+  @State private var duration: Double = 0
+  @State private var currentTime: Double = 0
   @State private var videoPlayerSize: CGSize!
   
   @State private var isFullScreen: Bool = false
@@ -270,8 +270,8 @@ struct VideoPlayerView: View {
       let duration = currentItem.duration.seconds
       
       if !duration.isNaN {
-        playbackDuration = duration
-        playbackCurrentTime = currentTime
+        self.duration = duration
+        self.currentTime = currentTime
         
         sliderProgress = currentTime / duration
         lastDraggedProgress = sliderProgress
@@ -281,7 +281,7 @@ struct VideoPlayerView: View {
           let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
           let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
           let bufferedEnd = CMTimeGetSeconds(firstTimeRange.end)
-          buffering = (bufferedStart + bufferedDuration) / playbackDuration
+          buffering = (bufferedStart + bufferedDuration) / duration
           notificationPostPlaybackInfo(userInfo: ["buffering": bufferedEnd])
         }
       }
@@ -294,12 +294,11 @@ struct VideoPlayerView: View {
         player.pause()
       }
       
-      player.addPeriodicTimeObserver(forInterval: .init(seconds: 1, preferredTimescale: 1), queue: .main) { time in
+      let interval = CMTime(value: 1, timescale: 2)
+      player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
         updatePlayerTime(time.seconds)
       }
-      
-      
-
+  
       updatePlayPauseImage()
       
       NotificationCenter.default.addObserver(
@@ -381,7 +380,7 @@ extension VideoPlayerView {
               RoundedRectangle(cornerRadius: 15, style: .continuous)
                 .stroke(.white, lineWidth: 2)
             )
-          Text(stringFromTimeInterval(interval: TimeInterval(truncating: (sliderProgress * playbackDuration) as NSNumber)))
+          Text(stringFromTimeInterval(interval: TimeInterval(truncating: (sliderProgress * duration) as NSNumber)))
             .font(.caption)
             .foregroundColor(.white)
             .fontWeight(.semibold)
@@ -410,80 +409,74 @@ extension VideoPlayerView {
       VideoSeekerThumbnailView()
         .padding(.bottom, 8)
       HStack {
-        ZStack(alignment: .leading) {
-          Rectangle()
-            .fill(.gray).opacity(0.5)
-            .frame(width: size.width)
-            .cornerRadius(8)
-          
-          Rectangle()
-            .fill(.white)
-            .frame(width: buffering * size.width)
-            .cornerRadius(8)
-          
-          Rectangle()
-            .fill(.blue)
-            .frame(width: size.width * sliderProgress > size.width ? size.width : size.width * sliderProgress)
-            .cornerRadius(8)
-          
-          HStack {}
-            .overlay(
-              Circle()
-                .fill(.blue)
-                .frame(width: 15, height: 15)
-                .frame(width: 50, height: 50)
-                .opacity(isSeekingByDoubleTap ? 0.001 : 1)
-                .contentShape(Rectangle())
-                .offset(x: size.width * sliderProgress > size.width ? size.width : size.width * sliderProgress)
-                .gesture(
-                  DragGesture()
-                    .updating($isDraggingSlider, body: { _, out, _ in
-                      out = true
-                    })
-                    .onChanged({ value in
-                      if let timeoutTask {
-                        timeoutTask.cancel()
-                      }
-                      
-                      let translationX: CGFloat = value.translation.width
-                      let calculatedProgress = (translationX / size.width) + lastDraggedProgress
-                      sliderProgress = max(min(calculatedProgress, 1), 0)
-                      isSeeking = true
-                      
-                      let dragIndex = Int(sliderProgress / 0.01)
-                      if thumbnailsFrames.indices.contains(dragIndex) {
-                        draggingImage = thumbnailsFrames[dragIndex]
-                      }
-                    })
-                    .onEnded({ value in
-                      lastDraggedProgress = sliderProgress
-                      if let currentItem = player.currentItem {
-                        let duration = currentItem.duration.seconds
-                        let targetTime = duration * sliderProgress
-                        let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
-                        
-                        if targetTime < 1 {
-                          isFinishedPlaying = false
-                        }
-                        player.seek(to: targetCMTime)
-                      }
-                      
-                      if isPlaying == true {
-                        timeoutControls()
-                      }
-                      
-                      DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
-                        isSeeking = false
-                      })
-                    })
-                )
-            )
-        }
-        .frame(height: 3)
-        
-//        Text(stringFromTimeInterval(interval: playbackDuration))
-//          .font(.system(size: calculateSizeDurationText))
-//          .foregroundColor(.white)
+          ZStack(alignment: .leading) {
+              Rectangle()
+                  .fill(Color.gray).opacity(0.5)
+                  .frame(width: size.width)
+                  .cornerRadius(8)
+              
+              Rectangle()
+                  .fill(Color.white)
+                  .frame(width: buffering * size.width)
+                  .cornerRadius(8)
+              
+              Rectangle()
+                  .fill(Color.blue)
+                  .frame(width: calculateSliderWidth())
+                  .cornerRadius(8)
+              
+              HStack {}
+                  .overlay(
+                      Circle()
+                          .fill(Color.blue)
+                          .frame(width: 15, height: 15)
+                          .frame(width: 50, height: 50)
+                          .opacity(isSeekingByDoubleTap ? 0.001 : 1)
+                          .contentShape(Rectangle())
+                          .offset(x: calculateSliderWidth())
+                          .gesture(
+                              DragGesture()
+                                  .updating($isDraggingSlider, body: { _, out, _ in
+                                      out = true
+                                  })
+                                  .onChanged({ value in
+                                      let translationX = value.translation.width
+                                      let calculatedProgress = (translationX / size.width) + lastDraggedProgress
+                                      sliderProgress = max(min(calculatedProgress, 1), 0)
+                                      isSeeking = true
+                                      
+                                      let dragIndex = Int(sliderProgress / 0.01)
+                                      if thumbnailsFrames.indices.contains(dragIndex) {
+                                          draggingImage = thumbnailsFrames[dragIndex]
+                                      }
+                                  })
+                                  .onEnded({ value in
+                                      lastDraggedProgress = sliderProgress
+                                      if let currentItem = player.currentItem {
+                                          let duration = currentItem.duration.seconds
+                                          let targetTime = duration * sliderProgress
+                                       
+                                        let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
+                                        let tolerance = CMTime(seconds: 0.1, preferredTimescale: Int32(NSEC_PER_SEC)) // Set your tolerance value
+
+                                          
+                                          if targetTime < 1 {
+                                              isFinishedPlaying = false
+                                          }
+                                        
+                                        player.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
+                                              isSeeking = false
+                                          })
+                                      }
+                                      
+                                      if isPlaying == true {
+                                          timeoutControls()
+                                      }
+                                  })
+                          )
+                  )
+          }
+          .frame(height: 3)
       }
       .opacity(showPlayerControls || isSeeking || isSeekingByDoubleTap ? 1 : 0)
       .animation(.easeInOut(duration: 0.2), value: showPlayerControls || isSeekingByDoubleTap || isSeeking)
@@ -563,6 +556,12 @@ extension VideoPlayerView {
 // MARK: -- Private Functions
 @available(iOS 13.0, *)
 extension VideoPlayerView {
+  private func calculateSliderWidth() -> CGFloat {
+      let maximumWidth = size.width
+      let calculatedWidth = maximumWidth * CGFloat(sliderProgress)
+      return min(maximumWidth, max(0, calculatedWidth))
+  }
+
   private func timeoutControls() {
     if let timeoutTask {
       timeoutTask.cancel()
@@ -581,22 +580,22 @@ extension VideoPlayerView {
     
   private func updatePlayerTime(_ time: CGFloat) {
     guard let currentItem = player.currentItem else { return }
-    print("entrando")
-    playbackCurrentTime = time
-    playbackDuration = currentItem.duration.seconds
-    let calculatedProgress = playbackCurrentTime / playbackDuration
+
+    currentTime = time
+    duration = currentItem.duration.seconds
+    let calculatedProgress = currentTime / duration
     
     let loadedTimeRanges = currentItem.loadedTimeRanges
     if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
       let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
       let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
       let bufferedEnd = CMTimeGetSeconds(firstTimeRange.end)
-      buffering = (bufferedStart + bufferedDuration) / playbackDuration
+      buffering = (bufferedStart + bufferedDuration) / duration
       notificationPostPlaybackInfo(userInfo: ["buffering": bufferedEnd])
     }
-    notificationPostPlaybackInfo(userInfo: ["currentTime": playbackCurrentTime, "duration": playbackDuration])
+    notificationPostPlaybackInfo(userInfo: ["currentTime": currentTime, "duration": duration])
 
-      if !isSeeking && sliderProgress < 1 {
+      if !isSeeking && time < currentItem.duration.seconds {
         sliderProgress = calculatedProgress
         lastDraggedProgress = sliderProgress
         notificationPostPlaybackInfo(userInfo: ["sliderProgress": calculatedProgress, "lastDraggedProgress": calculatedProgress])
@@ -604,7 +603,7 @@ extension VideoPlayerView {
     
     
     
-    if sliderProgress >= 1 {
+    if !isSeeking && time > currentItem.duration.seconds {
       onFinished()
       
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
@@ -710,21 +709,19 @@ extension VideoPlayerView {
     player.pause()
     isFinishedPlaying = true
     notificationPostPlaybackInfo(userInfo: ["playbackFinished": true])
-
     updatePlayPauseImage()
   }
   
   private func resetPlaybackStatus() {
-    DispatchQueue.main.asyncAfter(deadline: .now(), execute: {
-      isFinishedPlaying = false
-      player.play()
-    })
-  
+    isFinishedPlaying = false
+    
     sliderProgress = .zero
     lastDraggedProgress = .zero
     player.seek(to: .zero, completionHandler: {completed in
       if completed {
+        player.play()
         updatePlayPauseImage()
+        notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
       }
     })
   }
