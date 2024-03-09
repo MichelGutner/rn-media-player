@@ -11,19 +11,13 @@ import Combine
 
 @available(iOS 13.0, *)
 struct VideoPlayerView: View {
-  var size: CGSize
-  var onTapFullScreenControl: (Bool) -> Void
-  var onTapSettingsControl: () -> Void
-  
-  
   @ObservedObject private var playbackObserver = PlaybackObserver()
-  
   @State private var player: AVPlayer
   @State private var showPlayerControls: Bool = false
   @State private var isPlaying: Bool? = nil
   @State private var timeoutTask: DispatchWorkItem?
   @State private var playPauseimageName: String = "pause.fill"
-  
+  @State private var timeObserver: Any? = nil
   
   @State private var openedSettingsModal: Bool = false
   @State private var openedOptionsQuality: Bool = false
@@ -66,7 +60,11 @@ struct VideoPlayerView: View {
   @State private var isActiveAutoPlay: Bool = false
   @State private var isActiveLoop: Bool = false
   @State private var videoGravity: AVLayerVideoGravity!
+  @State private var interval = CMTime(value: 1, timescale: 2)
   
+  var size: CGSize
+  var onTapFullScreenControl: (Bool) -> Void
+  var onTapSettingsControl: () -> Void
   
   
   init(
@@ -99,7 +97,7 @@ struct VideoPlayerView: View {
     isPlaying: Bool?
   ) {
     self.size = size
-    self.player = player
+    _player = State(initialValue: player)
     self.onTapFullScreenControl = onTapFullScreenControl
     self.onTapSettingsControl = onTapSettingsControl
     _thumbnailsFrames = State(initialValue: thumbnails)
@@ -119,8 +117,7 @@ struct VideoPlayerView: View {
     _videoGravity = State(wrappedValue: videoGravity)
     _isFinishedPlaying = State(initialValue: playbackFinished)
     _isPlaying = State(wrappedValue: isPlaying)
-    
-    print("\(buffering) \(sliderProgress) \(lastDraggedProgress) \(currentTime) \(duration)")
+    _timeObserver = State(initialValue: nil)
   }
   
   var body: some View {
@@ -294,11 +291,10 @@ struct VideoPlayerView: View {
         player.pause()
       }
       
-      let interval = CMTime(value: 1, timescale: 2)
-      player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
+      timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
         updatePlayerTime(time.seconds)
       }
-  
+      
       updatePlayPauseImage()
       
       NotificationCenter.default.addObserver(
@@ -457,11 +453,11 @@ extension VideoPlayerView {
                                           let targetTime = duration * sliderProgress
                                        
                                         let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
-                                        let tolerance = CMTime(seconds: 0.1, preferredTimescale: Int32(NSEC_PER_SEC)) // Set your tolerance value
-
-                                          
-                                          if targetTime < 1 {
+                                        let tolerance = CMTime(seconds: 0.1, preferredTimescale: Int32(NSEC_PER_SEC))
+                                        
+                                          if targetTime < duration {
                                               isFinishedPlaying = false
+                                              updatePlayPauseImage()
                                           }
                                         
                                         player.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
@@ -601,11 +597,9 @@ extension VideoPlayerView {
         notificationPostPlaybackInfo(userInfo: ["sliderProgress": calculatedProgress, "lastDraggedProgress": calculatedProgress])
       }
     
-    
-    
-    if !isSeeking && time > currentItem.duration.seconds {
+    if !isSeeking && time >= currentItem.duration.seconds {
       onFinished()
-      
+      print("tester")
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
         if isActiveLoop {
           resetPlaybackStatus()
@@ -613,10 +607,18 @@ extension VideoPlayerView {
       })
       
     } else {
+      print("false")
       isFinishedPlaying = false
       notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
       updatePlayPauseImage()
     }
+  }
+  
+  private func removePeriodicTimeObserver() {
+    guard let timeObserver else { return }
+    player.pause()
+    player.removeTimeObserver(timeObserver)
+    self.timeObserver = nil
   }
   
   private func onPlaybackManager() {
@@ -706,7 +708,6 @@ extension VideoPlayerView {
   }
   
   private func onFinished() {
-    player.pause()
     isFinishedPlaying = true
     notificationPostPlaybackInfo(userInfo: ["playbackFinished": true])
     updatePlayPauseImage()
