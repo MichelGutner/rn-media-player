@@ -38,7 +38,7 @@ struct OptionsContentView: View {
             if item.enabled {
               HStack {
                 ZStack {
-                  Circle().stroke(Color.primary, lineWidth: 1).frame(width: 12, height: 12)
+                  Circle().stroke(selected == item.name ? Color.primary : Color.gray, lineWidth: 1).frame(width: 12, height: 12)
                   if selected == item.name {
                     Circle()
                       .fill(Color.primary)
@@ -47,7 +47,7 @@ struct OptionsContentView: View {
                 }
                 .padding(.trailing, 18)
                 .fixedSize(horizontal: false, vertical: true)
-                Text("\(item.name)").foregroundColor(.primary)
+                Text("\(item.name)").foregroundColor(selected == item.name ? Color.primary : Color.gray)
                 Spacer()
               }
             }

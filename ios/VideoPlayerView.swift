@@ -62,9 +62,14 @@ struct VideoPlayerView: View {
   @State private var videoGravity: AVLayerVideoGravity!
   @State private var interval = CMTime(value: 1, timescale: 2)
   
+  @State private var downloadProgress: Float = 0.0
+  @State private var showActionSheetFileManager = false
+  
   var size: CGSize
   var onTapFullScreenControl: (Bool) -> Void
   var onTapSettingsControl: () -> Void
+  
+  private var fileManager = PlayerFileManager()
   
   
   init(
@@ -127,7 +132,6 @@ struct VideoPlayerView: View {
         CustomVideoPlayer(player: player, videoGravity: videoGravity)
           .edgesIgnoringSafeArea(isFullScreen ? Edge.Set.all : [])
           .overlay(
-            
             Rectangle()
               .fill(Color.black.opacity(0.4))
               .opacity(showPlayerControls || isDraggingSlider ? 1 : 0)
@@ -172,14 +176,17 @@ struct VideoPlayerView: View {
               VideoSeekerView()
               HStack {
                 Spacer()
+                DownloadControl()
                 SettingsControl()
                 FullScreenControl()
               }
+
               .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
               .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
             }
               .padding(.leading)
               .padding(.trailing)
+              .padding(.bottom, 8)
           )
           .overlay(
             Group {
@@ -258,7 +265,6 @@ struct VideoPlayerView: View {
           )
       }
       .frame(width: videoPlayerSize.width, height: videoPlayerSize.height)
-      
     }
     .onAppear {
       guard !isObservedAdded else { return }
@@ -338,9 +344,6 @@ struct VideoPlayerView: View {
         }
     }
   }
-  
-
-
 }
 
 // MARK: -- View Builder
@@ -363,7 +366,11 @@ extension VideoPlayerView {
 
   @ViewBuilder
   func VideoSeekerThumbnailView() -> some View {
-    let thumbSize: CGSize = .init(width: 200, height: 100)
+    let calculatedWidthThumbnailSizeByWidth = calculateSizeByWidth(StaticSize.s200, VariantPercent.p40)
+    let calculatedHeightThumbnailSizeByWidth = calculateSizeByWidth(StaticSize.s100, VariantPercent.p40)
+    
+    let thumbSize: CGSize = .init(width: calculatedWidthThumbnailSizeByWidth, height: calculatedHeightThumbnailSizeByWidth)
+  
     HStack {
       if let draggingImage {
         VStack {
@@ -371,10 +378,10 @@ extension VideoPlayerView {
             .resizable()
             .aspectRatio(contentMode: .fill)
             .frame(width: thumbSize.width, height: thumbSize.height)
-            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: CorneRadious.c16, style: .continuous))
             .overlay(
-              RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .stroke(.white, lineWidth: 2)
+              RoundedRectangle(cornerRadius: CorneRadious.c16, style: .continuous)
+                .stroke(.blue, lineWidth: 2)
             )
           Text(stringFromTimeInterval(interval: TimeInterval(truncating: (sliderProgress * duration) as NSNumber)))
             .font(.caption)
@@ -382,10 +389,10 @@ extension VideoPlayerView {
             .fontWeight(.semibold)
         }
       } else {
-        RoundedRectangle(cornerRadius: 15, style: .continuous)
+        RoundedRectangle(cornerRadius: CorneRadious.c16, style: .continuous)
           .fill(.black)
           .overlay(
-            RoundedRectangle(cornerRadius: 15, style: .continuous)
+            RoundedRectangle(cornerRadius: CorneRadious.c16, style: .continuous)
               .stroke(.white, lineWidth: 2)
           )
       }
@@ -393,7 +400,7 @@ extension VideoPlayerView {
     .frame(width: thumbSize.width, height: thumbSize.height)
     .opacity(isDraggingSlider ? 1 : 0)
     .offset(x: sliderProgress * (size.width - thumbSize.width))
-    .animation(.easeInOut(duration: 0.2), value: isDraggingSlider)
+    .animation(.easeInOut(duration: AnimationDuration.s035), value: isDraggingSlider)
     
   }
   
@@ -403,80 +410,79 @@ extension VideoPlayerView {
 
     VStack(alignment: .leading) {
       VideoSeekerThumbnailView()
-        .padding(.bottom, 8)
+        .padding(.bottom, 16)
       HStack {
-          ZStack(alignment: .leading) {
-              Rectangle()
-                  .fill(Color.gray).opacity(0.5)
-                  .frame(width: size.width)
-                  .cornerRadius(8)
-              
-              Rectangle()
-                  .fill(Color.white)
-                  .frame(width: buffering * size.width)
-                  .cornerRadius(8)
-              
-              Rectangle()
-                  .fill(Color.blue)
-                  .frame(width: calculateSliderWidth())
-                  .cornerRadius(8)
-              
-              HStack {}
-                  .overlay(
-                      Circle()
-                          .fill(Color.blue)
-                          .frame(width: 15, height: 15)
-                          .frame(width: 50, height: 50)
-                          .opacity(isSeekingByDoubleTap ? 0.001 : 1)
-                          .contentShape(Rectangle())
-                          .offset(x: calculateSliderWidth())
-                          .gesture(
-                              DragGesture()
-                                  .updating($isDraggingSlider, body: { _, out, _ in
-                                      out = true
-                                  })
-                                  .onChanged({ value in
-                                      let translationX = value.translation.width
-                                      let calculatedProgress = (translationX / size.width) + lastDraggedProgress
-                                      sliderProgress = max(min(calculatedProgress, 1), 0)
-                                      isSeeking = true
-                                      
-                                      let dragIndex = Int(sliderProgress / 0.01)
-                                      if thumbnailsFrames.indices.contains(dragIndex) {
-                                          draggingImage = thumbnailsFrames[dragIndex]
-                                      }
-                                  })
-                                  .onEnded({ value in
-                                      lastDraggedProgress = sliderProgress
-                                      if let currentItem = player.currentItem {
-                                          let duration = currentItem.duration.seconds
-                                          let targetTime = duration * sliderProgress
-                                       
-                                        let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
-                                        let tolerance = CMTime(seconds: 0.1, preferredTimescale: Int32(NSEC_PER_SEC))
-                                        
-                                          if targetTime < duration {
-                                              isFinishedPlaying = false
-                                              updatePlayPauseImage()
-                                          }
-                                        
-                                        player.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
-                                              isSeeking = false
-                                          })
-                                      }
-                                      
-                                      if isPlaying == true {
-                                          timeoutControls()
-                                      }
-                                  })
-                          )
-                  )
-          }
-          .frame(height: 3)
+        ZStack(alignment: .leading) {
+          Rectangle()
+            .fill(Color.gray).opacity(0.5)
+            .frame(width: size.width)
+            .cornerRadius(8)
+          
+          Rectangle()
+            .fill(Color.white)
+            .frame(width: buffering * size.width)
+            .cornerRadius(8)
+          
+          Rectangle()
+            .fill(Color.blue)
+            .frame(width: calculateSliderWidth())
+            .cornerRadius(8)
+          
+          HStack {}
+            .overlay(
+              Circle()
+                .fill(Color.blue)
+                .frame(width: 15, height: 15)
+                .frame(width: 50, height: 50)
+                .opacity(isSeekingByDoubleTap ? 0.001 : 1)
+                .contentShape(Rectangle())
+                .offset(x: calculateSliderWidth())
+                .gesture(
+                  DragGesture()
+                    .updating($isDraggingSlider, body: { _, out, _ in
+                      out = true
+                    })
+                    .onChanged({ value in
+                      let translationX = value.translation.width
+                      let calculatedProgress = (translationX / size.width) + lastDraggedProgress
+                      sliderProgress = max(min(calculatedProgress, 1), 0)
+                      isSeeking = true
+                      
+                      let dragIndex = Int(sliderProgress / 0.01)
+                      if thumbnailsFrames.indices.contains(dragIndex) {
+                        draggingImage = thumbnailsFrames[dragIndex]
+                      }
+                    })
+                    .onEnded({ value in
+                      lastDraggedProgress = sliderProgress
+                      if let currentItem = player.currentItem {
+                        let duration = currentItem.duration.seconds
+                        let targetTime = duration * sliderProgress
+                        
+                        let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
+                        let tolerance = CMTime(seconds: 0.1, preferredTimescale: Int32(NSEC_PER_SEC))
+                        
+                        if targetTime < duration {
+                          isFinishedPlaying = false
+                          updatePlayPauseImage()
+                        }
+                        
+                        player.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
+                          isSeeking = false
+                        })
+                      }
+                      
+                      if isPlaying == true {
+                        timeoutControls()
+                      }
+                    })
+                )
+            )
+        }
+        .frame(height: 3)
       }
       .opacity(showPlayerControls || isSeeking || isSeekingByDoubleTap ? 1 : 0)
-      .animation(.easeInOut(duration: 0.2), value: showPlayerControls || isSeekingByDoubleTap || isSeeking)
-
+      .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls || isSeekingByDoubleTap || isSeeking)
     }
   }
   
@@ -490,14 +496,10 @@ extension VideoPlayerView {
         Button(action: {
           onPlaybackManager()
         }) {
-//          if isLoading {
-//            LoadingManager(config: [:])
-//          } else {
-            Image(systemName: playPauseimageName)
-              .foregroundColor(.white)
-              .font(.system(size: size30))
-              .padding(size16)
-//          }
+          Image(systemName: playPauseimageName)
+            .foregroundColor(.white)
+            .font(.system(size: size30))
+            .padding(size16)
         }
         .background(Color(.black).opacity(0.4))
         .cornerRadius(.infinity)
@@ -507,7 +509,7 @@ extension VideoPlayerView {
       Spacer()
     }
     .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
-    .animation(.easeInOut(duration: 0.2), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
+    .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
   }
   
   @ViewBuilder
@@ -530,7 +532,7 @@ extension VideoPlayerView {
   @ViewBuilder
   func SettingsControl() -> some View {
     Button(action: {
-        withAnimation(.linear(duration: 0.2)) {
+        withAnimation(.linear(duration: AnimationDuration.s035)) {
           openedSettingsModal = true
           notificationPostModal(userInfo: ["opened": openedSettingsModal])
         }
@@ -541,9 +543,68 @@ extension VideoPlayerView {
   }
   
   @ViewBuilder
+  func DownloadControl() -> some View {
+    let cached = PlayerFileManager().videoCached(title: "TestVideo")
+    Button (action: {
+      showActionSheetFileManager = true
+    }) {
+      VStack {
+        Image(systemName: "arrow.down")
+          .foregroundColor(.white)
+          .font(.system(size: 20))
+          .padding(8)
+        
+        ZStack(alignment: .leading) {
+          Rectangle()
+            .fill(cached.fileExist ? Color.blue : .white)
+            .frame(width: 30, height: 3)
+            .cornerRadius(16)
+            .padding(.top, -15)
+          
+          Rectangle()
+            .fill(Color.blue)
+            .frame(width: CGFloat(downloadProgress / 100) * 30, height: 3)
+            .cornerRadius(16)
+            .padding(.top, -15)
+        }
+        
+      }
+    }
+    .actionSheet(isPresented: $showActionSheetFileManager) {
+        let buttons: [ActionSheet.Button]
+        
+        if !cached.fileExist {
+            buttons = [
+                .default(Text("Baixar")) {
+                    fileManager.downloadFile(from: urlOfCurrentPlayerItem(player: player)!, title: "TestVideo", onProgress: { progress in
+                        self.downloadProgress = progress
+                    }, completion: { response, error in
+                      print("resp \(String(describing: response)) error: \(String(describing: error))")
+                    })
+                },
+                .cancel()
+            ]
+        } else {
+            buttons = [
+                .destructive(Text("Remover")) {
+                  fileManager.deleteFile(title: "TestVideo", completetion: { message, error in
+                    print("message: \(message), error: \(String(describing: error))")
+                    self.downloadProgress = .zero
+                  })
+                },
+                .cancel(Text("Cancelar"))
+            ]
+        }
+        
+      return ActionSheet(title: Text(!cached.fileExist ? "Deseja baixar o video?" : "Este vídeo já foi baixado deseja remover o video?"), buttons: buttons)
+    }
+
+  }
+  
+  @ViewBuilder
   func DefaultImage(_ name: String) -> some View {
     Image(systemName: name)
-      .font(.system(size: 25))
+      .font(.system(size: 20))
       .foregroundColor(.white)
       .padding(8)
   }
@@ -552,6 +613,9 @@ extension VideoPlayerView {
 // MARK: -- Private Functions
 @available(iOS 13.0, *)
 extension VideoPlayerView {
+  private func urlOfCurrentPlayerItem(player : AVPlayer) -> URL? {
+    return ((player.currentItem?.asset) as? AVURLAsset)?.url
+  }
   private func calculateSliderWidth() -> CGFloat {
       let maximumWidth = size.width
       let calculatedWidth = maximumWidth * CGFloat(sliderProgress)
@@ -599,7 +663,6 @@ extension VideoPlayerView {
     
     if !isSeeking && time >= currentItem.duration.seconds {
       onFinished()
-      print("tester")
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
         if isActiveLoop {
           resetPlaybackStatus()
@@ -607,7 +670,6 @@ extension VideoPlayerView {
       })
       
     } else {
-      print("false")
       isFinishedPlaying = false
       notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
       updatePlayPauseImage()

@@ -94,7 +94,14 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       do {
         let playbackUrl = source?["url"] as? String
         let verificatedUrlString = try verifyUrl(urlString: playbackUrl)
-        player = AVPlayer(url: verificatedUrlString)
+        let cached = PlayerFileManager().videoCached(title: "TestVideo")
+        
+        if cached.fileExist {
+          player = AVPlayer(url: URL(string: "file://\(cached.path)")!)
+        } else {
+          player = AVPlayer(url: verificatedUrlString)
+        }
+        
         player?.actionAtItemEnd = .none
         hasCalledSetup = true
         
@@ -244,9 +251,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       }
       superview?.addSubview(playerView.view)
     }
-    
-    
-    
+
     NotificationCenter.default.addObserver(forName: Notification.Name("modal"), object: nil, queue: .main) { [self] modalNotification in
       if let optionsQualitySelected = (modalNotification.userInfo?["optionsQualitySelected"] as? String) {
         self.selectedQuality = optionsQualitySelected
@@ -338,10 +343,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     if hasCalledSetup {
       enableAudioSession()
       videoPlayerSubView()
-    }
-    
-    player.addPeriodicTimeObserver(forInterval: .init(seconds: 1, preferredTimescale: 1), queue: .main) { time in
-      NotificationCenter.default.post(name: Notification.Name("periodTimeObserver"), object: nil, userInfo: ["currentTime": time.seconds])
     }
   }
   

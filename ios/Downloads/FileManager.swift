@@ -7,18 +7,41 @@
 
 import Foundation
 
-class DownloadFileManager: NSObject, URLSessionDownloadDelegate {
+class PlayerFileManager: NSObject, URLSessionDownloadDelegate {
   private var downloadTask: URLSessionDownloadTask!
   private var completion: ((URL?, Error?) -> Void)?
   private var onProgress: ((Float) -> Void)?
   private var destinationFileUrl: URL?
+  private var documentsUrl: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
   
-  func video(from url: URL, title: String = "video", onProgress: @escaping (Float) -> Void, completion: @escaping (URL?, Error?) -> Void) {
+  func videoCached(title: String) -> (fileExist: Bool, path: String) {
+      let fileManager = FileManager.default
+      
+      let filePath = documentsUrl.appendingPathComponent("\(title.replacingOccurrences(of: " ", with: "").lowercased()).mp4").path
+      
+      return (
+          fileExist: fileManager.fileExists(atPath: filePath),
+          path: filePath
+      )
+  }
+  
+  func deleteFile(title: String, completetion: (_ message: String, _ error: Error?) -> Void) {
+    let fileManager = FileManager.default
+    let filePath = documentsUrl.appendingPathComponent("\(title.replacingOccurrences(of: " ", with: "").lowercased()).mp4").path
+    
+    do {
+      try fileManager.removeItem(atPath: filePath)
+      completetion("deleted with success", nil)
+    } catch {
+      completetion("Error deleting file: \(error)", error)
+    }
+  }
+  
+  func downloadFile(from url: URL, title: String = "video", onProgress: @escaping (Float) -> Void, completion: @escaping (URL?, Error?) -> Void) {
     self.completion = completion
     self.onProgress = onProgress
-    let documentsUrl: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
     self.destinationFileUrl = documentsUrl.appendingPathComponent("\(title.replacingOccurrences(of: " ", with: "").lowercased()).mp4")
-
+    
     let sessionConfig = URLSessionConfiguration.default
     let session = URLSession(configuration: sessionConfig, delegate: self, delegateQueue: nil)
     

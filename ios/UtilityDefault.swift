@@ -13,6 +13,23 @@ struct StaticSize {
   static let s8: CGFloat = 8
   static let s16: CGFloat = 16
   static let s55: CGFloat = 55
+  static let s100: CGFloat = 100
+  static let s200: CGFloat = 200
+}
+
+struct AnimationDuration {
+  static let s035: CGFloat = 0.35
+}
+
+struct VariantPercent {
+  static let p10 = 0.1
+  static let p20 = 0.2
+  static let p30 = 0.3
+  static let p40 = 0.4
+}
+
+struct CorneRadious {
+  static let c16: CGFloat = 16.0
 }
 
 public var size30 = CGFloat(30)
