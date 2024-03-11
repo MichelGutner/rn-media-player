@@ -24,16 +24,14 @@ function App(): JSX.Element {
     <View>
       <RNPlayerVideo
         source={{
-          url: 'https://content.jwplatform.com/videos/MGAxJ46m-zZbIuxVJ.mp4',
-          videoTile: 'testing',
+          // url: 'https://content.jwplatform.com/videos/MGAxJ46m-zZbIuxVJ.mp4',
+          url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+          // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+          title: 'ElephantsDream',
         }}
-        // source={{
-        //   url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-        //   videoTile: 'testing',
-        // }}
         style={{height: 300}}
         onFullScreen={e => setIsFull(e)}
-        // resizeMode={resizeMode}
+        resizeMode={'contain'}
         paused={false}
         startTime={0}
         enterInFullScreenWhenDeviceRotated={true}

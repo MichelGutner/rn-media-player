@@ -25,7 +25,7 @@ struct SettingsContentView: View {
           onSettingSelected(setting.value)
         }) {
           HStack {
-            if let imageType = ESettingsOptions(rawValue: setting.value),
+            if let imageType = SettingsOption(rawValue: setting.value),
                let imageName = settingsImage(for: imageType) {
               Image(systemName: imageName)
                 .foregroundColor(.primary)
@@ -49,7 +49,7 @@ struct SettingsContentView: View {
     .fixedSize(horizontal: false, vertical: true)
   }
   
-  private func settingsImage(for optionType: ESettingsOptions) -> String? {
+  private func settingsImage(for optionType: SettingsOption) -> String? {
     switch optionType {
     case .qualities:
       return "slider.horizontal.3"

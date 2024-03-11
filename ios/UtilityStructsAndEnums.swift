@@ -16,7 +16,7 @@ public struct HashableItem: Hashable {
 }
 
 @available(iOS 13.0, *)
-enum ESettingsOptions: String {
+enum SettingsOption: String {
   case qualities,
        speeds,
        moreOptions
@@ -26,7 +26,7 @@ enum Resize: String {
   case contain, cover, stretch
 }
 
-enum VideoPlayerError: Error {
+enum RNVideoUrlError: Error {
   case invalidURL
   case invalidPlayer
 }

@@ -19,6 +19,7 @@ struct CustomVideoPlayer : UIViewControllerRepresentable {
     let controller  = AVPlayerViewController()
     controller.player = player
     controller.showsPlaybackControls = false
+    controller.player?.automaticallyWaitsToMinimizeStalling = true
     
     return controller
   }

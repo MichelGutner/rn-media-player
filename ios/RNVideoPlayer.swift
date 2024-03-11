@@ -20,18 +20,10 @@ class RNVideoPlayer: RCTViewManager {
 class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var hasCalledSetup = false
   private var player: AVPlayer?
-  private var timeObserver: Any?
-  private var playerLayer: AVPlayerLayer!
-  
-  private var isRotated = false
-  private var isSeeking: Bool = false
   private var loading = true
-  private var isOpenedModal = false
-  private var playerStatus: AVPlayer.TimeControlStatus?
   
   private var settingsOpened = false
-  private var optionsData: [HashableData] = []
-  
+
   private var initialQualitySelected = ""
   private var initialSpeedSelected = ""
   private var selectedQuality: String = ""
@@ -43,8 +35,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private var loadingView = UIView()
   private var url: URL?
-  
-  private var title = UILabel()
   private var thumbnailsFrames: [UIImage] = []
   
   private var playerView = UIView()
@@ -64,8 +54,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onDownloadVideoTapped: RCTDirectEventBlock?
   @objc var onQualityTapped: RCTDirectEventBlock?
   @objc var onPlayPause: RCTDirectEventBlock?
-  
-  private var viewController: RCTWrapperViewController?
   
   @objc var advanceValue: NSNumber? = 0
   @objc var suffixAdvanceValue: String? = "seconds"
@@ -94,7 +82,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       do {
         let playbackUrl = source?["url"] as? String
         let verificatedUrlString = try verifyUrl(urlString: playbackUrl)
-        let cached = PlayerFileManager().videoCached(title: "TestVideo")
+        let cached = PlayerFileManager().videoCached(title: source?["title"] as! String)
         
         if cached.fileExist {
           player = AVPlayer(url: URL(string: "file://\(cached.path)")!)
@@ -109,15 +97,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferEmpty", options: .new, context: nil)
         player?.currentItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
         player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferFull", options: .new, context: nil)
-        playerLayer = AVPlayerLayer(player: player)
       } catch {
         print("e", error)
         self.onError?(["url": "Error on get url: error type is \(error)"])
       }
     }
   }
-  
-  private var observer = PlaybackObserver()
   
   @objc var rate: Float = 0.0 {
     didSet{
@@ -137,7 +122,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     didSet {
       player?
         .currentItem?.seek(
-          to: CMTime(seconds: Double(startTime), preferredTimescale: 1),
+          to: CMTime(seconds: Double(startTime), preferredTimescale: 2),
           completionHandler: nil
         )
     }
@@ -155,30 +140,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var sliderProgress: Double = 0.0
   private var lastDraggedProgress: Double = 0.0
   private var isPlaying: Bool? = nil
-  
-  @objc func toggleFullScreen(_ fullScreen: Bool) {
-    if fullScreen {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: { [self] in
-        videoPlayerView.removeFromSuperview()
-        
-        videoPlayerView.frame = UIScreen.main.bounds
-        superview?.addSubview(videoPlayerView)
-      })
-    } else {
-      videoPlayerView.removeFromSuperview()
-      
-      if frame.height > UIScreen.main.bounds.height {
-        videoPlayerView.frame = UIScreen.main.bounds
-      } else {
-        videoPlayerView.frame = frame
-      }
-      
-      superview?.addSubview(videoPlayerView)
-    }
-    
-    isFullScreen = fullScreen
-    onFullScreenTapped?(["fullScreen": fullScreen])
-  }
   
   override func layoutSubviews() {
     guard let player = player else { return }
@@ -204,16 +165,17 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       self.videoSettings = settingsData.map { HashableData(dictionary: $0) }
     }
     
+    let title = source?["title"] as? String ?? ""
+    
     let mode = Resize(rawValue: resizeMode as String)
     let videoGravity = self.videoGravity(mode!)
     
     let playerView = UIHostingController(
       rootView: CustomView(
         player: player,
-        currentTime: currentTime,
-        duration: duration,
+        isLoading: loading,
+        title: title,
         playbackFinished: playbackFinished,
-        buffering: buffering,
         videoGravity: videoGravity,
         thumbnails: thumbnailsFrames,
         onTapFullScreenControl: { [self] state in
@@ -273,15 +235,15 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         self.settingsOpened = openedModal
       }
       
-      if let openedOptionsSpeed = (modalNotification.userInfo?["\(ESettingsOptions.speeds)Opened"] as? Bool) {
+      if let openedOptionsSpeed = (modalNotification.userInfo?["\(SettingsOption.speeds)Opened"] as? Bool) {
         self.openedOptionsSpeed = openedOptionsSpeed
       }
       
-      if let openedOptionsQualities = (modalNotification.userInfo?["\(ESettingsOptions.qualities)Opened"] as? Bool) {
+      if let openedOptionsQualities = (modalNotification.userInfo?["\(SettingsOption.qualities)Opened"] as? Bool) {
         self.openedOptionsQualities = openedOptionsQualities
       }
       
-      if let moreOptions = (modalNotification.userInfo?["\(ESettingsOptions.moreOptions)Opened"] as? Bool) {
+      if let moreOptions = (modalNotification.userInfo?["\(SettingsOption.moreOptions)Opened"] as? Bool) {
         self.openedOptionsMoreOptions = moreOptions
       }
       
@@ -414,6 +376,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         onReady?(["ready": true])
         generatingThumbnailsFrames()
       } else if player.status == .failed {
+        print("failed -----------------------------------------")
         self.onError?(extractPlayerErrors(player.currentItem))
       } else if player.status == .unknown {
         self.onError?(extractPlayerErrors(player.currentItem))
@@ -464,6 +427,30 @@ extension RNVideoPlayerView {
   
   @objc private func onTapGoback() {
     onGoBackTapped?([:])
+  }
+  
+  @objc func toggleFullScreen(_ fullScreen: Bool) {
+    if fullScreen {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: { [self] in
+        videoPlayerView.removeFromSuperview()
+        
+        videoPlayerView.frame = UIScreen.main.bounds
+        superview?.addSubview(videoPlayerView)
+      })
+    } else {
+      videoPlayerView.removeFromSuperview()
+      
+      if frame.height > UIScreen.main.bounds.height {
+        videoPlayerView.frame = UIScreen.main.bounds
+      } else {
+        videoPlayerView.frame = frame
+      }
+      
+      superview?.addSubview(videoPlayerView)
+    }
+    
+    isFullScreen = fullScreen
+    onFullScreenTapped?(["fullScreen": fullScreen])
   }
   
   @objc private func orientationDidChange() {
@@ -540,7 +527,7 @@ extension RNVideoPlayerView {
     if let urlString = urlString, let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
       return url
     } else {
-      throw VideoPlayerError.invalidURL
+      throw RNVideoUrlError.invalidURL
     }
   }
   
