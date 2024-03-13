@@ -38,6 +38,8 @@ function App(): JSX.Element {
         enterInFullScreenWhenDeviceRotated={true}
         autoPlay={true}
         loop={false}
+        doubleTapSeekValue={8}
+        suffixLabelDoubleTapSeek="segundos"
       />
       <TouchableOpacity onPress={() => console.log('oi')}>
         <Text>Olá Mundo</Text>

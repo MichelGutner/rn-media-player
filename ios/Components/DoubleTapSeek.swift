@@ -33,7 +33,7 @@ struct DoubleTapSeek: View {
             .font(.title)
             .rotationEffect(.init(degrees: isForward ? 180 : 0))
             
-            Text("\(tappedQuantity * advanceValue) ".appending(suffixAdvanceValue))
+            Text("\(!isForward ? "- " : "")\(tappedQuantity * advanceValue) ".appending(suffixAdvanceValue))
               .font(.caption)
               .fontWeight(.bold)
               .foregroundColor(.white)

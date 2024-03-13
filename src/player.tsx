@@ -29,6 +29,8 @@ export const RNPlayerVideo = ({
   enterInFullScreenWhenDeviceRotated,
   autoPlay,
   loop,
+  doubleTapSeekValue,
+  suffixLabelDoubleTapSeek,
 }: {
   style: ViewStyle;
   isFullScreen: boolean;
@@ -62,7 +64,8 @@ export const RNPlayerVideo = ({
       // onCompleted={({nativeEvent: {completed}}) => console.log(completed)}
       fullScreen={isFullScreen}
       resizeMode={resizeMode}
-      advanceValue={15}
+      doubleTapSeekValue={doubleTapSeekValue}
+      suffixLabelDoubleTapSeek={suffixLabelDoubleTapSeek}
       lockControls={true}
       onError={e => console.log('native Error', e.nativeEvent)}
       loadingProps={{

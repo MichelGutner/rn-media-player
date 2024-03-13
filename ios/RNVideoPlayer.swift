@@ -55,8 +55,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onQualityTapped: RCTDirectEventBlock?
   @objc var onPlayPause: RCTDirectEventBlock?
   
-  @objc var advanceValue: NSNumber? = 0
-  @objc var suffixAdvanceValue: String? = "seconds"
+  @objc var doubleTapSeekValue: NSNumber? = 0
+  @objc var suffixLabelDoubleTapSeek: String? = "seconds"
   
   @objc var thumbnailFramesSeconds: Float = 1.0
   @objc var enterInFullScreenWhenDeviceRotated: Bool = false
@@ -181,6 +181,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         onTapFullScreenControl: { [self] state in
           toggleFullScreen(state)
         },
+        doubleTapSeekValue: doubleTapSeekValue as! Int,
+        suffixLabelDoubleTapSeek: suffixLabelDoubleTapSeek!,
         isFullScreen: isFullScreen,
         videoSettings: videoSettings,
         onTapSettingsControl: onTapSettings,

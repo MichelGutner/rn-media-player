@@ -21,8 +21,8 @@ RCT_EXPORT_VIEW_PROPERTY(autoPlay, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(loop, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(videoTitle, NSString)
 RCT_EXPORT_VIEW_PROPERTY(resizeMode, NSString)
-RCT_EXPORT_VIEW_PROPERTY(advanceValue, NSNumber)
-RCT_EXPORT_VIEW_PROPERTY(suffixAdvanceValue, NSString)
+RCT_EXPORT_VIEW_PROPERTY(doubleTapSeekValue, NSNumber)
+RCT_EXPORT_VIEW_PROPERTY(suffixLabelDoubleTapSeek, NSString)
 
 
 RCT_EXPORT_VIEW_PROPERTY(onVideoProgress, RCTBubblingEventBlock)

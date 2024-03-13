@@ -68,11 +68,14 @@ struct VideoPlayerView: View {
   @State private var showActionSheetFileManager = false
   
   @State private var seekerThumbImageSize: CGSize = .init(width: 15, height: 15)
+  @State private var doubleTapSeekValue: Int = 10
+  @State private var suffixLabelDoubleTapSeek: String = "Seconds"
   
   var size: CGSize
   var safeAreaInsets: EdgeInsets
   var onTapFullScreenControl: (Bool) -> Void
   var onTapSettingsControl: () -> Void
+
   
   private var fileManager = PlayerFileManager()
   
@@ -86,6 +89,8 @@ struct VideoPlayerView: View {
     playbackFinished: Bool,
     thumbnails: [UIImage],
     onTapFullScreenControl: @escaping (Bool) -> Void,
+    doubleTapSeekValue: Int,
+    suffixLabelDoubleTapSeek: String,
     isFullScreen: Bool,
     videoSettings: [HashableData],
     onTapSettingsControl: @escaping () -> Void,
@@ -131,6 +136,8 @@ struct VideoPlayerView: View {
     _timeObserver = State(initialValue: nil)
     _title = State(initialValue: title)
     _isLoading = State(initialValue: isLoading)
+    _doubleTapSeekValue = State(initialValue: doubleTapSeekValue)
+    _suffixLabelDoubleTapSeek = State(initialValue: suffixLabelDoubleTapSeek)
   }
   
   var body: some View {
@@ -160,8 +167,8 @@ struct VideoPlayerView: View {
                   isFinished: {
                     isSeekingByDoubleTap = false
                   },
-                  advanceValue: 15,
-                  suffixAdvanceValue: "seconds"
+                  advanceValue: doubleTapSeekValue,
+                  suffixAdvanceValue: suffixLabelDoubleTapSeek
                 )
               )
               .onTapGesture {
@@ -533,7 +540,7 @@ extension VideoPlayerView {
   @ViewBuilder
   func SettingsControl() -> some View {
     Button(action: {
-        withAnimation(.linear(duration: AnimationDuration.s035)) {
+        withAnimation(.easeInOut(duration: AnimationDuration.s020)) {
           openedSettingsModal = true
           notificationPostModal(userInfo: ["opened": openedSettingsModal])
         }
@@ -790,6 +797,8 @@ struct CustomView : View {
   var videoGravity: AVLayerVideoGravity
   var thumbnails: [UIImage]
   var onTapFullScreenControl: (Bool) -> Void
+  var doubleTapSeekValue: Int
+  var suffixLabelDoubleTapSeek: String
   var isFullScreen: Bool
   var videoSettings: [HashableData]
   var onTapSettingsControl: () -> Void
@@ -823,6 +832,8 @@ struct CustomView : View {
         playbackFinished: playbackFinished,
         thumbnails: thumbnails,
         onTapFullScreenControl: onTapFullScreenControl,
+        doubleTapSeekValue: doubleTapSeekValue,
+        suffixLabelDoubleTapSeek: suffixLabelDoubleTapSeek,
         isFullScreen: isFullScreen,
         videoSettings: videoSettings,
         onTapSettingsControl: onTapSettingsControl,
