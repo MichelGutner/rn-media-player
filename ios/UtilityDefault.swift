@@ -15,10 +15,13 @@ struct StaticSize {
   static let s55: CGFloat = 55
   static let s100: CGFloat = 100
   static let s200: CGFloat = 200
+  // ---
+  static let playbackControler: CGFloat = 25
 }
 
 struct AnimationDuration {
   static let s035: CGFloat = 0.35
+  static let s020: CGFloat = 0.20
 }
 
 struct VariantPercent {

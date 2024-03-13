@@ -138,11 +138,6 @@ struct VideoPlayerView: View {
       let videoPlayerSize: CGSize = .init(width: size.width, height: size.height)
       
       ZStack {
-        Group {
-          if isLoading {
-            CustomLoading(config: [:])
-              .edgesIgnoringSafeArea(isFullScreen ? Edge.Set.all : [])
-          } else {
             CustomVideoPlayer(player: player, videoGravity: videoGravity)
               .edgesIgnoringSafeArea(isFullScreen ? Edge.Set.all : [])
               .overlay(
@@ -150,15 +145,6 @@ struct VideoPlayerView: View {
                   .fill(Color.black.opacity(0.4))
                   .opacity(showPlayerControls || isDraggingSlider ? 1 : 0)
                   .animation(.easeInOut(duration: AnimationDuration.s035), value: isDraggingSlider)
-                  .overlay(
-                    Group {
-                      //                  if isLoading {
-                      //                    CustomLoading(config: [:])
-                      //                  } else {
-                      PlaybackControls()
-                      //                  }
-                    }
-                  )
                   .edgesIgnoringSafeArea(Edge.Set.all)
               )
               .overlay(
@@ -207,6 +193,9 @@ struct VideoPlayerView: View {
                   .padding(.leading)
                   .padding(.trailing)
                   .padding(.bottom, safeAreaInsets.bottom + StaticSize.s16)
+                  .overlay(
+                    PlaybackControls()
+                  )
               )
               .overlay(
                 Group {
@@ -283,9 +272,10 @@ struct VideoPlayerView: View {
                   }
                 }
               )
-          }
+//              .overlay(
+//                PlaybackControls()
+//              )
         }
-      }
       .frame(width: videoPlayerSize.width, height: videoPlayerSize.height)
     }
     .onAppear {
@@ -429,8 +419,8 @@ extension VideoPlayerView {
   @ViewBuilder
   func VideoSeekerView() -> some View {
     VStack(alignment: .leading) {
-      VideoSeekerThumbnailView()
-        .padding(.bottom, 16)
+        VideoSeekerThumbnailView()
+          .padding(.bottom, 16)
       HStack {
         ZStack(alignment: .leading) {
           Rectangle()
@@ -508,28 +498,23 @@ extension VideoPlayerView {
   
   @ViewBuilder
   func PlaybackControls() -> some View {
-    
-    VStack {
-      Spacer()
-      HStack {
-        Spacer()
-        Button(action: {
-          onPlaybackManager()
-        }) {
-          Image(systemName: playPauseimageName)
-            .foregroundColor(.white)
-            .font(.system(size: size30))
-            .padding(size16)
-        }
-        .background(Color(.black).opacity(0.4))
-        .cornerRadius(.infinity)
-        Spacer()
-      }
-      .fixedSize(horizontal: true, vertical: true)
-      Spacer()
-    }
+    let controllerSize = calculateSizeByWidth(StaticSize.playbackControler, VariantPercent.p20)
+    Rectangle()
+      .fill(Color.black.opacity(0.5))
+      .cornerRadius(.infinity, antialiased: true)
+      .overlay(
+        CustomPlayPauseButton(
+          action: { isPlaying in
+            onPlaybackManager(playing: isPlaying)
+          },
+          isPlaying: player.timeControlStatus == .playing,
+          frame: .init(origin: .zero, size: .init(width: controllerSize, height: controllerSize))
+        )
+      )
+      .frame(width: controllerSize * 2, height: controllerSize * 2)
     .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
     .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
+
   }
   
   @ViewBuilder
@@ -697,7 +682,6 @@ extension VideoPlayerView {
       notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
       updatePlayPauseImage()
     }
-    self.isLoading = false
   }
   
   private func removePeriodicTimeObserver() {
@@ -707,11 +691,11 @@ extension VideoPlayerView {
     self.timeObserver = nil
   }
   
-  private func onPlaybackManager() {
+  private func onPlaybackManager(playing: Bool) {
     if isFinishedPlaying {
       resetPlaybackStatus()
     } else {
-      if player.timeControlStatus == .paused  {
+      if playing  {
         player.play()
         isPlaying = true
         timeoutControls()
@@ -722,7 +706,8 @@ extension VideoPlayerView {
           timeoutTask.cancel()
         }
       }
-      notificationPostPlaybackInfo(userInfo: ["isPlaying": isPlaying])
+      print("playing \(playing)")
+      notificationPostPlaybackInfo(userInfo: ["isPlaying": playing])
     }
     updatePlayPauseImage()
     

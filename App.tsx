@@ -25,8 +25,9 @@ function App(): JSX.Element {
       <RNPlayerVideo
         source={{
           // url: 'https://content.jwplatform.com/videos/MGAxJ46m-zZbIuxVJ.mp4',
-          url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+          // url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
           // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+          url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
           title: 'ElephantsDream',
         }}
         style={{height: 300}}
@@ -35,7 +36,7 @@ function App(): JSX.Element {
         paused={false}
         startTime={0}
         enterInFullScreenWhenDeviceRotated={true}
-        autoPlay={true}
+        autoPlay={false}
         loop={false}
       />
       <TouchableOpacity onPress={() => console.log('oi')}>
