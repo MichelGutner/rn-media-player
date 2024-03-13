@@ -186,13 +186,13 @@ struct VideoPlayerView: View {
                     SettingsControl()
                     FullScreenControl()
                   }
-                  .padding(.top, -StaticSize.s8)
+                  .padding(.top, -StandardSizes.small8)
                   .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
                   .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
                 }
                   .padding(.leading)
                   .padding(.trailing)
-                  .padding(.bottom, safeAreaInsets.bottom + StaticSize.s16)
+                  .padding(.bottom, safeAreaInsets.bottom + StandardSizes.small8)
                   .overlay(
                     PlaybackControls()
                   )
@@ -235,7 +235,6 @@ struct VideoPlayerView: View {
                                 selectedSpeed = item.name
                                 self.notificationPostModal(userInfo: ["optionsSpeedSelected": item.name, "\(SettingsOption.speeds)Opened": false, "speedRate": Float(item.value) as Any])
                                 resetModalState()
-                                updatePlayPauseImage()
                               },
                               initialSelectedItem: initialSpeedSelected,
                               selectedItem: selectedSpeed
@@ -272,9 +271,6 @@ struct VideoPlayerView: View {
                   }
                 }
               )
-//              .overlay(
-//                PlaybackControls()
-//              )
         }
       .frame(width: videoPlayerSize.width, height: videoPlayerSize.height)
     }
@@ -312,8 +308,6 @@ struct VideoPlayerView: View {
       timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
         updatePlayerTime(time.seconds)
       }
-      
-      updatePlayPauseImage()
       
       NotificationCenter.default.addObserver(
         playbackObserver,
@@ -363,23 +357,25 @@ struct VideoPlayerView: View {
 extension VideoPlayerView {
   @ViewBuilder
   func HeaderControls() -> some View {
+    let titleSize = calculateSizeByWidth(StandardSizes.small16, VariantPercent.p10)
+    
       HStack {
         Button (action: {
 //          onTapExit()
         }) {
-          DefaultImage("arrow.left")
+          CustomIcon("arrow.left")
         }
         .padding(.leading, 8)
         Spacer()
-        Text(title).font(.system(size: 12)).foregroundColor(.white)
+        Text(title).font(.system(size: titleSize)).foregroundColor(.white)
         Spacer()
       }
     }
 
   @ViewBuilder
   func VideoSeekerThumbnailView() -> some View {
-    let calculatedWidthThumbnailSizeByWidth = calculateSizeByWidth(StaticSize.s200, VariantPercent.p40)
-    let calculatedHeightThumbnailSizeByWidth = calculateSizeByWidth(StaticSize.s100, VariantPercent.p40)
+    let calculatedWidthThumbnailSizeByWidth = calculateSizeByWidth(StandardSizes.extraLarge200, VariantPercent.p40)
+    let calculatedHeightThumbnailSizeByWidth = calculateSizeByWidth(StandardSizes.extraLarge100, VariantPercent.p40)
     
     let thumbSize: CGSize = .init(width: calculatedWidthThumbnailSizeByWidth, height: calculatedHeightThumbnailSizeByWidth)
   
@@ -419,8 +415,8 @@ extension VideoPlayerView {
   @ViewBuilder
   func VideoSeekerView() -> some View {
     VStack(alignment: .leading) {
-        VideoSeekerThumbnailView()
-          .padding(.bottom, 16)
+      VideoSeekerThumbnailView()
+      TimeCodes()
       HStack {
         ZStack(alignment: .leading) {
           Rectangle()
@@ -474,7 +470,6 @@ extension VideoPlayerView {
                         
                         if targetTime < duration {
                           isFinishedPlaying = false
-                          updatePlayPauseImage()
                         }
                         
                         player.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
@@ -489,7 +484,8 @@ extension VideoPlayerView {
                 )
             )
         }
-        .frame(height: 3)
+        .frame(height: isSeeking ? StandardSizes.seekerViewMaxHeight : StandardSizes.seekerViewMinHeight)
+        .animation(.easeInOut(duration: AnimationDuration.s035), value: isSeeking)
       }
       .opacity(showPlayerControls || isSeeking || isSeekingByDoubleTap ? 1 : 0)
       .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls || isSeekingByDoubleTap || isSeeking)
@@ -498,7 +494,8 @@ extension VideoPlayerView {
   
   @ViewBuilder
   func PlaybackControls() -> some View {
-    let controllerSize = calculateSizeByWidth(StaticSize.playbackControler, VariantPercent.p20)
+    let controllerSize = calculateSizeByWidth(StandardSizes.playbackControler, VariantPercent.p20)
+    
     Rectangle()
       .fill(Color.black.opacity(0.5))
       .cornerRadius(.infinity, antialiased: true)
@@ -506,8 +503,7 @@ extension VideoPlayerView {
         CustomPlayPauseButton(
           action: { isPlaying in
             onPlaybackManager(playing: isPlaying)
-          },
-          isPlaying: player.timeControlStatus == .playing,
+          }, isPlaying: player.timeControlStatus != .paused,
           frame: .init(origin: .zero, size: .init(width: controllerSize, height: controllerSize))
         )
       )
@@ -527,7 +523,7 @@ extension VideoPlayerView {
       isFullScreen.toggle()
       self.onTapFullScreenControl(isFullScreen)
     }) {
-      DefaultImage(isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+      CustomIcon(isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
     }
 //    .foregroundColor(Color(transformStringIntoUIColor(color: color)))
     .rotationEffect(.init(degrees: 90))
@@ -542,7 +538,7 @@ extension VideoPlayerView {
           notificationPostModal(userInfo: ["opened": openedSettingsModal])
         }
     }) {
-      DefaultImage("gear")
+      CustomIcon("gear")
     }
     .fixedSize(horizontal: true, vertical: true)
   }
@@ -607,11 +603,16 @@ extension VideoPlayerView {
   }
   
   @ViewBuilder
-  func DefaultImage(_ name: String) -> some View {
-    Image(systemName: name)
-      .font(.system(size: 20))
-      .foregroundColor(.white)
-      .padding(8)
+  func TimeCodes() -> some View {
+    let sizeTimeCodes = calculateSizeByWidth(StandardSizes.small8, VariantPercent.p20)
+    HStack {
+      Spacer()
+      Text(stringFromTimeInterval(interval: currentTime).appending(" / \(stringFromTimeInterval(interval: duration))"))
+        .font(.system(size: sizeTimeCodes))
+        .foregroundColor(.white)
+    }
+    .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
+    .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
   }
 }
 
@@ -680,7 +681,6 @@ extension VideoPlayerView {
     } else {
       isFinishedPlaying = false
       notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
-      updatePlayPauseImage()
     }
   }
   
@@ -706,24 +706,7 @@ extension VideoPlayerView {
           timeoutTask.cancel()
         }
       }
-      print("playing \(playing)")
       notificationPostPlaybackInfo(userInfo: ["isPlaying": playing])
-    }
-    updatePlayPauseImage()
-    
-    
-  }
-  
-  private func updatePlayPauseImage() {
-    if isFinishedPlaying {
-      withAnimation(.easeInOut(duration: AnimationDuration.s035)) {
-        playPauseimageName = "gobackward"
-      }
-    } else {
-      withAnimation(.easeInOut(duration: AnimationDuration.s035)) {
-        player.timeControlStatus == .paused ? (playPauseimageName = "play.fill") : (playPauseimageName = "pause.fill")
-      }
-      isFinishedPlaying = false
     }
   }
   
@@ -781,7 +764,6 @@ extension VideoPlayerView {
   private func onFinished() {
     isFinishedPlaying = true
     notificationPostPlaybackInfo(userInfo: ["playbackFinished": true])
-    updatePlayPauseImage()
   }
   
   private func resetPlaybackStatus() {
@@ -792,7 +774,6 @@ extension VideoPlayerView {
     player.seek(to: .zero, completionHandler: {completed in
       if completed {
         player.play()
-        updatePlayPauseImage()
         notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
       }
     })

@@ -37,7 +37,7 @@ struct CustomPlayPauseButton: UIViewRepresentable {
   func makeUIView(context: Context) -> some UIView {
     let uiView = PlayPauseButton(frame: frame, action: action, isPlaying: isPlaying)
     uiView.center = CGPoint(x: frame.width / 2, y: frame.height / 2)
-    
+    print("is \(isPlaying)")
     return uiView
   }
   

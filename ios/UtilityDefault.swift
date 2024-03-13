@@ -7,16 +7,27 @@
 
 import Foundation
 
-struct StaticSize {
-  static let s30: CGFloat = 30
-  static let s18: CGFloat = 18
-  static let s8: CGFloat = 8
-  static let s16: CGFloat = 16
-  static let s55: CGFloat = 55
-  static let s100: CGFloat = 100
-  static let s200: CGFloat = 200
-  // ---
+struct StandardSizes {
+  // smalls
+  static let small8: CGFloat = 8
+  static let small16: CGFloat = 16
+  static let small18: CGFloat = 18
+  static let small20: CGFloat = 20
+  
+  // medium 21 - 40
+  static let medium30: CGFloat = 30
+  
+  // larges 41 - 80
+  static let large55: CGFloat = 55
+  
+  // extra large
+  static let extraLarge100: CGFloat = 100
+  static let extraLarge200: CGFloat = 200
+  
+  // --- identified sizes
   static let playbackControler: CGFloat = 25
+  static let seekerViewMinHeight: CGFloat = 3
+  static let seekerViewMaxHeight: CGFloat = 6
 }
 
 struct AnimationDuration {

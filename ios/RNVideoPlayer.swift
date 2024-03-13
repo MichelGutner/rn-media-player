@@ -140,7 +140,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var sliderProgress: Double = 0.0
   private var lastDraggedProgress: Double = 0.0
   private var isPlaying: Bool? = nil
-      
+  
   override func layoutSubviews() {
     guard let player = player else { return }
     videoPlayerView.removeFromSuperview()

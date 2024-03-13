@@ -30,13 +30,13 @@ function App(): JSX.Element {
           url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
           title: 'ElephantsDream',
         }}
-        style={{height: 300}}
+        style={{height: 350}}
         onFullScreen={e => setIsFull(e)}
         resizeMode={'contain'}
         paused={false}
         startTime={0}
         enterInFullScreenWhenDeviceRotated={true}
-        autoPlay={false}
+        autoPlay={true}
         loop={false}
       />
       <TouchableOpacity onPress={() => console.log('oi')}>
