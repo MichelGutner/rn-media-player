@@ -27,6 +27,7 @@
 		DBAD5F432BA0DB6500FC45FE /* UIBezierPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAD5F422BA0DB6500FC45FE /* UIBezierPaths.swift */; };
 		DBAD5F452BA21E2400FC45FE /* CustomIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAD5F442BA21E2400FC45FE /* CustomIcon.swift */; };
 		DBAD5F472BA233F800FC45FE /* ControllersProps.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAD5F462BA233F800FC45FE /* ControllersProps.swift */; };
+		DBAD5F492BA2A2F900FC45FE /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAD5F482BA2A2F900FC45FE /* Color.swift */; };
 		DBB3FEB12B85509F00AD8E55 /* OptionsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB02B85509F00AD8E55 /* OptionsContentView.swift */; };
 		DBB3FEB32B8595FE00AD8E55 /* SettingsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB22B8595FE00AD8E55 /* SettingsContentView.swift */; };
 		DBB3FEB52B85A48F00AD8E55 /* UtilityStructsAndEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */; };
@@ -82,6 +83,7 @@
 		DBAD5F422BA0DB6500FC45FE /* UIBezierPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIBezierPaths.swift; sourceTree = "<group>"; };
 		DBAD5F442BA21E2400FC45FE /* CustomIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomIcon.swift; sourceTree = "<group>"; };
 		DBAD5F462BA233F800FC45FE /* ControllersProps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControllersProps.swift; sourceTree = "<group>"; };
+		DBAD5F482BA2A2F900FC45FE /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
 		DBB3FEB02B85509F00AD8E55 /* OptionsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionsContentView.swift; sourceTree = "<group>"; };
 		DBB3FEB22B8595FE00AD8E55 /* SettingsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsContentView.swift; path = ../SettingsContentView.swift; sourceTree = "<group>"; };
 		DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityStructsAndEnums.swift; sourceTree = "<group>"; };
@@ -232,6 +234,7 @@
 			isa = PBXGroup;
 			children = (
 				DBAD5F422BA0DB6500FC45FE /* UIBezierPaths.swift */,
+				DBAD5F482BA2A2F900FC45FE /* Color.swift */,
 			);
 			name = Extensions;
 			sourceTree = "<group>";
@@ -628,6 +631,7 @@
 				DBBE84222B882EBE00B8A738 /* VideoPlayerView.swift in Sources */,
 				DBCD42EB2B6B3DCB0099DFEF /* QualityViewController.swift in Sources */,
 				DBC2BA782B6FF70900648252 /* PlaybackErrorManager.swift in Sources */,
+				DBAD5F492BA2A2F900FC45FE /* Color.swift in Sources */,
 				DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */,
 				DB645A072B79D24E000E54AD /* Playback.swift in Sources */,
 				DB0C9DCD2B23AB6900B7D598 /* UtilityStringHandler.swift in Sources */,

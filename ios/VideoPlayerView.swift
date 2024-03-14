@@ -69,7 +69,11 @@ struct VideoPlayerView: View {
   @State private var doubleTapSeekValue: Int = 10
   @State private var suffixLabelDoubleTapSeek: String = "Seconds"
   
-  @State private var controllersPropsData: HashableControllers? = .init(playbackControl: .init(color: .white))
+  @State private var controllersPropsData: HashableControllers? = .init(
+    playbackControl: .init(dictionary: [:]),
+    seekSliderControl: .init(dictionary: [:]),
+    timeCodesControl: .init(dictionary: [:])
+  )
   
   var size: CGSize
   var safeAreaInsets: EdgeInsets
@@ -399,11 +403,11 @@ extension VideoPlayerView {
             .clipShape(RoundedRectangle(cornerRadius: CorneRadious.c16, style: .continuous))
             .overlay(
               RoundedRectangle(cornerRadius: CorneRadious.c16, style: .continuous)
-                .stroke(.blue, lineWidth: 2)
+                .stroke(Color(uiColor: (controllersPropsData?.seekSliderControl.thumbnailBorderColor)!), lineWidth: 2)
             )
           Text(stringFromTimeInterval(interval: TimeInterval(truncating: (sliderProgress * duration) as NSNumber)))
             .font(.caption)
-            .foregroundColor(.white)
+            .foregroundColor(Color(uiColor: controllersPropsData?.seekSliderControl.thumbnailTimeCodeColor ?? UIColor.white))
             .fontWeight(.semibold)
         }
       } else {
@@ -411,7 +415,7 @@ extension VideoPlayerView {
           .fill(.black)
           .overlay(
             RoundedRectangle(cornerRadius: CorneRadious.c16, style: .continuous)
-              .stroke(.white, lineWidth: 2)
+              .stroke(Color(uiColor: (controllersPropsData?.seekSliderControl.thumbnailBorderColor)!), lineWidth: 2)
           )
       }
     }
@@ -430,24 +434,24 @@ extension VideoPlayerView {
       HStack {
         ZStack(alignment: .leading) {
           Rectangle()
-            .fill(Color.gray).opacity(0.5)
+            .fill(Color(uiColor: (controllersPropsData?.seekSliderControl.maximumTrackColor)!)).opacity(0.5)
             .frame(width: size.width - seekerThumbImageSize.width)
             .cornerRadius(8)
           
           Rectangle()
-            .fill(Color.white)
+            .fill(Color(uiColor: (controllersPropsData?.seekSliderControl.seekableTintColor)!))
             .frame(width: buffering * (size.width - seekerThumbImageSize.width))
             .cornerRadius(8)
           
           Rectangle()
-            .fill(Color.blue)
+            .fill(Color(uiColor: (controllersPropsData?.seekSliderControl.minimumTrackColor)!))
             .frame(width: calculateSliderWidth())
             .cornerRadius(8)
           
           HStack {}
             .overlay(
               Circle()
-                .fill(Color.blue)
+                .fill(Color(uiColor: (controllersPropsData?.seekSliderControl.thumbImageColor)!))
                 .frame(width: seekerThumbImageSize.width, height: seekerThumbImageSize.height)
                 .frame(width: 50, height: 50)
                 .opacity(isSeekingByDoubleTap ? 0.001 : 1)
@@ -619,7 +623,7 @@ extension VideoPlayerView {
       Spacer()
       Text(stringFromTimeInterval(interval: currentTime).appending(" / \(stringFromTimeInterval(interval: duration))"))
         .font(.system(size: sizeTimeCodes))
-        .foregroundColor(.white)
+        .foregroundColor(Color(uiColor: (controllersPropsData?.timeCodesControl.currentTimeColor)!))
     }
     .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
     .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)

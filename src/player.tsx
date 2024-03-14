@@ -228,7 +228,19 @@ export const RNPlayerVideo = ({
       }}
       dictionaryControllersProps={{
         playbackControl: {
-          color: 'rgba(108, 74, 121, 1)',
+          // color: '#a90ee6',
+        },
+        seekSliderControl: {
+          maximumTrackColor: '#4f4c50',
+          minimumTrackColor: '#890cba',
+          seekableTintColor: '#b6b6b6',
+          thumbImageColor: '#a90ee6',
+          // thumbnailBorderColor: '#a90ee6',
+          // thumbnailTimeCodeColor: '#a90ee6',
+        },
+        timeCodesControl: {
+          currentTimeColor: '#a90ee6',
+          durationColor: '#a90ee6',
         },
       }}
       onSettingsTapped={() => console.log('MORE OPTIONS TAPPED')}

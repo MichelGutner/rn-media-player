@@ -168,8 +168,14 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
     
     if let controllersProps = dictionaryControllersProps {
-      let playbackControlProps = HashableControllersProps(dictionary: controllersProps["playbackControl"] as! NSDictionary)
-      self.controllersPropsData = HashableControllers(playbackControl: playbackControlProps)
+      let playbackControlProps = PlaybackControlHashableProps(dictionary: controllersProps["playbackControl"] as? NSDictionary)
+      let seekSliderControlProps = SeekSliderControlHashableProps(dictionary: controllersProps["seekSliderControl"] as? NSDictionary)
+      let timeCodesControlProps = TimeCodesHashableProps(dictionary: controllersProps["timeCodesControl"] as? NSDictionary)
+      self.controllersPropsData = HashableControllers(
+        playbackControl: playbackControlProps,
+        seekSliderControl: seekSliderControlProps,
+        timeCodesControl: timeCodesControlProps
+      )
     }
     
     
