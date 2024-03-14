@@ -26,7 +26,7 @@ struct VideoPlayerView: View {
   @State private var openedOptionsSpeed: Bool = false
   @State private var openedOptionsMoreOptions: Bool = false
   
-  @State private var optionsData: [HashableData] = []
+  @State private var optionsData: [HashableModalContent] = []
   @State private var initialSelectedItem: String = ""
   @State private var initialQualitySelected: String = ""
   
@@ -35,11 +35,9 @@ struct VideoPlayerView: View {
   @State private var selectedQuality: String = ""
   @State private var selectedSpeed: String = ""
 
-  @State private var videoQualities: [HashableData] = []
-  @State private var videoSpeeds: [HashableData] = []
-  @State private var videoSettings: [HashableData] = []
-  
-
+  @State private var videoQualities: [HashableModalContent] = []
+  @State private var videoSpeeds: [HashableModalContent] = []
+  @State private var videoSettings: [HashableModalContent] = []
   
   @GestureState private var isDraggingSlider: Bool = false
   @State private var sliderProgress = 0.0
@@ -71,10 +69,13 @@ struct VideoPlayerView: View {
   @State private var doubleTapSeekValue: Int = 10
   @State private var suffixLabelDoubleTapSeek: String = "Seconds"
   
+  @State private var controllersPropsData: HashableControllers? = .init(playbackControl: .init(color: .white))
+  
   var size: CGSize
   var safeAreaInsets: EdgeInsets
   var onTapFullScreenControl: (Bool) -> Void
   var onTapSettingsControl: () -> Void
+  
 
   
   private var fileManager = PlayerFileManager()
@@ -92,11 +93,11 @@ struct VideoPlayerView: View {
     doubleTapSeekValue: Int,
     suffixLabelDoubleTapSeek: String,
     isFullScreen: Bool,
-    videoSettings: [HashableData],
+    videoSettings: [HashableModalContent],
     onTapSettingsControl: @escaping () -> Void,
-    videoQualities: [HashableData],
+    videoQualities: [HashableModalContent],
     initialQualitySelected: String,
-    videoSpeeds: [HashableData],
+    videoSpeeds: [HashableModalContent],
     initialSpeedSelected: String,
     selectedQuality: String,
     selectedSpeed: String,
@@ -109,7 +110,8 @@ struct VideoPlayerView: View {
     videoGravity: AVLayerVideoGravity,
     sliderProgress: Double,
     lastDraggedProgress: Double,
-    isPlaying: Bool?
+    isPlaying: Bool?,
+    controllersPropsData: HashableControllers?
   ) {
     self.size = size
     self.safeAreaInsets = safeAreaInsets
@@ -138,6 +140,7 @@ struct VideoPlayerView: View {
     _isLoading = State(initialValue: isLoading)
     _doubleTapSeekValue = State(initialValue: doubleTapSeekValue)
     _suffixLabelDoubleTapSeek = State(initialValue: suffixLabelDoubleTapSeek)
+    _controllersPropsData = State(initialValue: controllersPropsData)
   }
   
   var body: some View {
@@ -502,7 +505,7 @@ extension VideoPlayerView {
   @ViewBuilder
   func PlaybackControls() -> some View {
     let controllerSize = calculateSizeByWidth(StandardSizes.playbackControler, VariantPercent.p20)
-    
+
     Rectangle()
       .fill(Color.black.opacity(0.5))
       .cornerRadius(.infinity, antialiased: true)
@@ -511,13 +514,13 @@ extension VideoPlayerView {
           action: { isPlaying in
             onPlaybackManager(playing: isPlaying)
           }, isPlaying: player.timeControlStatus != .paused,
-          frame: .init(origin: .zero, size: .init(width: controllerSize, height: controllerSize))
+          frame: .init(origin: .zero, size: .init(width: controllerSize, height: controllerSize)),
+          color: controllersPropsData?.playbackControl.color.cgColor
         )
       )
       .frame(width: controllerSize * 2, height: controllerSize * 2)
     .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
     .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
-
   }
   
   @ViewBuilder
@@ -800,11 +803,11 @@ struct CustomView : View {
   var doubleTapSeekValue: Int
   var suffixLabelDoubleTapSeek: String
   var isFullScreen: Bool
-  var videoSettings: [HashableData]
+  var videoSettings: [HashableModalContent]
   var onTapSettingsControl: () -> Void
-  var videoQualities: [HashableData]
+  var videoQualities: [HashableModalContent]
   var initialQualitySelected: String
-  var videoSpeeds: [HashableData]
+  var videoSpeeds: [HashableModalContent]
   var initialSpeedSelected: String
   var selectedQuality: String
   var selectedSpeed: String
@@ -817,6 +820,7 @@ struct CustomView : View {
   var sliderProgress: Double
   var lastDraggedProgress: Double
   var isPlaying: Bool?
+  var controllersPropsData: HashableControllers?
   
   var body: some View {
     GeometryReader {
@@ -852,7 +856,8 @@ struct CustomView : View {
         videoGravity: videoGravity,
         sliderProgress: sliderProgress,
         lastDraggedProgress: lastDraggedProgress,
-        isPlaying: isPlaying
+        isPlaying: isPlaying,
+        controllersPropsData: controllersPropsData
       )
     }
   }

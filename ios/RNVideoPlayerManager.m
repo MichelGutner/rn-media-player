@@ -51,6 +51,7 @@ RCT_EXPORT_VIEW_PROPERTY(fullScreenProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(titleProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(goBackProps, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(loadingProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(dictionaryControllersProps, NSDictionary)
 
 // -- Settings Options data
 RCT_EXPORT_VIEW_PROPERTY(speeds, NSDictionary)

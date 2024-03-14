@@ -29,9 +29,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var selectedQuality: String = ""
   private var selectedSpeed: String = ""
   
-  private var videoQualities: [HashableData] = []
-  private var videoSpeeds: [HashableData] = []
-  private var videoSettings: [HashableData] = []
+  private var videoQualities: [HashableModalContent] = []
+  private var videoSpeeds: [HashableModalContent] = []
+  private var videoSettings: [HashableModalContent] = []
   
   private var loadingView = UIView()
   private var url: URL?
@@ -75,6 +75,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var speeds: NSDictionary? = [:]
   @objc var qualities: NSDictionary? = [:]
   @objc var settings: NSDictionary? = [:]
+  @objc var dictionaryControllersProps: NSDictionary? = [:]
   
   // external controls
   @objc var source: NSDictionary? = [:] {
@@ -140,6 +141,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var sliderProgress: Double = 0.0
   private var lastDraggedProgress: Double = 0.0
   private var isPlaying: Bool? = nil
+  private var controllersPropsData: HashableControllers? = nil
   
   override func layoutSubviews() {
     guard let player = player else { return }
@@ -154,16 +156,22 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
     
     if let qualitiesData = qualities?["data"] as? [[String: Any]] {
-      videoQualities = qualitiesData.map { HashableData(dictionary: $0) }
+      videoQualities = qualitiesData.map { HashableModalContent(dictionary: $0) }
     }
     
     if let speedsData = speeds?["data"] as? [[String: Any]] {
-      videoSpeeds = speedsData.map { HashableData(dictionary: $0) }
+      videoSpeeds = speedsData.map { HashableModalContent(dictionary: $0) }
     }
     
     if let settingsData = settings?["data"] as? [[String: Any]] {
-      self.videoSettings = settingsData.map { HashableData(dictionary: $0) }
+      self.videoSettings = settingsData.map { HashableModalContent(dictionary: $0) }
     }
+    
+    if let controllersProps = dictionaryControllersProps {
+      let playbackControlProps = HashableControllersProps(dictionary: controllersProps["playbackControl"] as! NSDictionary)
+      self.controllersPropsData = HashableControllers(playbackControl: playbackControlProps)
+    }
+    
     
     let title = source?["title"] as? String ?? ""
     
@@ -200,7 +208,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         isActiveLoop: loop,
         sliderProgress: sliderProgress,
         lastDraggedProgress: lastDraggedProgress,
-        isPlaying: isPlaying
+        isPlaying: isPlaying,
+        controllersPropsData: controllersPropsData
       )
     )
     videoPlayerView = playerView.view

@@ -226,6 +226,11 @@ export const RNPlayerVideo = ({
           },
         ],
       }}
+      dictionaryControllersProps={{
+        playbackControl: {
+          color: 'rgba(108, 74, 121, 1)',
+        },
+      }}
       onSettingsTapped={() => console.log('MORE OPTIONS TAPPED')}
       onFullScreenTapped={({nativeEvent}) =>
         onFullScreen(nativeEvent.fullScreen)

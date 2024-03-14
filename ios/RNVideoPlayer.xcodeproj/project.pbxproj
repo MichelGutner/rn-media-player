@@ -26,6 +26,7 @@
 		DBAD5F402B9F81FF00FC45FE /* CustomPlayPause.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAD5F3F2B9F81FF00FC45FE /* CustomPlayPause.swift */; };
 		DBAD5F432BA0DB6500FC45FE /* UIBezierPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAD5F422BA0DB6500FC45FE /* UIBezierPaths.swift */; };
 		DBAD5F452BA21E2400FC45FE /* CustomIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAD5F442BA21E2400FC45FE /* CustomIcon.swift */; };
+		DBAD5F472BA233F800FC45FE /* ControllersProps.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAD5F462BA233F800FC45FE /* ControllersProps.swift */; };
 		DBB3FEB12B85509F00AD8E55 /* OptionsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB02B85509F00AD8E55 /* OptionsContentView.swift */; };
 		DBB3FEB32B8595FE00AD8E55 /* SettingsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB22B8595FE00AD8E55 /* SettingsContentView.swift */; };
 		DBB3FEB52B85A48F00AD8E55 /* UtilityStructsAndEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */; };
@@ -33,7 +34,7 @@
 		DBBE84222B882EBE00B8A738 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBBE84212B882EBE00B8A738 /* VideoPlayerView.swift */; };
 		DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */; };
 		DBC2BA782B6FF70900648252 /* PlaybackErrorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC2BA772B6FF70900648252 /* PlaybackErrorManager.swift */; };
-		DBCD42E72B69E3180099DFEF /* data.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCD42E62B69E3180099DFEF /* data.swift */; };
+		DBCD42E72B69E3180099DFEF /* ModalContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCD42E62B69E3180099DFEF /* ModalContent.swift */; };
 		DBCD42EB2B6B3DCB0099DFEF /* QualityViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCD42EA2B6B3DCB0099DFEF /* QualityViewController.swift */; };
 		DBD7188A2B54CA9B008ED0AD /* UtilityDynamicSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */; };
 		DBE286242B97CC8E009E9EF4 /* MoreOptionsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE286232B97CC8E009E9EF4 /* MoreOptionsContentView.swift */; };
@@ -80,6 +81,7 @@
 		DBAD5F3F2B9F81FF00FC45FE /* CustomPlayPause.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPlayPause.swift; sourceTree = "<group>"; };
 		DBAD5F422BA0DB6500FC45FE /* UIBezierPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIBezierPaths.swift; sourceTree = "<group>"; };
 		DBAD5F442BA21E2400FC45FE /* CustomIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomIcon.swift; sourceTree = "<group>"; };
+		DBAD5F462BA233F800FC45FE /* ControllersProps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControllersProps.swift; sourceTree = "<group>"; };
 		DBB3FEB02B85509F00AD8E55 /* OptionsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionsContentView.swift; sourceTree = "<group>"; };
 		DBB3FEB22B8595FE00AD8E55 /* SettingsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsContentView.swift; path = ../SettingsContentView.swift; sourceTree = "<group>"; };
 		DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityStructsAndEnums.swift; sourceTree = "<group>"; };
@@ -87,7 +89,7 @@
 		DBBE84212B882EBE00B8A738 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDefault.swift; sourceTree = "<group>"; };
 		DBC2BA772B6FF70900648252 /* PlaybackErrorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackErrorManager.swift; sourceTree = "<group>"; };
-		DBCD42E62B69E3180099DFEF /* data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = data.swift; sourceTree = "<group>"; };
+		DBCD42E62B69E3180099DFEF /* ModalContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalContent.swift; sourceTree = "<group>"; };
 		DBCD42EA2B6B3DCB0099DFEF /* QualityViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QualityViewController.swift; sourceTree = "<group>"; };
 		DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDynamicSize.swift; sourceTree = "<group>"; };
 		DBE286232B97CC8E009E9EF4 /* MoreOptionsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreOptionsContentView.swift; sourceTree = "<group>"; };
@@ -260,12 +262,13 @@
 			name = Errors;
 			sourceTree = "<group>";
 		};
-		DBCD42E52B69E2F80099DFEF /* List */ = {
+		DBCD42E52B69E2F80099DFEF /* Hashables */ = {
 			isa = PBXGroup;
 			children = (
-				DBCD42E62B69E3180099DFEF /* data.swift */,
+				DBCD42E62B69E3180099DFEF /* ModalContent.swift */,
+				DBAD5F462BA233F800FC45FE /* ControllersProps.swift */,
 			);
-			name = List;
+			name = Hashables;
 			sourceTree = "<group>";
 		};
 		DBE286252B98E633009E9EF4 /* Views */ = {
@@ -295,7 +298,7 @@
 				DBE286302B992FBF009E9EF4 /* Observables */,
 				DBE2862E2B992E8D009E9EF4 /* Downloads */,
 				DBC2BA762B6FF6D700648252 /* Errors */,
-				DBCD42E52B69E2F80099DFEF /* List */,
+				DBCD42E52B69E2F80099DFEF /* Hashables */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -632,12 +635,13 @@
 				D02E142D2AF08CF6003D0472 /* RNVideoPlayer.swift in Sources */,
 				DB10488C2B9CC83900082330 /* FileManager.swift in Sources */,
 				DBAD5F402B9F81FF00FC45FE /* CustomPlayPause.swift in Sources */,
+				DBAD5F472BA233F800FC45FE /* ControllersProps.swift in Sources */,
 				DBB3FEB12B85509F00AD8E55 /* OptionsContentView.swift in Sources */,
 				DBB3FEB52B85A48F00AD8E55 /* UtilityStructsAndEnums.swift in Sources */,
 				DBB3FEB32B8595FE00AD8E55 /* SettingsContentView.swift in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
-				DBCD42E72B69E3180099DFEF /* data.swift in Sources */,
+				DBCD42E72B69E3180099DFEF /* ModalContent.swift in Sources */,
 				DBAD5F432BA0DB6500FC45FE /* UIBezierPaths.swift in Sources */,
 				DBAD5F452BA21E2400FC45FE /* CustomIcon.swift in Sources */,
 				DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */,

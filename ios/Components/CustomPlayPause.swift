@@ -14,14 +14,17 @@ struct CustomPlayPauseButton: UIViewRepresentable {
   var action: (Bool) -> Void
   var isPlaying: Bool
   var frame: CGRect
+  var color: CGColor?
   
   class Coordinator: NSObject {
     var action: (Bool) -> Void
     var isPlaying: Bool
+    var color: CGColor?
     
-    init(action: @escaping (Bool) -> Void, _ isPlaying: Bool) {
+    init(action: @escaping (Bool) -> Void, _ isPlaying: Bool, _ color: CGColor?) {
       self.action = action
       self.isPlaying = isPlaying
+      self.color = color
     }
     
     @objc func buttonTapped() {
@@ -30,14 +33,13 @@ struct CustomPlayPauseButton: UIViewRepresentable {
   }
   
   func makeCoordinator() -> Coordinator {
-    Coordinator(action: action, isPlaying)
+    Coordinator(action: action, isPlaying, color)
   }
   
   
   func makeUIView(context: Context) -> some UIView {
-    let uiView = PlayPauseButton(frame: frame, action: action, isPlaying: isPlaying)
+    let uiView = PlayPauseButton(frame: frame, action: action, isPlaying: isPlaying, color: color)
     uiView.center = CGPoint(x: frame.width / 2, y: frame.height / 2)
-    print("is \(isPlaying)")
     return uiView
   }
   
@@ -50,6 +52,7 @@ struct CustomPlayPauseButton: UIViewRepresentable {
 @available(iOS 13.0, *)
 class PlayPauseButton: UIButton {
   private var action: (Bool) -> Void
+  private var color: CGColor?
   
     private var playLeftLayer: CAShapeLayer!
     private var playRightLayer: CAShapeLayer!
@@ -65,9 +68,10 @@ class PlayPauseButton: UIButton {
         }
     }
     
-  init(frame: CGRect, action: @escaping (Bool) -> Void, isPlaying: Bool) {
+  init(frame: CGRect, action: @escaping (Bool) -> Void, isPlaying: Bool, color: CGColor?) {
     self.action = action
     self.playing = isPlaying
+    self.color = color
     
     super.init(frame: frame)
       setupLayers()
@@ -94,8 +98,8 @@ class PlayPauseButton: UIButton {
   private func createLayer(path: CGPath) -> CAShapeLayer {
     let layer = CAShapeLayer()
     layer.path = path
-    layer.fillColor = .init(red: 255, green: 255, blue: 255, alpha: 1)
-    layer.strokeColor = CGColor(gray: 1, alpha: 1)
+    layer.fillColor = color ?? CGColor(gray: 1, alpha: 1)
+    layer.strokeColor = color ?? CGColor(gray: 1, alpha: 1)
     layer.position = .init(x: bounds.midX, y: bounds.midY)
     
     layer.setNeedsDisplay()

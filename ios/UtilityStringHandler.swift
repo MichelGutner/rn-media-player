@@ -11,6 +11,7 @@ public func transformStringIntoUIColor(color: String?) -> UIColor {
   }
   
   if (colorToTransform.hasPrefix("rgba")) {
+    print("colorToTransform \(colorToTransform)")
     return transformRgbaIntoUIColor(color: colorToTransform)!
   }
   

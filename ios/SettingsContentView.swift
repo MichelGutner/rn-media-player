@@ -10,10 +10,10 @@ import SwiftUI
 
 @available(iOS 13.0, *)
 struct SettingsContentView: View {
-  var settingsData: [HashableData]
+  var settingsData: [HashableModalContent]
   var onSettingSelected: (String) -> Void
   
-  init(settingsData: [HashableData], onSettingSelected: @escaping (String) -> Void) {
+  init(settingsData: [HashableModalContent], onSettingSelected: @escaping (String) -> Void) {
     self.settingsData = settingsData
     self.onSettingSelected = onSettingSelected
   }

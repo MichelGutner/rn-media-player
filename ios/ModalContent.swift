@@ -5,7 +5,7 @@
 //  Created by Michel Gutner on 30/01/24.
 //
 
-struct HashableData : Hashable {
+struct HashableModalContent : Hashable {
   let name: String
   let value: String
   let enabled: Bool
@@ -28,7 +28,7 @@ struct HashableData : Hashable {
     hasher.combine(enabled)
   }
   
-  static func == (lhs: HashableData, rhs: HashableData) -> Bool {
+  static func == (lhs: HashableModalContent, rhs: HashableModalContent) -> Bool {
     return lhs.name == rhs.name && lhs.value == rhs.value && lhs.enabled == rhs.enabled
   }
 }
