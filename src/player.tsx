@@ -226,21 +226,47 @@ export const RNPlayerVideo = ({
           },
         ],
       }}
-      dictionaryControllersProps={{
-        playbackControl: {
-          // color: '#a90ee6',
-        },
-        seekSliderControl: {
-          maximumTrackColor: '#4f4c50',
-          minimumTrackColor: '#890cba',
-          seekableTintColor: '#b6b6b6',
-          thumbImageColor: '#a90ee6',
-          // thumbnailBorderColor: '#a90ee6',
-          // thumbnailTimeCodeColor: '#a90ee6',
-        },
-        timeCodesControl: {
-          currentTimeColor: '#a90ee6',
-          durationColor: '#a90ee6',
+      controlsProps={{
+        // playback: {
+        //   color: '#a90ee6',
+        // },
+        // seekSlider: {
+        //   maximumTrackColor: '#4f4c50',
+        //   minimumTrackColor: '#890cba',
+        //   seekableTintColor: '#b6b6b6',
+        //   thumbImageColor: '#a90ee6',
+        //   // thumbnailBorderColor: '#a90ee6',
+        //   // thumbnailTimeCodeColor: '#a90ee6',
+        // },
+        // timeCodes: {
+        //   currentTimeColor: '#f3e9f7',
+        //   durationColor: '#1a161c',
+        //   slashColor: '#a90ee6',
+        // },
+        // settings: {
+        //   color: '#a90ee6',
+        // },
+        // fullScreen: {
+        //   color: '#a90ee6',
+        // },
+        // download: {
+        //   color: '#696969',
+        //   progressBarColor: '#908c91',
+        //   progressBarFillColor: '#0df85f',
+        //   messageDelete: 'Delete',
+        //   messageDownload: 'Download',
+        //   labelDelete: 'Delete',
+        //   labelCancel: 'Cancel',
+        //   labelDownload: 'Download',
+        // },
+        // toast: {
+        //   // label: 'Video baixado com sucesso',
+        //   // backgroundColor: '#0df85f',
+        //   // labelColor: '#ffff',
+        // },
+        header: {
+          leftButtonColor: 'rgba(255,255,255,1)',
+          titleColor: '#d71e1e',
         },
       }}
       onSettingsTapped={() => console.log('MORE OPTIONS TAPPED')}

@@ -35,7 +35,7 @@ struct MoreOptionsContentView: View {
         Image(
           systemName: !isActiveAutoPlay ? "play.circle" : "pause.circle"
         )
-        .font(.system(size: size22))
+        .font(.system(size: StandardSizes.medium22))
         .foregroundColor(isActiveAutoPlay ? Color.primary : Color.gray)
         
         Text("Auto Play")
@@ -53,7 +53,7 @@ struct MoreOptionsContentView: View {
   func SectionLoopView() -> some View {
       HStack(alignment: .center) {
         Image(systemName: "repeat.1")
-          .font(.system(size: size22))
+          .font(.system(size: StandardSizes.medium22))
           .foregroundColor(isActiveLoop ? Color.primary : Color.gray)
         
         Text("Loop Video")

@@ -16,11 +16,10 @@
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		D02E142D2AF08CF6003D0472 /* RNVideoPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02E142C2AF08CF6003D0472 /* RNVideoPlayer.swift */; };
 		D02E142F2AF08E73003D0472 /* RNVideoPlayerManager.m in Sources */ = {isa = PBXBuildFile; fileRef = D02E142E2AF08E73003D0472 /* RNVideoPlayerManager.m */; };
-		DB0C9DCD2B23AB6900B7D598 /* UtilityStringHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DCC2B23AB6900B7D598 /* UtilityStringHandler.swift */; };
+		DB0C9DCD2B23AB6900B7D598 /* StringHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0C9DCC2B23AB6900B7D598 /* StringHandler.swift */; };
 		DB10488C2B9CC83900082330 /* FileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB10488B2B9CC83900082330 /* FileManager.swift */; };
 		DB5C75082B2D425500B750ED /* DoubleTapSeek.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */; };
 		DB645A072B79D24E000E54AD /* Playback.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB645A062B79D24E000E54AD /* Playback.swift */; };
-		DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */; };
 		DBAAB1952B66863900BE5FD7 /* CustomLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1942B66863900BE5FD7 /* CustomLoading.swift */; };
 		DBAAB1972B67275000BE5FD7 /* ModalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAAB1962B67275000BE5FD7 /* ModalViewController.swift */; };
 		DBAD5F402B9F81FF00FC45FE /* CustomPlayPause.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAD5F3F2B9F81FF00FC45FE /* CustomPlayPause.swift */; };
@@ -30,14 +29,14 @@
 		DBAD5F492BA2A2F900FC45FE /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBAD5F482BA2A2F900FC45FE /* Color.swift */; };
 		DBB3FEB12B85509F00AD8E55 /* OptionsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB02B85509F00AD8E55 /* OptionsContentView.swift */; };
 		DBB3FEB32B8595FE00AD8E55 /* SettingsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB22B8595FE00AD8E55 /* SettingsContentView.swift */; };
-		DBB3FEB52B85A48F00AD8E55 /* UtilityStructsAndEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */; };
+		DBB3FEB52B85A48F00AD8E55 /* Enums.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB3FEB42B85A48F00AD8E55 /* Enums.swift */; };
 		DBBE841F2B882D5600B8A738 /* CustomVideoPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBBE841E2B882D5600B8A738 /* CustomVideoPlayer.swift */; };
 		DBBE84222B882EBE00B8A738 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBBE84212B882EBE00B8A738 /* VideoPlayerView.swift */; };
-		DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */; };
+		DBC0447F2B4B3D2F00888241 /* StandardValues.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC0447E2B4B3D2F00888241 /* StandardValues.swift */; };
 		DBC2BA782B6FF70900648252 /* PlaybackErrorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBC2BA772B6FF70900648252 /* PlaybackErrorManager.swift */; };
 		DBCD42E72B69E3180099DFEF /* ModalContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCD42E62B69E3180099DFEF /* ModalContent.swift */; };
 		DBCD42EB2B6B3DCB0099DFEF /* QualityViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCD42EA2B6B3DCB0099DFEF /* QualityViewController.swift */; };
-		DBD7188A2B54CA9B008ED0AD /* UtilityDynamicSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */; };
+		DBD7188A2B54CA9B008ED0AD /* DynamicSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBD718892B54CA9B008ED0AD /* DynamicSize.swift */; };
 		DBE286242B97CC8E009E9EF4 /* MoreOptionsContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE286232B97CC8E009E9EF4 /* MoreOptionsContentView.swift */; };
 		DBE286282B98E661009E9EF4 /* CustomSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBE286272B98E661009E9EF4 /* CustomSwitch.swift */; };
 /* End PBXBuildFile section */
@@ -72,11 +71,10 @@
 		D02E142B2AF08CF5003D0472 /* RNVideoPlayer-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RNVideoPlayer-Bridging-Header.h"; sourceTree = "<group>"; };
 		D02E142C2AF08CF6003D0472 /* RNVideoPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RNVideoPlayer.swift; sourceTree = "<group>"; };
 		D02E142E2AF08E73003D0472 /* RNVideoPlayerManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNVideoPlayerManager.m; sourceTree = "<group>"; };
-		DB0C9DCC2B23AB6900B7D598 /* UtilityStringHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityStringHandler.swift; sourceTree = "<group>"; };
+		DB0C9DCC2B23AB6900B7D598 /* StringHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringHandler.swift; sourceTree = "<group>"; };
 		DB10488B2B9CC83900082330 /* FileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManager.swift; sourceTree = "<group>"; };
 		DB5C75072B2D425500B750ED /* DoubleTapSeek.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapSeek.swift; sourceTree = "<group>"; };
 		DB645A062B79D24E000E54AD /* Playback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Playback.swift; sourceTree = "<group>"; };
-		DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityImageHandler.swift; sourceTree = "<group>"; };
 		DBAAB1942B66863900BE5FD7 /* CustomLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomLoading.swift; sourceTree = "<group>"; };
 		DBAAB1962B67275000BE5FD7 /* ModalViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalViewController.swift; sourceTree = "<group>"; usesTabs = 0; };
 		DBAD5F3F2B9F81FF00FC45FE /* CustomPlayPause.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPlayPause.swift; sourceTree = "<group>"; };
@@ -86,14 +84,14 @@
 		DBAD5F482BA2A2F900FC45FE /* Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
 		DBB3FEB02B85509F00AD8E55 /* OptionsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionsContentView.swift; sourceTree = "<group>"; };
 		DBB3FEB22B8595FE00AD8E55 /* SettingsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsContentView.swift; path = ../SettingsContentView.swift; sourceTree = "<group>"; };
-		DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityStructsAndEnums.swift; sourceTree = "<group>"; };
+		DBB3FEB42B85A48F00AD8E55 /* Enums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Enums.swift; sourceTree = "<group>"; };
 		DBBE841E2B882D5600B8A738 /* CustomVideoPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomVideoPlayer.swift; sourceTree = "<group>"; };
 		DBBE84212B882EBE00B8A738 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
-		DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDefault.swift; sourceTree = "<group>"; };
+		DBC0447E2B4B3D2F00888241 /* StandardValues.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandardValues.swift; sourceTree = "<group>"; };
 		DBC2BA772B6FF70900648252 /* PlaybackErrorManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackErrorManager.swift; sourceTree = "<group>"; };
 		DBCD42E62B69E3180099DFEF /* ModalContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalContent.swift; sourceTree = "<group>"; };
 		DBCD42EA2B6B3DCB0099DFEF /* QualityViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QualityViewController.swift; sourceTree = "<group>"; };
-		DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityDynamicSize.swift; sourceTree = "<group>"; };
+		DBD718892B54CA9B008ED0AD /* DynamicSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicSize.swift; sourceTree = "<group>"; };
 		DBE286232B97CC8E009E9EF4 /* MoreOptionsContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreOptionsContentView.swift; sourceTree = "<group>"; };
 		DBE286272B98E661009E9EF4 /* CustomSwitch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomSwitch.swift; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -221,11 +219,10 @@
 		DB0C9DCF2B23B55900B7D598 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
-				DB0C9DCC2B23AB6900B7D598 /* UtilityStringHandler.swift */,
-				DBC0447E2B4B3D2F00888241 /* UtilityDefault.swift */,
-				DB78214E2B4E47200022DCE8 /* UtilityImageHandler.swift */,
-				DBD718892B54CA9B008ED0AD /* UtilityDynamicSize.swift */,
-				DBB3FEB42B85A48F00AD8E55 /* UtilityStructsAndEnums.swift */,
+				DB0C9DCC2B23AB6900B7D598 /* StringHandler.swift */,
+				DBC0447E2B4B3D2F00888241 /* StandardValues.swift */,
+				DBD718892B54CA9B008ED0AD /* DynamicSize.swift */,
+				DBB3FEB42B85A48F00AD8E55 /* Enums.swift */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -627,21 +624,20 @@
 				D02E142F2AF08E73003D0472 /* RNVideoPlayerManager.m in Sources */,
 				DBAAB1972B67275000BE5FD7 /* ModalViewController.swift in Sources */,
 				DBE286242B97CC8E009E9EF4 /* MoreOptionsContentView.swift in Sources */,
-				DBD7188A2B54CA9B008ED0AD /* UtilityDynamicSize.swift in Sources */,
+				DBD7188A2B54CA9B008ED0AD /* DynamicSize.swift in Sources */,
 				DBBE84222B882EBE00B8A738 /* VideoPlayerView.swift in Sources */,
 				DBCD42EB2B6B3DCB0099DFEF /* QualityViewController.swift in Sources */,
 				DBC2BA782B6FF70900648252 /* PlaybackErrorManager.swift in Sources */,
 				DBAD5F492BA2A2F900FC45FE /* Color.swift in Sources */,
-				DB78214F2B4E47200022DCE8 /* UtilityImageHandler.swift in Sources */,
 				DB645A072B79D24E000E54AD /* Playback.swift in Sources */,
-				DB0C9DCD2B23AB6900B7D598 /* UtilityStringHandler.swift in Sources */,
-				DBC0447F2B4B3D2F00888241 /* UtilityDefault.swift in Sources */,
+				DB0C9DCD2B23AB6900B7D598 /* StringHandler.swift in Sources */,
+				DBC0447F2B4B3D2F00888241 /* StandardValues.swift in Sources */,
 				D02E142D2AF08CF6003D0472 /* RNVideoPlayer.swift in Sources */,
 				DB10488C2B9CC83900082330 /* FileManager.swift in Sources */,
 				DBAD5F402B9F81FF00FC45FE /* CustomPlayPause.swift in Sources */,
 				DBAD5F472BA233F800FC45FE /* ControllersProps.swift in Sources */,
 				DBB3FEB12B85509F00AD8E55 /* OptionsContentView.swift in Sources */,
-				DBB3FEB52B85A48F00AD8E55 /* UtilityStructsAndEnums.swift in Sources */,
+				DBB3FEB52B85A48F00AD8E55 /* Enums.swift in Sources */,
 				DBB3FEB32B8595FE00AD8E55 /* SettingsContentView.swift in Sources */,
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,

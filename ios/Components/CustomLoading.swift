@@ -12,11 +12,11 @@ import SwiftUI
 struct CustomLoading: View {
   let config: NSDictionary?
   @State var isLoading : Bool = false
-  @State var size = calculateSizeByWidth(size24, variantPercent20)
+  @State var size = calculateSizeByWidth(StandardSizes.medium24, VariantPercent.p20)
   var body: some View {
     
     let loadingColor = config?["color"]
-    let color = Color(transformStringIntoUIColor(color: loadingColor as? String))
+    let color = Color(transformStringIntoUIColor(color: loadingColor as? String) ?? .white)
     
     
     ZStack {
@@ -35,7 +35,7 @@ struct CustomLoading: View {
   }
   
   private func updateDynamicSize() {
-    size = calculateSizeByWidth(size30, variantPercent20)
+    size = calculateSizeByWidth(StandardSizes.medium30, VariantPercent.p20)
   }
   
 }

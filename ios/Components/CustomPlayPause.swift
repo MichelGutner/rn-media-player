@@ -98,8 +98,8 @@ class PlayPauseButton: UIButton {
   private func createLayer(path: CGPath) -> CAShapeLayer {
     let layer = CAShapeLayer()
     layer.path = path
-    layer.fillColor = color ?? CGColor(gray: 1, alpha: 1)
-    layer.strokeColor = color ?? CGColor(gray: 1, alpha: 1)
+    layer.fillColor = color ?? CGColor(red: 255, green: 255, blue: 255, alpha: 1)
+    layer.strokeColor = color ?? CGColor(red: 255, green: 255, blue: 255, alpha: 1)
     layer.position = .init(x: bounds.midX, y: bounds.midY)
     
     layer.setNeedsDisplay()

@@ -7,14 +7,6 @@
 
 import Foundation
 
-
-@available(iOS 13.0, *)
-public struct HashableItem: Hashable {
-  var name: String
-  var value: String?
-  var enabled: Bool?
-}
-
 @available(iOS 13.0, *)
 enum SettingsOption: String {
   case qualities,

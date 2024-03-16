@@ -63,16 +63,23 @@ struct VideoPlayerView: View {
   @State private var interval = CMTime(value: 1, timescale: 2)
   
   @State private var downloadProgress: Float = 0.0
+  @State private var downloadInProgress: Bool = false
   @State private var showActionSheetFileManager = false
   
   @State private var seekerThumbImageSize: CGSize = .init(width: 15, height: 15)
   @State private var doubleTapSeekValue: Int = 10
   @State private var suffixLabelDoubleTapSeek: String = "Seconds"
+  @State private var isPresentToast: Bool = false
   
-  @State private var controllersPropsData: HashableControllers? = .init(
+  @State private var controlsProps: HashableControllers? = .init(
     playbackControl: .init(dictionary: [:]),
     seekSliderControl: .init(dictionary: [:]),
-    timeCodesControl: .init(dictionary: [:])
+    timeCodesControl: .init(dictionary: [:]),
+    settingsControl: .init(dictionary: [:]),
+    fullScreenControl: .init(dictionary: [:]),
+    downloadControl: .init(dictionary: [:]),
+    toastControl: .init(dictionary: [:]),
+    headerControl: .init(dictionary: [:])
   )
   
   var size: CGSize
@@ -115,7 +122,9 @@ struct VideoPlayerView: View {
     sliderProgress: Double,
     lastDraggedProgress: Double,
     isPlaying: Bool?,
-    controllersPropsData: HashableControllers?
+    controllersPropsData: HashableControllers?,
+    downloadInProgress: Bool,
+    downloadProgress: Float
   ) {
     self.size = size
     self.safeAreaInsets = safeAreaInsets
@@ -144,7 +153,9 @@ struct VideoPlayerView: View {
     _isLoading = State(initialValue: isLoading)
     _doubleTapSeekValue = State(initialValue: doubleTapSeekValue)
     _suffixLabelDoubleTapSeek = State(initialValue: suffixLabelDoubleTapSeek)
-    _controllersPropsData = State(initialValue: controllersPropsData)
+    _controlsProps = State(initialValue: controllersPropsData)
+    _downloadInProgress = State(initialValue: downloadInProgress)
+    _downloadProgress = State(wrappedValue: downloadProgress)
   }
   
   var body: some View {
@@ -222,10 +233,10 @@ struct VideoPlayerView: View {
                       onModalCompletion: { [self] in
                         openedSettingsModal = false
                         openedOptionsMoreOptions = false
-                        self.notificationPostModal(userInfo: ["opened": openedSettingsModal])
-                        self.notificationPostModal(userInfo: ["\(SettingsOption.speeds)Opened": false])
-                        self.notificationPostModal(userInfo: ["\(SettingsOption.qualities)Opened": false])
-                        self.notificationPostModal(userInfo: ["\(SettingsOption.moreOptions)Opened": false])
+                        notificationPostModal(userInfo: ["opened": openedSettingsModal])
+                        notificationPostModal(userInfo: ["\(SettingsOption.speeds)Opened": false])
+                        notificationPostModal(userInfo: ["\(SettingsOption.qualities)Opened": false])
+                        notificationPostModal(userInfo: ["\(SettingsOption.moreOptions)Opened": false])
                       },
                       modalContent: {
                         Group {
@@ -235,7 +246,7 @@ struct VideoPlayerView: View {
                               data: videoQualities,
                               onSelected: { [self] item in
                                 selectedQuality = item.name
-                                self.notificationPostModal(userInfo: ["optionsQualitySelected": item.name, "\(SettingsOption.qualities)Opened": false, "qualityUrl": item.value])
+                                notificationPostModal(userInfo: ["optionsQualitySelected": item.name, "\(SettingsOption.qualities)Opened": false, "qualityUrl": item.value])
                                 resetModalState()
                               },
                               initialSelectedItem: initialQualitySelected,
@@ -247,7 +258,7 @@ struct VideoPlayerView: View {
                               data: videoSpeeds,
                               onSelected: { [self] item in
                                 selectedSpeed = item.name
-                                self.notificationPostModal(userInfo: ["optionsSpeedSelected": item.name, "\(SettingsOption.speeds)Opened": false, "speedRate": Float(item.value) as Any])
+                                notificationPostModal(userInfo: ["optionsSpeedSelected": item.name, "\(SettingsOption.speeds)Opened": false, "speedRate": Float(item.value) as Any])
                                 resetModalState()
                               },
                               initialSelectedItem: initialSpeedSelected,
@@ -259,11 +270,11 @@ struct VideoPlayerView: View {
                               isActiveLoop: isActiveLoop,
                               onTapAutoPlay: { isActive in
                                 isActiveAutoPlay = isActive
-                                self.notificationPostModal(userInfo: ["optionsAutoPlay": isActive])
+                                notificationPostModal(userInfo: ["optionsAutoPlay": isActive])
                               },
                               onTapLoop: { isActive in
                                 isActiveLoop = isActive
-                                self.notificationPostModal(userInfo: ["optionsLoop": isActive])
+                                notificationPostModal(userInfo: ["optionsLoop": isActive])
                               }
                             )
                           } else {
@@ -274,7 +285,7 @@ struct VideoPlayerView: View {
                                 self.optionsItemSelected(option!)
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
                                   if let optionItem = option {
-                                    self.notificationPostModal(userInfo: ["\(optionItem)Opened": true])
+                                    notificationPostModal(userInfo: ["\(optionItem)Opened": true])
                                   }
                                 })
                               })
@@ -282,6 +293,13 @@ struct VideoPlayerView: View {
                           }
                         }
                       })
+                  }
+                }
+              )
+              .overlay(
+                Group {
+                  if isPresentToast {
+                    Toast()
                   }
                 }
               )
@@ -377,11 +395,11 @@ extension VideoPlayerView {
         Button (action: {
 //          onTapExit()
         }) {
-          CustomIcon("arrow.left")
+          CustomIcon("arrow.left", color: controlsProps?.header.leftButtonColor)
         }
         .padding(.leading, 8)
         Spacer()
-        Text(title).font(.system(size: titleSize)).foregroundColor(.white)
+        Text(title).font(.system(size: titleSize)).foregroundColor(Color(uiColor: (controlsProps?.header.titleColor ?? .white)))
         Spacer()
       }
     }
@@ -400,22 +418,22 @@ extension VideoPlayerView {
             .resizable()
             .aspectRatio(contentMode: .fill)
             .frame(width: thumbSize.width, height: thumbSize.height)
-            .clipShape(RoundedRectangle(cornerRadius: CorneRadious.c16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous))
             .overlay(
-              RoundedRectangle(cornerRadius: CorneRadious.c16, style: .continuous)
-                .stroke(Color(uiColor: (controllersPropsData?.seekSliderControl.thumbnailBorderColor)!), lineWidth: 2)
+              RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous)
+                .stroke(Color(uiColor: (controlsProps?.seekSlider.thumbnailBorderColor ?? .white)), lineWidth: 2)
             )
           Text(stringFromTimeInterval(interval: TimeInterval(truncating: (sliderProgress * duration) as NSNumber)))
             .font(.caption)
-            .foregroundColor(Color(uiColor: controllersPropsData?.seekSliderControl.thumbnailTimeCodeColor ?? UIColor.white))
+            .foregroundColor(Color(uiColor: controlsProps?.seekSlider.thumbnailTimeCodeColor ?? .white))
             .fontWeight(.semibold)
         }
       } else {
-        RoundedRectangle(cornerRadius: CorneRadious.c16, style: .continuous)
+        RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous)
           .fill(.black)
           .overlay(
-            RoundedRectangle(cornerRadius: CorneRadious.c16, style: .continuous)
-              .stroke(Color(uiColor: (controllersPropsData?.seekSliderControl.thumbnailBorderColor)!), lineWidth: 2)
+            RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous)
+              .stroke(Color(uiColor: (controlsProps?.seekSlider.thumbnailBorderColor) ?? .white), lineWidth: 2)
           )
       }
     }
@@ -434,26 +452,28 @@ extension VideoPlayerView {
       HStack {
         ZStack(alignment: .leading) {
           Rectangle()
-            .fill(Color(uiColor: (controllersPropsData?.seekSliderControl.maximumTrackColor)!)).opacity(0.5)
+            .fill(Color(uiColor: (controlsProps?.seekSlider.maximumTrackColor ?? .systemFill)))
             .frame(width: size.width - seekerThumbImageSize.width)
-            .cornerRadius(8)
+            .cornerRadius(CornerRadius.small)
           
           Rectangle()
-            .fill(Color(uiColor: (controllersPropsData?.seekSliderControl.seekableTintColor)!))
+            .fill(Color(uiColor: (controlsProps?.seekSlider.seekableTintColor ?? .systemGray2)))
             .frame(width: buffering * (size.width - seekerThumbImageSize.width))
-            .cornerRadius(8)
+            .cornerRadius(CornerRadius.small)
           
           Rectangle()
-            .fill(Color(uiColor: (controllersPropsData?.seekSliderControl.minimumTrackColor)!))
+            .fill(Color(uiColor: (controlsProps?.seekSlider.minimumTrackColor ?? .systemBlue)))
             .frame(width: calculateSliderWidth())
-            .cornerRadius(8)
+            .cornerRadius(CornerRadius.small)
           
           HStack {}
             .overlay(
               Circle()
-                .fill(Color(uiColor: (controllersPropsData?.seekSliderControl.thumbImageColor)!))
+                .fill(Color(uiColor: (controlsProps?.seekSlider.thumbImageColor ?? UIColor.white)))
                 .frame(width: seekerThumbImageSize.width, height: seekerThumbImageSize.height)
-                .frame(width: 50, height: 50)
+                .frame(width: 40, height: 40)
+                .background(Color(uiColor: isSeeking ? .systemFill : .clear))
+                .cornerRadius(CornerRadius.infinity)
                 .opacity(isSeekingByDoubleTap ? 0.001 : 1)
                 .contentShape(Rectangle())
                 .offset(x: calculateSliderWidth())
@@ -519,7 +539,7 @@ extension VideoPlayerView {
             onPlaybackManager(playing: isPlaying)
           }, isPlaying: player.timeControlStatus != .paused,
           frame: .init(origin: .zero, size: .init(width: controllerSize, height: controllerSize)),
-          color: controllersPropsData?.playbackControl.color.cgColor
+          color: controlsProps?.playback.color?.cgColor
         )
       )
       .frame(width: controllerSize * 2, height: controllerSize * 2)
@@ -529,19 +549,13 @@ extension VideoPlayerView {
   
   @ViewBuilder
   func FullScreenControl() -> some View {
-
-//    let color = fullScreenConfig?["color"] as? String
-//    let isHidden = fullScreenConfig?["hidden"] as? Bool
-    
     Button (action: {
       isFullScreen.toggle()
       self.onTapFullScreenControl(isFullScreen)
     }) {
-      CustomIcon(isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+      CustomIcon(isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right", color: controlsProps?.fullScreen.color)
     }
-//    .foregroundColor(Color(transformStringIntoUIColor(color: color)))
     .rotationEffect(.init(degrees: 90))
-//    .opacity(isHidden ?? false ? 0 : 1)
   }
   
   @ViewBuilder
@@ -552,7 +566,7 @@ extension VideoPlayerView {
           notificationPostModal(userInfo: ["opened": openedSettingsModal])
         }
     }) {
-      CustomIcon("gear")
+      CustomIcon("gear", color: controlsProps?.settings.color);
     }
     .fixedSize(horizontal: true, vertical: true)
   }
@@ -560,58 +574,76 @@ extension VideoPlayerView {
   @ViewBuilder
   func DownloadControl() -> some View {
     let cached = PlayerFileManager().videoCached(title: title)
+    let size = calculateSizeByWidth(StandardSizes.small14, VariantPercent.p20)
+    let progressBarSize = calculateSizeByWidth(StandardSizes.medium24, VariantPercent.p10)
+    
     Button (action: {
       showActionSheetFileManager = true
     }) {
       VStack {
         Image(systemName: "arrow.down")
-          .foregroundColor(.white)
-          .font(.system(size: 20))
-          .padding(8)
+          .foregroundColor(Color(uiColor: controlsProps?.download.color ?? .white))
+          .font(.system(size: size))
         
         ZStack(alignment: .leading) {
           Rectangle()
-            .fill(cached.fileExist ? Color.blue : .white)
-            .frame(width: 30, height: 3)
-            .cornerRadius(16)
-            .padding(.top, -15)
+            .fill(cached.fileExist ? Color(uiColor: controlsProps?.download.progressBarFillColor ?? .blue) : Color(uiColor: controlsProps?.download.progressBarColor ?? .white))
+            .frame(width: progressBarSize, height: 2)
+            .cornerRadius(CornerRadius.medium)
+            
           
           Rectangle()
-            .fill(Color.blue)
-            .frame(width: CGFloat(downloadProgress / 100) * 30, height: 3)
-            .cornerRadius(16)
-            .padding(.top, -15)
+            .fill(Color(uiColor: controlsProps?.download.progressBarFillColor ?? .blue))
+            .frame(width: CGFloat(downloadProgress / 100) * progressBarSize, height: 2)
+            .cornerRadius(CornerRadius.medium)
         }
         
       }
+      .padding(.trailing, 4)
     }
     .actionSheet(isPresented: $showActionSheetFileManager) {
         let buttons: [ActionSheet.Button]
         
         if !cached.fileExist {
-            buttons = [
-                .default(Text("Baixar")) {
-                    fileManager.downloadFile(from: urlOfCurrentPlayerItem(player: player)!, title: title, onProgress: { progress in
-                        self.downloadProgress = progress
-                    }, completion: { response, error in
-                      print("resp \(String(describing: response)) error: \(String(describing: error))")
-                    })
-                },
-                .cancel()
-            ]
+          buttons = [
+            .default(Text(controlsProps?.download.labelDownload ?? "Download")) {
+              downloadInProgress = true
+              notificationPostPlaybackInfo(userInfo: ["downloadInProgress": true])
+              fileManager.downloadFile(from: urlOfCurrentPlayerItem(player: player)!, title: title, onProgress: { progress in
+                self.downloadProgress = progress
+                if downloadProgress >= 100 && downloadInProgress {
+                  isPresentToast = true
+                }
+                notificationPostPlaybackInfo(userInfo: ["downloadProgress": downloadProgress])
+              }, completion: { response, error in
+                
+                print("resp \(String(describing: response)) error: \(String(describing: error))")
+                downloadInProgress = false
+                notificationPostPlaybackInfo(userInfo: ["downloadInProgress": false])
+                
+              })
+            },
+            .cancel()
+          ]
         } else {
             buttons = [
-                .destructive(Text("Remover")) {
+              .destructive(Text(controlsProps?.download.labelDelete ?? "Remove")) {
                   fileManager.deleteFile(title: title, completetion: { message, error in
                     print("message: \(message), error: \(String(describing: error))")
                     self.downloadProgress = .zero
                   })
                 },
-                .cancel(Text("Cancelar"))
+              .cancel(Text(controlsProps?.download.labelCancel ?? "Cancel"))
             ]
         }
         
-      return ActionSheet(title: Text(!cached.fileExist ? "Deseja baixar o video?" : "Este vídeo já foi baixado deseja remover o video?"), buttons: buttons)
+      return ActionSheet(
+        title:
+          Text(!cached.fileExist
+               ? controlsProps?.download.messageDownload ?? "Do you want to download the video?"
+               : controlsProps?.download.messageDelete ?? "This video has already been downloaded. Do you want to remove the video?"),
+        buttons: buttons
+      )
     }
 
   }
@@ -619,14 +651,55 @@ extension VideoPlayerView {
   @ViewBuilder
   func TimeCodes() -> some View {
     let sizeTimeCodes = calculateSizeByWidth(StandardSizes.small8, VariantPercent.p20)
-    HStack {
+    
+    HStack(alignment: .center) {
       Spacer()
-      Text(stringFromTimeInterval(interval: currentTime).appending(" / \(stringFromTimeInterval(interval: duration))"))
+      Text(stringFromTimeInterval(interval: currentTime))
         .font(.system(size: sizeTimeCodes))
-        .foregroundColor(Color(uiColor: (controllersPropsData?.timeCodesControl.currentTimeColor)!))
+        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.currentTimeColor ?? .white)))
+      
+      Text("/")
+        .font(.system(size: sizeTimeCodes))
+        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.slashColor ?? .white)))
+      
+      Text(stringFromTimeInterval(interval: duration))
+        .font(.system(size: sizeTimeCodes))
+        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.durationColor ?? .white)))
+    
     }
     .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
     .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
+  }
+  
+  @ViewBuilder
+  func Toast() -> some View {
+    let size = calculateSizeByWidth(StandardSizes.small8, VariantPercent.p30)
+    
+    VStack {
+      Spacer()
+      Text(controlsProps?.toast.label ?? "Download successful")
+        .font(.system(size: size))
+        .padding()
+        .foregroundColor(Color(uiColor: (controlsProps?.toast.labelColor ?? .white)))
+        .background(Color(uiColor: (controlsProps?.toast.backgroundColor ?? .systemGray2)))
+        .cornerRadius(CornerRadius.medium)
+        .opacity(isPresentToast ? 1 : 0)
+        .animation(.easeInOut(duration: AnimationDuration.s035))
+        .onTapGesture {
+          isPresentToast = false
+          downloadInProgress = false
+        }
+        .onAppear {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            withAnimation(.easeInOut(duration: AnimationDuration.s020)) {
+              isPresentToast = false
+              downloadInProgress = false
+            }
+          }
+        }
+        .padding(.bottom, UIScreen.main.bounds.height * 0.07)
+      
+    }
   }
 }
 
@@ -636,6 +709,7 @@ extension VideoPlayerView {
   private func urlOfCurrentPlayerItem(player : AVPlayer) -> URL? {
     return ((player.currentItem?.asset) as? AVURLAsset)?.url
   }
+  
   private func calculateSliderWidth() -> CGFloat {
       let maximumWidth = (size.width - seekerThumbImageSize.width)
       let calculatedWidth = maximumWidth * CGFloat(sliderProgress)
@@ -663,6 +737,8 @@ extension VideoPlayerView {
       self.isLoading = true
       return
     }
+    
+//    print("test \(downloadProgress)")
     
     currentTime = time
     duration = currentItem.duration.seconds
@@ -753,14 +829,6 @@ extension VideoPlayerView {
     openedOptionsMoreOptions = false
   }
   
-  private func notificationPostModal(userInfo: [String: Any]) {
-    NotificationCenter.default.post(name: Notification.Name("modal"), object: nil, userInfo: userInfo)
-  }
-  
-  private func notificationPostPlaybackInfo(userInfo: [String: Any]) {
-    NotificationCenter.default.post(name: Notification.Name("playbackInfo"), object: nil, userInfo: userInfo)
-  }
-  
   private func optionsItemSelected(_ item: SettingsOption) {
     switch(item) {
     case .qualities:
@@ -825,6 +893,8 @@ struct CustomView : View {
   var lastDraggedProgress: Double
   var isPlaying: Bool?
   var controllersPropsData: HashableControllers?
+  var downloadInProgress: Bool
+  var downloadProgress: Float
   
   var body: some View {
     GeometryReader {
@@ -861,7 +931,9 @@ struct CustomView : View {
         sliderProgress: sliderProgress,
         lastDraggedProgress: lastDraggedProgress,
         isPlaying: isPlaying,
-        controllersPropsData: controllersPropsData
+        controllersPropsData: controllersPropsData,
+        downloadInProgress: downloadInProgress,
+        downloadProgress: downloadProgress
       )
     }
   }
@@ -878,9 +950,9 @@ struct DoubleTapManager : View {
   
   var body: some View {
     ZStack {
-      Color(.clear).opacity(variantPercent10)
+      Color(.clear).opacity(VariantPercent.p10)
       VStack {
-        HStack(spacing: size60) {
+        HStack(spacing: StandardSizes.large55) {
           DoubleTapSeek(onTap:  onTapBackward, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: isFinished)
           DoubleTapSeek(isForward: true, onTap:  onTapForward, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: isFinished)
         }

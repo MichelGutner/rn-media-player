@@ -75,7 +75,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var speeds: NSDictionary? = [:]
   @objc var qualities: NSDictionary? = [:]
   @objc var settings: NSDictionary? = [:]
-  @objc var dictionaryControllersProps: NSDictionary? = [:]
+  @objc var controlsProps: NSDictionary? = [:]
   
   // external controls
   @objc var source: NSDictionary? = [:] {
@@ -142,6 +142,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var lastDraggedProgress: Double = 0.0
   private var isPlaying: Bool? = nil
   private var controllersPropsData: HashableControllers? = nil
+  private var downloadInProgress: Bool = false
+  private var downloadProgress: Float = 0.0
   
   override func layoutSubviews() {
     guard let player = player else { return }
@@ -167,14 +169,25 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       self.videoSettings = settingsData.map { HashableModalContent(dictionary: $0) }
     }
     
-    if let controllersProps = dictionaryControllersProps {
-      let playbackControlProps = PlaybackControlHashableProps(dictionary: controllersProps["playbackControl"] as? NSDictionary)
-      let seekSliderControlProps = SeekSliderControlHashableProps(dictionary: controllersProps["seekSliderControl"] as? NSDictionary)
-      let timeCodesControlProps = TimeCodesHashableProps(dictionary: controllersProps["timeCodesControl"] as? NSDictionary)
+    if let controllersProps = controlsProps {
+      let playbackProps = PlaybackControlHashableProps(dictionary: controllersProps["playback"] as? NSDictionary)
+      let seekSliderProps = SeekSliderControlHashableProps(dictionary: controllersProps["seekSlider"] as? NSDictionary)
+      let timeCodesProps = TimeCodesHashableProps(dictionary: controllersProps["timeCodes"] as? NSDictionary)
+      let settingsProps = SettingsControlHashableProps(dictionary: controllersProps["settings"] as? NSDictionary)
+      let fullScreenProps = FullScreenControlHashableProps(dictionary: controllersProps["fullScreen"] as? NSDictionary)
+      let downloadProps = DownloadControlHashableProps(dictionary: controllersProps["download"] as? NSDictionary)
+      let toastProps = ToastHashableProps(dictionary: controllersProps["toast"] as? NSDictionary)
+      let headerProps = HeaderControlHashableProps(dictionary: controllersProps["header"] as? NSDictionary)
+      
       self.controllersPropsData = HashableControllers(
-        playbackControl: playbackControlProps,
-        seekSliderControl: seekSliderControlProps,
-        timeCodesControl: timeCodesControlProps
+        playbackControl: playbackProps,
+        seekSliderControl: seekSliderProps,
+        timeCodesControl: timeCodesProps,
+        settingsControl: settingsProps,
+        fullScreenControl: fullScreenProps,
+        downloadControl: downloadProps,
+        toastControl: toastProps,
+        headerControl: headerProps
       )
     }
     
@@ -215,7 +228,9 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         sliderProgress: sliderProgress,
         lastDraggedProgress: lastDraggedProgress,
         isPlaying: isPlaying,
-        controllersPropsData: controllersPropsData
+        controllersPropsData: controllersPropsData,
+        downloadInProgress: downloadInProgress,
+        downloadProgress: downloadProgress
       )
     )
     videoPlayerView = playerView.view
@@ -301,6 +316,14 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       
       if let isPlaying = notification.userInfo?["isPlaying"] as? Bool {
         self.isPlaying = isPlaying
+      }
+      
+      if let downloadInProgress = notification.userInfo?["downloadInProgress"] as? Bool {
+        self.downloadInProgress = downloadInProgress
+      }
+      
+      if let downloadProgress = notification.userInfo?["downloadProgress"] as? Float {
+        self.downloadProgress = downloadProgress
       }
       
       if !playbackFinished {
