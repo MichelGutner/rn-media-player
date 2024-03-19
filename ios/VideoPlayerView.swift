@@ -233,10 +233,7 @@ struct VideoPlayerView: View {
                       onModalCompletion: { [self] in
                         openedSettingsModal = false
                         openedOptionsMoreOptions = false
-                        notificationPostModal(userInfo: ["opened": openedSettingsModal])
-                        notificationPostModal(userInfo: ["\(SettingsOption.speeds)Opened": false])
-                        notificationPostModal(userInfo: ["\(SettingsOption.qualities)Opened": false])
-                        notificationPostModal(userInfo: ["\(SettingsOption.moreOptions)Opened": false])
+
                       },
                       modalContent: {
                         Group {
@@ -245,6 +242,7 @@ struct VideoPlayerView: View {
                               size: size,
                               data: videoQualities,
                               onSelected: { [self] item in
+                                resetModalState()
                                 selectedQuality = item.name
                                 notificationPostModal(userInfo: ["optionsQualitySelected": item.name, "\(SettingsOption.qualities)Opened": false, "qualityUrl": item.value])
                                 resetModalState()
@@ -534,13 +532,31 @@ extension VideoPlayerView {
       .fill(Color.black.opacity(0.5))
       .cornerRadius(.infinity, antialiased: true)
       .overlay(
-        CustomPlayPauseButton(
-          action: { isPlaying in
-            onPlaybackManager(playing: isPlaying)
-          }, isPlaying: player.timeControlStatus != .paused,
-          frame: .init(origin: .zero, size: .init(width: controllerSize, height: controllerSize)),
-          color: controlsProps?.playback.color?.cgColor
-        )
+        Group {
+          if isFinishedPlaying {
+            Button(action: {
+              resetPlaybackStatus()
+            }) {
+              Image(systemName: "gobackward")
+                .font(.system(size: controllerSize))
+                .foregroundColor(Color(uiColor: controlsProps?.playback.color ?? .white))
+            }
+            
+          } else {
+            if player.timeControlStatus == .waitingToPlayAtSpecifiedRate {
+              CustomLoading(config: [:])
+            } else {
+              CustomPlayPauseButton(
+                action: { isPlaying in
+                  onPlaybackManager(playing: isPlaying)
+                }, isPlaying: player.timeControlStatus != .paused,
+                frame: .init(origin: .zero, size: .init(width: controllerSize, height: controllerSize)),
+                color: controlsProps?.playback.color?.cgColor
+              )
+            }
+          }
+        }
+        
       )
       .frame(width: controllerSize * 2, height: controllerSize * 2)
     .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
@@ -564,6 +580,7 @@ extension VideoPlayerView {
         withAnimation(.easeInOut(duration: AnimationDuration.s020)) {
           openedSettingsModal = true
           notificationPostModal(userInfo: ["opened": openedSettingsModal])
+          onTapSettingsControl()
         }
     }) {
       CustomIcon("gear", color: controlsProps?.settings.color);
@@ -654,7 +671,7 @@ extension VideoPlayerView {
     
     HStack(alignment: .center) {
       Spacer()
-      Text(stringFromTimeInterval(interval: currentTime))
+      Text(stringFromTimeInterval(interval: currentTime > duration ? duration : currentTime))
         .font(.system(size: sizeTimeCodes))
         .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.currentTimeColor ?? .white)))
       
@@ -734,11 +751,12 @@ extension VideoPlayerView {
     
   private func updatePlayerTime(_ time: CGFloat) {
     guard let currentItem = player.currentItem else {
-      self.isLoading = true
       return
     }
     
-//    print("test \(downloadProgress)")
+    if time.isNaN || currentItem.duration.seconds.isNaN {
+      return
+    }
     
     currentTime = time
     duration = currentItem.duration.seconds
@@ -754,24 +772,23 @@ extension VideoPlayerView {
     }
     notificationPostPlaybackInfo(userInfo: ["currentTime": currentTime, "duration": duration])
 
-      if !isSeeking && time < currentItem.duration.seconds {
-        sliderProgress = calculatedProgress
-        lastDraggedProgress = sliderProgress
-        notificationPostPlaybackInfo(userInfo: ["sliderProgress": calculatedProgress, "lastDraggedProgress": calculatedProgress])
-      }
-    
-    if !isSeeking && time >= currentItem.duration.seconds {
-      onFinished()
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
-        if isActiveLoop {
-          resetPlaybackStatus()
+      if !isSeeking  {
+        if currentTime < duration {
+          sliderProgress = calculatedProgress
+          lastDraggedProgress = sliderProgress
+          notificationPostPlaybackInfo(userInfo: ["sliderProgress": calculatedProgress, "lastDraggedProgress": calculatedProgress])
+          
+          isFinishedPlaying = false
+          notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
+        } else {
+          onFinished()
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+            if isActiveLoop {
+              resetPlaybackStatus()
+            }
+          })
         }
-      })
-      
-    } else {
-      isFinishedPlaying = false
-      notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
-    }
+      }
   }
   
   private func removePeriodicTimeObserver() {
@@ -782,9 +799,6 @@ extension VideoPlayerView {
   }
   
   private func onPlaybackManager(playing: Bool) {
-    if isFinishedPlaying {
-      resetPlaybackStatus()
-    } else {
       if playing  {
         player.play()
         isPlaying = true
@@ -797,7 +811,6 @@ extension VideoPlayerView {
         }
       }
       notificationPostPlaybackInfo(userInfo: ["isPlaying": playing])
-    }
   }
   
   private func forwardTime(_ timeToChange: Double) {
@@ -827,6 +840,11 @@ extension VideoPlayerView {
     openedOptionsQuality = false
     openedOptionsSpeed = false
     openedOptionsMoreOptions = false
+    
+    notificationPostModal(userInfo: ["opened": false])
+    notificationPostModal(userInfo: ["\(SettingsOption.speeds)Opened": false])
+    notificationPostModal(userInfo: ["\(SettingsOption.qualities)Opened": false])
+    notificationPostModal(userInfo: ["\(SettingsOption.moreOptions)Opened": false])
   }
   
   private func optionsItemSelected(_ item: SettingsOption) {
@@ -849,14 +867,16 @@ extension VideoPlayerView {
   }
   
   private func resetPlaybackStatus() {
+    showPlayerControls = false
     isFinishedPlaying = false
+    notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
     
     sliderProgress = .zero
     lastDraggedProgress = .zero
+    currentTime = .zero
     player.seek(to: .zero, completionHandler: {completed in
-      if completed {
+      if completed && !isFinishedPlaying {
         player.play()
-        notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
       }
     })
   }

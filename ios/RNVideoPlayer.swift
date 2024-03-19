@@ -43,7 +43,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onLoaded: RCTBubblingEventBlock?
   @objc var onReady: RCTDirectEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
-  @objc var onSettingsTapped: RCTDirectEventBlock?
+  @objc var onTapSettingsControl: RCTDirectEventBlock?
   @objc var onFullScreenTapped: RCTDirectEventBlock?
   @objc var onError: RCTDirectEventBlock?
   @objc var onBuffer: RCTDirectEventBlock?
@@ -196,7 +196,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     let mode = Resize(rawValue: resizeMode as String)
     let videoGravity = self.videoGravity(mode!)
-    
     let playerView = UIHostingController(
       rootView: CustomView(
         player: player,
@@ -460,7 +459,7 @@ extension RNVideoPlayerView {
 @available(iOS 13.0, *)
 extension RNVideoPlayerView {
   @objc private func onTapSettings() {
-    onSettingsTapped?([:])
+    onTapSettingsControl?([:])
     settingsOpened = true
   }
   
