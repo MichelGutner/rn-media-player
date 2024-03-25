@@ -86,6 +86,7 @@ struct VideoPlayerView: View {
   var safeAreaInsets: EdgeInsets
   var onTapFullScreenControl: (Bool) -> Void
   var onTapSettingsControl: () -> Void
+  var onTapHeaderGoback: () -> Void
   
 
   
@@ -124,13 +125,15 @@ struct VideoPlayerView: View {
     isPlaying: Bool?,
     controllersPropsData: HashableControllers?,
     downloadInProgress: Bool,
-    downloadProgress: Float
+    downloadProgress: Float,
+    onTapHeaderGoback: @escaping () -> Void
   ) {
     self.size = size
     self.safeAreaInsets = safeAreaInsets
-    _player = State(initialValue: player)
     self.onTapFullScreenControl = onTapFullScreenControl
     self.onTapSettingsControl = onTapSettingsControl
+    self.onTapHeaderGoback = onTapHeaderGoback
+    _player = State(initialValue: player)
     _thumbnailsFrames = State(initialValue: thumbnails)
     _isFullScreen = State(wrappedValue: isFullScreen)
     _videoQualities = State(initialValue: videoQualities)
@@ -217,7 +220,6 @@ struct VideoPlayerView: View {
                 }
                   .padding(.leading)
                   .padding(.trailing)
-                  .padding(.bottom, safeAreaInsets.bottom + StandardSizes.small8)
                   .overlay(
                     PlaybackControls()
                   )
@@ -227,12 +229,9 @@ struct VideoPlayerView: View {
                   if openedSettingsModal {
                     ModalViewController(
                       onModalAppear: {},
-                      onModalDisappear: {
-                        resetModalState()
-                      },
+                      onModalDisappear: {},
                       onModalCompletion: { [self] in
-                        openedSettingsModal = false
-                        openedOptionsMoreOptions = false
+                        resetModalState()
 
                       },
                       modalContent: {
@@ -391,7 +390,7 @@ extension VideoPlayerView {
     
       HStack {
         Button (action: {
-//          onTapExit()
+          onTapGoback()
         }) {
           CustomIcon("arrow.left", color: controlsProps?.header.leftButtonColor)
         }
@@ -604,7 +603,7 @@ extension VideoPlayerView {
         
         ZStack(alignment: .leading) {
           Rectangle()
-            .fill(cached.fileExist ? Color(uiColor: controlsProps?.download.progressBarFillColor ?? .blue) : Color(uiColor: controlsProps?.download.progressBarColor ?? .white))
+            .fill(cached.fileExist ? Color(uiColor: controlsProps?.download.progressBarColor ?? .blue) : Color(uiColor: controlsProps?.download.progressBarColor ?? .white))
             .frame(width: progressBarSize, height: 2)
             .cornerRadius(CornerRadius.medium)
             
@@ -791,13 +790,6 @@ extension VideoPlayerView {
       }
   }
   
-  private func removePeriodicTimeObserver() {
-    guard let timeObserver else { return }
-    player.pause()
-    player.removeTimeObserver(timeObserver)
-    self.timeObserver = nil
-  }
-  
   private func onPlaybackManager(playing: Bool) {
       if playing  {
         player.play()
@@ -880,6 +872,10 @@ extension VideoPlayerView {
       }
     })
   }
+  
+  private func onTapGoback() {
+    onTapHeaderGoback()
+  }
 }
 
 // MARK: -- CustomView
@@ -915,6 +911,7 @@ struct CustomView : View {
   var controllersPropsData: HashableControllers?
   var downloadInProgress: Bool
   var downloadProgress: Float
+  var onTapHeaderGoback: () -> Void
   
   var body: some View {
     GeometryReader {
@@ -953,7 +950,8 @@ struct CustomView : View {
         isPlaying: isPlaying,
         controllersPropsData: controllersPropsData,
         downloadInProgress: downloadInProgress,
-        downloadProgress: downloadProgress
+        downloadProgress: downloadProgress,
+        onTapHeaderGoback: onTapHeaderGoback
       )
     }
   }
