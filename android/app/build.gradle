@@ -107,6 +107,15 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.15.1'
+    implementation 'com.google.android.exoplayer:exoplayer-dash:2.15.1'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.15.1'
+//    implementation 'com.google.android.exoplayer:exoplayer:r2.4.0'
+//    implementation 'com.google.android.exoplayer:exoplayer-core:r2.4.0'
+//    implementation 'com.google.android.exoplayer:exoplayer-dash:r2.4.0'
+//    implementation 'com.google.android.exoplayer:exoplayer-hls:r2.4.0'
+//    implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:r2.4.0'
+//    implementation 'com.google.android.exoplayer:exoplayer-ui:r2.4.0'
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}")
     debugImplementation("com.facebook.flipper:flipper-network-plugin:${FLIPPER_VERSION}") {
