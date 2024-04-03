@@ -383,7 +383,7 @@ struct VideoPlayerView: View {
 
 // MARK: -- View Builder
 @available(iOS 13.0, *)
-extension VideoPlayerView {
+extension VideoPlayerView {  
   @ViewBuilder
   func HeaderControls() -> some View {
     let titleSize = calculateSizeByWidth(StandardSizes.small16, VariantPercent.p10)
