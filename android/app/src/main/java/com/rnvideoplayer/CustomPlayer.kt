@@ -1,9 +1,11 @@
 package com.rnvideoplayer
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.view.LayoutInflater
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ProgressBar
 import androidx.media3.common.MediaItem
@@ -11,6 +13,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.DefaultTimeBar
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.TimeBar
@@ -19,7 +22,6 @@ import com.facebook.react.uimanager.ThemedReactContext
 
 @UnstableApi @SuppressLint("ViewConstructor", "UseCompatLoadingForDrawables")
 class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context) {
-
     private var isFullScreen: Boolean = false;
     private val playIcon: ImageView
     private val animatedPlayToPause: AnimatedVectorDrawable
@@ -29,12 +31,17 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
     private val animatedExitToFull: AnimatedVectorDrawable
     private var progressBar: ProgressBar
     private var seekBar: DefaultTimeBar
-
-        private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build()
+    private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build()
+    private var contentView: ViewGroup
     init {
         player = exoPlayer
         useController = false
+        false.also { useController = it }
+        AspectRatioFrameLayout.LAYOUT_MODE_OPTICAL_BOUNDS.also { resizeMode = it }
         exoPlayer.playWhenReady = true
+
+        contentView = context.currentActivity?.window?.decorView as ViewGroup
+
         val inflater = LayoutInflater.from(context)
         inflater.inflate(R.layout.custom_player, this, true)
         playIcon = findViewById(R.id.animated_play_to_pause)
@@ -83,15 +90,7 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
         }
 
         fullScreenIcon.setOnClickListener {
-            if (isFullScreen) {
-                fullScreenIcon.setImageDrawable(animatedExitToFull)
-                animatedExitToFull.start()
-                isFullScreen = false
-            } else {
-                fullScreenIcon.setImageDrawable(animatedFullSToExit)
-                animatedFullSToExit.start()
-                isFullScreen = true
-            }
+            toggleFullScreen()
         }
 
         seekBar.addListener(object : OnScrubListener {
@@ -114,8 +113,15 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
         startSeekBarUpdateTask()
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration?) {
+        super.onConfigurationChanged(newConfig)
+        val orientation = resources.configuration.orientation
+        if (orientation === Configuration.ORIENTATION_LANDSCAPE) {
+
+        }
+    }
     private fun startSeekBarUpdateTask() {
-        val updateIntervalMs = 1000L // Update interval in milliseconds
+        val updateIntervalMs = 1000L
         val updateSeekBarTask = object : Runnable {
             override fun run() {
                 if (exoPlayer.playWhenReady && exoPlayer.isPlaying) {
@@ -139,8 +145,30 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
 
     private fun updateSeekBar() {
         val position = exoPlayer.contentPosition
+        val buffered = exoPlayer.contentBufferedPosition
 
         seekBar.setPosition(position)
+        seekBar.setBufferedPosition(buffered)
         seekBar.requestLayout()
+    }
+    private fun toggleFullScreen() {
+        if (isFullScreen) {
+            fullScreenIcon.setImageDrawable(animatedExitToFull)
+            animatedExitToFull.start()
+
+            contentView.removeView(this)
+            contentView.addView(this, currentWidth, currentHeight)
+        } else {
+            fullScreenIcon.setImageDrawable(animatedFullSToExit)
+            animatedFullSToExit.start()
+
+            (parent as? ViewGroup)?.removeView(this)
+            contentView.addView(this, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        }
+        isFullScreen = !isFullScreen
+    }
+
+    fun setCurrentHeight(height: Int) {
+        currentHeight = height
     }
 }
