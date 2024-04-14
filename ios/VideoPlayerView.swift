@@ -220,6 +220,7 @@ struct VideoPlayerView: View {
                 }
                   .padding(.leading)
                   .padding(.trailing)
+                  .padding(.bottom)
                   .overlay(
                     PlaybackControls()
                   )
