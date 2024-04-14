@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -19,6 +20,7 @@ import androidx.media3.ui.PlayerView
 import androidx.media3.ui.TimeBar
 import androidx.media3.ui.TimeBar.OnScrubListener
 import com.facebook.react.uimanager.ThemedReactContext
+import java.util.concurrent.TimeUnit
 
 @UnstableApi @SuppressLint("ViewConstructor", "UseCompatLoadingForDrawables")
 class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context) {
@@ -33,10 +35,12 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
     private var seekBar: DefaultTimeBar
     private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build()
     private var contentView: ViewGroup
+
+    private var timeCodesPosition: TextView
+    private var timeCodesDuration: TextView
     init {
         player = exoPlayer
         useController = false
-        false.also { useController = it }
         AspectRatioFrameLayout.LAYOUT_MODE_OPTICAL_BOUNDS.also { resizeMode = it }
         exoPlayer.playWhenReady = true
 
@@ -49,6 +53,8 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
         progressBar = findViewById(R.id.progress_bar)
         seekBar = findViewById(R.id.animated_seekbar)
         progressBar.indeterminateDrawable.setColorFilter(Color.BLUE, PorterDuff.Mode.SRC_IN)
+        timeCodesPosition = findViewById(R.id.time_codes_position)
+        timeCodesDuration = findViewById(R.id.time_codes_duration)
 
         // Load the animated drawables
         animatedPlayToPause = context.getDrawable(R.drawable.animated_play_to_pause) as AnimatedVectorDrawable
@@ -67,6 +73,7 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
                      playIcon.visibility = VISIBLE
                     progressBar.visibility = GONE
                     seekBar.setDuration(exoPlayer.duration)
+                    timeCodesDuration.text = createTimeCodesFormatted(exoPlayer.duration)
                 }
 
                 updateSeekBar()
@@ -110,6 +117,7 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
 
         })
 
+
         startSeekBarUpdateTask()
     }
 
@@ -147,9 +155,22 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
         val position = exoPlayer.contentPosition
         val buffered = exoPlayer.contentBufferedPosition
 
+        timeCodesPosition.text = createTimeCodesFormatted(position)
         seekBar.setPosition(position)
         seekBar.setBufferedPosition(buffered)
         seekBar.requestLayout()
+    }
+
+    private  fun createTimeCodesFormatted(time: Long): String {
+        val hours = TimeUnit.MILLISECONDS.toHours(time)
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(time)
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(time) - TimeUnit.MINUTES.toSeconds(minutes)
+
+        return if (hours > 0) {
+            String.format("%02d:%02d:%02d", minutes, seconds)
+        } else {
+            String.format("%02d:%02d", minutes, seconds)
+        }
     }
     private fun toggleFullScreen() {
         if (isFullScreen) {
@@ -157,12 +178,12 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
             animatedExitToFull.start()
 
             contentView.removeView(this)
-            contentView.addView(this, currentWidth, currentHeight)
+            contentView.addView(this, ViewGroup.LayoutParams.MATCH_PARENT, currentHeight)
         } else {
             fullScreenIcon.setImageDrawable(animatedFullSToExit)
             animatedFullSToExit.start()
 
-            (parent as? ViewGroup)?.removeView(this)
+            contentView.removeView(this)
             contentView.addView(this, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         }
         isFullScreen = !isFullScreen

@@ -35,6 +35,13 @@ class RNVideoPlayer : SimpleViewManager<View>() {
         customPlayer.viewTreeObserver.removeOnGlobalLayoutListener(this)
         currentHeight = customPlayer.height
         currentWidth= customPlayer.width
+        (customPlayer.parent as? ViewGroup)?.removeView(customPlayer)
+        // Add customPlayer to the view hierarchy
+        (reactContext.currentActivity?.window?.decorView as? ViewGroup)?.addView(
+          customPlayer,
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          currentHeight
+        )
       }
     })
 
