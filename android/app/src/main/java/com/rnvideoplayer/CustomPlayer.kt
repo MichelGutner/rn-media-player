@@ -1,13 +1,18 @@
 package com.rnvideoplayer
+
 import android.annotation.SuppressLint
-import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.drawable.AnimatedVectorDrawable
+import android.media.MediaMetadataRetriever
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -21,23 +26,37 @@ import androidx.media3.ui.TimeBar
 import androidx.media3.ui.TimeBar.OnScrubListener
 import com.facebook.react.uimanager.ThemedReactContext
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
-@UnstableApi @SuppressLint("ViewConstructor", "UseCompatLoadingForDrawables")
-class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context) {
-    private var isFullScreen: Boolean = false;
+@UnstableApi
+@SuppressLint("ViewConstructor", "UseCompatLoadingForDrawables")
+class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
+    private lateinit var binding: CustomPlayer
+
+    private var isVisibleControl: Boolean = true
+    private var isFullScreen: Boolean = false
+    private var isSeeking: Boolean = false
     private val playIcon: ImageView
     private val animatedPlayToPause: AnimatedVectorDrawable
     private val animatedPauseToPlay: AnimatedVectorDrawable
     private val fullScreenIcon: ImageView
+    private val previewImageView: ImageView
+    private val overlayView: RelativeLayout
+    private val playPauseContent: RelativeLayout
+    private val viewController: PlayerView
     private val animatedFullSToExit: AnimatedVectorDrawable
     private val animatedExitToFull: AnimatedVectorDrawable
     private var progressBar: ProgressBar
     private var seekBar: DefaultTimeBar
     private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build()
     private var contentView: ViewGroup
+    private var timestamp = 0L
+    private val interval = 5000L
+    private val bitmaps = ArrayList<Bitmap>()
 
     private var timeCodesPosition: TextView
     private var timeCodesDuration: TextView
+
     init {
         player = exoPlayer
         useController = false
@@ -49,7 +68,16 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
         val inflater = LayoutInflater.from(context)
         inflater.inflate(R.layout.custom_player, this, true)
         playIcon = findViewById(R.id.animated_play_to_pause)
+        playPauseContent = findViewById(R.id.playPause)
         fullScreenIcon = findViewById(R.id.animated_full_to_exit)
+        previewImageView = findViewById(R.id.preview_image_view)
+        overlayView = findViewById(R.id.overlay_controls)
+        viewController = findViewById(R.id.player)
+
+//        previewImageView.layoutParams.width = (contentView.width * 0.4).toInt()
+//        previewImageView.layoutParams.height = (contentView.height * 0.4).toInt()
+        println("height for preview${(contentView.height * 0.4).toInt()}")
+
         progressBar = findViewById(R.id.progress_bar)
         seekBar = findViewById(R.id.animated_seekbar)
         progressBar.indeterminateDrawable.setColorFilter(Color.BLUE, PorterDuff.Mode.SRC_IN)
@@ -69,22 +97,27 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
                 if (playbackState === Player.STATE_BUFFERING) {
                     playIcon.visibility = INVISIBLE
                     progressBar.visibility = VISIBLE
-                 } else if (playbackState === Player.STATE_READY) {
-                     playIcon.visibility = VISIBLE
+                } else if (playbackState === Player.STATE_READY) {
+                    playIcon.visibility = VISIBLE
                     progressBar.visibility = GONE
                     seekBar.setDuration(exoPlayer.duration)
                     timeCodesDuration.text = createTimeCodesFormatted(exoPlayer.duration)
+
+
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        hideControls()
+                    }, 3000)
                 }
 
                 updateSeekBar()
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                // errors
+                // handle errors
             }
         })
 
-        playIcon.setOnClickListener {
+        playPauseContent.setOnClickListener {
             if (exoPlayer.isPlaying) {
                 playIcon.setImageDrawable(animatedPauseToPlay)
                 animatedPauseToPlay.start()
@@ -102,32 +135,51 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
 
         seekBar.addListener(object : OnScrubListener {
             override fun onScrubStart(timeBar: TimeBar, position: Long) {
-                exoPlayer.seekTo(position)
+                isSeeking = true
             }
-
             override fun onScrubMove(timeBar: TimeBar, position: Long) {
-                exoPlayer.seekTo(position)
+                val seconds = TimeUnit.MILLISECONDS.toSeconds(position)
+                val duration = TimeUnit.MILLISECONDS.toSeconds(exoPlayer.duration)
+                val intervalInSeconds  = TimeUnit.MILLISECONDS.toSeconds(interval)
+                val index = (seconds / intervalInSeconds).toInt()
+                val counter = ((((seconds * 100) / duration) * seekBar.width) / 100)
+                previewImageView.visibility = VISIBLE
+
+                if (index < bitmaps.size) {
+                    previewImageView.setImageBitmap(bitmaps[index])
+                    previewImageView.translationX = getTranslateXPreviewImage(counter)
+                }
             }
 
             override fun onScrubStop(timeBar: TimeBar, position: Long, canceled: Boolean) {
                 if (!canceled) {
                     exoPlayer.seekTo(position)
+                    previewImageView.visibility = GONE
+                    isSeeking = false
                 }
             }
 
         })
 
+        viewController.setOnClickListener {
+            onToggleControlsVisibility()
+        }
 
         startSeekBarUpdateTask()
     }
 
-    override fun onConfigurationChanged(newConfig: Configuration?) {
-        super.onConfigurationChanged(newConfig)
-        val orientation = resources.configuration.orientation
-        if (orientation === Configuration.ORIENTATION_LANDSCAPE) {
+    private fun getTranslateXPreviewImage(counter: Long): Float {
+        var translateX: Float = 16.0F
 
+        if (counter.toFloat() + previewImageView.width / 2 >= seekBar.width.toFloat()) {
+            translateX = (seekBar.width.toFloat() - previewImageView.width) - 16
+        } else if (counter.toFloat() >= previewImageView.width / 2 && counter.toFloat() + previewImageView.width / 2 < seekBar.width.toFloat()) {
+            translateX = counter.toFloat() - previewImageView.width / 2
         }
+
+        return translateX
     }
+
     private fun startSeekBarUpdateTask() {
         val updateIntervalMs = 1000L
         val updateSeekBarTask = object : Runnable {
@@ -145,10 +197,11 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
         val mediaItem = MediaItem.fromUri(android.net.Uri.parse(url))
         exoPlayer.setMediaItem(mediaItem)
         exoPlayer.prepare()
+        generatingThumbnailFrames(url)
     }
 
-    fun relesePlayer() {
-       exoPlayer.release()
+    fun releasePlayer() {
+        exoPlayer.release()
     }
 
     private fun updateSeekBar() {
@@ -161,7 +214,7 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
         seekBar.requestLayout()
     }
 
-    private  fun createTimeCodesFormatted(time: Long): String {
+    private fun createTimeCodesFormatted(time: Long): String {
         val hours = TimeUnit.MILLISECONDS.toHours(time)
         val minutes = TimeUnit.MILLISECONDS.toMinutes(time)
         val seconds = TimeUnit.MILLISECONDS.toSeconds(time) - TimeUnit.MINUTES.toSeconds(minutes)
@@ -172,6 +225,7 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
             String.format("%02d:%02d", minutes, seconds)
         }
     }
+
     private fun toggleFullScreen() {
         if (isFullScreen) {
             fullScreenIcon.setImageDrawable(animatedExitToFull)
@@ -189,7 +243,46 @@ class CustomPlayer constructor(context: ThemedReactContext): PlayerView(context)
         isFullScreen = !isFullScreen
     }
 
+    private fun generatingThumbnailFrames(url: String) {
+        thread {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(url)
+
+            val durationString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            val duration = durationString?.toLong() ?:0
+
+            while (timestamp < duration) {
+                val bitmap = retriever.getFrameAtTime(timestamp * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                if (bitmap != null) {
+                    bitmaps.add(bitmap)
+                    timestamp += interval
+                }
+            }
+            retriever.release()
+        }
+    }
+
     fun setCurrentHeight(height: Int) {
         currentHeight = height
+    }
+
+    private fun onToggleControlsVisibility() {
+        isVisibleControl = !isVisibleControl
+        if (isVisibleControl) {
+            // Controls are currently hidden, show them
+            showControls()
+        } else {
+            // Controls are currently visible, hide them
+            hideControls()
+        }
+    }
+
+
+    private fun showControls() {
+        overlayView.visibility = VISIBLE
+    }
+
+    private fun hideControls() {
+        overlayView.visibility = INVISIBLE
     }
 }
