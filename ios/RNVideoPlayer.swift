@@ -42,15 +42,15 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var onReady: RCTDirectEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
   @objc var onTapSettingsControl: RCTDirectEventBlock?
-  @objc var onFullScreenTapped: RCTDirectEventBlock?
+  @objc var onFullScreen: RCTDirectEventBlock?
   @objc var onError: RCTDirectEventBlock?
   @objc var onBuffer: RCTDirectEventBlock?
   @objc var onBufferCompleted: RCTDirectEventBlock?
   @objc var onGoBackTapped: RCTDirectEventBlock?
   @objc var onVideoDownloaded: RCTDirectEventBlock?
-  @objc var onPlaybackSpeedTapped: RCTDirectEventBlock?
-  @objc var onDownloadVideoTapped: RCTDirectEventBlock?
-  @objc var onQualityTapped: RCTDirectEventBlock?
+  @objc var onPlaybackSpeed: RCTDirectEventBlock?
+  @objc var onDownloadVideo: RCTDirectEventBlock?
+  @objc var onQuality: RCTDirectEventBlock?
   @objc var onPlayPause: RCTDirectEventBlock?
   
   @objc var doubleTapSeekValue: NSNumber? = 0
@@ -92,7 +92,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         self.setNeedsLayout()
       } catch {
         print("e", error)
-        self.onError?(["url": "Error on get url: error type is \(error)"])
+        self.onError?(["userInfo": "Error on get url: error type is \(error)"])
       }
     }
   }
@@ -171,6 +171,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       let downloadProps = DownloadControlHashableProps(dictionary: controllersProps["download"] as? NSDictionary)
       let toastProps = ToastHashableProps(dictionary: controllersProps["toast"] as? NSDictionary)
       let headerProps = HeaderControlHashableProps(dictionary: controllersProps["header"] as? NSDictionary)
+      let loadingProps = LoadingHashableProps(dictionary: controllersProps["loading"] as? NSDictionary)
       
       self.controllersPropsData = HashableControllers(
         playbackControl: playbackProps,
@@ -180,7 +181,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         fullScreenControl: fullScreenProps,
         downloadControl: downloadProps,
         toastControl: toastProps,
-        headerControl: headerProps
+        headerControl: headerProps,
+        loadingControl: loadingProps
       )
     }
     
@@ -308,6 +310,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       }
       
       if let isPlaying = notification.userInfo?["isPlaying"] as? Bool {
+        self.onPlayPause?(["isPlaying": isPlaying])
         self.isPlaying = isPlaying
       }
       
@@ -337,7 +340,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     if hasCalledSetup {
       enableAudioSession()
-      videoPlayerSubView()
     }
   }
   
@@ -378,8 +380,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     }
   }
   
-  private func videoPlayerSubView() {}
-  
   override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
     if object is AVPlayerItem {
       switch keyPath {
@@ -398,10 +398,12 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     if keyPath == "status", let player = player {
       if player.status == .readyToPlay {
         self.loading = false
-        //        onLoadingManager(hideLoading: true)
-        onLoaded?(["duration": player.currentItem?.duration.seconds as Any])
         onReady?(["ready": true])
         generatingThumbnailsFrames()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: { [self] in
+          onLoaded?(["duration": duration])
+        })
+
       } else if player.status == .failed {
         self.onError?(extractPlayerErrors(player.currentItem))
       } else if player.status == .unknown {
@@ -420,7 +422,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
       try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers, .allowAirPlay])
       try AVAudioSession.sharedInstance().setActive(true)
     } catch {
-      onError?(["error": "cant able to enable audio background session \(error)"])
+      onError?(["userInfo": "cant able to enable audio background session \(error)"])
     }
   }
 }
@@ -477,7 +479,7 @@ extension RNVideoPlayerView {
     }
     
     isFullScreen = fullScreen
-    onFullScreenTapped?(["fullScreen": fullScreen])
+    onFullScreen?(["fullScreen": fullScreen])
   }
   
   @objc private func orientationDidChange() {

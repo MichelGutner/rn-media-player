@@ -10,18 +10,13 @@ import SwiftUI
 
 @available(iOS 13.0, *)
 struct CustomLoading: View {
-  let config: NSDictionary?
+  let color: UIColor?
   @State var isLoading : Bool = false
   @State var size = calculateSizeByWidth(StandardSizes.medium24, VariantPercent.p20)
   var body: some View {
-    
-    let loadingColor = config?["color"]
-    let color = Color(transformStringIntoUIColor(color: loadingColor as? String) ?? .white)
-    
-    
     ZStack {
       Circle().trim(from: 0, to: 0.8)
-        .stroke(color, lineWidth: 3)
+        .stroke(Color(uiColor: color ?? .white), lineWidth: 3)
         .frame(width: size, height: size, alignment: .center)
         .rotationEffect(Angle(degrees: isLoading ? 0 : 360))
       

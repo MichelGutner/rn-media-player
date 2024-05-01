@@ -241,6 +241,23 @@ struct ToastHashableProps: Hashable {
   }
 }
 
+struct LoadingHashableProps: Hashable {
+  var color: UIColor?
+  
+  init(color: UIColor) {
+    self.color = color
+  }
+  
+  init(dictionary: NSDictionary?) {
+    self.color = transformStringIntoUIColor(color: dictionary?["color"] as? String)
+  }
+  
+  
+  static func == (lhs: LoadingHashableProps, rhs: LoadingHashableProps) -> Bool {
+    return lhs.color == rhs.color
+  }
+}
+
 ///----- 
 
 struct HashableControllers: Hashable {
@@ -252,6 +269,7 @@ struct HashableControllers: Hashable {
   var download: DownloadControlHashableProps
   var toast: ToastHashableProps
   var header: HeaderControlHashableProps
+  var loading: LoadingHashableProps
   
   init(
     playbackControl: PlaybackControlHashableProps,
@@ -261,7 +279,8 @@ struct HashableControllers: Hashable {
     fullScreenControl: FullScreenControlHashableProps,
     downloadControl: DownloadControlHashableProps,
     toastControl: ToastHashableProps,
-    headerControl: HeaderControlHashableProps
+    headerControl: HeaderControlHashableProps,
+    loadingControl: LoadingHashableProps
   ) {
     self.playback = playbackControl
     self.seekSlider = seekSliderControl
@@ -271,6 +290,7 @@ struct HashableControllers: Hashable {
     self.download = downloadControl
     self.toast = toastControl
     self.header = headerControl
+    self.loading = loadingControl
   }
   
   func hash(into hasher: inout Hasher) {
@@ -282,9 +302,10 @@ struct HashableControllers: Hashable {
     hasher.combine(download)
     hasher.combine(toast)
     hasher.combine(header)
+    hasher.combine(loading)
   }
   
   static func == (lhs: HashableControllers, rhs: HashableControllers) -> Bool {
-    return lhs.playback == rhs.playback && lhs.seekSlider == rhs.seekSlider && lhs.timeCodes == rhs.timeCodes && lhs.settings == rhs.settings && lhs.fullScreen == rhs.fullScreen && lhs.download == rhs.download && lhs.toast == rhs.toast && lhs.header == rhs.header
+    return lhs.playback == rhs.playback && lhs.seekSlider == rhs.seekSlider && lhs.timeCodes == rhs.timeCodes && lhs.settings == rhs.settings && lhs.fullScreen == rhs.fullScreen && lhs.download == rhs.download && lhs.toast == rhs.toast && lhs.header == rhs.header && lhs.loading == rhs.loading
   }
 }

@@ -18,7 +18,6 @@ struct VideoPlayerView: View {
   @State private var showPlayerControls: Bool = false
   @State private var isPlaying: Bool? = nil
   @State private var timeoutTask: DispatchWorkItem?
-  @State private var playPauseimageName: String = "pause.fill"
   @State private var timeObserver: Any? = nil
   
   @State private var openedSettingsModal: Bool = false
@@ -79,7 +78,8 @@ struct VideoPlayerView: View {
     fullScreenControl: .init(dictionary: [:]),
     downloadControl: .init(dictionary: [:]),
     toastControl: .init(dictionary: [:]),
-    headerControl: .init(dictionary: [:])
+    headerControl: .init(dictionary: [:]),
+    loadingControl: .init(dictionary: [:])
   )
   
   var size: CGSize
@@ -544,7 +544,7 @@ extension VideoPlayerView {
             
           } else {
             if player.timeControlStatus == .waitingToPlayAtSpecifiedRate {
-              CustomLoading(config: [:])
+              CustomLoading(color: controlsProps?.loading.color)
             } else {
               CustomPlayPauseButton(
                 action: { isPlaying in
@@ -634,7 +634,6 @@ extension VideoPlayerView {
                 notificationPostPlaybackInfo(userInfo: ["downloadProgress": downloadProgress])
               }, completion: { response, error in
                 
-                print("resp \(String(describing: response)) error: \(String(describing: error))")
                 downloadInProgress = false
                 notificationPostPlaybackInfo(userInfo: ["downloadInProgress": false])
                 
@@ -646,7 +645,6 @@ extension VideoPlayerView {
             buttons = [
               .destructive(Text(controlsProps?.download.labelDelete ?? "Remove")) {
                   fileManager.deleteFile(title: title, completetion: { message, error in
-                    print("message: \(message), error: \(String(describing: error))")
                     self.downloadProgress = .zero
                   })
                 },
