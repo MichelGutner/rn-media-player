@@ -52,7 +52,7 @@ This section provides detailed information about the props, methods, and events 
 | **`controlsProps`** | Configure controls properties. | `Object`| [controls](#Controls)    |
 
 
-###### Settings
+##### Settings
 | Property     | Description                                          | Type         |
 | ------------ | -----------------------------------------------------| ------------ |
 | **`name`** | value to settings display. | `String`|
@@ -75,7 +75,7 @@ This section provides detailed information about the props, methods, and events 
   ],
 }
 ```
-###### Speeds
+##### Speeds
 | Property     | Description                                          | Type         |
 | ------------ | -----------------------------------------------------| ------------ |
 | **`name`** | value to display in settings. | `String`|
@@ -116,7 +116,7 @@ This section provides detailed information about the props, methods, and events 
 | **`toast`** | Styles toast notifications within the player. | `Object`| Detailed below
 | **`header`** | Styles the video player header. | `Object`| Detailed below
 
-###### Detailed Configuration Options
+##### Detailed Configuration Options
 ***Note***: This library accepts color specifications in hexadecimal format only. Please ensure that all color properties are provided as hex codes.
 
 `seekSlider`
