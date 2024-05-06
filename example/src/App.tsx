@@ -1,11 +1,8 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Video } from 'rn-media-player';
+import { Video, EResizeMode } from 'rn-media-player';
 
 function App(): JSX.Element {
-  // const [isFull, setIsFull] = useState(false);
-  // const resizeMode = isFull ? 'cover' : 'contain';
-
   return (
     <View>
       <Video
@@ -17,7 +14,7 @@ function App(): JSX.Element {
           title: 'ElephantsDream',
         }}
         style={{ height: 320 }}
-        resizeMode={'contain'}
+        resizeMode={EResizeMode.Contain}
         paused={false}
         startTime={0}
         enterInFullScreenWhenDeviceRotated={true}
