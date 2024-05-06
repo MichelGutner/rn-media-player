@@ -18,10 +18,8 @@ struct ForwardView : View {
         onTap()
       } label : {
         Image(systemName: "arrow.down.right.and.arrow.up.left")
-          .font(.system(size: calculateFrameSize(size22, variantPercent20)))
+          .font(.system(size: 16))
           .foregroundColor(.white)
       }
     }
 }
-
-//fullScreenImage = fullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right"

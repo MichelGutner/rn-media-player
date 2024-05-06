@@ -4,9 +4,7 @@
 //
 //  Created by Michel on 30/10/23.
 //
-
-#import <React/RCTBridge.h>
-#import "React/RCTViewManager.h"
+#import <React/RCTViewManager.h>
 
 @interface RCT_EXTERN_MODULE(RNVideoPlayer, RCTViewManager)
 
