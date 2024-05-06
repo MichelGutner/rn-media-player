@@ -887,7 +887,7 @@ struct CustomView : View {
   var videoGravity: AVLayerVideoGravity
   var thumbnails: [UIImage]
   var onTapFullScreenControl: (Bool) -> Void
-  var doubleTapSeekValue: Int
+  var tapToSeekValue: Int
   var suffixLabelDoubleTapSeek: String
   var isFullScreen: Bool
   var videoSettings: [HashableModalContent]
@@ -926,7 +926,7 @@ struct CustomView : View {
         playbackFinished: playbackFinished,
         thumbnails: thumbnails,
         onTapFullScreenControl: onTapFullScreenControl,
-        doubleTapSeekValue: doubleTapSeekValue,
+        doubleTapSeekValue: tapToSeekValue,
         suffixLabelDoubleTapSeek: suffixLabelDoubleTapSeek,
         isFullScreen: isFullScreen,
         videoSettings: videoSettings,

@@ -1,7 +1,14 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import { Platform, UIManager, requireNativeComponent } from 'react-native';
+import {
+  Platform,
+  UIManager,
+  requireNativeComponent,
+  useWindowDimensions,
+} from 'react-native';
 import type { TVideoPlayerProps } from './types';
+import { ensureHttpsUrl } from './helpers';
+import { defaultSettings } from './constants';
 export { EResizeMode } from './types';
 export type { TVideoPlayerProps } from './types';
 
@@ -19,6 +26,16 @@ const VideoPlayer =
         throw new Error(LINKING_ERROR);
       };
 
-export const Video = (props: TVideoPlayerProps) => (
-  <VideoPlayer style={{ ...props?.style, overflow: 'hidden' }} {...props} />
-);
+export const Video = (props: TVideoPlayerProps) => {
+  const { height, width } = useWindowDimensions();
+  const url = ensureHttpsUrl(props.source.url);
+  console.log('🚀 ~ Video ~ url:', url);
+  return (
+    <VideoPlayer
+      settings={defaultSettings}
+      {...props}
+      style={{ height, width, ...props?.style, overflow: 'hidden' }}
+      source={{ url, title: props.source.title }}
+    />
+  );
+};

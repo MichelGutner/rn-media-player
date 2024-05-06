@@ -7,11 +7,10 @@ function App(): JSX.Element {
     <View>
       <Video
         source={{
-          url: 'https://content.jwplatform.com/videos/MGAxJ46m-zZbIuxVJ.mp4',
           // url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
           // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-          // url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-          title: 'ElephantsDream',
+          url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          title: 'Sintel',
         }}
         style={{ height: 320 }}
         resizeMode={EResizeMode.Contain}
@@ -20,8 +19,8 @@ function App(): JSX.Element {
         enterInFullScreenWhenDeviceRotated={true}
         autoPlay={true}
         loop={false}
-        doubleTapSeekValue={8}
-        suffixLabelDoubleTapSeek="segundos"
+        // tapToSeekValue={8}
+        // suffixLabelTapToSeek="segundos"
         // onLoaded={({nativeEvent}) => console.log(nativeEvent.duration)}
         // onVideoProgress={data => console.log(data.nativeEvent)}
         // onPlayPause={event => console.log(event.nativeEvent.isPlaying)}
@@ -123,25 +122,6 @@ function App(): JSX.Element {
               value:
                 'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
               enabled: true,
-            },
-          ],
-        }}
-        settings={{
-          data: [
-            {
-              name: 'Qualidades',
-              enabled: true,
-              value: 'qualities',
-            },
-            {
-              name: 'Playback Speeds',
-              enabled: true,
-              value: 'speeds',
-            },
-            {
-              name: 'More Options',
-              enabled: true,
-              value: 'moreOptions',
             },
           ],
         }}

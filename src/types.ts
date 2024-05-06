@@ -16,7 +16,7 @@ type ResizeMode = WithDefault<
   'none'
 >;
 
-type TCommonOptionsProperties = {
+type TOptionProperties = {
   initialSelected: string;
   data: ReadonlyArray<{
     name: string;
@@ -100,7 +100,7 @@ type TOnVideoBufferCompleted = TGenericEventHandler<{
 export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   source: {
     url: string;
-    title: string;
+    title?: string;
   };
   thumbnailFramesSeconds?: number;
   enterInFullScreenWhenDeviceRotated?: boolean;
@@ -116,12 +116,12 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   onCompleted?: TOnVideoCompleted;
   onError?: TOnError;
   resizeMode?: ResizeMode;
-  lockControls?: boolean;
-  doubleTapSeekValue?: number;
-  suffixLabelDoubleTapSeek?: string;
-  speeds?: TCommonOptionsProperties;
-  qualities?: TCommonOptionsProperties;
-  settings?: Omit<TCommonOptionsProperties, 'initialSelected'>;
+  // lockControls?: boolean;
+  tapToSeekValue?: number;
+  suffixLabelTapToSeek?: string;
+  speeds?: TOptionProperties;
+  qualities?: TOptionProperties;
+  settings?: Omit<TOptionProperties, 'initialSelected'>;
   controlsProps?: TVideoPlayerControlConfig;
   onFullScreen?: TOnVideoFullScreen;
   onSettings?: () => void;
