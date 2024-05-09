@@ -21,10 +21,13 @@ yarn add rn-media-player
 import { Video } from "rn-media-player";
 
 // ...
-const url = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-const title = "Big Buck Bunny"
+const source = {
+  url: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+  title: "Big Buck Bunny"
+}
 
-<Video source={{url, title}} />
+<Video source={source} />
+
 ```
 
 ## API Reference
@@ -154,6 +157,89 @@ This section provides detailed information about the props, methods, and events 
 
 * leftButtonColor: Color of the left button in the header (string)
 * titleColor: Color of the title in the header (string)
+
+
+##### Events
+| Property     | Description                                          | Type         | Details  |
+| ------------ | -----------------------------------------------------| ------------ | -------- |
+| **`onSettings`** | Callback tap settings. | `Func`| Void
+| **`onGoBack`** | Callback tap goBack. | `Func`| Void
+| **`onPlaybackSpeed`** | Callback tap playback speed on settings. | `Func`| Void
+| **`onQuality`** | Callback tap quality on settings. | `Func`| Void
+| **`onFullScreen`** | Callback tap full screen. | `Func`| Void
+| **`onBufferCompleted`** | Callback with NativeSyntheticEvent when buffer is completed. | `Func`| Detailed below
+| **`onVideoDownloaded`** | Callback with NativeSyntheticEvent when video is downloaded. | `Func`| Detailed below
+| **`onBuffer`** | Callback with NativeSyntheticEvent when video is buffering. | `Func`| Detailed below
+| **`onLoaded`** | Callback with NativeSyntheticEvent when video is loaded. | `Func`| Detailed below
+| **`onVideoProgress`** | Callback with NativeSyntheticEvent when video is in-progress. | `Func`| Detailed below
+| **`onPlayPause`** | Callback with NativeSyntheticEvent when video is playing or paused. | `Func`| Detailed below
+| **`onCompleted`** | Callback with NativeSyntheticEvent when video is completed. | `Func`| Detailed below
+| **`onError`** | Callback with NativeSyntheticEvent when video has ocurred error. | `Func`| Detailed below
+
+
+##### Detailed Events
+**Notes** to access events must be use callback params ex: 
+````JS
+  <Video
+    // ...rest code
+    onCompleted={(event)  => event.nativeEvent.xxxx}
+  />
+````
+
+`onBufferCompleted`
+: *Called when the video has completed buffering.*
+
+: - **Parameters**:
+  - `completed` (`boolean`): True if buffering is complete and playback can continue.
+
+`onVideoDownloaded`
+: *Called when the video download status changes.*
+
+: - **Parameters**:
+  - `downloaded` (`boolean`): Indicates whether the video has been fully downloaded.
+  - `status` (`string`): Status message of the download.
+  - `error` (`any`): Error object if the download failed.
+
+`onBuffer`
+: *Indicates changes in the buffering state of the video.*
+
+: - **Parameters**:
+  - `buffering` (`boolean`): True if the video is currently buffering.
+
+`onLoaded`
+: *Called when the video is loaded and ready to play.*
+
+: - **Parameters**:
+  - `duration` (`Float`): The total duration of the video.
+
+`onVideoProgress`
+: *Called periodically during playback to indicate buffering progress and play progress.*
+
+: - **Parameters**:
+  - `buffering` (`Float`): Current buffering state as a float value.
+  - `progress` (`Float`): Current progress of the video playback as a float value.
+
+`onPlayPause`
+: *Called when the play or pause action is triggered.*
+
+: - **Parameters**:
+  - `isPlaying` (`boolean`): True if the video is currently playing.
+
+`onCompleted`
+: *Called when the video playback has completed.*
+
+: - **Parameters**:
+  - `completed` (`boolean`): True if the video has finished playing.
+
+`onError`
+: *Called when there is an error during video playback*.
+
+: - **Parameters**:
+  - `code` (`number`): Error code identifying the type of error.
+  - `userInfo` (`string`): General information about the error.
+  - `description` (`string`): Detailed description of what caused the error.
+  - `failureReason` (`string`): The reason for the video playback failure.
+  - `fixSuggestion` (`string`): Suggested fix for the error.
 
 
 ## License
