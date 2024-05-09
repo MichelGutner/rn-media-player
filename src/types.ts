@@ -110,11 +110,6 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   paused?: boolean;
   rate?: number;
   startTime?: number;
-  onLoaded?: TOnVideoLoaded;
-  onVideoProgress?: TOnVideoProgress;
-  onPlayPause?: TOnVideoPlayPause;
-  onCompleted?: TOnVideoCompleted;
-  onError?: TOnError;
   resizeMode?: ResizeMode;
   // lockControls?: boolean;
   tapToSeekValue?: number;
@@ -123,14 +118,19 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   qualities?: TOptionProperties;
   settings?: Omit<TOptionProperties, 'initialSelected'>;
   controlsProps?: TVideoPlayerControlConfig;
-  onFullScreen?: TOnVideoFullScreen;
   onSettings?: () => void;
   onGoBack?: () => void;
   onPlaybackSpeed?: () => void;
   onQuality?: () => void;
+  onFullScreen?: TOnVideoFullScreen;
   onBufferCompleted?: TOnVideoBufferCompleted;
   onVideoDownloaded?: TOnVideoDownloaded;
   onBuffer?: TOnVideoBuffer;
+  onLoaded?: TOnVideoLoaded;
+  onVideoProgress?: TOnVideoProgress;
+  onPlayPause?: TOnVideoPlayPause;
+  onCompleted?: TOnVideoCompleted;
+  onError?: TOnError;
 };
 
 type TGenericEventHandler<T> = DirectEventHandler<Readonly<T>>;
