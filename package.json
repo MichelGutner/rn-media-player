@@ -37,7 +37,11 @@
   "keywords": [
     "react-native",
     "ios",
-    "android"
+    "android",
+    "video",
+    "player",
+    "video-player",
+    "media"
   ],
   "repository": {
     "type": "git",
