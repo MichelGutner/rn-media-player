@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
@@ -32,6 +33,9 @@ import kotlin.concurrent.thread
 @SuppressLint("ViewConstructor", "UseCompatLoadingForDrawables")
 class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
     private lateinit var binding: CustomPlayer
+    private var dialog = SettingsDialog(context.currentActivity!!)
+
+    private var settingsControl: ImageButton
 
     private var isVisibleControl: Boolean = true
     private var isFullScreen: Boolean = false
@@ -42,7 +46,6 @@ class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
     private val fullScreenIcon: ImageView
     private val previewImageView: ImageView
     private val overlayView: RelativeLayout
-    private val playPauseContent: RelativeLayout
     private val viewController: PlayerView
     private val animatedFullSToExit: AnimatedVectorDrawable
     private val animatedExitToFull: AnimatedVectorDrawable
@@ -68,15 +71,11 @@ class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
         val inflater = LayoutInflater.from(context)
         inflater.inflate(R.layout.custom_player, this, true)
         playIcon = findViewById(R.id.animated_play_to_pause)
-        playPauseContent = findViewById(R.id.playPause)
         fullScreenIcon = findViewById(R.id.animated_full_to_exit)
         previewImageView = findViewById(R.id.preview_image_view)
         overlayView = findViewById(R.id.overlay_controls)
         viewController = findViewById(R.id.player)
-
-//        previewImageView.layoutParams.width = (contentView.width * 0.4).toInt()
-//        previewImageView.layoutParams.height = (contentView.height * 0.4).toInt()
-        println("height for preview${(contentView.height * 0.4).toInt()}")
+        settingsControl = findViewById(R.id.settings_control)
 
         progressBar = findViewById(R.id.progress_bar)
         seekBar = findViewById(R.id.animated_seekbar)
@@ -117,7 +116,7 @@ class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
             }
         })
 
-        playPauseContent.setOnClickListener {
+        playIcon.setOnClickListener {
             if (exoPlayer.isPlaying) {
                 playIcon.setImageDrawable(animatedPauseToPlay)
                 animatedPauseToPlay.start()
@@ -163,6 +162,11 @@ class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
 
         viewController.setOnClickListener {
             onToggleControlsVisibility()
+        }
+
+        settingsControl.setOnClickListener {
+
+          dialog.showDialog()
         }
 
         startSeekBarUpdateTask()

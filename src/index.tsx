@@ -29,7 +29,6 @@ const VideoPlayer =
 export const Video = (props: TVideoPlayerProps) => {
   const { height, width } = useWindowDimensions();
   const url = ensureHttpsUrl(props.source.url);
-  console.log('🚀 ~ Video ~ url:', url);
   return (
     <VideoPlayer
       settings={defaultSettings}
