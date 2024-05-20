@@ -29,12 +29,13 @@ const VideoPlayer =
 export const Video = (props: TVideoPlayerProps) => {
   const { height, width } = useWindowDimensions();
   const url = ensureHttpsUrl(props.source.url);
+
   return (
     <VideoPlayer
       settings={defaultSettings}
       {...props}
       style={{ height, width, ...props?.style, overflow: 'hidden' }}
-      source={{ url, title: props.source.title }}
+      source={{ url, title: props?.source?.title }}
     />
   );
 };

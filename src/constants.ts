@@ -11,10 +11,10 @@ export const defaultSettings = {
       value: 'speeds',
       enabled: true,
     },
-    {
-      name: 'More Options',
-      value: 'moreOptions',
-      enabled: true,
-    },
+    // {
+    //   name: 'More Options',
+    //   value: 'moreOptions',
+    //   enabled: true,
+    // },
   ],
 };

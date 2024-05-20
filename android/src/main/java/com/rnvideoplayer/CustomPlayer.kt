@@ -1,5 +1,6 @@
 package com.rnvideoplayer
 
+import CustomBottomDialog
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -25,17 +26,39 @@ import androidx.media3.ui.DefaultTimeBar
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.TimeBar
 import androidx.media3.ui.TimeBar.OnScrubListener
+import com.facebook.react.bridge.ReadableArray
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ThemedReactContext
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-@UnstableApi
-@SuppressLint("ViewConstructor", "UseCompatLoadingForDrawables")
-class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
-    private lateinit var binding: CustomPlayer
-    private var dialog = SettingsDialog(context.currentActivity!!)
+private val ReadableMap.name: String
+  get() {
+    return this.getString("name").toString()
+  }
 
+private val ReadableMap.value: String
+  get() {
+    return this.getString("value").toString()
+  }
+
+private val ReadableMap.enabled: Boolean
+  get() {
+    return this.getBoolean("enabled")
+  }
+
+private val ReadableMap.children: ReadableMap?
+  get() {
+    return this.getMap("children")
+  }
+
+@UnstableApi
+@SuppressLint("ViewConstructor", "UseCompatLoadingForDrawables", "ResourceType",
+  "MissingInflatedId"
+)
+class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
     private var settingsControl: ImageButton
+    private var settingsProps: ReadableArray? = null
 
     private var isVisibleControl: Boolean = true
     private var isFullScreen: Boolean = false
@@ -59,6 +82,7 @@ class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
 
     private var timeCodesPosition: TextView
     private var timeCodesDuration: TextView
+    private val dialog = CustomBottomDialog(context)
 
     init {
         player = exoPlayer
@@ -67,6 +91,7 @@ class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
         exoPlayer.playWhenReady = true
 
         contentView = context.currentActivity?.window?.decorView as ViewGroup
+
 
         val inflater = LayoutInflater.from(context)
         inflater.inflate(R.layout.custom_player, this, true)
@@ -164,10 +189,9 @@ class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
             onToggleControlsVisibility()
         }
 
-        settingsControl.setOnClickListener {
-
-          dialog.showDialog()
-        }
+      settingsControl.setOnClickListener {
+        dialog.show()
+      }
 
         startSeekBarUpdateTask()
     }
@@ -266,6 +290,7 @@ class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
         }
     }
 
+
     fun setCurrentHeight(height: Int) {
         currentHeight = height
     }
@@ -280,13 +305,15 @@ class CustomPlayer(context: ThemedReactContext) : PlayerView(context) {
             hideControls()
         }
     }
-
-
     private fun showControls() {
-        overlayView.visibility = VISIBLE
+        overlayView.fadeIn()
     }
 
     private fun hideControls() {
-        overlayView.visibility = INVISIBLE
+        overlayView.fadeOut()
     }
+
+  fun getSettingsProperties(props: ReadableMap) {
+    settingsProps = props.getArray("data")
+  }
 }

@@ -1,63 +1,126 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- res/layout/fragment_custom_dialog.xml -->
+<androidx.constraintlayout.widget.ConstraintLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
-  android:layout_height="match_parent"
-  android:background="@android:color/white">
+  android:layout_height="match_parent">
 
-  <LinearLayout
+  <RelativeLayout
+    android:id="@+id/relativeLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:layout_margin="16dp"
+    android:layout_marginTop="10dp"
+    android:background="@drawable/rounded_corner_background"
+    android:padding="12dp"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintHorizontal_bias="0.666"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintVertical_bias="0.323">
+    app:layout_constraintVertical_bias="0.01"
+    tools:ignore="MissingConstraints">
 
-    <ImageButton
-      android:id="@+id/imageButton"
-      android:layout_width="30dp"
-      android:layout_height="30dp"
-      android:layout_gravity="end"
-      android:background="?android:attr/selectableItemBackgroundBorderless"
-      android:src="@drawable/close_svg_vector"
-      tools:ignore="HardcodedText" />
+    <View
+      android:id="@+id/swipeLine"
+      android:layout_width="40dp"
+      android:layout_height="4dp"
+      android:layout_centerHorizontal="true"
+      android:layout_marginTop="4dp"
+      android:background="@drawable/swipe_line" />
 
     <LinearLayout
+      android:id="@+id/qualitiesLayout"
       android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:layout_marginTop="16dp"
-      android:baselineAligned="false"
-      android:gravity="center"
+      android:layout_height="wrap_content"
+      android:layout_below="@id/swipeLine"
+      android:background="?android:attr/selectableItemBackground"
+      android:clickable="true"
+      android:focusable="true"
       android:orientation="horizontal"
-      android:textAlignment="center">
-      <TextView
-        android:id="@+id/textView"
-        android:layout_width="380dp"
+      android:padding="12dp">
+
+      <ImageView
+        android:id="@+id/qualitiesIcon"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:src="@drawable/outline_tune" />
+
+      <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="12dp"
         android:layout_weight="1"
-        android:textColor="@android:color/black"
-        android:text="Qualidades" />
+        android:gravity="center"
+        android:orientation="horizontal">
 
-      <ImageButton
-        android:id="@+id/xx"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/close_svg_vector"
-        tools:ignore="HardcodedText" />
+        <TextView
+          android:id="@+id/qualityTextView"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="Qualities" />
 
+        <TextView
+          android:id="@+id/currentQualityTextView"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="Auto(360p)" />
+
+        <ImageView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center"
+          android:layout_marginLeft="3dp"
+          android:src="@drawable/arrow_forward" />
+      </LinearLayout>
     </LinearLayout>
-  </LinearLayout>
 
-  <androidx.cardview.widget.CardView
-    android:layout_width="409dp"
-    android:layout_height="wrap_content"
-    tools:layout_editor_absoluteX="1dp"
-    tools:layout_editor_absoluteY="386dp" />
+    <LinearLayout
+      android:id="@+id/speedsLayout"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_below="@id/qualitiesLayout"
+      android:background="?android:attr/selectableItemBackground"
+      android:clickable="true"
+      android:focusable="true"
+      android:orientation="horizontal"
+      android:padding="12dp">
 
+      <ImageView
+        android:id="@+id/speedsIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/baseline_slow_motion_video" />
 
+      <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="12dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <TextView
+          android:id="@+id/speedsTextView"
+          android:layout_width="0dp"
+          android:layout_height="wrap_content"
+          android:layout_weight="1"
+          android:text="Speeds" />
+
+        <TextView
+          android:id="@+id/currentPlaybackSpeedTextView"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="Normal" />
+
+        <ImageView
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center"
+          android:layout_marginLeft="3dp"
+          android:src="@drawable/arrow_forward" />
+      </LinearLayout>
+    </LinearLayout>
+  </RelativeLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
