@@ -18,46 +18,50 @@ var currentHeight: Int = 0;
 class RNVideoPlayer : SimpleViewManager<View>() {
   override fun getName() = "RNVideoPlayer"
 
-  @OptIn(UnstableApi::class) override fun createViewInstance(reactContext: ThemedReactContext): CustomPlayer {
-    val customPlayer = CustomPlayer(reactContext)
-    customPlayer.setBackgroundColor(Color.parseColor("black"))
+  @OptIn(UnstableApi::class)
+  override fun createViewInstance(reactContext: ThemedReactContext): RNVideoPlayerView {
+    val rnVideoPlayerView = RNVideoPlayerView(reactContext)
+    rnVideoPlayerView.setBackgroundColor(Color.parseColor("black"))
     reactContext.currentActivity?.window?.setFlags(
       WindowManager.LayoutParams.FLAG_FULLSCREEN,
       WindowManager.LayoutParams.FLAG_FULLSCREEN
     )
-    customPlayer.systemUiVisibility = (View.SYSTEM_UI_FLAG_FULLSCREEN
-            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+    rnVideoPlayerView.systemUiVisibility = (View.SYSTEM_UI_FLAG_FULLSCREEN
+      or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+      or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
 
-    customPlayer.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+    rnVideoPlayerView.viewTreeObserver.addOnGlobalLayoutListener(object :
+      ViewTreeObserver.OnGlobalLayoutListener {
       override fun onGlobalLayout() {
-        customPlayer.viewTreeObserver.removeOnGlobalLayoutListener(this)
-        currentHeight = customPlayer.height
-        currentWidth= customPlayer.width
-        (customPlayer.parent as? ViewGroup)?.removeView(customPlayer)
+        rnVideoPlayerView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+        currentHeight = rnVideoPlayerView.height
+        currentWidth = rnVideoPlayerView.width
+        (rnVideoPlayerView.parent as? ViewGroup)?.removeView(rnVideoPlayerView)
 
         (reactContext.currentActivity?.window?.decorView as? ViewGroup)?.addView(
-          customPlayer,
+          rnVideoPlayerView,
           ViewGroup.LayoutParams.MATCH_PARENT,
           currentHeight
         )
       }
     })
 
-    return customPlayer
+    return rnVideoPlayerView
   }
 
-  @OptIn(UnstableApi::class) @ReactProp(name = "source")
-  fun setSource(customPlayer: CustomPlayer, source: ReadableMap?) {
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "source")
+  fun setSource(RNVideoPlayerView: RNVideoPlayerView, source: ReadableMap?) {
     val url = source?.getString("url")
     if (!url.isNullOrEmpty()) {
-      customPlayer.setMediaItem(url)
+      RNVideoPlayerView.setMediaItem(url)
     }
   }
 
-  @OptIn(UnstableApi::class) @ReactProp(name = "settings")
-  fun setSettings(customPlayer: CustomPlayer, settings: ReadableMap){
-    customPlayer.getSettingsProperties(settings)
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "settings")
+  fun setSettings(rnVideoPlayerView: RNVideoPlayerView, settings: ReadableMap) {
+    rnVideoPlayerView.getSettingsProperties(settings)
   }
 
 }
