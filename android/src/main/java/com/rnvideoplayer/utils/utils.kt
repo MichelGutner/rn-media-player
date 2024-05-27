@@ -1,4 +1,4 @@
-package com.rnvideoplayer
+package com.rnvideoplayer.utils
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter

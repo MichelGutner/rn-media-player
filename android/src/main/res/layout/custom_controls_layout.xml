@@ -81,7 +81,7 @@
         </LinearLayout>
 
             <androidx.media3.ui.DefaultTimeBar
-                android:id="@+id/animated_seekbar"
+                android:id="@+id/time_bar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="0dp"

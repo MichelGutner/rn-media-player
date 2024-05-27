@@ -1,4 +1,4 @@
-package com.rnvideoplayer
+package com.rnvideoplayer.components
 
 import ICustomPlayerControls
 import android.annotation.SuppressLint
@@ -6,6 +6,7 @@ import android.graphics.drawable.AnimatedVectorDrawable
 import android.view.View
 import android.widget.ImageButton
 import com.facebook.react.uimanager.ThemedReactContext
+import com.rnvideoplayer.R
 
 @SuppressLint("UseCompatLoadingForDrawables")
 class CustomPlayerControls(private val context: ThemedReactContext, view: View) :

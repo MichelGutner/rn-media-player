@@ -1,3 +1,5 @@
+package com.rnvideoplayer.components
+
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.os.Bundle

@@ -26,9 +26,6 @@ class RNVideoPlayer : SimpleViewManager<View>() {
       WindowManager.LayoutParams.FLAG_FULLSCREEN,
       WindowManager.LayoutParams.FLAG_FULLSCREEN
     )
-    rnVideoPlayerView.systemUiVisibility = (View.SYSTEM_UI_FLAG_FULLSCREEN
-      or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-      or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
 
     rnVideoPlayerView.viewTreeObserver.addOnGlobalLayoutListener(object :
       ViewTreeObserver.OnGlobalLayoutListener {
@@ -51,10 +48,10 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "source")
-  fun setSource(RNVideoPlayerView: RNVideoPlayerView, source: ReadableMap?) {
+  fun setSource(rnVideoPlayerView: RNVideoPlayerView, source: ReadableMap?) {
     val url = source?.getString("url")
     if (!url.isNullOrEmpty()) {
-      RNVideoPlayerView.setMediaItem(url)
+      rnVideoPlayerView.setMediaItem(url)
     }
   }
 
@@ -63,5 +60,10 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   fun setSettings(rnVideoPlayerView: RNVideoPlayerView, settings: ReadableMap) {
     rnVideoPlayerView.getSettingsProperties(settings)
   }
+
+//  @ReactProp(name = "qualities")
+//  fun setQualities(rnVideoPlayerView: RNVideoPlayerView, qualities: ReadableMap) {
+//    rnVideoPlayerView.setQualities(qualities)
+//  }
 
 }
