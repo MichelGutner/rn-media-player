@@ -11,6 +11,7 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
+import com.rnvideoplayer.readableMapManager.ReadableMapManager
 
 var currentWidth: Int = 0;
 var currentHeight: Int = 0;
@@ -61,9 +62,10 @@ class RNVideoPlayer : SimpleViewManager<View>() {
     rnVideoPlayerView.getSettingsProperties(settings)
   }
 
-//  @ReactProp(name = "qualities")
-//  fun setQualities(rnVideoPlayerView: RNVideoPlayerView, qualities: ReadableMap) {
-//    rnVideoPlayerView.setQualities(qualities)
-//  }
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "qualities")
+  fun setQualities(rnVideoPlayerView: RNVideoPlayerView, qualities: ReadableMap) {
+    ReadableMapManager.getInstance().setReadableMapProps(qualities, "qualities")
+  }
 
 }

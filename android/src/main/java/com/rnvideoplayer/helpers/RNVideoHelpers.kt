@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import java.util.concurrent.TimeUnit
 
 class RNVideoHelpers {
-
   @SuppressLint("DefaultLocale")
   fun createTimeCodesFormatted(time: Long): String {
     val hours = TimeUnit.MILLISECONDS.toHours(time)
@@ -17,5 +16,4 @@ class RNVideoHelpers {
       String.format("%02d:%02d", minutes, seconds)
     }
   }
-
 }

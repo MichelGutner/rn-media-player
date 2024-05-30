@@ -1,5 +1,6 @@
 package com.rnvideoplayer.components
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.view.View
 import android.widget.ProgressBar
@@ -7,6 +8,7 @@ import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.R
 
+@SuppressLint("ViewConstructor")
 class CustomLoading(context: ThemedReactContext, view: View, attrs: ReadableArray? = null): ProgressBar(context) {
     private val loading = view.findViewById<ProgressBar>(R.id.progress_bar)
 
