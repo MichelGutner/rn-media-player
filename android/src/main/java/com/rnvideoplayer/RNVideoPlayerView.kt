@@ -2,7 +2,10 @@ package com.rnvideoplayer
 
 import com.rnvideoplayer.components.CustomBottomDialog
 import android.annotation.SuppressLint
+import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.media3.common.MediaItem
@@ -21,6 +24,7 @@ import com.rnvideoplayer.components.CustomSeekBar
 import com.rnvideoplayer.components.CustomThumbnailPreview
 import com.rnvideoplayer.exoPlayer.CustomExoPlayer
 import com.rnvideoplayer.helpers.RNVideoHelpers
+import com.rnvideoplayer.readableMapManager.ReadableMapManager
 import com.rnvideoplayer.utils.fadeIn
 import com.rnvideoplayer.utils.fadeOut
 import java.util.concurrent.TimeUnit
@@ -54,25 +58,24 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private var settingsProps: ReadableArray? = null
 
   private val timeBar = CustomSeekBar(this)
-  private val loading = CustomLoading(context,this)
+  private val loading = CustomLoading(context, this)
   private val thumbnail = CustomThumbnailPreview(context, this)
+  private val dialog = CustomBottomDialog(context)
+  private val playerController = CustomPlayerControls(context, this)
+  private val readableManager = ReadableMapManager.getInstance()
 
   private var isVisibleControl: Boolean = true
   private var isFullScreen: Boolean = false
   private var isSeeking: Boolean = false
-//  private val previewImageView: ImageView
   private val overlayView: RelativeLayout
-
+  private var selectedQuality: String? = null
   private var timeCodesPosition: TextView
   private var timeCodesDuration: TextView
-  private val dialog = CustomBottomDialog(context)
-  private val playerController = CustomPlayerControls(context, this)
+
 
   init {
     customPlayer.init()
     //        AspectRatioFrameLayout.LAYOUT_MODE_OPTICAL_BOUNDS.also { resizeMode = it }
-
-//    previewImageView = findViewById(R.id.preview_image_view)
     overlayView = findViewById(R.id.overlay_controls)
 
     timeCodesPosition = findViewById(R.id.time_codes_position)
@@ -101,7 +104,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     })
 
     playerController.setPlayPauseButtonClickListener {
-      when  {
+      when {
         exoPlayer.isPlaying -> exoPlayer.pause()
         else -> exoPlayer.play()
       }
@@ -128,7 +131,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
         if (index < thumbnail.bitmaps.size) {
           thumbnail.setCurrentImageBitmapByIndex(index)
-          thumbnail.translationX = getTranslateXPreviewImage(counter)
+          thumbnail.translationX = onTranslateXThumbnail(counter)
         }
       }
 
@@ -139,7 +142,6 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
           isSeeking = false
         }
       }
-
     })
 
     overlayController.setOnClickListener {
@@ -147,13 +149,79 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     }
 
     playerController.setSettingsButtonClickListener {
+      val view = LayoutInflater.from(context).inflate(R.layout.custom_dialog, null)
+      dialog.setContentView(view)
       dialog.show()
+
+      val qualitiesLayout: LinearLayout = view.findViewById(R.id.qualitiesLayout)
+
+      qualitiesLayout.setOnClickListener {
+        dialog.dismiss()
+        postDelayed({
+          run {
+            showQualitiesOptionsDialog()
+          }
+        }, 300)
+      }
     }
 
-    startSeekBarUpdateTask()
+    runnable()
   }
 
-  private fun getTranslateXPreviewImage(counter: Long): Float {
+  data class QualityItem(val name: String, val value: String, val enabled: Boolean)
+
+  private fun showQualitiesOptionsDialog() {
+    val settingsOptionsView = LayoutInflater.from(context).inflate(R.layout.quality_options_dialog, null)
+
+    val qualities = readableManager.getReadableMapProps("qualities")?.getArray("data")
+    if (selectedQuality.isNullOrEmpty()) {
+      selectedQuality =
+        readableManager.getReadableMapProps("qualities")?.getString("initialSelected")
+    }
+
+    val qualityItems = mutableListOf<QualityItem>()
+    for (i in 0 until qualities?.size()!!) {
+      val quality = qualities.getMap(i)
+      if (quality.enabled) {
+        qualityItems.add(QualityItem(quality.name, quality.value, quality.enabled))
+      }
+    }
+
+    val qualityOptionsLayout: LinearLayout =
+      settingsOptionsView.findViewById(R.id.qualityOptionsLayout)
+
+    for (quality in qualityItems) {
+      val qualityItemView = LayoutInflater.from(context).inflate(R.layout.quality_item, null)
+      val qualityNameTextView: TextView = qualityItemView.findViewById(R.id.qualityNameTextView)
+      val qualityCheck: ImageView = qualityItemView.findViewById(R.id.checkImage)
+
+      qualityNameTextView.text = quality.name
+      qualityCheck.visibility = if (quality.name == selectedQuality) VISIBLE else GONE
+
+      qualityItemView.setOnClickListener {
+        if (selectedQuality == quality.name) {
+          return@setOnClickListener
+        } else {
+          selectedQuality = quality.name
+          it.postDelayed({
+            run {
+              dialog.dismiss()
+            }
+          }, 300)
+        }
+
+//        playVideo(quality.value)
+      }
+
+      qualityOptionsLayout.addView(qualityItemView)
+    }
+
+    dialog.setContentView(settingsOptionsView)
+
+    dialog.show()
+  }
+
+  private fun onTranslateXThumbnail(counter: Long): Float {
     var translateX: Float = 16.0F
 
     if (counter.toFloat() + thumbnail.width / 2 >= timeBar.width.toFloat()) {
@@ -165,7 +233,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     return translateX
   }
 
-  private fun startSeekBarUpdateTask() {
+  private fun runnable() {
     val updateIntervalMs = 1000L
     val updateSeekBarTask = object : Runnable {
       override fun run() {
@@ -181,13 +249,12 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   fun setMediaItem(url: String) {
     val mediaItem = MediaItem.fromUri(android.net.Uri.parse(url))
     exoPlayer.setMediaItem(mediaItem)
-    exoPlayer.prepare()
     thumbnail.generatingThumbnailFrames(url)
   }
 
-  fun releasePlayer() {
-    exoPlayer.release()
-  }
+//  fun releasePlayer() {
+//    exoPlayer.release()
+//  }
 
   private fun updateTimeBar() {
     val position = exoPlayer.contentPosition
@@ -218,10 +285,8 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
   private fun onToggleControlsVisibility() {
     if (!isVisibleControl) {
-      // Controls are currently hidden, show them
       showControls()
     } else {
-      // Controls are currently visible, hide them
       hideControls()
     }
   }

@@ -10,30 +10,22 @@
     android:id="@+id/relativeLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
     android:layout_margin="16dp"
-    android:layout_marginTop="10dp"
     android:background="@drawable/rounded_corner_background"
     android:padding="12dp"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintHorizontal_bias="1.0"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintVertical_bias="0.01"
+    app:layout_constraintVertical_bias="0.973"
     tools:ignore="MissingConstraints">
-
-    <View
-      android:id="@+id/swipeLine"
-      android:layout_width="40dp"
-      android:layout_height="4dp"
-      android:layout_centerHorizontal="true"
-      android:layout_marginTop="4dp"
-      android:background="@drawable/swipe_line" />
 
     <LinearLayout
       android:id="@+id/qualitiesLayout"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_below="@id/swipeLine"
       android:background="?android:attr/selectableItemBackground"
       android:clickable="true"
       android:focusable="true"
