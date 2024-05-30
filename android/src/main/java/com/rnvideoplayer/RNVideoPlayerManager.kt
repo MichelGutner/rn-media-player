@@ -68,4 +68,10 @@ class RNVideoPlayer : SimpleViewManager<View>() {
     ReadableMapManager.getInstance().setReadableMapProps(qualities, "qualities")
   }
 
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "speeds")
+  fun setSpeeds(rnVideoPlayerView: RNVideoPlayerView, speeds: ReadableMap) {
+    ReadableMapManager.getInstance().setReadableMapProps(speeds, "speeds")
+  }
+
 }

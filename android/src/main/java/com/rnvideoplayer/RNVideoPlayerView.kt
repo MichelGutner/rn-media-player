@@ -4,7 +4,6 @@ import com.rnvideoplayer.components.CustomBottomDialog
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
@@ -18,6 +17,7 @@ import androidx.media3.ui.TimeBar.OnScrubListener
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ThemedReactContext
+import com.rnvideoplayer.components.CustomContentDialog
 import com.rnvideoplayer.components.CustomLoading
 import com.rnvideoplayer.components.CustomPlayerControls
 import com.rnvideoplayer.components.CustomSeekBar
@@ -46,8 +46,7 @@ private val ReadableMap.enabled: Boolean
 
 @UnstableApi
 @SuppressLint(
-  "ViewConstructor", "UseCompatLoadingForDrawables", "ResourceType",
-  "MissingInflatedId"
+  "ViewConstructor", "UseCompatLoadingForDrawables", "ResourceType", "MissingInflatedId"
 )
 class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private val customPlayer = CustomExoPlayer(context, this)
@@ -68,9 +67,14 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private var isFullScreen: Boolean = false
   private var isSeeking: Boolean = false
   private val overlayView: RelativeLayout
-  private var selectedQuality: String? = null
+
+
   private var timeCodesPosition: TextView
   private var timeCodesDuration: TextView
+  private var contentDialog = CustomContentDialog(context, dialog)
+
+  private var selectedQuality: String? = null;
+  private var selectedSpeed: String? = null;
 
 
   init {
@@ -95,7 +99,9 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
           timeCodesDuration.text = helper.createTimeCodesFormatted(exoPlayer.duration)
         }
 
-        updateTimeBar()
+        if (exoPlayer.isPlaying) {
+          updateTimeBar()
+        }
       }
 
       override fun onPlayerError(error: PlaybackException) {
@@ -149,76 +155,55 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     }
 
     playerController.setSettingsButtonClickListener {
+      val qualities = readableManager.getReadableMapProps("qualities")
+      val data = qualities?.getArray("data");
+      val initialSelected = qualities?.getString("initialSelected");
+
+      if (selectedQuality.isNullOrEmpty()) {
+        selectedQuality = initialSelected
+      }
+
+      val speeds = readableManager.getReadableMapProps("speeds")
+      val dataSpeeds = speeds?.getArray("data");
+      val initialSelectedSpeed = speeds?.getString("initialSelected");
+
+      if (selectedSpeed.isNullOrEmpty()) {
+        selectedSpeed = initialSelectedSpeed
+      }
+
       val view = LayoutInflater.from(context).inflate(R.layout.custom_dialog, null)
       dialog.setContentView(view)
       dialog.show()
 
       val qualitiesLayout: LinearLayout = view.findViewById(R.id.qualitiesLayout)
+      val speedsLayout: LinearLayout = view.findViewById(R.id.speedsLayout)
 
       qualitiesLayout.setOnClickListener {
         dialog.dismiss()
         postDelayed({
           run {
-            showQualitiesOptionsDialog()
+            contentDialog.showOptionsDialog(data, selectedQuality) { name, value ->
+              selectedQuality = name
+              customPlayer.changeVideoQuality(value)
+            }
+          }
+        }, 300)
+      }
+
+
+      speedsLayout.setOnClickListener {
+        dialog.dismiss()
+        postDelayed({
+          run {
+            contentDialog.showOptionsDialog(dataSpeeds, selectedSpeed) { name, value ->
+              selectedSpeed = name
+              exoPlayer.setPlaybackSpeed(value.toFloat())
+            }
           }
         }, 300)
       }
     }
-
     runnable()
-  }
-
-  data class QualityItem(val name: String, val value: String, val enabled: Boolean)
-
-  private fun showQualitiesOptionsDialog() {
-    val settingsOptionsView = LayoutInflater.from(context).inflate(R.layout.quality_options_dialog, null)
-
-    val qualities = readableManager.getReadableMapProps("qualities")?.getArray("data")
-    if (selectedQuality.isNullOrEmpty()) {
-      selectedQuality =
-        readableManager.getReadableMapProps("qualities")?.getString("initialSelected")
-    }
-
-    val qualityItems = mutableListOf<QualityItem>()
-    for (i in 0 until qualities?.size()!!) {
-      val quality = qualities.getMap(i)
-      if (quality.enabled) {
-        qualityItems.add(QualityItem(quality.name, quality.value, quality.enabled))
-      }
-    }
-
-    val qualityOptionsLayout: LinearLayout =
-      settingsOptionsView.findViewById(R.id.qualityOptionsLayout)
-
-    for (quality in qualityItems) {
-      val qualityItemView = LayoutInflater.from(context).inflate(R.layout.quality_item, null)
-      val qualityNameTextView: TextView = qualityItemView.findViewById(R.id.qualityNameTextView)
-      val qualityCheck: ImageView = qualityItemView.findViewById(R.id.checkImage)
-
-      qualityNameTextView.text = quality.name
-      qualityCheck.visibility = if (quality.name == selectedQuality) VISIBLE else GONE
-
-      qualityItemView.setOnClickListener {
-        if (selectedQuality == quality.name) {
-          return@setOnClickListener
-        } else {
-          selectedQuality = quality.name
-          it.postDelayed({
-            run {
-              dialog.dismiss()
-            }
-          }, 300)
-        }
-
-//        playVideo(quality.value)
-      }
-
-      qualityOptionsLayout.addView(qualityItemView)
-    }
-
-    dialog.setContentView(settingsOptionsView)
-
-    dialog.show()
   }
 
   private fun onTranslateXThumbnail(counter: Long): Float {
@@ -271,9 +256,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     } else {
       parentView.removeView(this)
       parentView.addView(
-        this,
-        ViewGroup.LayoutParams.MATCH_PARENT,
-        ViewGroup.LayoutParams.MATCH_PARENT
+        this, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
       )
     }
     isFullScreen = !isFullScreen
