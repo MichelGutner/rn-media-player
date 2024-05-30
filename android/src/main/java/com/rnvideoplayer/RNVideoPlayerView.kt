@@ -82,26 +82,25 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     //        AspectRatioFrameLayout.LAYOUT_MODE_OPTICAL_BOUNDS.also { resizeMode = it }
     overlayView = findViewById(R.id.overlay_controls)
 
+
     timeCodesPosition = findViewById(R.id.time_codes_position)
     timeCodesDuration = findViewById(R.id.time_codes_duration)
 
     exoPlayer.addListener(object : Player.Listener {
       override fun onPlaybackStateChanged(playbackState: Int) {
         super.onPlaybackStateChanged(playbackState)
-
-        if (playbackState === Player.STATE_BUFFERING) {
+          println("-------> ${playbackState}")
+        if (playbackState == Player.STATE_BUFFERING) {
           playerController.setVisibilityPlayPauseButton(false)
           loading.show()
-        } else if (playbackState === Player.STATE_READY) {
+        } else if (playbackState == Player.STATE_READY) {
           playerController.setVisibilityPlayPauseButton(true)
           loading.hide()
           timeBar.build(exoPlayer.duration)
           timeCodesDuration.text = helper.createTimeCodesFormatted(exoPlayer.duration)
         }
 
-        if (exoPlayer.isPlaying) {
           updateTimeBar()
-        }
       }
 
       override fun onPlayerError(error: PlaybackException) {
@@ -171,7 +170,14 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
         selectedSpeed = initialSelectedSpeed
       }
 
+
       val view = LayoutInflater.from(context).inflate(R.layout.custom_dialog, null)
+      val currentQualitySelected = view.findViewById<TextView>(R.id.currentQualityTextView)
+      val currentSpeedSelected = view.findViewById<TextView>(R.id.currentPlaybackSpeedTextView)
+
+      currentQualitySelected.text = selectedQuality
+      currentSpeedSelected.text = selectedSpeed
+
       dialog.setContentView(view)
       dialog.show()
 

@@ -27,7 +27,7 @@
     android:layout_gravity="center"
     android:layout_weight="1"
     android:paddingStart="12dp"
-    android:text="Quality Name"
+    android:text="Name"
     tools:ignore="RtlSymmetry" />
 
 </LinearLayout>

@@ -30,6 +30,7 @@
       android:clickable="true"
       android:focusable="true"
       android:orientation="horizontal"
+      android:gravity="center"
       android:padding="12dp">
 
       <ImageView
@@ -58,7 +59,8 @@
           android:id="@+id/currentQualityTextView"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
-          android:text="Auto(360p)" />
+          android:layout_marginRight="12dp"
+          android:text="" />
 
         <ImageView
           android:layout_width="wrap_content"
@@ -78,6 +80,7 @@
       android:clickable="true"
       android:focusable="true"
       android:orientation="horizontal"
+      android:gravity="center"
       android:padding="12dp">
 
       <ImageView
@@ -104,6 +107,7 @@
           android:id="@+id/currentPlaybackSpeedTextView"
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
+          android:layout_marginRight="12dp"
           android:text="Normal" />
 
         <ImageView

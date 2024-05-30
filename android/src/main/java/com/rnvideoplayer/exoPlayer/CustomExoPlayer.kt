@@ -45,14 +45,15 @@ class CustomExoPlayer(private val context: ThemedReactContext, private val view:
 
     val dataSourceFactory = DefaultDataSource.Factory(context)
     val newMediaItem = MediaItem.fromUri(newQualityUrl)
-    val newMediaSource =
-      DefaultMediaSourceFactory(dataSourceFactory).createMediaSource(newMediaItem)
+    val newMediaSource = DefaultMediaSourceFactory(dataSourceFactory).createMediaSource(newMediaItem)
 
-    exoPlayer.setMediaSource(newMediaSource)
+    exoPlayer.setMediaSource(newMediaSource, currentPosition)
     exoPlayer.prepare()
 
-    exoPlayer.seekTo(currentPosition)
-
     exoPlayer.playWhenReady = true
+  }
+
+  fun release() {
+    exoPlayer.release()
   }
 }

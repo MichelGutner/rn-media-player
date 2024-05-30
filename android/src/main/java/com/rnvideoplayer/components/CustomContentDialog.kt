@@ -49,8 +49,6 @@ class CustomContentDialog(private val context: ThemedReactContext, private val d
             dialog.dismiss()
           }, 300)
         }
-        // Handle option item click
-        // playVideo(option.value)
         callback(option.name, option.value)
       }
 
