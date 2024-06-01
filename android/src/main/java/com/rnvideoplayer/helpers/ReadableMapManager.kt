@@ -1,4 +1,4 @@
-package com.rnvideoplayer.readableMapManager
+package com.rnvideoplayer.helpers
 
 import com.facebook.react.bridge.ReadableMap
 

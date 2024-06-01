@@ -13,7 +13,8 @@ class CustomPlayerControls(private val context: ThemedReactContext, view: View) 
   ICustomPlayerControls {
   private val playPauseButton: ImageButton = view.findViewById(R.id.animated_play_to_pause)
   private val fullScreenButton: ImageButton = view.findViewById(R.id.animated_full_to_exit)
-  private var settingsButton: ImageButton = view.findViewById(R.id.settings_control)
+  private val settingsButton: ImageButton = view.findViewById(R.id.settings_control)
+  private val replayButton: ImageButton = view.findViewById(R.id.replay_to_pause)
 
   private val animatedPlayToPause = createAnimatedDrawable(R.drawable.animated_play_to_pause)
   private val animatedPauseToPlay = createAnimatedDrawable(R.drawable.animated_pause_to_play)
@@ -26,6 +27,7 @@ class CustomPlayerControls(private val context: ThemedReactContext, view: View) 
 
   override fun morphPlayPause(isPlaying: Boolean) {
     if (isPlaying) {
+      replayButton.visibility = View.GONE
       playPauseButton.setImageDrawable(animatedPlayToPause)
       animatedPlayToPause.start()
     } else {
@@ -36,6 +38,10 @@ class CustomPlayerControls(private val context: ThemedReactContext, view: View) 
 
   override fun setVisibilityPlayPauseButton(isVisible: Boolean) {
     playPauseButton.visibility = if (isVisible) View.VISIBLE else View.GONE
+  }
+
+  override fun setVisibilityReplayButton(isVisible: Boolean) {
+    replayButton.visibility = if (isVisible) View.VISIBLE else View.GONE
   }
 
   override fun setFullScreenButtonClickListener(listener: View.OnClickListener) {
@@ -54,6 +60,10 @@ class CustomPlayerControls(private val context: ThemedReactContext, view: View) 
 
   override fun setSettingsButtonClickListener(listener: View.OnClickListener) {
     settingsButton.setOnClickListener(listener)
+  }
+
+  override fun setReplayButtonClickListener(listener: View.OnClickListener) {
+    replayButton.setOnClickListener(listener)
   }
 
   private fun createAnimatedDrawable(drawableResId: Int): AnimatedVectorDrawable {

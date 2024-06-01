@@ -1,5 +1,6 @@
 package com.rnvideoplayer.exoPlayer
 
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.annotation.OptIn
@@ -10,8 +11,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import com.facebook.react.uimanager.ThemedReactContext
+import com.rnvideoplayer.Downloader
 import com.rnvideoplayer.R
 
+@UnstableApi
 class CustomExoPlayer(private val context: ThemedReactContext, private val view: PlayerView) {
   private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build();
 
@@ -25,6 +28,11 @@ class CustomExoPlayer(private val context: ThemedReactContext, private val view:
     view.useController = false
     exoPlayer.prepare()
     exoPlayer.playWhenReady = true
+  }
+
+  fun buildMediaItem(url: String) {
+    val mediaItem = MediaItem.fromUri(Uri.parse(url))
+    exoPlayer.setMediaItem(mediaItem)
   }
 
   fun getExoPlayer(): ExoPlayer {

@@ -24,7 +24,7 @@ import com.rnvideoplayer.components.CustomSeekBar
 import com.rnvideoplayer.components.CustomThumbnailPreview
 import com.rnvideoplayer.exoPlayer.CustomExoPlayer
 import com.rnvideoplayer.helpers.RNVideoHelpers
-import com.rnvideoplayer.readableMapManager.ReadableMapManager
+import com.rnvideoplayer.helpers.ReadableMapManager
 import com.rnvideoplayer.utils.fadeIn
 import com.rnvideoplayer.utils.fadeOut
 import java.util.concurrent.TimeUnit
@@ -89,7 +89,6 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     exoPlayer.addListener(object : Player.Listener {
       override fun onPlaybackStateChanged(playbackState: Int) {
         super.onPlaybackStateChanged(playbackState)
-          println("-------> ${playbackState}")
         if (playbackState == Player.STATE_BUFFERING) {
           playerController.setVisibilityPlayPauseButton(false)
           loading.show()
@@ -98,9 +97,12 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
           loading.hide()
           timeBar.build(exoPlayer.duration)
           timeCodesDuration.text = helper.createTimeCodesFormatted(exoPlayer.duration)
+        } else if (playbackState == Player.STATE_ENDED) {
+          playerController.setVisibilityReplayButton(true)
+          playerController.setVisibilityPlayPauseButton(false)
         }
 
-          updateTimeBar()
+        updateTimeBar()
       }
 
       override fun onPlayerError(error: PlaybackException) {
@@ -209,6 +211,11 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
         }, 300)
       }
     }
+
+    playerController.setReplayButtonClickListener {
+      exoPlayer.seekTo(0)
+      playerController.setVisibilityReplayButton(false)
+    }
     runnable()
   }
 
@@ -238,8 +245,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   }
 
   fun setMediaItem(url: String) {
-    val mediaItem = MediaItem.fromUri(android.net.Uri.parse(url))
-    exoPlayer.setMediaItem(mediaItem)
+    customPlayer.buildMediaItem(url)
     thumbnail.generatingThumbnailFrames(url)
   }
 

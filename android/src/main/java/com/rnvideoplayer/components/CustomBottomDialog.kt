@@ -20,7 +20,7 @@ class CustomBottomDialog(
     val maxWidth = if (isPortrait) displayMetrics.widthPixels else displayMetrics.heightPixels
     val maxHeight = if (isPortrait) (displayMetrics.heightPixels * 0.35).toInt() else (displayMetrics.heightPixels * 0.8).toInt()
 
-    window?.setLayout(maxWidth, maxHeight)
+    window?.setLayout(maxWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
 
     window?.setGravity(Gravity.BOTTOM)
     window?.setWindowAnimations(com.google.android.material.R.style.Animation_Design_BottomSheetDialog)
