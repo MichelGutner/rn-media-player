@@ -15,10 +15,9 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent">
 
-
-
-    <RelativeLayout
-      android:id="@+id/double_tap_left"
+<!-- Double Tap View -->
+    <LinearLayout
+      android:id="@+id/double_tap_view"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:background="@drawable/rounded_background_double_tap"
@@ -34,8 +33,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
-        />
-    </RelativeLayout>
+        >
+        <TextView
+          android:id="@+id/double_tap_text"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="-15 seconds"
+          android:textColor="#fff"
+          android:layout_alignParentEnd="true"
+          android:layout_centerInParent="true"
+          />
+      </RelativeLayout>
+    </LinearLayout>
+<!-- Double tap view -->
 
       <RelativeLayout
         xmlns:tools="http://schemas.android.com/tools"

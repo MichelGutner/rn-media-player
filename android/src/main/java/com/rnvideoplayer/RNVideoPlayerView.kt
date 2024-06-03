@@ -67,8 +67,9 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private var timeCodesPosition: TextView
   private var timeCodesDuration: TextView
   private var contentDialog = CustomContentDialog(context, dialog)
-  private var doubleTapLeft: RelativeLayout
+  private var doubleTapView: LinearLayout
   private var doubleTap: RelativeLayout
+  private var doubleTapText: TextView
 
   private var selectedQuality: String? = null;
   private var selectedSpeed: String? = null;
@@ -83,17 +84,19 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
     timeCodesPosition = findViewById(R.id.time_codes_position)
     timeCodesDuration = findViewById(R.id.time_codes_duration)
-    doubleTapLeft = findViewById(R.id.double_tap_left)
+    doubleTapView = findViewById(R.id.double_tap_view)
     doubleTap = findViewById(R.id.double_tap)
+    doubleTapText = findViewById(R.id.double_tap_text)
 
-
-    doubleTapLeft.viewTreeObserver.addOnGlobalLayoutListener(object :
-      ViewTreeObserver.OnGlobalLayoutListener {
+    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
       override fun onGlobalLayout() {
-        scaleView(false, doubleTapLeft)
+        scaleView(false, doubleTapView)
+        val layoutParams = doubleTapText.layoutParams as MarginLayoutParams
+        layoutParams.marginEnd = parentView.width / 5
+        doubleTapText.layoutParams = layoutParams
+       requestLayout()
       }
     })
-
 
     exoPlayer.addListener(object : Player.Listener {
       override fun onPlaybackStateChanged(playbackState: Int) {
@@ -164,12 +167,12 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
       onToggleControlsVisibility()
     }
 
-    doubleTapLeft.setOnTouchListener(object : OnTouchListener {
+    doubleTapView.setOnTouchListener(object : OnTouchListener {
 
       val gestureDetector =
         GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
           override fun onDoubleTap(e: MotionEvent): Boolean {
-            doubleTap.visibility = VISIBLE
+            doubleTap.fadeIn(100)
             resetTimerTask?.cancel()
             exoPlayer.seekTo(exoPlayer.contentPosition - 15000)
             hideControls()
@@ -293,10 +296,10 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 //    exoPlayer.release()
 //  }
 
-  fun createTimerTask(resetDuration: Long = 1300) {
+  fun createTimerTask(resetDuration: Long = 1000) {
     resetTimerTask = object : TimerTask() {
       override fun run() {
-        doubleTap.visibility = INVISIBLE
+        doubleTap.fadeOut(10)
       }
     }
     timer.schedule(resetTimerTask, resetDuration)
