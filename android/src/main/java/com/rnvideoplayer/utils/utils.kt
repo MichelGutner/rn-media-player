@@ -23,3 +23,18 @@ fun View.fadeOut(duration: Long = 500) {
       }
     })
 }
+
+fun scaleView(isForward: Boolean, view: View) {
+  val scale = 2f
+  if (isForward) {
+    view.pivotX = 0f
+  } else {
+    view.pivotX = view.width.toFloat()
+    view.translationX = -(view.width.toFloat() / 2f + 80)
+  }
+  view.pivotY = view.height / 2f
+  view.animate().scaleX(scale).scaleY(scale).setDuration(200).start()
+  view.requestLayout()
+}
+
+

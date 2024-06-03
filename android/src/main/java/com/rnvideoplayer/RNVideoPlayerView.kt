@@ -2,12 +2,15 @@ package com.rnvideoplayer
 
 import com.rnvideoplayer.components.CustomBottomDialog
 import android.annotation.SuppressLint
+import android.view.GestureDetector
 import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -27,26 +30,18 @@ import com.rnvideoplayer.helpers.RNVideoHelpers
 import com.rnvideoplayer.helpers.ReadableMapManager
 import com.rnvideoplayer.utils.fadeIn
 import com.rnvideoplayer.utils.fadeOut
+import com.rnvideoplayer.utils.scaleView
+import java.util.Timer
+import java.util.TimerTask
 import java.util.concurrent.TimeUnit
-
-private val ReadableMap.name: String
-  get() {
-    return this.getString("name").toString()
-  }
-
-private val ReadableMap.value: String
-  get() {
-    return this.getString("value").toString()
-  }
-
-private val ReadableMap.enabled: Boolean
-  get() {
-    return this.getBoolean("enabled")
-  }
 
 @UnstableApi
 @SuppressLint(
-  "ViewConstructor", "UseCompatLoadingForDrawables", "ResourceType", "MissingInflatedId"
+  "ViewConstructor",
+  "UseCompatLoadingForDrawables",
+  "ResourceType",
+  "MissingInflatedId",
+  "ClickableViewAccessibility"
 )
 class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private val customPlayer = CustomExoPlayer(context, this)
@@ -72,10 +67,13 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private var timeCodesPosition: TextView
   private var timeCodesDuration: TextView
   private var contentDialog = CustomContentDialog(context, dialog)
+  private var doubleTapLeft: RelativeLayout
+  private var doubleTap: RelativeLayout
 
   private var selectedQuality: String? = null;
   private var selectedSpeed: String? = null;
-
+  private var timer = Timer()
+  private var resetTimerTask: TimerTask? = null
 
   init {
     customPlayer.init()
@@ -85,6 +83,17 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
     timeCodesPosition = findViewById(R.id.time_codes_position)
     timeCodesDuration = findViewById(R.id.time_codes_duration)
+    doubleTapLeft = findViewById(R.id.double_tap_left)
+    doubleTap = findViewById(R.id.double_tap)
+
+
+    doubleTapLeft.viewTreeObserver.addOnGlobalLayoutListener(object :
+      ViewTreeObserver.OnGlobalLayoutListener {
+      override fun onGlobalLayout() {
+        scaleView(false, doubleTapLeft)
+      }
+    })
+
 
     exoPlayer.addListener(object : Player.Listener {
       override fun onPlaybackStateChanged(playbackState: Int) {
@@ -154,6 +163,37 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     overlayController.setOnClickListener {
       onToggleControlsVisibility()
     }
+
+    doubleTapLeft.setOnTouchListener(object : OnTouchListener {
+
+      val gestureDetector =
+        GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+          override fun onDoubleTap(e: MotionEvent): Boolean {
+            doubleTap.visibility = VISIBLE
+            resetTimerTask?.cancel()
+            exoPlayer.seekTo(exoPlayer.contentPosition - 15000)
+            hideControls()
+            createTimerTask()
+            return super.onDoubleTap(e)
+          }
+
+          override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+            resetTimerTask?.cancel()
+            if (doubleTap.visibility == VISIBLE) {
+              createTimerTask()
+              exoPlayer.seekTo(exoPlayer.contentPosition - 15000)
+            } else {
+            onToggleControlsVisibility()
+            }
+            return super.onSingleTapConfirmed(e)
+          }
+        })
+
+      override fun onTouch(v: View?, event: MotionEvent): Boolean {
+        gestureDetector.onTouchEvent(event)
+        return false
+      }
+    })
 
     playerController.setSettingsButtonClickListener {
       val qualities = readableManager.getReadableMapProps("qualities")
@@ -252,6 +292,15 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 //  fun releasePlayer() {
 //    exoPlayer.release()
 //  }
+
+  fun createTimerTask(resetDuration: Long = 1300) {
+    resetTimerTask = object : TimerTask() {
+      override fun run() {
+        doubleTap.visibility = INVISIBLE
+      }
+    }
+    timer.schedule(resetTimerTask, resetDuration)
+  }
 
   private fun updateTimeBar() {
     val position = exoPlayer.contentPosition
