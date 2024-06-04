@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent">
 
@@ -48,12 +49,11 @@
 <!-- Double tap view -->
 
       <RelativeLayout
-        xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/overlay_controls"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
-        android:background="#34000000">
+        android:background="#66000000">
 
         <RelativeLayout
           android:layout_width="60dp"
@@ -103,8 +103,20 @@
             android:visibility="invisible"
             tools:ignore="RtlHardcoded" />
 
+          <TextView
+            android:id="@+id/time_codes_preview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:layout_marginTop="8dp"
+            android:text="@string/time_codes_start_value"
+            android:textColor="#fff"
+            android:textSize="10sp"
+            android:visibility="invisible"
+            tools:ignore="RtlHardcoded" />
+
           <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="end"
             android:orientation="horizontal"

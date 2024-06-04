@@ -7,13 +7,13 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.TimeBar
 import androidx.media3.ui.TimeBar.OnScrubListener
@@ -53,7 +53,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
   private val timeBar = CustomSeekBar(this)
   private val loading = CustomLoading(context, this)
-  private val thumbnail = CustomThumbnailPreview(context, this)
+  private val thumbnail = CustomThumbnailPreview(this)
   private val dialog = CustomBottomDialog(context)
   private val playerController = CustomPlayerControls(context, this)
   private val readableManager = ReadableMapManager.getInstance()
@@ -71,14 +71,14 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private var doubleTap: RelativeLayout
   private var doubleTapText: TextView
 
-  private var selectedQuality: String? = null;
-  private var selectedSpeed: String? = null;
+  private var selectedQuality: String? = null
+  private var selectedSpeed: String? = null
   private var timer = Timer()
   private var resetTimerTask: TimerTask? = null
 
   init {
     customPlayer.init()
-    //        AspectRatioFrameLayout.LAYOUT_MODE_OPTICAL_BOUNDS.also { resizeMode = it }
+            AspectRatioFrameLayout.RESIZE_MODE_FIT.also { resizeMode = it }
     overlayView = findViewById(R.id.overlay_controls)
 
 
@@ -88,30 +88,36 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     doubleTap = findViewById(R.id.double_tap)
     doubleTapText = findViewById(R.id.double_tap_text)
 
-    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-      override fun onGlobalLayout() {
-        scaleView(false, doubleTapView)
-        val layoutParams = doubleTapText.layoutParams as MarginLayoutParams
-        layoutParams.marginEnd = parentView.width / 5
-        doubleTapText.layoutParams = layoutParams
-       requestLayout()
-      }
-    })
+    viewTreeObserver.addOnGlobalLayoutListener {
+      scaleView(false, doubleTapView)
+      val layoutParams = doubleTapText.layoutParams as MarginLayoutParams
+      layoutParams.marginEnd = parentView.width / 5
+      doubleTapText.layoutParams = layoutParams
+      requestLayout()
+    }
 
     exoPlayer.addListener(object : Player.Listener {
       override fun onPlaybackStateChanged(playbackState: Int) {
         super.onPlaybackStateChanged(playbackState)
-        if (playbackState == Player.STATE_BUFFERING) {
-          playerController.setVisibilityPlayPauseButton(false)
-          loading.show()
-        } else if (playbackState == Player.STATE_READY) {
-          playerController.setVisibilityPlayPauseButton(true)
-          loading.hide()
-          timeBar.build(exoPlayer.duration)
-          timeCodesDuration.text = helper.createTimeCodesFormatted(exoPlayer.duration)
-        } else if (playbackState == Player.STATE_ENDED) {
-          playerController.setVisibilityReplayButton(true)
-          playerController.setVisibilityPlayPauseButton(false)
+        when (playbackState) {
+            Player.STATE_BUFFERING -> {
+              playerController.setVisibilityPlayPauseButton(false)
+              loading.show()
+            }
+            Player.STATE_READY -> {
+              playerController.setVisibilityPlayPauseButton(true)
+              loading.hide()
+              timeBar.build(exoPlayer.duration)
+              timeCodesDuration.text = helper.createTimeCodesFormatted(exoPlayer.duration)
+            }
+            Player.STATE_ENDED -> {
+              playerController.setVisibilityReplayButton(true)
+              playerController.setVisibilityPlayPauseButton(false)
+            }
+
+          Player.STATE_IDLE -> {
+            TODO()
+          }
         }
 
         updateTimeBar()
@@ -145,13 +151,13 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
         val duration = TimeUnit.MILLISECONDS.toSeconds(exoPlayer.duration)
         val intervalInSeconds = TimeUnit.MILLISECONDS.toSeconds(thumbnail.interval)
         val index = (seconds / intervalInSeconds).toInt()
-        val counter = ((((seconds * 100) / duration) * timeBar.width) / 100)
-        thumbnail.show()
-
+        val currentSeekPoint = ((((seconds * 100) / duration) * timeBar.width) / 100)
         if (index < thumbnail.bitmaps.size) {
           thumbnail.setCurrentImageBitmapByIndex(index)
-          thumbnail.translationX = onTranslateXThumbnail(counter)
+          thumbnail.translationX = onTranslateXThumbnail(currentSeekPoint)
         }
+        thumbnail.getCurrentPlayerPosition(helper.createTimeCodesFormatted(position))
+        thumbnail.show()
       }
 
       override fun onScrubStop(timeBar: TimeBar, position: Long, canceled: Boolean) {
@@ -200,16 +206,16 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
     playerController.setSettingsButtonClickListener {
       val qualities = readableManager.getReadableMapProps("qualities")
-      val data = qualities?.getArray("data");
-      val initialSelected = qualities?.getString("initialSelected");
+      val data = qualities?.getArray("data")
+      val initialSelected = qualities?.getString("initialSelected")
 
       if (selectedQuality.isNullOrEmpty()) {
         selectedQuality = initialSelected
       }
 
       val speeds = readableManager.getReadableMapProps("speeds")
-      val dataSpeeds = speeds?.getArray("data");
-      val initialSelectedSpeed = speeds?.getString("initialSelected");
+      val dataSpeeds = speeds?.getArray("data")
+      val initialSelectedSpeed = speeds?.getString("initialSelected")
 
       if (selectedSpeed.isNullOrEmpty()) {
         selectedSpeed = initialSelectedSpeed
@@ -257,18 +263,18 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
     playerController.setReplayButtonClickListener {
       exoPlayer.seekTo(0)
+      thumbnail.translationX = 0F
       playerController.setVisibilityReplayButton(false)
     }
     runnable()
   }
 
-  private fun onTranslateXThumbnail(counter: Long): Float {
-    var translateX: Float = 16.0F
-
-    if (counter.toFloat() + thumbnail.width / 2 >= timeBar.width.toFloat()) {
+  private fun onTranslateXThumbnail(currentSeekPoint: Long): Float {
+    var translateX = 16.0F
+    if (currentSeekPoint.toFloat() + thumbnail.width / 2 >= timeBar.width.toFloat()) {
       translateX = (timeBar.width.toFloat() - thumbnail.width) - 16
-    } else if (counter.toFloat() >= thumbnail.width / 2 && counter.toFloat() + thumbnail.width / 2 < timeBar.width.toFloat()) {
-      translateX = counter.toFloat() - thumbnail.width / 2
+    } else if (currentSeekPoint.toFloat() >= thumbnail.width / 2 && currentSeekPoint.toFloat() + thumbnail.width / 2 < timeBar.width.toFloat()) {
+      translateX = currentSeekPoint.toFloat() - thumbnail.width / 2
     }
 
     return translateX
