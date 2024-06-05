@@ -35,7 +35,7 @@ class CustomThumbnailPreview(view: View) : ICustomThumbnailPreview {
   }
 
   override fun show() {
-    if (bitmaps.isEmpty()) return
+    if (bitmaps.size <= 5) return
     thumbnail.visibility = View.VISIBLE
     timeCodesPreview.visibility = View.VISIBLE
   }

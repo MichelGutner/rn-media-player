@@ -10,6 +10,7 @@ function App(): JSX.Element {
           // url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
           // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
           url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          // url: 'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
           title: 'Sintel',
         }}
         style={{ height: 320 }}

@@ -46,6 +46,36 @@
           />
       </RelativeLayout>
     </LinearLayout>
+
+      <LinearLayout
+        android:id="@+id/double_tap_right_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/rounded_background_double_tap"
+        android:focusable="true"
+        android:clickable="true"
+        android:focusableInTouchMode="true"
+        >
+
+        <RelativeLayout
+          android:visibility="gone"
+          android:id="@+id/double_tap_2"
+          android:background="?android:attr/selectableItemBackgroundBorderless"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_gravity="center"
+          >
+          <TextView
+            android:id="@+id/double_tap_text_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="-15 seconds"
+            android:textColor="#fff"
+            android:layout_alignParentStart="true"
+            android:layout_centerInParent="true"
+            />
+        </RelativeLayout>
+      </LinearLayout>
 <!-- Double tap view -->
 
       <RelativeLayout

@@ -21,6 +21,7 @@ import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.components.CustomContentDialog
+import com.rnvideoplayer.components.CustomDoubleTapSeek
 import com.rnvideoplayer.components.CustomLoading
 import com.rnvideoplayer.components.CustomPlayerControls
 import com.rnvideoplayer.components.CustomSeekBar
@@ -30,7 +31,6 @@ import com.rnvideoplayer.helpers.RNVideoHelpers
 import com.rnvideoplayer.helpers.ReadableMapManager
 import com.rnvideoplayer.utils.fadeIn
 import com.rnvideoplayer.utils.fadeOut
-import com.rnvideoplayer.utils.scaleView
 import java.util.Timer
 import java.util.TimerTask
 import java.util.concurrent.TimeUnit
@@ -67,56 +67,60 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private var timeCodesPosition: TextView
   private var timeCodesDuration: TextView
   private var contentDialog = CustomContentDialog(context, dialog)
-  private var doubleTapView: LinearLayout
-  private var doubleTap: RelativeLayout
-  private var doubleTapText: TextView
 
   private var selectedQuality: String? = null
   private var selectedSpeed: String? = null
   private var timer = Timer()
   private var resetTimerTask: TimerTask? = null
+  private var leftDoubleTap = CustomDoubleTapSeek(
+    context,
+    this,
+    R.id.double_tap_view,
+    R.id.double_tap,
+    R.id.double_tap_text,
+    false
+  )
+  private var rightDoubleTap = CustomDoubleTapSeek(
+    context, this, R.id.double_tap_right_view,
+    R.id.double_tap_2,
+    R.id.double_tap_text_2,
+    true
+  )
+
 
   init {
     customPlayer.init()
-            AspectRatioFrameLayout.RESIZE_MODE_FIT.also { resizeMode = it }
+    AspectRatioFrameLayout.RESIZE_MODE_FIT.also { resizeMode = it }
     overlayView = findViewById(R.id.overlay_controls)
 
 
     timeCodesPosition = findViewById(R.id.time_codes_position)
     timeCodesDuration = findViewById(R.id.time_codes_duration)
-    doubleTapView = findViewById(R.id.double_tap_view)
-    doubleTap = findViewById(R.id.double_tap)
-    doubleTapText = findViewById(R.id.double_tap_text)
-
-    viewTreeObserver.addOnGlobalLayoutListener {
-      scaleView(false, doubleTapView)
-      val layoutParams = doubleTapText.layoutParams as MarginLayoutParams
-      layoutParams.marginEnd = parentView.width / 5
-      doubleTapText.layoutParams = layoutParams
-      requestLayout()
-    }
 
     exoPlayer.addListener(object : Player.Listener {
       override fun onPlaybackStateChanged(playbackState: Int) {
         super.onPlaybackStateChanged(playbackState)
         when (playbackState) {
-            Player.STATE_BUFFERING -> {
-              playerController.setVisibilityPlayPauseButton(false)
-              loading.show()
-            }
-            Player.STATE_READY -> {
-              playerController.setVisibilityPlayPauseButton(true)
-              loading.hide()
-              timeBar.build(exoPlayer.duration)
-              timeCodesDuration.text = helper.createTimeCodesFormatted(exoPlayer.duration)
-            }
-            Player.STATE_ENDED -> {
-              playerController.setVisibilityReplayButton(true)
-              playerController.setVisibilityPlayPauseButton(false)
-            }
+          Player.STATE_BUFFERING -> {
+            playerController.setVisibilityPlayPauseButton(false)
+            loading.show()
+          }
+
+          Player.STATE_READY -> {
+            playerController.setVisibilityPlayPauseButton(true)
+            loading.hide()
+            timeBar.build(exoPlayer.duration)
+            timeCodesDuration.text = helper.createTimeCodesFormatted(exoPlayer.duration)
+          }
+
+          Player.STATE_ENDED -> {
+            playerController.setVisibilityReplayButton(true)
+            playerController.setVisibilityPlayPauseButton(false)
+          }
 
           Player.STATE_IDLE -> {
-            TODO()
+            println("STATE_IDLE")
+//            exoPlayer.videoChangeFrameRateStrategy
           }
         }
 
@@ -124,6 +128,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
       }
 
       override fun onPlayerError(error: PlaybackException) {
+//        println("Error: ${error.errorCode} ${error.message} ${error.localizedMessage} ${error.stackTrace} ${error.cause} ${error.errorCodeName} ${error.timestampMs}")
         // handle errors
       }
     })
@@ -165,6 +170,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
           exoPlayer.seekTo(position)
           thumbnail.hide()
           isSeeking = false
+          playerController.setVisibilityReplayButton(false)
         }
       }
     })
@@ -173,35 +179,43 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
       onToggleControlsVisibility()
     }
 
-    doubleTapView.setOnTouchListener(object : OnTouchListener {
-
-      val gestureDetector =
-        GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-          override fun onDoubleTap(e: MotionEvent): Boolean {
-            doubleTap.fadeIn(100)
-            resetTimerTask?.cancel()
-            exoPlayer.seekTo(exoPlayer.contentPosition - 15000)
-            hideControls()
-            createTimerTask()
-            return super.onDoubleTap(e)
-          }
-
-          override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-            resetTimerTask?.cancel()
-            if (doubleTap.visibility == VISIBLE) {
-              createTimerTask()
-              exoPlayer.seekTo(exoPlayer.contentPosition - 15000)
-            } else {
-            onToggleControlsVisibility()
-            }
-            return super.onSingleTapConfirmed(e)
-          }
-        })
-
-      override fun onTouch(v: View?, event: MotionEvent): Boolean {
-        gestureDetector.onTouchEvent(event)
-        return false
+    leftDoubleTap.tap({
+      resetTimerTask?.cancel()
+      if (leftDoubleTap.effect.visibility == VISIBLE) {
+        onTimerTask() {
+          leftDoubleTap.effect.fadeOut(100)
+        }
+        customPlayer.seekToPreviousPosition(15000)
+      } else {
+        onToggleControlsVisibility()
       }
+    }, {
+      resetTimerTask?.cancel()
+      hideControls()
+      onTimerTask() {
+        leftDoubleTap.effect.fadeOut(10)
+      }
+      customPlayer.seekToPreviousPosition(15000)
+    })
+    rightDoubleTap.tap({
+      resetTimerTask?.cancel()
+      if (rightDoubleTap.effect.visibility == VISIBLE) {
+        onTimerTask() {
+          rightDoubleTap.effect.fadeOut(100)
+        }
+        customPlayer.seekToNextPosition(15000)
+      } else {
+        onToggleControlsVisibility()
+      }
+    }, {
+      rightDoubleTap.effect.fadeIn(100)
+      resetTimerTask?.cancel()
+      hideControls()
+
+      onTimerTask() {
+        rightDoubleTap.effect.fadeOut(100)
+      }
+      customPlayer.seekToNextPosition(15000)
     })
 
     playerController.setSettingsButtonClickListener {
@@ -266,6 +280,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
       thumbnail.translationX = 0F
       playerController.setVisibilityReplayButton(false)
     }
+
     runnable()
   }
 
@@ -302,10 +317,10 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 //    exoPlayer.release()
 //  }
 
-  fun createTimerTask(resetDuration: Long = 1000) {
+  fun onTimerTask(resetDuration: Long = 1000, callback: () -> Unit) {
     resetTimerTask = object : TimerTask() {
       override fun run() {
-        doubleTap.fadeOut(10)
+        callback()
       }
     }
     timer.schedule(resetTimerTask, resetDuration)

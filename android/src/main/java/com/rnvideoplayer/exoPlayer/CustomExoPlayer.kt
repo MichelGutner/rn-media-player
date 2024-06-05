@@ -60,6 +60,14 @@ class CustomExoPlayer(private val context: ThemedReactContext, private val view:
     exoPlayer.playWhenReady = true
   }
 
+  fun seekToNextPosition(position: Long) {
+    exoPlayer.seekTo(exoPlayer.contentPosition + position)
+  }
+
+  fun seekToPreviousPosition(position: Long) {
+    exoPlayer.seekTo(exoPlayer.contentPosition - position)
+  }
+
   fun release() {
     exoPlayer.release()
   }
