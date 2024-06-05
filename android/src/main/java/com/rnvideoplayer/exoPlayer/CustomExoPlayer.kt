@@ -29,9 +29,13 @@ class CustomExoPlayer(private val context: ThemedReactContext, private val view:
     exoPlayer.playWhenReady = true
   }
 
-  fun buildMediaItem(url: String) {
+  fun buildMediaItem(url: String, startTime: Long?) {
     val mediaItem = MediaItem.fromUri(Uri.parse(url))
-    exoPlayer.setMediaItem(mediaItem)
+    if (startTime != null) {
+      exoPlayer.setMediaItem(mediaItem, startTime * 1000)
+    } else {
+      exoPlayer.setMediaItem(mediaItem)
+    }
   }
 
   fun getExoPlayer(): ExoPlayer {

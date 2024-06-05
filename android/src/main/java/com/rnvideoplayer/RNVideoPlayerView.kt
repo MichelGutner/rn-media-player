@@ -2,10 +2,7 @@ package com.rnvideoplayer
 
 import com.rnvideoplayer.components.CustomBottomDialog
 import android.annotation.SuppressLint
-import android.view.GestureDetector
 import android.view.LayoutInflater
-import android.view.MotionEvent
-import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
@@ -27,6 +24,7 @@ import com.rnvideoplayer.components.CustomPlayerControls
 import com.rnvideoplayer.components.CustomSeekBar
 import com.rnvideoplayer.components.CustomThumbnailPreview
 import com.rnvideoplayer.exoPlayer.CustomExoPlayer
+import com.rnvideoplayer.helpers.MutableMapLongManager
 import com.rnvideoplayer.helpers.RNVideoHelpers
 import com.rnvideoplayer.helpers.ReadableMapManager
 import com.rnvideoplayer.utils.fadeIn
@@ -57,6 +55,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private val dialog = CustomBottomDialog(context)
   private val playerController = CustomPlayerControls(context, this)
   private val readableManager = ReadableMapManager.getInstance()
+  private val mutableMapLongManager = MutableMapLongManager.getInstance()
 
   private var isVisibleControl: Boolean = true
   private var isFullScreen: Boolean = false
@@ -309,7 +308,9 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   }
 
   fun setMediaItem(url: String) {
-    customPlayer.buildMediaItem(url)
+    val startTime = mutableMapLongManager.getMutableMapProps("startTime")
+    println("startTime: $startTime")
+    customPlayer.buildMediaItem(url, startTime)
     thumbnail.generatingThumbnailFrames(url)
   }
 

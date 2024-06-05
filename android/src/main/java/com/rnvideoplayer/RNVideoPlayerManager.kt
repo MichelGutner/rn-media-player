@@ -11,6 +11,7 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
+import com.rnvideoplayer.helpers.MutableMapLongManager
 import com.rnvideoplayer.helpers.ReadableMapManager
 
 var currentWidth: Int = 0;
@@ -74,4 +75,9 @@ class RNVideoPlayer : SimpleViewManager<View>() {
     ReadableMapManager.getInstance().setReadableMapProps(speeds, "speeds")
   }
 
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "startTime")
+  fun setStartTime(rnVideoPlayerView: RNVideoPlayerView, startTime: Double) {
+    MutableMapLongManager.getInstance().setMutableMapProps(startTime, "startTime")
+  }
 }
