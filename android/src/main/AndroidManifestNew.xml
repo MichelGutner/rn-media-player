@@ -3,12 +3,15 @@
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
   <application
-    android:theme="@style/AppTheme" >
+    android:theme="@style/AppTheme">
     <activity android:name=".RNVideoPlayerView" android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
+    <meta-data
+      android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
+      android:value="com.rnvideoplayer.providers.MyCastOptionsProvider" />
   </application>
 </manifest>

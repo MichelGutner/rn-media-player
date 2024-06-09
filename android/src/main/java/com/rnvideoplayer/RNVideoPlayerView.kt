@@ -4,9 +4,12 @@ import com.rnvideoplayer.components.CustomBottomDialog
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.media3.cast.CastPlayer
+import androidx.media3.cast.SessionAvailabilityListener
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -14,9 +17,12 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.TimeBar
 import androidx.media3.ui.TimeBar.OnScrubListener
+import androidx.mediarouter.app.MediaRouteButton
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ThemedReactContext
+import com.google.android.gms.cast.framework.CastButtonFactory
+import com.google.android.gms.cast.framework.CastContext
 import com.rnvideoplayer.components.CustomContentDialog
 import com.rnvideoplayer.components.CustomDoubleTapSeek
 import com.rnvideoplayer.components.CustomLoading
@@ -29,8 +35,6 @@ import com.rnvideoplayer.helpers.RNVideoHelpers
 import com.rnvideoplayer.helpers.ReadableMapManager
 import com.rnvideoplayer.utils.fadeIn
 import com.rnvideoplayer.utils.fadeOut
-import java.util.Timer
-import java.util.TimerTask
 import java.util.concurrent.TimeUnit
 
 @UnstableApi
@@ -57,10 +61,11 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private val readableManager = ReadableMapManager.getInstance()
   private val mutableMapLongManager = MutableMapLongManager.getInstance()
 
-  private var isVisibleControl: Boolean = true
+  private var isVisibleControl: Boolean = false
   private var isFullScreen: Boolean = false
   private var isSeeking: Boolean = false
   private val overlayView: RelativeLayout
+  private lateinit var castPlayer: CastPlayer
 
 
   private var timeCodesPosition: TextView
@@ -69,8 +74,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
   private var selectedQuality: String? = null
   private var selectedSpeed: String? = null
-  private var timer = Timer()
-  private var resetTimerTask: TimerTask? = null
+
   private var leftDoubleTap = CustomDoubleTapSeek(
     context,
     this,
@@ -89,9 +93,14 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
   init {
     customPlayer.init()
-    AspectRatioFrameLayout.RESIZE_MODE_FIT.also { resizeMode = it }
+    val castContext = CastContext.getSharedInstance(context)
+    val mediaRouteButton = findViewById<MediaRouteButton>(R.id.media_route_button)
+
+    CastButtonFactory.setUpMediaRouteButton(context, mediaRouteButton)
+    AspectRatioFrameLayout.RESIZE_MODE_FILL.also { resizeMode = it }
     overlayView = findViewById(R.id.overlay_controls)
 
+    castPlayer = CastPlayer(castContext)
 
     timeCodesPosition = findViewById(R.id.time_codes_position)
     timeCodesDuration = findViewById(R.id.time_codes_duration)
@@ -117,10 +126,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
             playerController.setVisibilityPlayPauseButton(false)
           }
 
-          Player.STATE_IDLE -> {
-            println("STATE_IDLE")
-//            exoPlayer.videoChangeFrameRateStrategy
-          }
+          Player.STATE_IDLE -> {}
         }
 
         updateTimeBar()
@@ -179,41 +185,25 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     }
 
     leftDoubleTap.tap({
-      resetTimerTask?.cancel()
       if (leftDoubleTap.effect.visibility == VISIBLE) {
-        onTimerTask() {
-          leftDoubleTap.effect.fadeOut(100)
-        }
         customPlayer.seekToPreviousPosition(15000)
       } else {
         onToggleControlsVisibility()
       }
     }, {
-      resetTimerTask?.cancel()
       hideControls()
-      onTimerTask() {
-        leftDoubleTap.effect.fadeOut(10)
-      }
       customPlayer.seekToPreviousPosition(15000)
     })
+
     rightDoubleTap.tap({
-      resetTimerTask?.cancel()
       if (rightDoubleTap.effect.visibility == VISIBLE) {
-        onTimerTask() {
-          rightDoubleTap.effect.fadeOut(100)
-        }
         customPlayer.seekToNextPosition(15000)
       } else {
         onToggleControlsVisibility()
       }
     }, {
       rightDoubleTap.effect.fadeIn(100)
-      resetTimerTask?.cancel()
       hideControls()
-
-      onTimerTask() {
-        rightDoubleTap.effect.fadeOut(100)
-      }
       customPlayer.seekToNextPosition(15000)
     })
 
@@ -280,6 +270,17 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
       playerController.setVisibilityReplayButton(false)
     }
 
+    castPlayer.setSessionAvailabilityListener(object: SessionAvailabilityListener {
+      override fun onCastSessionAvailable() {
+        exoPlayer.currentMediaItem?.let { castPlayer.setMediaItem(it) }
+        exoPlayer.pause()
+      }
+
+      override fun onCastSessionUnavailable() {
+        exoPlayer.play()
+      }
+    })
+
     runnable()
   }
 
@@ -296,20 +297,19 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
   private fun runnable() {
     val updateIntervalMs = 1000L
-    val updateSeekBarTask = object : Runnable {
+    val updateSeekBarTask = (object : Runnable {
       override fun run() {
         if (exoPlayer.playWhenReady && exoPlayer.isPlaying) {
           updateTimeBar()
         }
         postDelayed(this, updateIntervalMs)
       }
-    }
+    })
     post(updateSeekBarTask)
   }
 
   fun setMediaItem(url: String) {
     val startTime = mutableMapLongManager.getMutableMapProps("startTime")
-    println("startTime: $startTime")
     customPlayer.buildMediaItem(url, startTime)
     thumbnail.generatingThumbnailFrames(url)
   }
@@ -318,21 +318,20 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 //    exoPlayer.release()
 //  }
 
-  fun onTimerTask(resetDuration: Long = 1000, callback: () -> Unit) {
-    resetTimerTask = object : TimerTask() {
-      override fun run() {
-        callback()
-      }
-    }
-    timer.schedule(resetTimerTask, resetDuration)
-  }
-
   private fun updateTimeBar() {
     val position = exoPlayer.contentPosition
     val buffered = exoPlayer.contentBufferedPosition
 
     timeCodesPosition.text = helper.createTimeCodesFormatted(position)
     timeBar.update(position, buffered)
+  }
+
+  private fun setFullScreen() {
+    parentView.removeView(this)
+    parentView.addView(
+      this, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+    )
+    isFullScreen = true
   }
 
   private fun toggleFullScreen() {

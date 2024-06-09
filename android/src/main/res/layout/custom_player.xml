@@ -80,10 +80,27 @@
 
       <RelativeLayout
         android:id="@+id/overlay_controls"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true"
-        android:background="#66000000">
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#66000000"
+        android:fitsSystemWindows="true">
+
+        <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:gravity="end"
+          >
+
+          <androidx.mediarouter.app.MediaRouteButton
+            android:id="@+id/media_route_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="24dp"
+            android:layout_marginTop="16dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            />
+
+        </LinearLayout>
 
         <RelativeLayout
           android:layout_width="60dp"
@@ -151,6 +168,7 @@
             android:gravity="end"
             android:orientation="horizontal"
             android:paddingEnd="16dp"
+            android:visibility="gone"
             tools:ignore="RtlSymmetry">
 
             <TextView
