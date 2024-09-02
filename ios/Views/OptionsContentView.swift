@@ -8,17 +8,16 @@
 import Foundation
 import SwiftUI
 
-@available(iOS 13.0, *)
 struct OptionsContentView: View {
   var size: CGSize
-  var data: [HashableModalContent]
-  var onSelected: (HashableModalContent) -> Void
+  var data: [HashableContent]
+  var onSelected: (HashableContent) -> Void
   var initialSelectedItem: String
   var selectedItem: String
   
   @State private var selected: String
   
-  init(size: CGSize, data: [HashableModalContent], onSelected: @escaping (HashableModalContent) -> Void, initialSelectedItem: String, selectedItem: String) {
+  init(size: CGSize, data: [HashableContent], onSelected: @escaping (HashableContent) -> Void, initialSelectedItem: String, selectedItem: String) {
     self.size = size
     self.data = data
     self.onSelected = onSelected

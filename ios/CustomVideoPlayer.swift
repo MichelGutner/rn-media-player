@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 import AVKit
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 struct CustomVideoPlayer : UIViewControllerRepresentable {
   var player: AVPlayer
   var videoGravity: AVLayerVideoGravity

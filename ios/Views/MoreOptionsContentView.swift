@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-@available(iOS 13.0, *)
 struct MoreOptionsContentView: View {
   @State private var isActiveAutoPlay: Bool = true
   @State private var isActiveLoop: Bool = false

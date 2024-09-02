@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-@available(iOS 13.0, *)
 struct CustomSwitch: View {
   @Binding var isActived: Bool
   var onSelect: (Bool) -> Void

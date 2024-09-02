@@ -9,34 +9,18 @@ import SwiftUI
 import AVKit
 import Combine
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 struct VideoPlayerView: View {
   @ObservedObject private var playbackObserver = PlaybackObserver()
   @State private var player: AVPlayer
+  @State private var menus: NSDictionary
+    @State private var controlsCallback: Controls
   @State private var isLoading: Bool = false
   @State private var title: String = ""
   @State private var showPlayerControls: Bool = false
   @State private var isPlaying: Bool? = nil
   @State private var timeoutTask: DispatchWorkItem?
   @State private var timeObserver: Any? = nil
-  
-  @State private var openedSettingsModal: Bool = false
-  @State private var openedOptionsQuality: Bool = false
-  @State private var openedOptionsSpeed: Bool = false
-  @State private var openedOptionsMoreOptions: Bool = false
-  
-  @State private var optionsData: [HashableModalContent] = []
-  @State private var initialSelectedItem: String = ""
-  @State private var initialQualitySelected: String = ""
-  
-  @State private var initialSpeedSelected: String = ""
-  
-  @State private var selectedQuality: String = ""
-  @State private var selectedSpeed: String = ""
-
-  @State private var videoQualities: [HashableModalContent] = []
-  @State private var videoSpeeds: [HashableModalContent] = []
-  @State private var videoSettings: [HashableModalContent] = []
   
   @GestureState private var isDraggingSlider: Bool = false
   @State private var sliderProgress = 0.0
@@ -88,15 +72,14 @@ struct VideoPlayerView: View {
   var onTapSettingsControl: () -> Void
   var onTapHeaderGoback: () -> Void
   
-
-  
   private var fileManager = PlayerFileManager()
-  
   
   init(
     size: CGSize,
     safeAreaInsets: EdgeInsets,
     player: AVPlayer,
+    menus: NSDictionary,
+    controlsCallback: Controls,
     isLoading: Bool,
     title: String,
     playbackFinished: Bool,
@@ -105,18 +88,7 @@ struct VideoPlayerView: View {
     doubleTapSeekValue: Int,
     suffixLabelDoubleTapSeek: String,
     isFullScreen: Bool,
-    videoSettings: [HashableModalContent],
     onTapSettingsControl: @escaping () -> Void,
-    videoQualities: [HashableModalContent],
-    initialQualitySelected: String,
-    videoSpeeds: [HashableModalContent],
-    initialSpeedSelected: String,
-    selectedQuality: String,
-    selectedSpeed: String,
-    settingsModalOpened: Bool,
-    openedOptionsQualities: Bool,
-    openedOptionsSpeed: Bool,
-    openedOptionsMoreOptions: Bool,
     isActiveAutoPlay: Bool,
     isActiveLoop: Bool,
     videoGravity: AVLayerVideoGravity,
@@ -128,37 +100,30 @@ struct VideoPlayerView: View {
     downloadProgress: Float,
     onTapHeaderGoback: @escaping () -> Void
   ) {
-    self.size = size
-    self.safeAreaInsets = safeAreaInsets
-    self.onTapFullScreenControl = onTapFullScreenControl
-    self.onTapSettingsControl = onTapSettingsControl
-    self.onTapHeaderGoback = onTapHeaderGoback
-    _player = State(initialValue: player)
-    _thumbnailsFrames = State(initialValue: thumbnails)
-    _isFullScreen = State(wrappedValue: isFullScreen)
-    _videoQualities = State(initialValue: videoQualities)
-    _videoSpeeds = State(initialValue: videoSpeeds)
-    _videoSettings = State(initialValue: videoSettings)
-    _initialQualitySelected = State(initialValue: selectedQuality.isEmpty ? initialQualitySelected : selectedQuality)
-    _initialSpeedSelected = State(initialValue: selectedSpeed.isEmpty ? initialSpeedSelected : selectedSpeed)
-    _openedSettingsModal = State(initialValue: settingsModalOpened)
-    _openedOptionsQuality = State(initialValue: openedOptionsQualities)
-    _openedOptionsSpeed = State(initialValue: openedOptionsSpeed)
-    _openedOptionsMoreOptions = State(initialValue: openedOptionsMoreOptions)
-    _playbackObserver = ObservedObject(initialValue: PlaybackObserver())
-    _isActiveAutoPlay = State(initialValue: isActiveAutoPlay)
-    _isActiveLoop = State(initialValue: isActiveLoop)
-    _videoGravity = State(wrappedValue: videoGravity)
-    _isFinishedPlaying = State(initialValue: playbackFinished)
-    _isPlaying = State(wrappedValue: isPlaying)
-    _timeObserver = State(initialValue: nil)
-    _title = State(initialValue: title)
-    _isLoading = State(initialValue: isLoading)
-    _doubleTapSeekValue = State(initialValue: doubleTapSeekValue)
-    _suffixLabelDoubleTapSeek = State(initialValue: suffixLabelDoubleTapSeek)
-    _controlsProps = State(initialValue: controllersPropsData)
-    _downloadInProgress = State(initialValue: downloadInProgress)
-    _downloadProgress = State(wrappedValue: downloadProgress)
+      self.size = size
+      self.safeAreaInsets = safeAreaInsets
+      self.onTapFullScreenControl = onTapFullScreenControl
+      self.onTapSettingsControl = onTapSettingsControl
+      self.onTapHeaderGoback = onTapHeaderGoback
+      _player = State(initialValue: player)
+      _menus = State(initialValue: menus)
+      _controlsCallback = State(initialValue: controlsCallback)
+      _thumbnailsFrames = State(initialValue: thumbnails)
+      _isFullScreen = State(wrappedValue: isFullScreen)
+      _playbackObserver = ObservedObject(initialValue: PlaybackObserver())
+      _isActiveAutoPlay = State(initialValue: isActiveAutoPlay)
+      _isActiveLoop = State(initialValue: isActiveLoop)
+      _videoGravity = State(wrappedValue: videoGravity)
+      _isFinishedPlaying = State(initialValue: playbackFinished)
+      _isPlaying = State(wrappedValue: isPlaying)
+      _timeObserver = State(initialValue: nil)
+      _title = State(initialValue: title)
+      _isLoading = State(initialValue: isLoading)
+      _doubleTapSeekValue = State(initialValue: doubleTapSeekValue)
+      _suffixLabelDoubleTapSeek = State(initialValue: suffixLabelDoubleTapSeek)
+      _controlsProps = State(initialValue: controllersPropsData)
+      _downloadInProgress = State(initialValue: downloadInProgress)
+      _downloadProgress = State(wrappedValue: downloadProgress)
   }
   
   var body: some View {
@@ -168,6 +133,7 @@ struct VideoPlayerView: View {
       ZStack {
             CustomVideoPlayer(player: player, videoGravity: videoGravity)
               .edgesIgnoringSafeArea(isFullScreen ? Edge.Set.all : [])
+              .transition(.scale.combined(with: .opacity))
               .overlay(
                 Rectangle()
                   .fill(Color.black.opacity(0.4))
@@ -211,8 +177,7 @@ struct VideoPlayerView: View {
                   HStack {
                     Spacer()
                     DownloadControl()
-                    SettingsControl()
-                    FullScreenControl()
+                    MenuControl()
                   }
                   .padding(.top, -StandardSizes.small8)
                   .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
@@ -225,75 +190,7 @@ struct VideoPlayerView: View {
                     PlaybackControls()
                   )
               )
-              .overlay(
-                Group {
-                  if openedSettingsModal {
-                    ModalViewController(
-                      onModalAppear: {},
-                      onModalDisappear: {},
-                      onModalCompletion: { [self] in
-                        resetModalState()
-
-                      },
-                      modalContent: {
-                        Group {
-                          if openedOptionsQuality {
-                            OptionsContentView(
-                              size: size,
-                              data: videoQualities,
-                              onSelected: { [self] item in
-                                resetModalState()
-                                selectedQuality = item.name
-                                notificationPostModal(userInfo: ["optionsQualitySelected": item.name, "\(SettingsOption.qualities)Opened": false, "qualityUrl": item.value])
-                                resetModalState()
-                              },
-                              initialSelectedItem: initialQualitySelected,
-                              selectedItem: selectedQuality
-                            )
-                          } else if openedOptionsSpeed {
-                            OptionsContentView(
-                              size: size,
-                              data: videoSpeeds,
-                              onSelected: { [self] item in
-                                selectedSpeed = item.name
-                                notificationPostModal(userInfo: ["optionsSpeedSelected": item.name, "\(SettingsOption.speeds)Opened": false, "speedRate": Float(item.value) as Any])
-                                resetModalState()
-                              },
-                              initialSelectedItem: initialSpeedSelected,
-                              selectedItem: selectedSpeed
-                            )
-                          } else if openedOptionsMoreOptions {
-                            MoreOptionsContentView(
-                              isActiveAutoPlay: isActiveAutoPlay,
-                              isActiveLoop: isActiveLoop,
-                              onTapAutoPlay: { isActive in
-                                isActiveAutoPlay = isActive
-                                notificationPostModal(userInfo: ["optionsAutoPlay": isActive])
-                              },
-                              onTapLoop: { isActive in
-                                isActiveLoop = isActive
-                                notificationPostModal(userInfo: ["optionsLoop": isActive])
-                              }
-                            )
-                          } else {
-                            SettingsContentView(
-                              settingsData: videoSettings,
-                              onSettingSelected: { [self] item in
-                                let option = SettingsOption(rawValue: item)
-                                self.optionsItemSelected(option!)
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-                                  if let optionItem = option {
-                                    notificationPostModal(userInfo: ["\(optionItem)Opened": true])
-                                  }
-                                })
-                              })
-                            
-                          }
-                        }
-                      })
-                  }
-                }
-              )
+              
               .overlay(
                 Group {
                   if isPresentToast {
@@ -383,23 +280,23 @@ struct VideoPlayerView: View {
 }
 
 // MARK: -- View Builder
-@available(iOS 13.0, *)
-extension VideoPlayerView {  
+@available(iOS 14.0, *)
+extension VideoPlayerView {
   @ViewBuilder
   func HeaderControls() -> some View {
-    let titleSize = calculateSizeByWidth(StandardSizes.small16, VariantPercent.p10)
-    
       HStack {
-        Button (action: {
-          onTapGoback()
-        }) {
-          CustomIcon("arrow.left", color: controlsProps?.header.leftButtonColor)
-        }
-        .padding(.leading, 8)
-        Spacer()
-        Text(title).font(.system(size: titleSize)).foregroundColor(Color(uiColor: (controlsProps?.header.titleColor ?? .white)))
-        Spacer()
+          Button (action: {
+              withAnimation(.easeInOut(duration: 0.35)) {
+                  isFullScreen.toggle()
+              }
+            self.onTapFullScreenControl(isFullScreen)
+          }) {
+            CustomIcon(isFullScreen ? "xmark" : "arrow.up.left.and.arrow.down.right", color: controlsProps?.fullScreen.color)
+          }
+          Spacer()
       }
+      .padding(.top, 12)
+      .padding(.leading, 8)
     }
 
   @ViewBuilder
@@ -443,149 +340,133 @@ extension VideoPlayerView {
   }
   
   @ViewBuilder
-  func VideoSeekerView() -> some View {
-    VStack(alignment: .leading) {
-      VideoSeekerThumbnailView()
-      TimeCodes()
-      HStack {
-        ZStack(alignment: .leading) {
-          Rectangle()
-            .fill(Color(uiColor: (controlsProps?.seekSlider.maximumTrackColor ?? .systemFill)))
-            .frame(width: size.width - seekerThumbImageSize.width)
-            .cornerRadius(CornerRadius.small)
-          
-          Rectangle()
-            .fill(Color(uiColor: (controlsProps?.seekSlider.seekableTintColor ?? .systemGray2)))
-            .frame(width: buffering * (size.width - seekerThumbImageSize.width))
-            .cornerRadius(CornerRadius.small)
-          
-          Rectangle()
-            .fill(Color(uiColor: (controlsProps?.seekSlider.minimumTrackColor ?? .systemBlue)))
-            .frame(width: calculateSliderWidth())
-            .cornerRadius(CornerRadius.small)
-          
-          HStack {}
+    func VideoSeekerView() -> some View {
+        VStack(alignment: .leading) {
+            VideoSeekerThumbnailView()
+            TimeCodes()
+            HStack {
+                ZStack(alignment: .leading) {
+                    Rectangle()
+                        .fill(Color(uiColor: (controlsProps?.seekSlider.maximumTrackColor ?? .systemFill)))
+                        .frame(width: size.width - seekerThumbImageSize.width)
+                        .cornerRadius(CornerRadius.small)
+                    
+                    Rectangle()
+                        .fill(Color(uiColor: (controlsProps?.seekSlider.seekableTintColor ?? .systemGray2)))
+                        .frame(width: buffering * (size.width - seekerThumbImageSize.width))
+                        .cornerRadius(CornerRadius.small)
+                    
+                    Rectangle()
+                        .fill(Color(uiColor: (controlsProps?.seekSlider.minimumTrackColor ?? .systemBlue)))
+                        .frame(width: calculateSliderWidth())
+                        .cornerRadius(CornerRadius.small)
+                    
+                    HStack {}
+                        .overlay(
+                            Circle()
+                                .fill(Color(uiColor: (controlsProps?.seekSlider.thumbImageColor ?? UIColor.white)))
+                                .frame(width: seekerThumbImageSize.width, height: seekerThumbImageSize.height)
+                                .frame(width: 40, height: 40)
+                                .background(Color(uiColor: isSeeking ? .systemFill : .clear))
+                                .cornerRadius(CornerRadius.infinity)
+                                .opacity(isSeekingByDoubleTap ? 0.001 : 1)
+                                .contentShape(Rectangle())
+                                .offset(x: calculateSliderWidth())
+                                .gesture(
+                                    DragGesture()
+                                        .updating($isDraggingSlider, body: { _, out, _ in
+                                            out = true
+                                        })
+                                        .onChanged({ value in
+                                            let translationX = value.translation.width
+                                            let calculatedProgress = (translationX / size.width) + lastDraggedProgress
+                                            sliderProgress = max(min(calculatedProgress, 1), 0)
+                                            isSeeking = true
+                                            
+                                            let dragIndex = Int(sliderProgress / 0.01)
+                                            if thumbnailsFrames.indices.contains(dragIndex) {
+                                                draggingImage = thumbnailsFrames[dragIndex]
+                                            }
+                                        })
+                                        .onEnded({ value in
+                                            lastDraggedProgress = sliderProgress
+                                            if let currentItem = player.currentItem {
+                                                let duration = currentItem.duration.seconds
+                                                let targetTime = duration * sliderProgress
+                                                
+                                                let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
+                                                let tolerance = CMTime(seconds: 0.1, preferredTimescale: Int32(NSEC_PER_SEC))
+                                                
+                                                if targetTime < duration {
+                                                    isFinishedPlaying = false
+                                                }
+                                                
+                                                player.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
+                                                    isSeeking = false
+                                                })
+                                            }
+                                            
+                                            if isPlaying == true {
+                                                timeoutControls()
+                                            }
+                                        })
+                                )
+                        )
+                }
+                .frame(height: isSeeking ? StandardSizes.seekerViewMaxHeight : StandardSizes.seekerViewMinHeight)
+                .animation(.easeInOut(duration: AnimationDuration.s035), value: isSeeking)
+            }
+            .opacity(showPlayerControls || isSeeking || isSeekingByDoubleTap ? 1 : 0)
+            .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls || isSeekingByDoubleTap || isSeeking)
+        }
+    }
+  
+  @ViewBuilder
+    func PlaybackControls() -> some View {
+        let controllerSize = calculateSizeByWidth(StandardSizes.playbackControler, VariantPercent.p20)
+        
+        Rectangle()
+            .fill(Color.black.opacity(0.5))
+            .cornerRadius(.infinity, antialiased: true)
             .overlay(
-              Circle()
-                .fill(Color(uiColor: (controlsProps?.seekSlider.thumbImageColor ?? UIColor.white)))
-                .frame(width: seekerThumbImageSize.width, height: seekerThumbImageSize.height)
-                .frame(width: 40, height: 40)
-                .background(Color(uiColor: isSeeking ? .systemFill : .clear))
-                .cornerRadius(CornerRadius.infinity)
-                .opacity(isSeekingByDoubleTap ? 0.001 : 1)
-                .contentShape(Rectangle())
-                .offset(x: calculateSliderWidth())
-                .gesture(
-                  DragGesture()
-                    .updating($isDraggingSlider, body: { _, out, _ in
-                      out = true
-                    })
-                    .onChanged({ value in
-                      let translationX = value.translation.width
-                      let calculatedProgress = (translationX / size.width) + lastDraggedProgress
-                      sliderProgress = max(min(calculatedProgress, 1), 0)
-                      isSeeking = true
-                      
-                      let dragIndex = Int(sliderProgress / 0.01)
-                      if thumbnailsFrames.indices.contains(dragIndex) {
-                        draggingImage = thumbnailsFrames[dragIndex]
-                      }
-                    })
-                    .onEnded({ value in
-                      lastDraggedProgress = sliderProgress
-                      if let currentItem = player.currentItem {
-                        let duration = currentItem.duration.seconds
-                        let targetTime = duration * sliderProgress
-                        
-                        let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
-                        let tolerance = CMTime(seconds: 0.1, preferredTimescale: Int32(NSEC_PER_SEC))
-                        
-                        if targetTime < duration {
-                          isFinishedPlaying = false
+                Group {
+                    if isFinishedPlaying {
+                        Button(action: {
+                            resetPlaybackStatus()
+                        }) {
+                            Image(systemName: "gobackward")
+                                .font(.system(size: controllerSize))
+                                .foregroundColor(Color(uiColor: controlsProps?.playback.color ?? .white))
                         }
                         
-                        player.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
-                          isSeeking = false
-                        })
-                      }
-                      
-                      if isPlaying == true {
-                        timeoutControls()
-                      }
-                    })
-                )
+                    } else {
+                        if player.timeControlStatus == .waitingToPlayAtSpecifiedRate {
+                            CustomLoading(color: controlsProps?.loading.color)
+                        } else {
+                            CustomPlayPauseButton(
+                                action: { isPlaying in
+                                    onPlaybackManager(playing: isPlaying)
+                                }, isPlaying: player.timeControlStatus != .paused,
+                                frame: .init(origin: .zero, size: .init(width: controllerSize, height: controllerSize)),
+                                color: controlsProps?.playback.color?.cgColor
+                            )
+                        }
+                    }
+                }
+                
             )
-        }
-        .frame(height: isSeeking ? StandardSizes.seekerViewMaxHeight : StandardSizes.seekerViewMinHeight)
-        .animation(.easeInOut(duration: AnimationDuration.s035), value: isSeeking)
+            .frame(width: controllerSize * 2, height: controllerSize * 2)
+            .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
+            .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
+    }
+  
+  @ViewBuilder
+  func MenuControl() -> some View {
+      CreateCircleMenuButton(menus: menus,
+          CustomIcon("ellipsis", color: controlsProps?.settings.color)
+      ) { label, value in
+          controlsCallback.menuItemSelected(label, value)
       }
-      .opacity(showPlayerControls || isSeeking || isSeekingByDoubleTap ? 1 : 0)
-      .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls || isSeekingByDoubleTap || isSeeking)
-    }
-  }
-  
-  @ViewBuilder
-  func PlaybackControls() -> some View {
-    let controllerSize = calculateSizeByWidth(StandardSizes.playbackControler, VariantPercent.p20)
-
-    Rectangle()
-      .fill(Color.black.opacity(0.5))
-      .cornerRadius(.infinity, antialiased: true)
-      .overlay(
-        Group {
-          if isFinishedPlaying {
-            Button(action: {
-              resetPlaybackStatus()
-            }) {
-              Image(systemName: "gobackward")
-                .font(.system(size: controllerSize))
-                .foregroundColor(Color(uiColor: controlsProps?.playback.color ?? .white))
-            }
-            
-          } else {
-            if player.timeControlStatus == .waitingToPlayAtSpecifiedRate {
-              CustomLoading(color: controlsProps?.loading.color)
-            } else {
-              CustomPlayPauseButton(
-                action: { isPlaying in
-                  onPlaybackManager(playing: isPlaying)
-                }, isPlaying: player.timeControlStatus != .paused,
-                frame: .init(origin: .zero, size: .init(width: controllerSize, height: controllerSize)),
-                color: controlsProps?.playback.color?.cgColor
-              )
-            }
-          }
-        }
-        
-      )
-      .frame(width: controllerSize * 2, height: controllerSize * 2)
-    .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
-    .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
-  }
-  
-  @ViewBuilder
-  func FullScreenControl() -> some View {
-    Button (action: {
-      isFullScreen.toggle()
-      self.onTapFullScreenControl(isFullScreen)
-    }) {
-      CustomIcon(isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right", color: controlsProps?.fullScreen.color)
-    }
-    .rotationEffect(.init(degrees: 90))
-  }
-  
-  @ViewBuilder
-  func SettingsControl() -> some View {
-    Button(action: {
-        withAnimation(.easeInOut(duration: AnimationDuration.s020)) {
-          openedSettingsModal = true
-          notificationPostModal(userInfo: ["opened": openedSettingsModal])
-          onTapSettingsControl()
-        }
-    }) {
-      CustomIcon("gear", color: controlsProps?.settings.color);
-    }
-    .fixedSize(horizontal: true, vertical: true)
   }
   
   @ViewBuilder
@@ -719,7 +600,7 @@ extension VideoPlayerView {
 }
 
 // MARK: -- Private Functions
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 extension VideoPlayerView {
   private func urlOfCurrentPlayerItem(player : AVPlayer) -> URL? {
     return ((player.currentItem?.asset) as? AVURLAsset)?.url
@@ -826,32 +707,6 @@ extension VideoPlayerView {
                 completionHandler: { _ in })
   }
   
-  private func resetModalState() {
-    openedSettingsModal = false
-    openedOptionsQuality = false
-    openedOptionsSpeed = false
-    openedOptionsMoreOptions = false
-    
-    notificationPostModal(userInfo: ["opened": false])
-    notificationPostModal(userInfo: ["\(SettingsOption.speeds)Opened": false])
-    notificationPostModal(userInfo: ["\(SettingsOption.qualities)Opened": false])
-    notificationPostModal(userInfo: ["\(SettingsOption.moreOptions)Opened": false])
-  }
-  
-  private func optionsItemSelected(_ item: SettingsOption) {
-    switch(item) {
-    case .qualities:
-      openedOptionsQuality = true
-      break
-    case .speeds:
-      openedOptionsSpeed = true
-      break
-    case .moreOptions:
-      openedOptionsMoreOptions = true
-      break
-    }
-  }
-  
   private func onFinished() {
     isFinishedPlaying = true
     notificationPostPlaybackInfo(userInfo: ["playbackFinished": true])
@@ -878,86 +733,67 @@ extension VideoPlayerView {
 }
 
 // MARK: -- CustomView
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 struct CustomView : View {
-  var player: AVPlayer
-  var isLoading: Bool
-  var title: String
-  var playbackFinished: Bool
-  var videoGravity: AVLayerVideoGravity
-  var thumbnails: [UIImage]
-  var onTapFullScreenControl: (Bool) -> Void
-  var tapToSeekValue: Int
-  var suffixLabelDoubleTapSeek: String
-  var isFullScreen: Bool
-  var videoSettings: [HashableModalContent]
-  var onTapSettingsControl: () -> Void
-  var videoQualities: [HashableModalContent]
-  var initialQualitySelected: String
-  var videoSpeeds: [HashableModalContent]
-  var initialSpeedSelected: String
-  var selectedQuality: String
-  var selectedSpeed: String
-  var settingsModalOpened: Bool
-  var openedOptionsQualities: Bool
-  var openedOptionsSpeed: Bool
-  var openedOptionsMoreOptions: Bool
-  var isActiveAutoPlay: Bool
-  var isActiveLoop: Bool
-  var sliderProgress: Double
-  var lastDraggedProgress: Double
-  var isPlaying: Bool?
-  var controllersPropsData: HashableControllers?
-  var downloadInProgress: Bool
-  var downloadProgress: Float
-  var onTapHeaderGoback: () -> Void
-  
-  var body: some View {
-    GeometryReader {
-      let size = $0.size
-      let safeAreaInsets = $0.safeAreaInsets
-      
-      VideoPlayerView(
-        size: size,
-        safeAreaInsets: safeAreaInsets,
-        player: player,
-        isLoading: isLoading,
-        title: title,
-        playbackFinished: playbackFinished,
-        thumbnails: thumbnails,
-        onTapFullScreenControl: onTapFullScreenControl,
-        doubleTapSeekValue: tapToSeekValue,
-        suffixLabelDoubleTapSeek: suffixLabelDoubleTapSeek,
-        isFullScreen: isFullScreen,
-        videoSettings: videoSettings,
-        onTapSettingsControl: onTapSettingsControl,
-        videoQualities: videoQualities,
-        initialQualitySelected: initialQualitySelected,
-        videoSpeeds: videoSpeeds,
-        initialSpeedSelected: initialSpeedSelected,
-        selectedQuality: selectedQuality,
-        selectedSpeed: selectedSpeed,
-        settingsModalOpened: settingsModalOpened,
-        openedOptionsQualities: openedOptionsQualities,
-        openedOptionsSpeed: openedOptionsSpeed,
-        openedOptionsMoreOptions: openedOptionsMoreOptions,
-        isActiveAutoPlay: isActiveAutoPlay,
-        isActiveLoop: isActiveLoop,
-        videoGravity: videoGravity,
-        sliderProgress: sliderProgress,
-        lastDraggedProgress: lastDraggedProgress,
-        isPlaying: isPlaying,
-        controllersPropsData: controllersPropsData,
-        downloadInProgress: downloadInProgress,
-        downloadProgress: downloadProgress,
-        onTapHeaderGoback: onTapHeaderGoback
-      )
+    var player: AVPlayer
+    var menus: NSDictionary
+    var controlsCallback: Controls
+    var isLoading: Bool
+    var title: String
+    var playbackFinished: Bool
+    var videoGravity: AVLayerVideoGravity
+    var thumbnails: [UIImage]
+    var onTapFullScreenControl: (Bool) -> Void
+    var tapToSeekValue: Int
+    var suffixLabelDoubleTapSeek: String
+    var isFullScreen: Bool
+    var onTapSettingsControl: () -> Void
+    var isActiveAutoPlay: Bool
+    var isActiveLoop: Bool
+    var sliderProgress: Double
+    var lastDraggedProgress: Double
+    var isPlaying: Bool?
+    var controllersPropsData: HashableControllers?
+    var downloadInProgress: Bool
+    var downloadProgress: Float
+    var onTapHeaderGoback: () -> Void
+    
+    var body: some View {
+        GeometryReader {
+            let size = $0.size
+            let safeAreaInsets = $0.safeAreaInsets
+            
+            VideoPlayerView(
+                size: size,
+                safeAreaInsets: safeAreaInsets,
+                player: player,
+                menus: menus,
+                controlsCallback: controlsCallback,
+                isLoading: isLoading,
+                title: title,
+                playbackFinished: playbackFinished,
+                thumbnails: thumbnails,
+                onTapFullScreenControl: onTapFullScreenControl,
+                doubleTapSeekValue: tapToSeekValue,
+                suffixLabelDoubleTapSeek: suffixLabelDoubleTapSeek,
+                isFullScreen: isFullScreen,
+                onTapSettingsControl: onTapSettingsControl,
+                isActiveAutoPlay: isActiveAutoPlay,
+                isActiveLoop: isActiveLoop,
+                videoGravity: videoGravity,
+                sliderProgress: sliderProgress,
+                lastDraggedProgress: lastDraggedProgress,
+                isPlaying: isPlaying,
+                controllersPropsData: controllersPropsData,
+                downloadInProgress: downloadInProgress,
+                downloadProgress: downloadProgress,
+                onTapHeaderGoback: onTapHeaderGoback
+            )
+        }
     }
-  }
 }
 
-
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 struct DoubleTapManager : View {
   var onTapBackward: (Int) -> Void
   var onTapForward: (Int) -> Void

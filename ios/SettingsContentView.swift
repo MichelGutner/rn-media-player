@@ -8,12 +8,12 @@
 import Foundation
 import SwiftUI
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 struct SettingsContentView: View {
-  var settingsData: [HashableModalContent]
+  var settingsData: [HashableContent]
   var onSettingSelected: (String) -> Void
   
-  init(settingsData: [HashableModalContent], onSettingSelected: @escaping (String) -> Void) {
+  init(settingsData: [HashableContent], onSettingSelected: @escaping (String) -> Void) {
     self.settingsData = settingsData
     self.onSettingSelected = onSettingSelected
   }

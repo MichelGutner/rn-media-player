@@ -4,7 +4,7 @@ import UIKit
 import React
 import AVFoundation
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 @objc(RNVideoPlayer)
 class RNVideoPlayer: RCTViewManager {
   @objc override func view() -> (RNVideoPlayerView) {
@@ -16,22 +16,12 @@ class RNVideoPlayer: RCTViewManager {
   }
 }
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var hasCalledSetup = false
   private var player: AVPlayer?
   private var loading = true
   
-  private var settingsOpened = false
-  
-  private var initialQualitySelected = ""
-  private var initialSpeedSelected = ""
-  private var selectedQuality: String = ""
-  private var selectedSpeed: String = ""
-  
-  private var videoQualities: [HashableModalContent] = []
-  private var videoSpeeds: [HashableModalContent] = []
-  private var videoSettings: [HashableModalContent] = []
   private var url: URL?
   private var thumbnailsFrames: [UIImage] = []
   
@@ -61,41 +51,39 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   @objc var autoPlay: Bool = true
   @objc var loop: Bool = false
   
-  @objc var speeds: NSDictionary? = [:]
-  @objc var qualities: NSDictionary? = [:]
-  @objc var settings: NSDictionary? = [:]
+    @objc var menus: NSDictionary? = [:]
+    @objc var onMenuItemSelected: RCTBubblingEventBlock?
   @objc var controlsProps: NSDictionary? = [:]
   
-  // external controls
-  @objc var source: NSDictionary? = [:] {
-    didSet {
-      do {
-        let playbackUrl = source?["url"] as? String
-        cleanupPreviousVideo()
-        let verificatedUrlString = try verifyUrl(urlString: playbackUrl)
-        let cached = PlayerFileManager().videoCached(title: source?["title"] as! String)
-        
-        if cached.fileExist {
-          player = AVPlayer(url: URL(string: "file://\(cached.path)")!)
-        } else {
-          player = AVPlayer(url: verificatedUrlString)
+    @objc var source: NSDictionary? = [:] {
+        didSet {
+            do {
+                let playbackUrl = source?["url"] as? String
+                cleanupPreviousVideo()
+                let verificatedUrlString = try verifyUrl(urlString: playbackUrl)
+                print(verificatedUrlString)
+                let cached = PlayerFileManager().videoCached(title: source?["title"] as! String)
+                
+                if cached.fileExist {
+                    player = AVPlayer(url: URL(string: "file://\(cached.path)")!)
+                } else {
+                    player = AVPlayer(url: verificatedUrlString)
+                }
+                
+                player?.actionAtItemEnd = .none
+                hasCalledSetup = true
+                
+                player?.addObserver(self, forKeyPath: "status", options: .new, context: nil)
+                player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferEmpty", options: .new, context: nil)
+                player?.currentItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
+                player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferFull", options: .new, context: nil)
+                
+                self.setNeedsLayout()
+            } catch {
+                self.onError?(["userInfo": "Error on get url: error type is \(error)"])
+            }
         }
-        
-        player?.actionAtItemEnd = .none
-        hasCalledSetup = true
-        
-        player?.addObserver(self, forKeyPath: "status", options: .new, context: nil)
-        player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferEmpty", options: .new, context: nil)
-        player?.currentItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
-        player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferFull", options: .new, context: nil)
-        
-        self.setNeedsLayout()
-      } catch {
-        print("e", error)
-        self.onError?(["userInfo": "Error on get url: error type is \(error)"])
-      }
     }
-  }
   
   @objc var rate: Float = 0.0 {
     didSet{
@@ -113,10 +101,10 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   @objc var startTime: Float = 0.0 {
     didSet {
-      player?
-        .currentItem?.seek(
-          to: CMTime(seconds: Double(startTime), preferredTimescale: 2),
-          completionHandler: nil
+        player?
+            .currentItem?.seek(
+                to: CMTime(seconds: Double(startTime), preferredTimescale: 2),
+                completionHandler: nil
         )
     }
   }
@@ -127,9 +115,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   private var playbackFinished: Bool = false
   private var isFullScreen = false
   private var videoPlayerView = UIView()
-  private var openedOptionsQualities: Bool = false
-  private var openedOptionsSpeed: Bool = false
-  private var openedOptionsMoreOptions: Bool = false
   private var sliderProgress: Double = 0.0
   private var lastDraggedProgress: Double = 0.0
   private var isPlaying: Bool? = nil
@@ -140,27 +125,6 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   override func layoutSubviews() {
     guard let player = player else { return }
     videoPlayerView.removeFromSuperview()
-    
-    if let initialQualityOption = qualities?["initialSelected"] as? String  {
-      initialQualitySelected = initialQualityOption
-    }
-    
-    if let initialSpeedOption = speeds?["initialSelected"] as? String {
-      initialSpeedSelected = initialSpeedOption
-    }
-    
-    
-    if let qualitiesData = qualities?["data"] as? [[String: Any]] {
-      videoQualities = qualitiesData.map { HashableModalContent(dictionary: $0) }
-    }
-    
-    if let speedsData = speeds?["data"] as? [[String: Any]] {
-      videoSpeeds = speedsData.map { HashableModalContent(dictionary: $0) }
-    }
-    
-    if let settingsData = settings?["data"] as? [[String: Any]] {
-      self.videoSettings = settingsData.map { HashableModalContent(dictionary: $0) }
-    }
     
     if let controllersProps = controlsProps {
       let playbackProps = PlaybackControlHashableProps(dictionary: controllersProps["playback"] as? NSDictionary)
@@ -191,9 +155,16 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     let mode = Resize(rawValue: resizeMode as String)
     let videoGravity = self.videoGravity(mode!)
+      print(player)
     let playerView = UIHostingController(
       rootView: CustomView(
         player: player,
+        menus: menus ?? [:],
+        controlsCallback: Controls(
+            menuItemSelected: { label, value in
+                self.onMenuItemSelected?(["name": label, "value": value])
+            }
+        ),
         isLoading: loading,
         title: title,
         playbackFinished: playbackFinished,
@@ -205,18 +176,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         tapToSeekValue: tapToSeekValue as! Int,
         suffixLabelDoubleTapSeek: suffixLabelTapToSeek!,
         isFullScreen: isFullScreen,
-        videoSettings: videoSettings,
         onTapSettingsControl: onTapSettings,
-        videoQualities: videoQualities,
-        initialQualitySelected: initialQualitySelected,
-        videoSpeeds: videoSpeeds,
-        initialSpeedSelected: initialSpeedSelected,
-        selectedQuality: selectedQuality,
-        selectedSpeed: selectedSpeed,
-        settingsModalOpened: settingsOpened,
-        openedOptionsQualities: openedOptionsQualities,
-        openedOptionsSpeed: openedOptionsSpeed,
-        openedOptionsMoreOptions: openedOptionsMoreOptions,
         isActiveAutoPlay: autoPlay,
         isActiveLoop: loop,
         sliderProgress: sliderProgress,
@@ -232,57 +192,21 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     videoPlayerView.backgroundColor = .black
     videoPlayerView.clipsToBounds = true
     
-    if videoPlayerView.frame == .zero {
-      if frame.height > UIScreen.main.bounds.height {
-        videoPlayerView.frame = UIScreen.main.bounds
-      } else {
-        videoPlayerView.frame = frame
+      withAnimation(.easeIn(duration: 0.35)) {
+          if videoPlayerView.frame == .zero {
+              if frame.height > UIScreen.main.bounds.height {
+                  withAnimation(.easeInOut(duration: 0.35)) {
+                      videoPlayerView.frame = UIScreen.main.bounds
+                  }
+                  
+              } else {
+                  withAnimation(.easeInOut(duration: 0.35)) {
+                      videoPlayerView.frame = frame
+                  }
+              }
+              superview?.addSubview(playerView.view)
+          }
       }
-      superview?.addSubview(playerView.view)
-    }
-    
-    NotificationCenter.default.addObserver(forName: Notification.Name("modal"), object: nil, queue: .main) { [self] modalNotification in
-      if let optionsQualitySelected = (modalNotification.userInfo?["optionsQualitySelected"] as? String) {
-        self.selectedQuality = optionsQualitySelected
-      }
-      
-      if let qualityUrlToChange = modalNotification.userInfo?["qualityUrl"] as? String {
-        self.changePlaybackQuality(URL(string: qualityUrlToChange)!)
-      }
-      
-      if let speedRate = (modalNotification.userInfo?["speedRate"] as? Float) {
-        self.onChangeRate(speedRate)
-      }
-      
-      if let optionsSpeedSelected = (modalNotification.userInfo?["optionsSpeedSelected"] as? String) {
-        self.selectedSpeed = optionsSpeedSelected
-      }
-      
-      if let openedModal = (modalNotification.userInfo?["opened"] as? Bool) {
-        self.settingsOpened = openedModal
-      }
-      
-      if let openedOptionsSpeed = (modalNotification.userInfo?["\(SettingsOption.speeds)Opened"] as? Bool) {
-        self.openedOptionsSpeed = openedOptionsSpeed
-      }
-      
-      if let openedOptionsQualities = (modalNotification.userInfo?["\(SettingsOption.qualities)Opened"] as? Bool) {
-        self.openedOptionsQualities = openedOptionsQualities
-      }
-      
-      if let moreOptions = (modalNotification.userInfo?["\(SettingsOption.moreOptions)Opened"] as? Bool) {
-        self.openedOptionsMoreOptions = moreOptions
-      }
-      
-      if let optionsAutoPlay = modalNotification.userInfo?["optionsAutoPlay"] as? Bool {
-        self.autoPlay = optionsAutoPlay
-      }
-      
-      if let optionsLoop = modalNotification.userInfo?["optionsLoop"] as? Bool {
-        self.loop = optionsLoop
-      }
-      
-    }
     
     NotificationCenter.default.addObserver(forName: Notification.Name("playbackInfo"), object: nil, queue: .main) { [self] notification in
       if let buffering = notification.userInfo?["buffering"] as? Double {
@@ -345,7 +269,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
   
   private func generatingThumbnailsFrames() {
     Task.detached { [self] in
-      guard let asset = await player?.currentItem?.asset else { return }
+        guard let asset = await player?.currentItem?.asset else { return }
       
       do {
         let totalDuration = asset.duration.seconds
@@ -395,8 +319,8 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
         break
       }
     }
-    if keyPath == "status", let player = player {
-      if player.status == .readyToPlay {
+      if keyPath == "status", let player = player {
+          if player.status == .readyToPlay {
         self.loading = false
         onReady?(["ready": true])
         generatingThumbnailsFrames()
@@ -428,29 +352,34 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
 }
 
 
+struct Controls {
+    var menuItemSelected: (_ label: String, _ value: Any) -> Void
+}
 
 // player method from bridge
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 extension RNVideoPlayerView {
   @objc private func onPaused(_ paused: Bool) {
     if paused {
-      player?.pause()
+        player?.pause()
     } else {
-      player?.play()
+        player?.play()
     }
   }
   
   @objc private func onChangeRate(_ rate: Float) {
-    self.player?.rate = rate
+      player?.rate = rate
+      if (isPlaying == false) {
+          player?.pause()
+      }
   }
 }
 
 // player methods
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 extension RNVideoPlayerView {
   @objc private func onTapSettings() {
     onTapSettingsControl?([:])
-    settingsOpened = true
   }
   
   @objc private func onTapGoback() {
@@ -458,29 +387,39 @@ extension RNVideoPlayerView {
     cleanupPreviousVideo()
   }
   
-  @objc func toggleFullScreen(_ fullScreen: Bool) {
-    if fullScreen {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: { [self] in
-        videoPlayerView.removeFromSuperview()
+    @objc func toggleFullScreen(_ fullScreen: Bool) {
+        let transition = CATransition()
+        transition.type = .fade
+        transition.duration = 0.15
         
-        videoPlayerView.frame = UIScreen.main.bounds
-        superview?.addSubview(videoPlayerView)
-      })
-    } else {
-      videoPlayerView.removeFromSuperview()
-      
-      if frame.height > UIScreen.main.bounds.height {
-        videoPlayerView.frame = UIScreen.main.bounds
-      } else {
-        videoPlayerView.frame = frame
-      }
-      
-      superview?.addSubview(videoPlayerView)
+        videoPlayerView.layer.add(transition, forKey: kCATransition)
+        
+        if fullScreen {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: { [self] in
+                videoPlayerView.removeFromSuperview()
+                videoPlayerView.frame = UIScreen.main.bounds
+                superview?.addSubview(videoPlayerView)
+            })
+        } else {
+            videoPlayerView.removeFromSuperview()
+            
+            if frame.height > UIScreen.main.bounds.height {
+                withAnimation(.easeInOut(duration: 0.35)) {
+                    videoPlayerView.frame = UIScreen.main.bounds
+                }
+            } else {
+                withAnimation(.easeInOut(duration: 0.35)) {
+                    videoPlayerView.frame = frame
+                }
+            }
+            
+            superview?.addSubview(videoPlayerView)
+        }
+        
+        isFullScreen = fullScreen
+        onFullScreen?(["fullScreen": fullScreen])
     }
-    
-    isFullScreen = fullScreen
-    onFullScreen?(["fullScreen": fullScreen])
-  }
+
   
   @objc private func orientationDidChange() {
     let currentOrientation = UIDevice.current.orientation
@@ -504,7 +443,7 @@ extension RNVideoPlayerView {
   }
 }
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 extension RNVideoPlayerView {
   func videoGravity(_ videoResize: Resize) -> AVLayerVideoGravity  {
     switch (videoResize) {
@@ -518,13 +457,13 @@ extension RNVideoPlayerView {
   }
   
   private func changePlaybackQuality(_ url: URL) {
-    let currentTime = player?.currentItem?.currentTime() ?? CMTime.zero
+      let currentTime = player?.currentItem?.currentTime() ?? CMTime.zero
     let asset = AVURLAsset(url: url)
     let newPlayerItem = AVPlayerItem(asset: asset)
     
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: { [self] in
-      player?.replaceCurrentItem(with: newPlayerItem)
-      player?.seek(to: currentTime)
+        player?.replaceCurrentItem(with: newPlayerItem)
+        player?.seek(to: currentTime)
       
       newPlayerItem.addObserver(self, forKeyPath: "status", options: [.new], context: nil)
       var playerItemStatusObservation: NSKeyValueObservation?
@@ -553,48 +492,37 @@ extension RNVideoPlayerView {
   }
   
   private func cleanupPreviousVideo() {
-    player?.pause()
+      player?.pause()
     
-    player?.removeObserver(self, forKeyPath: "status")
-    player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferEmpty")
-    player?.currentItem?.removeObserver(self, forKeyPath: "playbackLikelyToKeepUp")
-    player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferFull")
+      player?.removeObserver(self, forKeyPath: "status")
+      player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferEmpty")
+      player?.currentItem?.removeObserver(self, forKeyPath: "playbackLikelyToKeepUp")
+      player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferFull")
     
-    player = nil
+      player = nil
     
     resetToInitialState()
   }
   
-  private func resetToInitialState() {
-          // Reset all relevant properties to their initial values
-          hasCalledSetup = false
-          player = nil
-          loading = true
-          settingsOpened = false
-          initialQualitySelected = ""
-          initialSpeedSelected = ""
-          selectedQuality = ""
-          selectedSpeed = ""
-          videoQualities.removeAll()
-          videoSpeeds.removeAll()
-          videoSettings.removeAll()
-          thumbnailsFrames.removeAll()
-          url = nil
-          playerView.removeFromSuperview()
-          buffering = 0.0
-          currentTime = 0.0
-          duration = 0.0
-          playbackFinished = false
-          isFullScreen = false
-          videoPlayerView.removeFromSuperview()
-          openedOptionsQualities = false
-          openedOptionsSpeed = false
-          openedOptionsMoreOptions = false
-          sliderProgress = 0.0
-          lastDraggedProgress = 0.0
-          isPlaying = nil
-          controllersPropsData = nil
-          downloadInProgress = false
-          downloadProgress = 0.0
-      }
+    private func resetToInitialState() {
+        // Reset all relevant properties to their initial values
+        hasCalledSetup = false
+        player = nil
+        loading = true
+        thumbnailsFrames.removeAll()
+        url = nil
+        playerView.removeFromSuperview()
+        buffering = 0.0
+        currentTime = 0.0
+        duration = 0.0
+        playbackFinished = false
+        isFullScreen = false
+        videoPlayerView.removeFromSuperview()
+        sliderProgress = 0.0
+        lastDraggedProgress = 0.0
+        isPlaying = nil
+        controllersPropsData = nil
+        downloadInProgress = false
+        downloadProgress = 0.0
+    }
 }

@@ -40,8 +40,7 @@ RCT_EXPORT_VIEW_PROPERTY(onPlayPause, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(controlsProps, NSDictionary)
 
 // -- Settings Options data
-RCT_EXPORT_VIEW_PROPERTY(speeds, NSDictionary)
-RCT_EXPORT_VIEW_PROPERTY(qualities, NSDictionary)
-RCT_EXPORT_VIEW_PROPERTY(settings, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(menus, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(onMenuItemSelected, RCTBubblingEventBlock)
 
 @end

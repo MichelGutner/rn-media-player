@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 struct CustomLoading: View {
   let color: UIColor?
   @State var isLoading : Bool = false

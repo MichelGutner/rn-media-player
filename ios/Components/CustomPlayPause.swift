@@ -9,7 +9,6 @@ import Foundation
 import UIKit
 import SwiftUI
 
-@available(iOS 13.0, *)
 struct CustomPlayPauseButton: UIViewRepresentable {
   var action: (Bool) -> Void
   var isPlaying: Bool
@@ -49,7 +48,6 @@ struct CustomPlayPauseButton: UIViewRepresentable {
   
 }
 
-@available(iOS 13.0, *)
 class PlayPauseButton: UIButton {
   private var action: (Bool) -> Void
   private var color: CGColor?

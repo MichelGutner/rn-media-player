@@ -1,6 +1,5 @@
 import SwiftUI
 
-@available(iOS 13.0, *)
 struct DoubleTapSeek: View {
   @State private var tappedQuantity: Int = 0
   @State private var isTapped: Bool = false

@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-@available(iOS 13.0, *)
+@available(iOS 14.0, *)
 extension Color {
     init(uiColor: UIColor) {
         let components = uiColor.cgColor.components
