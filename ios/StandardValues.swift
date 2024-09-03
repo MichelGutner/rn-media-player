@@ -29,8 +29,8 @@ struct StandardSizes {
   
   // --- identified sizes
   static let playbackControler: CGFloat = 25
-  static let seekerViewMinHeight: CGFloat = 3
-  static let seekerViewMaxHeight: CGFloat = 6
+  static let seekerViewMinHeight: CGFloat = 6
+  static let seekerViewMaxHeight: CGFloat = 8
 }
 
 struct AnimationDuration {

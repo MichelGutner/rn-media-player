@@ -49,7 +49,7 @@ struct VideoPlayerView: View {
   @State private var downloadInProgress: Bool = false
   @State private var showActionSheetFileManager = false
   
-  @State private var seekerThumbImageSize: CGSize = .init(width: 15, height: 15)
+  @State private var seekerThumbImageSize: CGSize = .init(width: 12, height: 12)
   @State private var doubleTapSeekValue: Int = 10
   @State private var suffixLabelDoubleTapSeek: String = "Seconds"
   @State private var isPresentToast: Bool = false
@@ -173,15 +173,26 @@ struct VideoPlayerView: View {
                     .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
                     .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
                   Spacer()
-                  VideoSeekerView()
-                  HStack {
-                    Spacer()
-                    DownloadControl()
-                    MenuControl()
-                  }
-                  .padding(.top, -StandardSizes.small8)
-                  .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
-                  .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
+                    
+//                    HStack {
+//     
+//                        Spacer()
+//                    }
+                        //                      DownloadControl()
+                    VStack {
+                        HStack(alignment: .bottom) {
+                            VideoSeekerThumbnailView()
+                            Spacer()
+                            MenuControl()
+                                .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
+                                .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
+                        }
+                        HStack {
+                            VideoSeekerView()
+                            TimeCodes()
+                                .fixedSize()
+                        }
+                    }
                 }
                   .padding(.leading)
                   .padding(.trailing)
@@ -341,24 +352,23 @@ extension VideoPlayerView {
   
   @ViewBuilder
     func VideoSeekerView() -> some View {
-        VStack(alignment: .leading) {
-            VideoSeekerThumbnailView()
-            TimeCodes()
-            HStack {
+        GeometryReader { geometry in
+            VStack {
+                Spacer()
                 ZStack(alignment: .leading) {
                     Rectangle()
                         .fill(Color(uiColor: (controlsProps?.seekSlider.maximumTrackColor ?? .systemFill)))
-                        .frame(width: size.width - seekerThumbImageSize.width)
+                        .frame(width: geometry.size.width - seekerThumbImageSize.width)
                         .cornerRadius(CornerRadius.small)
                     
                     Rectangle()
                         .fill(Color(uiColor: (controlsProps?.seekSlider.seekableTintColor ?? .systemGray2)))
-                        .frame(width: buffering * (size.width - seekerThumbImageSize.width))
+                        .frame(width: buffering * (geometry.size.width - seekerThumbImageSize.width))
                         .cornerRadius(CornerRadius.small)
                     
                     Rectangle()
                         .fill(Color(uiColor: (controlsProps?.seekSlider.minimumTrackColor ?? .systemBlue)))
-                        .frame(width: calculateSliderWidth())
+                        .frame(width: calculateSliderWidth(geometry))
                         .cornerRadius(CornerRadius.small)
                     
                     HStack {}
@@ -371,7 +381,7 @@ extension VideoPlayerView {
                                 .cornerRadius(CornerRadius.infinity)
                                 .opacity(isSeekingByDoubleTap ? 0.001 : 1)
                                 .contentShape(Rectangle())
-                                .offset(x: calculateSliderWidth())
+                                .offset(x: calculateSliderWidth(geometry))
                                 .gesture(
                                     DragGesture()
                                         .updating($isDraggingSlider, body: { _, out, _ in
@@ -379,7 +389,7 @@ extension VideoPlayerView {
                                         })
                                         .onChanged({ value in
                                             let translationX = value.translation.width
-                                            let calculatedProgress = (translationX / size.width) + lastDraggedProgress
+                                            let calculatedProgress = (translationX / geometry.size.width) + lastDraggedProgress
                                             sliderProgress = max(min(calculatedProgress, 1), 0)
                                             isSeeking = true
                                             
@@ -415,10 +425,11 @@ extension VideoPlayerView {
                 }
                 .frame(height: isSeeking ? StandardSizes.seekerViewMaxHeight : StandardSizes.seekerViewMinHeight)
                 .animation(.easeInOut(duration: AnimationDuration.s035), value: isSeeking)
+                .opacity(showPlayerControls || isSeekingByDoubleTap || isDraggingSlider ? 1 : 0)
+                .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls || isSeekingByDoubleTap || isDraggingSlider)
             }
-            .opacity(showPlayerControls || isSeeking || isSeekingByDoubleTap ? 1 : 0)
-            .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls || isSeekingByDoubleTap || isSeeking)
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
   
   @ViewBuilder
@@ -546,17 +557,17 @@ extension VideoPlayerView {
   
   @ViewBuilder
   func TimeCodes() -> some View {
-    let sizeTimeCodes = calculateSizeByWidth(StandardSizes.small8, VariantPercent.p20)
+      let sizeTimeCodes = calculateSizeByWidth(StandardSizes.small8 + 2, VariantPercent.p20)
     
-    HStack(alignment: .center) {
+    HStack() {
       Spacer()
-      Text(stringFromTimeInterval(interval: currentTime > duration ? duration : currentTime))
-        .font(.system(size: sizeTimeCodes))
-        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.currentTimeColor ?? .white)))
-      
-      Text("/")
-        .font(.system(size: sizeTimeCodes))
-        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.slashColor ?? .white)))
+//      Text(stringFromTimeInterval(interval: currentTime > duration ? duration : currentTime))
+//        .font(.system(size: sizeTimeCodes))
+//        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.currentTimeColor ?? .white)))
+//      
+//      Text("/")
+//        .font(.system(size: sizeTimeCodes))
+//        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.slashColor ?? .white)))
       
       Text(stringFromTimeInterval(interval: duration))
         .font(.system(size: sizeTimeCodes))
@@ -606,8 +617,8 @@ extension VideoPlayerView {
     return ((player.currentItem?.asset) as? AVURLAsset)?.url
   }
   
-  private func calculateSliderWidth() -> CGFloat {
-      let maximumWidth = (size.width - seekerThumbImageSize.width)
+    private func calculateSliderWidth(_ geometry: GeometryProxy) -> CGFloat {
+        let maximumWidth = (geometry.size.width - seekerThumbImageSize.width)
       let calculatedWidth = maximumWidth * CGFloat(sliderProgress)
       return min(maximumWidth, max(0, calculatedWidth))
   }

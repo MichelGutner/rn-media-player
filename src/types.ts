@@ -16,15 +16,6 @@ type ResizeMode = WithDefault<
   'none'
 >;
 
-type TOptionProperties = {
-  initialSelected: string;
-  data: ReadonlyArray<{
-    name: string;
-    value: string;
-    enabled: boolean;
-  }>;
-};
-
 type TVideoPlayerControlConfig = {
   loading?: {
     color?: string;
@@ -114,9 +105,6 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   // lockControls?: boolean;
   tapToSeekValue?: number;
   suffixLabelTapToSeek?: string;
-  speeds?: TOptionProperties;
-  qualities?: TOptionProperties;
-  settings?: Omit<TOptionProperties, 'initialSelected'>;
   controlsProps?: TVideoPlayerControlConfig;
   onSettings?: () => void;
   onGoBack?: () => void;
@@ -131,6 +119,10 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   onPlayPause?: TOnVideoPlayPause;
   onCompleted?: TOnVideoCompleted;
   onError?: TOnError;
+  menus: {
+    [key: string]: unknown[];
+  };
+  onMenuItemSelected?: TGenericEventHandler<{ name: string; value: any }>;
 };
 
 type TGenericEventHandler<T> = DirectEventHandler<Readonly<T>>;
