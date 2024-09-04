@@ -105,11 +105,13 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   // lockControls?: boolean;
   tapToSeekValue?: number;
   suffixLabelTapToSeek?: string;
+  /**
+   * Set this parameter to change the quality of the video
+   */
+  changeQualityUrl?: string;
   controlsProps?: TVideoPlayerControlConfig;
   onSettings?: () => void;
   onGoBack?: () => void;
-  onPlaybackSpeed?: () => void;
-  onQuality?: () => void;
   onFullScreen?: TOnVideoFullScreen;
   onBufferCompleted?: TOnVideoBufferCompleted;
   onVideoDownloaded?: TOnVideoDownloaded;
@@ -122,6 +124,9 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   menus: {
     [key: string]: unknown[];
   };
+  /**
+   * Get menu item selected on settings
+   */
   onMenuItemSelected?: TGenericEventHandler<{ name: string; value: any }>;
 };
 

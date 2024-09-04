@@ -183,14 +183,14 @@ struct VideoPlayerView: View {
                         HStack(alignment: .bottom) {
                             VideoSeekerThumbnailView()
                             Spacer()
-                            MenuControl()
-                                .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
-                                .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
                         }
                         HStack {
                             VideoSeekerView()
                             TimeCodes()
                                 .fixedSize()
+                            MenuControl()
+                                .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
+                                .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
                         }
                     }
                 }
@@ -360,6 +360,8 @@ extension VideoPlayerView {
                         .fill(Color(uiColor: (controlsProps?.seekSlider.maximumTrackColor ?? .systemFill)))
                         .frame(width: geometry.size.width - seekerThumbImageSize.width)
                         .cornerRadius(CornerRadius.small)
+                        .border(Color(uiColor: (controlsProps?.seekSlider.maximumTrackColor ?? .systemFill)), width: /*@START_MENU_TOKEN@*/1/*@END_MENU_TOKEN@*/)
+                        .shadow(radius: 10)
                     
                     Rectangle()
                         .fill(Color(uiColor: (controlsProps?.seekSlider.seekableTintColor ?? .systemGray2)))
