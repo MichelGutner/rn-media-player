@@ -30,7 +30,7 @@ class CustomThumbnailPreview(view: View) : ICustomThumbnailPreview {
 
     thumbnail.translationX = translationX
     timeCodesPreview.translationX = translateXTimesCodePreview
-    thumbnail.drawToBitmap(Bitmap.Config.ALPHA_8)
+    thumbnail.drawToBitmap(Bitmap.Config.ARGB_8888)
     thumbnail.setImageBitmap(bitmaps[index])
   }
 

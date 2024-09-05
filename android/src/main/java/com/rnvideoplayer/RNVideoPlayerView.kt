@@ -3,11 +3,13 @@ package com.rnvideoplayer
 import com.rnvideoplayer.components.CustomBottomDialog
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.media3.cast.CastPlayer
 import androidx.media3.cast.SessionAvailabilityListener
 import androidx.media3.common.PlaybackException
@@ -18,9 +20,12 @@ import androidx.media3.ui.PlayerView
 import androidx.media3.ui.TimeBar
 import androidx.media3.ui.TimeBar.OnScrubListener
 import androidx.mediarouter.app.MediaRouteButton
-import com.facebook.react.bridge.ReadableArray
-import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.ReactContext
+import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.ThemedReactContext
+import com.facebook.react.uimanager.UIManagerHelper
+import com.facebook.react.uimanager.events.Event
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
 import com.rnvideoplayer.components.CustomContentDialog
@@ -49,9 +54,8 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private val customPlayer = CustomExoPlayer(context, this)
   private val exoPlayer = customPlayer.getExoPlayer()
   private val overlayController = customPlayer.getOverlayView()
-  private val parentView = customPlayer.getParentView()
   private val helper = RNVideoHelpers()
-  private var settingsProps: ReadableArray? = null
+  private var menusData: MutableSet<String> = mutableSetOf()
 
   private val timeBar = CustomSeekBar(this)
   private val loading = CustomLoading(context, this)
@@ -71,9 +75,6 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private var timeCodesPosition: TextView
   private var timeCodesDuration: TextView
   private var contentDialog = CustomContentDialog(context, dialog)
-
-  private var selectedQuality: String? = null
-  private var selectedSpeed: String? = null
 
   private var leftDoubleTap = CustomDoubleTapSeek(
     context,
@@ -207,70 +208,16 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
       customPlayer.seekToNextPosition(15000)
     })
 
-    playerController.setSettingsButtonClickListener {
-      val qualities = readableManager.getReadableMapProps("qualities")
-      val data = qualities?.getArray("data")
-      val initialSelected = qualities?.getString("initialSelected")
-
-      if (selectedQuality.isNullOrEmpty()) {
-        selectedQuality = initialSelected
-      }
-
-      val speeds = readableManager.getReadableMapProps("speeds")
-      val dataSpeeds = speeds?.getArray("data")
-      val initialSelectedSpeed = speeds?.getString("initialSelected")
-
-      if (selectedSpeed.isNullOrEmpty()) {
-        selectedSpeed = initialSelectedSpeed
-      }
-
-
-      val view = LayoutInflater.from(context).inflate(R.layout.custom_dialog, null)
-      val currentQualitySelected = view.findViewById<TextView>(R.id.currentQualityTextView)
-      val currentSpeedSelected = view.findViewById<TextView>(R.id.currentPlaybackSpeedTextView)
-
-      currentQualitySelected.text = selectedQuality
-      currentSpeedSelected.text = selectedSpeed
-
-      dialog.setContentView(view)
-      dialog.show()
-
-      val qualitiesLayout: LinearLayout = view.findViewById(R.id.qualitiesLayout)
-      val speedsLayout: LinearLayout = view.findViewById(R.id.speedsLayout)
-
-      qualitiesLayout.setOnClickListener {
-        dialog.dismiss()
-        postDelayed({
-          run {
-            contentDialog.showOptionsDialog(data, selectedQuality) { name, value ->
-              selectedQuality = name
-              customPlayer.changeVideoQuality(value)
-            }
-          }
-        }, 300)
-      }
-
-
-      speedsLayout.setOnClickListener {
-        dialog.dismiss()
-        postDelayed({
-          run {
-            contentDialog.showOptionsDialog(dataSpeeds, selectedSpeed) { name, value ->
-              selectedSpeed = name
-              exoPlayer.setPlaybackSpeed(value.toFloat())
-            }
-          }
-        }, 300)
-      }
+    playerController.setSettingsButtonClickListener { viewer ->
+      showPopUp(viewer)
     }
-
     playerController.setReplayButtonClickListener {
       exoPlayer.seekTo(0)
       thumbnail.translationX = 0F
       playerController.setVisibilityReplayButton(false)
     }
 
-    castPlayer.setSessionAvailabilityListener(object: SessionAvailabilityListener {
+    castPlayer.setSessionAvailabilityListener(object : SessionAvailabilityListener {
       override fun onCastSessionAvailable() {
         exoPlayer.currentMediaItem?.let { castPlayer.setMediaItem(it) }
         exoPlayer.pause()
@@ -282,6 +229,43 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     })
 
     runnable()
+  }
+
+  private fun showPopUp(view: View) {
+    val popup = PopupMenu(context, view)
+    menusData.forEach { menuItemTitle ->
+      val item = popup.menu.add(menuItemTitle)
+      item.icon = ContextCompat.getDrawable(context, R.drawable.arrow_forward)
+      item.setOnMenuItemClickListener { menuItem ->
+        val option = readableManager.getReadableMapProps(menuItem.title.toString())
+        contentDialog.showOptionsDialog(option, "") { name, value ->
+//          val dispatcher = UIManagerHelper.getEventDispatcher(context as ReactContext?, this.id)
+//          if (dispatcher != null) {
+//
+//
+//            val surfaceId = UIManagerHelper.getSurfaceId(context)
+//
+//            dispatcher.dispatchEvent(object : Event<Event<*>>(surfaceId, this.id) {
+//              override fun getEventName(): String {
+//                return "onMenuItemSelected"
+//              }
+//
+//              override fun getEventData(): WritableMap? {
+//                return Arguments.createMap().apply {
+//                  putString(menuItemTitle, value.toString())
+//                }
+//              }
+//            })
+//          } else {
+//            println("Dispatch null")
+//          }
+        }
+        true
+      }
+    }
+    popup.inflate(R.menu.popup_menu)
+    popup.gravity.also { popup.gravity = 5 }
+    popup.show()
   }
 
   private fun onTranslateXThumbnail(currentSeekPoint: Long): Float {
@@ -326,26 +310,21 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     timeBar.update(position, buffered)
   }
 
-  private fun setFullScreen() {
-    parentView.removeView(this)
-    parentView.addView(
-      this, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
-    )
-    isFullScreen = true
+  private fun toggleFullScreen() {
+    val params = this.layoutParams
+    if (isFullScreen) {
+      params.width = ViewGroup.LayoutParams.MATCH_PARENT
+      params.height = currentHeight
+    } else {
+      params.width = ViewGroup.LayoutParams.MATCH_PARENT
+      params.height = ViewGroup.LayoutParams.MATCH_PARENT
+    }
+    this.layoutParams = params
+    isFullScreen = !isFullScreen
+
+    this.requestLayout()
   }
 
-  private fun toggleFullScreen() {
-    if (isFullScreen) {
-      parentView.removeView(this)
-      parentView.addView(this, ViewGroup.LayoutParams.MATCH_PARENT, currentHeight)
-    } else {
-      parentView.removeView(this)
-      parentView.addView(
-        this, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
-      )
-    }
-    isFullScreen = !isFullScreen
-  }
 
   fun setCurrentHeight(height: Int) {
     currentHeight = height
@@ -369,7 +348,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     overlayView.fadeOut()
   }
 
-  fun getSettingsProperties(props: ReadableMap) {
-    settingsProps = props.getArray("data")
+  fun getMenus(props: MutableSet<String>) {
+    menusData = props
   }
 }

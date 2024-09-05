@@ -3,7 +3,8 @@
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
-  android:layout_height="match_parent">
+  android:layout_height="match_parent"
+  >
 
   <androidx.media3.ui.PlayerView
     android:id="@+id/player"
@@ -88,17 +89,28 @@
         <LinearLayout
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
-          android:gravity="end"
+          android:orientation="horizontal"
+          android:padding="16dp"
           >
+
+          <ImageButton
+            android:id="@+id/animated_full_to_exit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="22dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/animated_full_to_exit"
+            tools:ignore="ContentDescription,HardcodedText" />
 
           <androidx.mediarouter.app.MediaRouteButton
             android:id="@+id/media_route_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8.dp"
             android:layout_marginEnd="24dp"
-            android:layout_marginTop="16dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
-            />
+            app:mediaRouteButtonTint="#ffff" />
 
         </LinearLayout>
 
@@ -136,17 +148,20 @@
           android:layout_height="wrap_content"
           android:layout_alignParentBottom="true"
           android:gravity="end"
-          android:orientation="vertical">
+          android:orientation="vertical"
+          android:padding="16dp"
+          >
 
           <ImageView
             android:id="@+id/preview_image_view"
-            android:layout_width="200dp"
-            android:layout_height="100dp"
+            android:layout_width="220dp"
+            android:layout_height="120dp"
             android:layout_gravity="left"
             android:background="@drawable/rounded_corner_background"
+            android:cropToPadding="false"
             android:elevation="5dp"
             android:importantForAccessibility="no"
-            android:scaleType="fitCenter"
+            android:scaleType="centerCrop"
             android:visibility="invisible"
             tools:ignore="RtlHardcoded" />
 
@@ -196,38 +211,36 @@
 
           </LinearLayout>
 
-          <androidx.media3.ui.DefaultTimeBar
-            android:id="@+id/time_bar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="0dp"
-            android:layout_marginBottom="0dp" />
-
           <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="end"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            >
+            <androidx.media3.ui.DefaultTimeBar
+              android:id="@+id/time_bar"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_marginStart="51dp"
+              android:layout_marginTop="5dp"
+              />
 
+            <RelativeLayout
+              android:layout_width="35dp"
+              android:layout_height="35dp"
+              android:layout_marginBottom="16dp"
+              android:layout_marginEnd="12dp"
+              android:background="@drawable/rounded_background">
             <ImageButton
               android:id="@+id/settings_control"
-              android:layout_width="30dp"
-              android:layout_height="30dp"
-              android:layout_marginEnd="16dp"
-              android:layout_marginBottom="16dp"
+              android:layout_width="35dp"
+              android:layout_height="35dp"
+              android:focusable="true"
+              android:clickable="true"
               android:background="?android:attr/selectableItemBackgroundBorderless"
-              android:src="@drawable/baseline_settings_24"
+              android:src="@drawable/baseline_more_horiz_24"
               tools:ignore="HardcodedText" />
-
-            <ImageButton
-              android:id="@+id/animated_full_to_exit"
-              android:layout_width="30dp"
-              android:layout_height="30dp"
-              android:layout_marginEnd="16dp"
-              android:layout_marginBottom="16dp"
-              android:background="?android:attr/selectableItemBackgroundBorderless"
-              android:src="@drawable/animated_full_to_exit"
-              tools:ignore="ContentDescription,HardcodedText" />
+            </RelativeLayout>
           </LinearLayout>
         </LinearLayout>
 

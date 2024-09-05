@@ -46,10 +46,6 @@ class CustomExoPlayer(private val context: ThemedReactContext, private val view:
     return view.findViewById(R.id.player)
   }
 
-  fun getParentView(): ViewGroup {
-    return context.currentActivity?.window?.decorView as ViewGroup
-  }
-
   @OptIn(UnstableApi::class)
   fun changeVideoQuality(newQualityUrl: String) {
     val currentPosition = exoPlayer.currentPosition
