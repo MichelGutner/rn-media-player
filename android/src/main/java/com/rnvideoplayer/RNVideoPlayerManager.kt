@@ -7,17 +7,13 @@ import android.view.ViewTreeObserver
 import android.view.WindowManager
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
-import com.facebook.react.bridge.Arguments
-import com.facebook.react.bridge.ReactContext.RCTDeviceEventEmitter
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.common.MapBuilder
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
-import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.annotations.ReactProp
-import com.facebook.react.uimanager.events.Event
 import com.rnvideoplayer.helpers.MutableMapLongManager
 import com.rnvideoplayer.helpers.ReadableMapManager
 
@@ -56,11 +52,26 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   }
 
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> {
-    return MapBuilder.builder<String, Any>()
-    .put("onMenuItemSelected", MapBuilder.of("registrationName", "onMenuItemSelected"))
-      .build()
-  }
+    val events = listOf(
+      "onMenuItemSelected",
+      "onVideoProgress",
+      "onLoaded",
+      "onCompleted",
+      "onReady",
+      "onBuffer",
+      "onBufferCompleted",
+      "onPlayPause"
+    )
 
+
+    val mapBuilder = MapBuilder.builder<String, Any>()
+
+    events.forEach { event ->
+      mapBuilder.put(event, MapBuilder.of("registrationName", event))
+    }
+
+    return mapBuilder.build()
+  }
   @OptIn(UnstableApi::class)
   @ReactProp(name = "source")
   fun setSource(rnVideoPlayerView: RNVideoPlayerView, source: ReadableMap?) {
@@ -84,8 +95,16 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "startTime")
-  fun setStartTime(rnVideoPlayerView: RNVideoPlayerView, startTime: Double) {
+  fun setStartTime(player: RNVideoPlayerView, startTime: Double) {
     MutableMapLongManager.getInstance().setMutableMapProps(startTime, "startTime")
+  }
+
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "changeQualityUrl")
+  fun setChangeQualityUrl(player: RNVideoPlayerView, changeQualityUrl: String) {
+    if (changeQualityUrl.isNotEmpty()) {
+      player.changeQuality(changeQualityUrl)
+    }
   }
 
   private fun sendEvent(eventName: String, params: WritableMap) {
@@ -93,4 +112,15 @@ class RNVideoPlayer : SimpleViewManager<View>() {
       .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
       .emit(eventName, params)
   }
+}
+
+public object EventNames {
+  const val menuItemSelected = "onMenuItemSelected"
+  const val videoProgress = "onVideoProgress"
+  const val videoLoaded = "onLoaded"
+  const val videoCompleted = "onCompleted"
+  const val videoReady = "onReady"
+  const val videoBuffering = "onBuffer"
+  const val videoBufferCompleted = "onBufferCompleted"
+  const val videoPlayPauseStatus = "onPlayPause"
 }

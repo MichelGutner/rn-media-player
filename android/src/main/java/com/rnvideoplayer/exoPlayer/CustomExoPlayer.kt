@@ -48,7 +48,12 @@ class CustomExoPlayer(private val context: ThemedReactContext, private val view:
 
   @OptIn(UnstableApi::class)
   fun changeVideoQuality(newQualityUrl: String) {
+    val currentMediaItem = exoPlayer.currentMediaItem
     val currentPosition = exoPlayer.currentPosition
+
+    if (currentMediaItem?.localConfiguration?.uri.toString() == newQualityUrl) {
+      return
+    }
 
     val dataSourceFactory = DefaultDataSource.Factory(context)
     val newMediaItem = MediaItem.fromUri(newQualityUrl)
@@ -56,8 +61,6 @@ class CustomExoPlayer(private val context: ThemedReactContext, private val view:
 
     exoPlayer.setMediaSource(newMediaSource, currentPosition)
     exoPlayer.prepare()
-
-    exoPlayer.playWhenReady = true
   }
 
   fun seekToNextPosition(position: Long) {

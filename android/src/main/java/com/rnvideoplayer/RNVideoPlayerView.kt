@@ -2,10 +2,8 @@ package com.rnvideoplayer
 
 import com.rnvideoplayer.components.CustomBottomDialog
 import android.annotation.SuppressLint
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.RelativeLayout
 import android.widget.TextView
@@ -21,11 +19,7 @@ import androidx.media3.ui.TimeBar
 import androidx.media3.ui.TimeBar.OnScrubListener
 import androidx.mediarouter.app.MediaRouteButton
 import com.facebook.react.bridge.Arguments
-import com.facebook.react.bridge.ReactContext
-import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.ThemedReactContext
-import com.facebook.react.uimanager.UIManagerHelper
-import com.facebook.react.uimanager.events.Event
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
 import com.rnvideoplayer.components.CustomContentDialog
@@ -34,6 +28,7 @@ import com.rnvideoplayer.components.CustomLoading
 import com.rnvideoplayer.components.CustomPlayerControls
 import com.rnvideoplayer.components.CustomSeekBar
 import com.rnvideoplayer.components.CustomThumbnailPreview
+import com.rnvideoplayer.events.Events
 import com.rnvideoplayer.exoPlayer.CustomExoPlayer
 import com.rnvideoplayer.helpers.MutableMapLongManager
 import com.rnvideoplayer.helpers.RNVideoHelpers
@@ -76,19 +71,13 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private var timeCodesDuration: TextView
   private var contentDialog = CustomContentDialog(context, dialog)
 
+  private var event = Events(context)
+
   private var leftDoubleTap = CustomDoubleTapSeek(
-    context,
-    this,
-    R.id.double_tap_view,
-    R.id.double_tap,
-    R.id.double_tap_text,
-    false
+    context, this, R.id.double_tap_view, R.id.double_tap, R.id.double_tap_text, false
   )
   private var rightDoubleTap = CustomDoubleTapSeek(
-    context, this, R.id.double_tap_right_view,
-    R.id.double_tap_2,
-    R.id.double_tap_text_2,
-    true
+    context, this, R.id.double_tap_right_view, R.id.double_tap_2, R.id.double_tap_text_2, true
   )
 
 
@@ -145,6 +134,9 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
         else -> exoPlayer.play()
       }
       playerController.morphPlayPause(exoPlayer.isPlaying)
+      event.send(EventNames.videoPlayPauseStatus, this, Arguments.createMap().apply {
+        putBoolean("isPlaying", exoPlayer.isPlaying)
+      })
     }
 
     playerController.setFullScreenButtonClickListener {
@@ -238,27 +230,11 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
       item.icon = ContextCompat.getDrawable(context, R.drawable.arrow_forward)
       item.setOnMenuItemClickListener { menuItem ->
         val option = readableManager.getReadableMapProps(menuItem.title.toString())
-        contentDialog.showOptionsDialog(option, "") { name, value ->
-//          val dispatcher = UIManagerHelper.getEventDispatcher(context as ReactContext?, this.id)
-//          if (dispatcher != null) {
-//
-//
-//            val surfaceId = UIManagerHelper.getSurfaceId(context)
-//
-//            dispatcher.dispatchEvent(object : Event<Event<*>>(surfaceId, this.id) {
-//              override fun getEventName(): String {
-//                return "onMenuItemSelected"
-//              }
-//
-//              override fun getEventData(): WritableMap? {
-//                return Arguments.createMap().apply {
-//                  putString(menuItemTitle, value.toString())
-//                }
-//              }
-//            })
-//          } else {
-//            println("Dispatch null")
-//          }
+        contentDialog.showOptionsDialog(option, "") { _, value ->
+          event.send(EventNames.menuItemSelected, this, Arguments.createMap().apply {
+            putString("name", menuItemTitle)
+            putString("value", value.toString())
+          })
         }
         true
       }
@@ -350,5 +326,8 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
   fun getMenus(props: MutableSet<String>) {
     menusData = props
+  }
+  fun changeQuality(newQualityUrl: String) {
+    customPlayer.changeVideoQuality(newQualityUrl)
   }
 }
