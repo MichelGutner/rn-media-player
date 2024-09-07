@@ -10,12 +10,10 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.media3.ui.PlayerView
 import com.facebook.react.uimanager.ThemedReactContext
-import com.rnvideoplayer.helpers.MutableMapLongManager
+import com.rnvideoplayer.helpers.TimeoutWork
 import com.rnvideoplayer.utils.fadeIn
 import com.rnvideoplayer.utils.fadeOut
 import com.rnvideoplayer.utils.scaleView
-import java.util.Timer
-import java.util.TimerTask
 
 @SuppressLint("SetTextI18n")
 class CustomDoubleTapSeek(
@@ -29,9 +27,8 @@ class CustomDoubleTapSeek(
   private var doubleTapView: LinearLayout = view.findViewById(doubleTapViewId)
   var effect: RelativeLayout = view.findViewById(doubleTapEffectId)
   var doubleTapText: TextView = view.findViewById(doubleTapTextId)
-  private var timer = Timer()
-  private var resetTimerTask: TimerTask? = null
   var tappedQuantity: Int = 0
+  val timeoutWork = TimeoutWork()
 
   init {
     doubleTapView.viewTreeObserver.addOnGlobalLayoutListener {
@@ -54,9 +51,9 @@ class CustomDoubleTapSeek(
         GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
           override fun onDoubleTap(e: MotionEvent): Boolean {
             tappedQuantity++
-            resetTimerTask?.cancel()
+            timeoutWork.cancelTimer()
             effect.fadeIn(100)
-            onTimerTask() {
+            timeoutWork.createTask {
               effect.fadeOut(100)
               tappedQuantity = 0
             }
@@ -66,9 +63,9 @@ class CustomDoubleTapSeek(
 
           override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
             tappedQuantity++
-            resetTimerTask?.cancel()
+            timeoutWork.cancelTimer()
             if (effect.visibility == PlayerView.VISIBLE) {
-              onTimerTask() {
+              timeoutWork.createTask {
                 tappedQuantity = 0
                 effect.fadeOut(100)
               }
@@ -83,14 +80,5 @@ class CustomDoubleTapSeek(
         return false
       }
     })
-  }
-
-  fun onTimerTask(resetDuration: Long = 1000, callback: () -> Unit) {
-    resetTimerTask = object : TimerTask() {
-      override fun run() {
-        callback()
-      }
-    }
-    timer.schedule(resetTimerTask, resetDuration)
   }
 }

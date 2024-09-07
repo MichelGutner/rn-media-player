@@ -13,7 +13,7 @@ class CustomLoading(context: ThemedReactContext, view: View, attrs: ReadableArra
     private val loading = view.findViewById<ProgressBar>(R.id.progress_bar)
 
   init {
-    loading.indeterminateDrawable.setColorFilter(Color.RED, android.graphics.PorterDuff.Mode.SRC_IN)
+    loading.indeterminateDrawable.setColorFilter(Color.BLUE, android.graphics.PorterDuff.Mode.SRC_IN)
   }
 
   fun show() {

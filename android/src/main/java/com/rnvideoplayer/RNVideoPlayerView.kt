@@ -30,6 +30,7 @@ import com.rnvideoplayer.helpers.MutableMapLongManager
 import com.rnvideoplayer.helpers.MutableMapStringManager
 import com.rnvideoplayer.helpers.RNVideoHelpers
 import com.rnvideoplayer.helpers.ReadableMapManager
+import com.rnvideoplayer.helpers.TimeoutWork
 import com.rnvideoplayer.utils.fadeIn
 import com.rnvideoplayer.utils.fadeOut
 import java.util.concurrent.TimeUnit
@@ -45,9 +46,11 @@ import java.util.concurrent.TimeUnit
 class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private val customPlayer = CustomExoPlayer(context, this)
   private val exoPlayer = customPlayer.getExoPlayer()
-  private val overlayController = customPlayer.getOverlayView()
+  private val videoPlayerView = customPlayer.getVideoPlayerView()
   private val helper = RNVideoHelpers()
   private var menusData: MutableSet<String> = mutableSetOf()
+
+  val timeoutWork = TimeoutWork()
 
   private val timeBar = CustomSeekBar(this)
   private val loading = CustomLoading(context, this)
@@ -63,8 +66,6 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private val overlayView: RelativeLayout
 //  private var castPlayer: CastPlayer
 
-
-  //  private var timeCodesPosition: TextView
   private var timeCodesDuration: TextView
   private var contentDialog = CustomContentDialog(context, dialog)
 
@@ -80,6 +81,12 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
   init {
     customPlayer.init()
+    customPlayer.playerInitialized {
+      event.send(EventNames.videoLoaded, this, Arguments.createMap().apply {
+        putDouble("duration", TimeUnit.MILLISECONDS.toSeconds(exoPlayer.duration).toDouble())
+      })
+      timeoutControls()
+    }
 //    val castContext = CastContext.getSharedInstance(context)
 //    val mediaRouteButton = findViewById<MediaRouteButton>(R.id.media_route_button)
 
@@ -127,8 +134,15 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
     playerController.setPlayPauseButtonClickListener {
       when {
-        exoPlayer.isPlaying -> exoPlayer.pause()
-        else -> exoPlayer.play()
+        exoPlayer.isPlaying -> {
+          exoPlayer.pause()
+          timeoutWork.cancelTimer()
+        }
+
+        else -> {
+          timeoutControls()
+          exoPlayer.play()
+        }
       }
       playerController.morphPlayPause(exoPlayer.isPlaying)
       event.send(EventNames.videoPlayPauseStatus, this, Arguments.createMap().apply {
@@ -170,7 +184,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
       }
     })
 
-    overlayController.setOnClickListener {
+    videoPlayerView.setOnClickListener {
       onToggleControlsVisibility()
     }
 
@@ -195,7 +209,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
         onToggleControlsVisibility()
       }
     }, { quantity ->
-//      multiplyTapToSeekValues(quantity, true)
+      multiplyTapToSeekValues(quantity, true)
       rightDoubleTap.effect.fadeIn(200)
       hideControls()
       customPlayer.seekToNextPosition(15000)
@@ -308,9 +322,21 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private fun onToggleControlsVisibility() {
     if (!isVisibleControl) {
       showControls()
+      if (exoPlayer.isPlaying) {
+        timeoutControls()
+      }
     } else {
       hideControls()
     }
+  }
+
+  private fun timeoutControls() {
+    timeoutWork.cancelTimer()
+
+    timeoutWork.createTask(4000) {
+      hideControls()
+    }
+
   }
 
   private fun showControls() {

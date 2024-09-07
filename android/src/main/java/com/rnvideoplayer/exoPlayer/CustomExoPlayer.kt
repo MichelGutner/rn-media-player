@@ -2,9 +2,9 @@ package com.rnvideoplayer.exoPlayer
 
 import android.net.Uri
 import android.view.LayoutInflater
-import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
@@ -42,7 +42,7 @@ class CustomExoPlayer(private val context: ThemedReactContext, private val view:
     return exoPlayer
   }
 
-  fun getOverlayView(): PlayerView {
+  fun getVideoPlayerView(): PlayerView {
     return view.findViewById(R.id.player)
   }
 
@@ -72,5 +72,16 @@ class CustomExoPlayer(private val context: ThemedReactContext, private val view:
   }
   fun changeRate(rate: Float) {
     exoPlayer.setPlaybackSpeed(rate)
+  }
+  fun playerInitialized(callback: (Boolean) -> Unit) {
+    exoPlayer.addListener(object : Player.Listener {
+      override fun onPlaybackStateChanged(playbackState: Int) {
+        super.onPlaybackStateChanged(playbackState)
+        if (playbackState == Player.STATE_READY) {
+            callback(true)
+        }
+      }
+    })
+
   }
 }
