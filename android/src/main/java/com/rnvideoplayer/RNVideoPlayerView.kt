@@ -1,9 +1,10 @@
 package com.rnvideoplayer
 
+import android.animation.ValueAnimator
 import com.rnvideoplayer.components.CustomBottomDialog
 import android.annotation.SuppressLint
 import android.view.View
-import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import android.widget.PopupMenu
 import android.widget.RelativeLayout
 import android.widget.TextView
@@ -50,7 +51,7 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private val helper = RNVideoHelpers()
   private var menusData: MutableSet<String> = mutableSetOf()
 
-  val timeoutWork = TimeoutWork()
+  private val timeoutWork = TimeoutWork()
 
   private val timeBar = CustomSeekBar(this)
   private val loading = CustomLoading(context, this)
@@ -305,17 +306,21 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   }
 
   private fun toggleFullScreen() {
-    val params = this.layoutParams
-    if (isFullScreen) {
-      params.width = ViewGroup.LayoutParams.MATCH_PARENT
-      params.height = currentHeight
-    } else {
-      params.width = ViewGroup.LayoutParams.MATCH_PARENT
-      params.height = ViewGroup.LayoutParams.MATCH_PARENT
-    }
-    this.layoutParams = params
-    isFullScreen = !isFullScreen
+    val startHeight = this.height
+    val targetHeight = if (isFullScreen) currentHeight else context.resources.displayMetrics.heightPixels
 
+    val heightAnimator = ValueAnimator.ofInt(startHeight, targetHeight)
+    heightAnimator.addUpdateListener { animation ->
+      val newHeight = animation.animatedValue as Int
+      val params = this.layoutParams
+      params.height = newHeight
+      this.layoutParams = params
+    }
+    heightAnimator.duration = 300
+    heightAnimator.interpolator = DecelerateInterpolator()
+    heightAnimator.start()
+
+    isFullScreen = !isFullScreen
     this.requestLayout()
   }
 
@@ -372,10 +377,10 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   }
 
   @SuppressLint("SetTextI18n")
-  private fun multiplyTapToSeekValues(quantity: Int, isFoward: Boolean) {
+  private fun multiplyTapToSeekValues(quantity: Int, isForward: Boolean) {
     val tapToSeekTime = mutableMapLongManager.getMutableMapProps("tapToSeekValue")
     val suffixLabel = MutableMapStringManager.getInstance().get("suffixLabel")
-    if (isFoward) {
+    if (isForward) {
       rightDoubleTap.doubleTapText.text = "${tapToSeekTime?.times(quantity)} $suffixLabel"
     } else {
       leftDoubleTap.doubleTapText.text = "-${tapToSeekTime?.times(quantity)} $suffixLabel"

@@ -23,6 +23,7 @@ fun View.fadeOut(duration: Long = 500) {
       }
     })
 }
+
 fun scaleView(isForward: Boolean, view: View) {
   val scale = 2f
   if (isForward) {
