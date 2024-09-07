@@ -10,12 +10,14 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.media3.ui.PlayerView
 import com.facebook.react.uimanager.ThemedReactContext
+import com.rnvideoplayer.helpers.MutableMapLongManager
 import com.rnvideoplayer.utils.fadeIn
 import com.rnvideoplayer.utils.fadeOut
 import com.rnvideoplayer.utils.scaleView
 import java.util.Timer
 import java.util.TimerTask
 
+@SuppressLint("SetTextI18n")
 class CustomDoubleTapSeek(
   val context: ThemedReactContext,
   view: View,
@@ -26,10 +28,10 @@ class CustomDoubleTapSeek(
 ) {
   private var doubleTapView: LinearLayout = view.findViewById(doubleTapViewId)
   var effect: RelativeLayout = view.findViewById(doubleTapEffectId)
-  private var doubleTapText: TextView = view.findViewById(doubleTapTextId)
+  var doubleTapText: TextView = view.findViewById(doubleTapTextId)
   private var timer = Timer()
   private var resetTimerTask: TimerTask? = null
-
+  var tappedQuantity: Int = 0
 
   init {
     doubleTapView.viewTreeObserver.addOnGlobalLayoutListener {
@@ -46,28 +48,32 @@ class CustomDoubleTapSeek(
   }
 
   @SuppressLint("ClickableViewAccessibility")
-  fun tap(onSingleTap: () -> Unit, onDoubleTap: () -> Unit) {
+  fun tap(onSingleTap: (tapQuantity: Int) -> Unit, onDoubleTap: (tapQuantity: Int) -> Unit) {
     doubleTapView.setOnTouchListener(object : View.OnTouchListener {
       val gestureDetector =
         GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
           override fun onDoubleTap(e: MotionEvent): Boolean {
+            tappedQuantity++
             resetTimerTask?.cancel()
             effect.fadeIn(100)
             onTimerTask() {
               effect.fadeOut(100)
+              tappedQuantity = 0
             }
-            onDoubleTap()
+            onDoubleTap(tappedQuantity)
             return super.onDoubleTap(e)
           }
 
           override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+            tappedQuantity++
             resetTimerTask?.cancel()
             if (effect.visibility == PlayerView.VISIBLE) {
               onTimerTask() {
+                tappedQuantity = 0
                 effect.fadeOut(100)
               }
             }
-            onSingleTap()
+            onSingleTap(tappedQuantity)
             return super.onSingleTapConfirmed(e)
           }
         })
@@ -87,5 +93,4 @@ class CustomDoubleTapSeek(
     }
     timer.schedule(resetTimerTask, resetDuration)
   }
-
 }

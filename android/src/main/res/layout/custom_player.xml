@@ -17,36 +17,34 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent">
 
-<!-- Double Tap View -->
-    <LinearLayout
-      android:id="@+id/double_tap_view"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:background="@drawable/rounded_background_double_tap"
-      android:focusable="true"
-      android:clickable="true"
-      android:focusableInTouchMode="true"
-      >
-
-      <RelativeLayout
-        android:visibility="gone"
-        android:id="@+id/double_tap"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
+      <!-- Double Tap View -->
+      <LinearLayout
+        android:id="@+id/double_tap_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center"
-        >
-        <TextView
-          android:id="@+id/double_tap_text"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
-          android:text="-15 seconds"
-          android:textColor="#fff"
-          android:layout_alignParentEnd="true"
-          android:layout_centerInParent="true"
-          />
-      </RelativeLayout>
-    </LinearLayout>
+        android:background="@drawable/rounded_background_double_tap"
+        android:clickable="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true">
+
+        <RelativeLayout
+          android:id="@+id/double_tap"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_gravity="center"
+          android:background="?android:attr/selectableItemBackgroundBorderless"
+          android:visibility="gone">
+
+          <TextView
+            android:id="@+id/double_tap_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerInParent="true"
+            android:text="-15 seconds"
+            android:textColor="#fff" />
+        </RelativeLayout>
+      </LinearLayout>
 
       <LinearLayout
         android:id="@+id/double_tap_right_view"
@@ -59,25 +57,24 @@
         >
 
         <RelativeLayout
-          android:visibility="gone"
           android:id="@+id/double_tap_2"
-          android:background="?android:attr/selectableItemBackgroundBorderless"
           android:layout_width="match_parent"
           android:layout_height="match_parent"
           android:layout_gravity="center"
-          >
+          android:background="?android:attr/selectableItemBackgroundBorderless"
+          android:visibility="gone">
+
           <TextView
             android:id="@+id/double_tap_text_2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="-15 seconds"
-            android:textColor="#fff"
             android:layout_alignParentStart="true"
             android:layout_centerInParent="true"
-            />
+            android:text="-15 seconds"
+            android:textColor="#fff" />
         </RelativeLayout>
       </LinearLayout>
-<!-- Double tap view -->
+      <!-- Double tap view -->
 
       <RelativeLayout
         android:id="@+id/overlay_controls"
@@ -90,8 +87,7 @@
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:orientation="horizontal"
-          android:padding="16dp"
-          >
+          android:padding="16dp">
 
           <ImageButton
             android:id="@+id/animated_full_to_exit"
@@ -103,20 +99,20 @@
             android:src="@drawable/animated_full_to_exit"
             tools:ignore="ContentDescription,HardcodedText" />
 
-          <androidx.mediarouter.app.MediaRouteButton
-            android:id="@+id/media_route_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8.dp"
-            android:layout_marginEnd="24dp"
-            android:background="?android:attr/selectableItemBackgroundBorderless"
-            app:mediaRouteButtonTint="#ffff" />
+          <!--          <androidx.mediarouter.app.MediaRouteButton-->
+          <!--            android:id="@+id/media_route_button"-->
+          <!--            android:layout_width="wrap_content"-->
+          <!--            android:layout_height="wrap_content"-->
+          <!--            android:layout_marginTop="8.dp"-->
+          <!--            android:layout_marginEnd="24dp"-->
+          <!--            android:background="?android:attr/selectableItemBackgroundBorderless"-->
+          <!--            app:mediaRouteButtonTint="#ffff" />-->
 
         </LinearLayout>
 
         <RelativeLayout
-          android:layout_width="60dp"
-          android:layout_height="60dp"
+          android:layout_width="80dp"
+          android:layout_height="80dp"
           android:layout_centerInParent="true"
           android:layout_centerHorizontal="true"
           android:layout_centerVertical="true"
@@ -124,8 +120,8 @@
 
           <ImageButton
             android:id="@+id/animated_play_to_pause"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:importantForAccessibility="no"
             android:src="@drawable/animated_pause_to_play"
@@ -133,8 +129,8 @@
 
           <ImageButton
             android:id="@+id/replay_to_pause"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:importantForAccessibility="no"
             android:src="@drawable/replay_to_pause"
@@ -149,8 +145,7 @@
           android:layout_alignParentBottom="true"
           android:gravity="end"
           android:orientation="vertical"
-          android:padding="16dp"
-          >
+          android:padding="16dp">
 
           <ImageView
             android:id="@+id/preview_image_view"
@@ -201,46 +196,61 @@
               android:text="@string/slash_text"
               android:textColor="#fff" />
 
-            <TextView
-              android:id="@+id/time_codes_duration"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:layout_marginStart="4dp"
-              android:text="@string/time_codes_start_value"
-              android:textColor="#fff" />
+            <!--            <TextView-->
+            <!--              android:id="@+id/time_codes_duration"-->
+            <!--              android:layout_width="wrap_content"-->
+            <!--              android:layout_height="wrap_content"-->
+            <!--              android:layout_marginStart="4dp"-->
+            <!--              android:text="@string/time_codes_start_value"-->
+            <!--              android:textColor="#fff" />-->
 
           </LinearLayout>
 
           <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="end"
-            android:orientation="horizontal"
-            >
+            android:orientation="horizontal">
+
             <androidx.media3.ui.DefaultTimeBar
               android:id="@+id/time_bar"
+              android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="10dp"
+              android:layout_weight="1" />
+
+            <LinearLayout
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
-              android:layout_marginStart="51dp"
-              android:layout_marginTop="5dp"
-              />
+              android:padding="8dp"
+              android:layout_gravity="center">
 
-            <RelativeLayout
-              android:layout_width="35dp"
-              android:layout_height="35dp"
-              android:layout_marginBottom="16dp"
-              android:layout_marginEnd="12dp"
+              <TextView
+                android:id="@+id/time_codes_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="@string/time_codes_start_value"
+                android:textColor="#fff" />
+            </LinearLayout>
+
+            <LinearLayout
+              android:layout_width="45dp"
+              android:layout_height="45dp"
+              android:layout_gravity="end"
               android:background="@drawable/rounded_background">
-            <ImageButton
-              android:id="@+id/settings_control"
-              android:layout_width="35dp"
-              android:layout_height="35dp"
-              android:focusable="true"
-              android:clickable="true"
-              android:background="?android:attr/selectableItemBackgroundBorderless"
-              android:src="@drawable/baseline_more_horiz_24"
-              tools:ignore="HardcodedText" />
-            </RelativeLayout>
+
+              <ImageButton
+                android:id="@+id/settings_control"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="end"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:contentDescription="not implemented"
+                android:focusable="true"
+                android:src="@drawable/baseline_more_horiz_24"
+                tools:ignore="HardcodedText" />
+            </LinearLayout>
           </LinearLayout>
         </LinearLayout>
 

@@ -8,8 +8,6 @@ import android.widget.PopupMenu
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.media3.cast.CastPlayer
-import androidx.media3.cast.SessionAvailabilityListener
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -17,11 +15,9 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.media3.ui.TimeBar
 import androidx.media3.ui.TimeBar.OnScrubListener
-import androidx.mediarouter.app.MediaRouteButton
 import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ThemedReactContext
-import com.google.android.gms.cast.framework.CastButtonFactory
-import com.google.android.gms.cast.framework.CastContext
 import com.rnvideoplayer.components.CustomContentDialog
 import com.rnvideoplayer.components.CustomDoubleTapSeek
 import com.rnvideoplayer.components.CustomLoading
@@ -31,6 +27,7 @@ import com.rnvideoplayer.components.CustomThumbnailPreview
 import com.rnvideoplayer.events.Events
 import com.rnvideoplayer.exoPlayer.CustomExoPlayer
 import com.rnvideoplayer.helpers.MutableMapLongManager
+import com.rnvideoplayer.helpers.MutableMapStringManager
 import com.rnvideoplayer.helpers.RNVideoHelpers
 import com.rnvideoplayer.helpers.ReadableMapManager
 import com.rnvideoplayer.utils.fadeIn
@@ -64,10 +61,10 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   private var isFullScreen: Boolean = false
   private var isSeeking: Boolean = false
   private val overlayView: RelativeLayout
-  private lateinit var castPlayer: CastPlayer
+//  private var castPlayer: CastPlayer
 
 
-  private var timeCodesPosition: TextView
+  //  private var timeCodesPosition: TextView
   private var timeCodesDuration: TextView
   private var contentDialog = CustomContentDialog(context, dialog)
 
@@ -83,16 +80,16 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
   init {
     customPlayer.init()
-    val castContext = CastContext.getSharedInstance(context)
-    val mediaRouteButton = findViewById<MediaRouteButton>(R.id.media_route_button)
+//    val castContext = CastContext.getSharedInstance(context)
+//    val mediaRouteButton = findViewById<MediaRouteButton>(R.id.media_route_button)
 
-    CastButtonFactory.setUpMediaRouteButton(context, mediaRouteButton)
+//    CastButtonFactory.setUpMediaRouteButton(context, mediaRouteButton)
     AspectRatioFrameLayout.RESIZE_MODE_FILL.also { resizeMode = it }
     overlayView = findViewById(R.id.overlay_controls)
 
-    castPlayer = CastPlayer(castContext)
+//    castPlayer = CastPlayer(castContext)
 
-    timeCodesPosition = findViewById(R.id.time_codes_position)
+//    timeCodesPosition = findViewById(R.id.time_codes_position)
     timeCodesDuration = findViewById(R.id.time_codes_duration)
 
     exoPlayer.addListener(object : Player.Listener {
@@ -177,25 +174,29 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
       onToggleControlsVisibility()
     }
 
-    leftDoubleTap.tap({
+    leftDoubleTap.tap({ quantity ->
+      multiplyTapToSeekValues(quantity, false)
       if (leftDoubleTap.effect.visibility == VISIBLE) {
         customPlayer.seekToPreviousPosition(15000)
       } else {
         onToggleControlsVisibility()
       }
-    }, {
+    }, { quantity ->
+      multiplyTapToSeekValues(quantity, false)
       hideControls()
       customPlayer.seekToPreviousPosition(15000)
     })
 
-    rightDoubleTap.tap({
+    rightDoubleTap.tap({ quantity ->
+      multiplyTapToSeekValues(quantity, true)
       if (rightDoubleTap.effect.visibility == VISIBLE) {
         customPlayer.seekToNextPosition(15000)
       } else {
         onToggleControlsVisibility()
       }
-    }, {
-      rightDoubleTap.effect.fadeIn(100)
+    }, { quantity ->
+//      multiplyTapToSeekValues(quantity, true)
+      rightDoubleTap.effect.fadeIn(200)
       hideControls()
       customPlayer.seekToNextPosition(15000)
     })
@@ -203,22 +204,25 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     playerController.setSettingsButtonClickListener { viewer ->
       showPopUp(viewer)
     }
+
     playerController.setReplayButtonClickListener {
       exoPlayer.seekTo(0)
       thumbnail.translationX = 0F
       playerController.setVisibilityReplayButton(false)
     }
 
-    castPlayer.setSessionAvailabilityListener(object : SessionAvailabilityListener {
-      override fun onCastSessionAvailable() {
-        exoPlayer.currentMediaItem?.let { castPlayer.setMediaItem(it) }
-        exoPlayer.pause()
-      }
+    //TODO: need implement cast
+//    castPlayer.setSessionAvailabilityListener(object : SessionAvailabilityListener {
+//      override fun onCastSessionAvailable() {
+//        exoPlayer.currentMediaItem?.let { castPlayer.setMediaItem(it) }
+//        exoPlayer.pause()
+//      }
+//
+//      override fun onCastSessionUnavailable() {
+//        exoPlayer.play()
+//      }
+//    })
 
-      override fun onCastSessionUnavailable() {
-        exoPlayer.play()
-      }
-    })
 
     runnable()
   }
@@ -274,16 +278,16 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     thumbnail.generatingThumbnailFrames(url)
   }
 
-//  fun releasePlayer() {
-//    exoPlayer.release()
-//  }
-
   private fun updateTimeBar() {
     val position = exoPlayer.contentPosition
     val buffered = exoPlayer.contentBufferedPosition
 
-    timeCodesPosition.text = helper.createTimeCodesFormatted(position)
+//    timeCodesPosition.text = helper.createTimeCodesFormatted(position)
     timeBar.update(position, buffered)
+    event.send(EventNames.videoProgress, this, Arguments.createMap().apply {
+      putDouble("progress", TimeUnit.MILLISECONDS.toSeconds(position).toDouble())
+      putDouble("buffering", TimeUnit.MILLISECONDS.toSeconds(buffered).toDouble())
+    })
   }
 
   private fun toggleFullScreen() {
@@ -299,11 +303,6 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     isFullScreen = !isFullScreen
 
     this.requestLayout()
-  }
-
-
-  fun setCurrentHeight(height: Int) {
-    currentHeight = height
   }
 
   private fun onToggleControlsVisibility() {
@@ -327,7 +326,34 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   fun getMenus(props: MutableSet<String>) {
     menusData = props
   }
+
   fun changeQuality(newQualityUrl: String) {
     customPlayer.changeVideoQuality(newQualityUrl)
+  }
+
+  fun changeRate(rate: Float) {
+    customPlayer.changeRate(rate)
+  }
+
+  @SuppressLint("SetTextI18n")
+  fun changeTapToSeekProps(props: ReadableMap?) {
+    val suffixLabel = props?.getString("suffixLabel")
+    val value = props?.getInt("value")
+    value?.toDouble()
+      ?.let { mutableMapLongManager.setMutableMapProps(it, "tapToSeekValue") }
+
+    suffixLabel?.let { MutableMapStringManager.getInstance().set("suffixLabel", it) }
+  }
+
+  @SuppressLint("SetTextI18n")
+  private fun multiplyTapToSeekValues(quantity: Int, isFoward: Boolean) {
+    val tapToSeekTime = mutableMapLongManager.getMutableMapProps("tapToSeekValue")
+    val suffixLabel = MutableMapStringManager.getInstance().get("suffixLabel")
+    if (isFoward) {
+      rightDoubleTap.doubleTapText.text = "${tapToSeekTime?.times(quantity)} $suffixLabel"
+    } else {
+      leftDoubleTap.doubleTapText.text = "-${tapToSeekTime?.times(quantity)} $suffixLabel"
+    }
+
   }
 }

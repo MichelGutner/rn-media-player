@@ -8,13 +8,13 @@ import android.view.WindowManager
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.facebook.react.bridge.ReadableMap
-import com.facebook.react.bridge.WritableMap
 import com.facebook.react.common.MapBuilder
-import com.facebook.react.modules.core.DeviceEventManagerModule
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
+import com.rnvideoplayer.events.events
 import com.rnvideoplayer.helpers.MutableMapLongManager
+import com.rnvideoplayer.helpers.MutableMapStringManager
 import com.rnvideoplayer.helpers.ReadableMapManager
 
 var currentWidth: Int = 0;
@@ -52,20 +52,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   }
 
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> {
-    val events = listOf(
-      "onMenuItemSelected",
-      "onVideoProgress",
-      "onLoaded",
-      "onCompleted",
-      "onReady",
-      "onBuffer",
-      "onBufferCompleted",
-      "onPlayPause"
-    )
-
-
     val mapBuilder = MapBuilder.builder<String, Any>()
-
     events.forEach { event ->
       mapBuilder.put(event, MapBuilder.of("registrationName", event))
     }
@@ -79,6 +66,12 @@ class RNVideoPlayer : SimpleViewManager<View>() {
     if (!url.isNullOrEmpty()) {
       rnVideoPlayerView.setMediaItem(url)
     }
+  }
+
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "rate")
+  fun setRate(rnVideoPlayerView: RNVideoPlayerView, rate: Double) {
+    rnVideoPlayerView.changeRate(rate.toFloat())
   }
 
   @OptIn(UnstableApi::class)
@@ -100,17 +93,17 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   }
 
   @OptIn(UnstableApi::class)
+  @ReactProp(name = "tapToSeek")
+  fun setSuffixLabelTapToSeek(player: RNVideoPlayerView, tapToSeek: ReadableMap?) {
+      player.changeTapToSeekProps(tapToSeek)
+  }
+
+  @OptIn(UnstableApi::class)
   @ReactProp(name = "changeQualityUrl")
   fun setChangeQualityUrl(player: RNVideoPlayerView, changeQualityUrl: String) {
     if (changeQualityUrl.isNotEmpty()) {
       player.changeQuality(changeQualityUrl)
     }
-  }
-
-  private fun sendEvent(eventName: String, params: WritableMap) {
-    reactApplicationContext
-      .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-      .emit(eventName, params)
   }
 }
 

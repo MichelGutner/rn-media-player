@@ -70,8 +70,7 @@ class CustomExoPlayer(private val context: ThemedReactContext, private val view:
   fun seekToPreviousPosition(position: Long) {
     exoPlayer.seekTo(exoPlayer.contentPosition - position)
   }
-
-  fun release() {
-    exoPlayer.release()
+  fun changeRate(rate: Float) {
+    exoPlayer.setPlaybackSpeed(rate)
   }
 }

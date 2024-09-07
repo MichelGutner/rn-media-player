@@ -6,6 +6,17 @@ import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.events.Event
 
+val events = listOf(
+  "onMenuItemSelected",
+  "onVideoProgress",
+  "onLoaded",
+  "onCompleted",
+  "onReady",
+  "onBuffer",
+  "onBufferCompleted",
+  "onPlayPause"
+)
+
 class Events(private val context: ReactContext) {
    fun send(eventName: String, view: View, params: WritableMap) {
      val dispatcher = UIManagerHelper.getEventDispatcher(context as ReactContext?, view.id)
