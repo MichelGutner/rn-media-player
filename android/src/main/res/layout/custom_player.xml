@@ -89,15 +89,23 @@
           android:orientation="horizontal"
           android:padding="16dp">
 
+        <LinearLayout
+          android:layout_width="45dp"
+          android:layout_height="45dp"
+          android:layout_gravity="end"
+          android:focusable="true"
+          android:clickable="true"
+          android:layout_marginStart="24dp"
+          android:layout_marginTop="22dp"
+          android:background="?android:attr/selectableItemBackgroundBorderless">
           <ImageButton
             android:id="@+id/animated_full_to_exit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="22dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:src="@drawable/animated_full_to_exit"
             tools:ignore="ContentDescription,HardcodedText" />
+        </LinearLayout>
 
           <!--          <androidx.mediarouter.app.MediaRouteButton-->
           <!--            android:id="@+id/media_route_button"-->
