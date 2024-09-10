@@ -7,10 +7,10 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.view.drawToBitmap
 import com.rnvideoplayer.R
-import com.rnvideoplayer.interfaces.ICustomThumbnailPreview
+import com.rnvideoplayer.interfaces.IThumbnailPreview
 import kotlin.concurrent.thread
 
-class CustomThumbnailPreview(view: View) : ICustomThumbnailPreview {
+class ThumbnailPreview(view: View) : IThumbnailPreview {
   private var timestamp = 0L
   val interval = 5000L
   val bitmaps = ArrayList<Bitmap>()

@@ -10,6 +10,7 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.media3.ui.PlayerView
 import com.facebook.react.uimanager.ThemedReactContext
+import com.rnvideoplayer.R
 import com.rnvideoplayer.helpers.TimeoutWork
 import com.rnvideoplayer.utils.fadeIn
 import com.rnvideoplayer.utils.fadeOut
@@ -17,20 +18,25 @@ import com.rnvideoplayer.utils.scaleView
 
 @SuppressLint("SetTextI18n")
 class CustomDoubleTapSeek(
-  val context: ThemedReactContext,
+  private val context: ThemedReactContext,
   view: View,
-  doubleTapViewId: Int,
-  doubleTapEffectId: Int,
-  doubleTapTextId: Int,
   isForward: Boolean
 ) {
-  private var doubleTapView: LinearLayout = view.findViewById(doubleTapViewId)
-  var effect: RelativeLayout = view.findViewById(doubleTapEffectId)
-  var doubleTapText: TextView = view.findViewById(doubleTapTextId)
-  var tappedQuantity: Int = 0
-  val timeoutWork = TimeoutWork()
+  private val doubleTapViewId = if (!isForward) R.id.double_tap_view else R.id.double_tap_right_view
+  private val doubleTapEffectId = if (!isForward) R.id.double_tap else R.id.double_tap_2
+  private val doubleTapTextId = if (!isForward) R.id.double_tap_text else R.id.double_tap_text_2
+
+  private val doubleTapView: LinearLayout = view.findViewById(doubleTapViewId)
+  val effect: RelativeLayout = view.findViewById(doubleTapEffectId)
+  val doubleTapText: TextView = view.findViewById(doubleTapTextId)
+  private var tappedQuantity: Int = 0
+  private val timeoutWork = TimeoutWork()
 
   init {
+    setupLayout(view, isForward)
+  }
+
+  private fun setupLayout(view: View, isForward: Boolean) {
     doubleTapView.viewTreeObserver.addOnGlobalLayoutListener {
       scaleView(isForward, doubleTapView)
       val layoutParams = doubleTapText.layoutParams as ViewGroup.MarginLayoutParams
@@ -62,7 +68,9 @@ class CustomDoubleTapSeek(
           }
 
           override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-            tappedQuantity++
+            if (tappedQuantity > 0) {
+              tappedQuantity++
+            }
             timeoutWork.cancelTimer()
             if (effect.visibility == PlayerView.VISIBLE) {
               timeoutWork.createTask {
