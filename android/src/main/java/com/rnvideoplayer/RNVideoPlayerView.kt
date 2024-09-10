@@ -1,14 +1,11 @@
 package com.rnvideoplayer
 
-import android.animation.ValueAnimator
 import com.rnvideoplayer.components.CustomBottomDialog
 import android.annotation.SuppressLint
 import android.view.View
-import android.view.animation.DecelerateInterpolator
-import android.widget.PopupMenu
+import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -19,18 +16,17 @@ import androidx.media3.ui.TimeBar.OnScrubListener
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ThemedReactContext
-import com.rnvideoplayer.components.CustomContentDialog
 import com.rnvideoplayer.components.CustomDoubleTapSeek
 import com.rnvideoplayer.components.CustomLoading
 import com.rnvideoplayer.components.CustomPlayerControls
 import com.rnvideoplayer.components.CustomSeekBar
-import com.rnvideoplayer.components.CustomThumbnailPreview
+import com.rnvideoplayer.components.PopUpMenu
+import com.rnvideoplayer.components.ThumbnailPreview
 import com.rnvideoplayer.events.Events
-import com.rnvideoplayer.exoPlayer.CustomExoPlayer
+import com.rnvideoplayer.exoPlayer.MediaPlayerInteractionHandle
 import com.rnvideoplayer.helpers.MutableMapLongManager
-import com.rnvideoplayer.helpers.MutableMapStringManager
 import com.rnvideoplayer.helpers.RNVideoHelpers
-import com.rnvideoplayer.helpers.ReadableMapManager
+import com.rnvideoplayer.helpers.TimeUnitManager
 import com.rnvideoplayer.helpers.TimeoutWork
 import com.rnvideoplayer.utils.fadeIn
 import com.rnvideoplayer.utils.fadeOut
@@ -44,10 +40,12 @@ import java.util.concurrent.TimeUnit
   "MissingInflatedId",
   "ClickableViewAccessibility"
 )
-class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
-  private val customPlayer = CustomExoPlayer(context, this)
-  private val exoPlayer = customPlayer.getExoPlayer()
-  private val videoPlayerView = customPlayer.getVideoPlayerView()
+class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(context) {
+  var mainView = this
+  val mediaPlayer = MediaPlayerInteractionHandle(context, this)
+  private val exoPlayer = mediaPlayer.exoPlayer
+
+  private val videoPlayerView = mediaPlayer.getVideoPlayerView()
   private val helper = RNVideoHelpers()
   private var menusData: MutableSet<String> = mutableSetOf()
 
@@ -55,39 +53,36 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 
   private val timeBar = CustomSeekBar(this)
   private val loading = CustomLoading(context, this)
-  private val thumbnail = CustomThumbnailPreview(this)
-  private val dialog = CustomBottomDialog(context)
+  private val thumbnail = ThumbnailPreview(this)
   private val playerController = CustomPlayerControls(context, this)
-  private val readableManager = ReadableMapManager.getInstance()
-  private val mutableMapLongManager = MutableMapLongManager.getInstance()
+  private val timeUnitHandler = TimeUnitManager()
 
   private var isVisibleControl: Boolean = false
   private var isFullScreen: Boolean = false
   private var isSeeking: Boolean = false
+  private var started: Boolean = false
+
+  private var doubleTapSuffixLabel: String = "seconds"
+  private var doubleTapValue: Long = 15000
+
   private val overlayView: RelativeLayout
 //  private var castPlayer: CastPlayer
 
   private var timeCodesDuration: TextView
-  private var contentDialog = CustomContentDialog(context, dialog)
-
   private var event = Events(context)
 
   private var leftDoubleTap = CustomDoubleTapSeek(
-    context, this, R.id.double_tap_view, R.id.double_tap, R.id.double_tap_text, false
+    context, this, false
   )
   private var rightDoubleTap = CustomDoubleTapSeek(
-    context, this, R.id.double_tap_right_view, R.id.double_tap_2, R.id.double_tap_text_2, true
+    context, this, true
   )
 
 
   init {
-    customPlayer.init()
-    customPlayer.playerInitialized {
-      event.send(EventNames.videoLoaded, this, Arguments.createMap().apply {
-        putDouble("duration", TimeUnit.MILLISECONDS.toSeconds(exoPlayer.duration).toDouble())
-      })
-      timeoutControls()
-    }
+    rightDoubleTapGesture()
+    leftDoubleTapGesture()
+//    customPlayer.init()
 //    val castContext = CastContext.getSharedInstance(context)
 //    val mediaRouteButton = findViewById<MediaRouteButton>(R.id.media_route_button)
 
@@ -112,8 +107,17 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
           Player.STATE_READY -> {
             playerController.setVisibilityPlayPauseButton(true)
             loading.hide()
-            timeBar.build(exoPlayer.duration)
-            timeCodesDuration.text = helper.createTimeCodesFormatted(exoPlayer.duration)
+            if (!started) {
+              started = true
+              timeBar.build(exoPlayer.duration)
+              timeCodesDuration.text = helper.createTimeCodesFormatted(exoPlayer.duration)
+
+              event.send(EventNames.videoLoaded, mainView, Arguments.createMap().apply {
+                putDouble("duration", timeUnitHandler.toSecondsDouble(exoPlayer.duration))
+              })
+              timeoutControls()
+              buildThumbnails()
+            }
           }
 
           Player.STATE_ENDED -> {
@@ -189,33 +193,6 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
       onToggleControlsVisibility()
     }
 
-    leftDoubleTap.tap({ quantity ->
-      multiplyTapToSeekValues(quantity, false)
-      if (leftDoubleTap.effect.visibility == VISIBLE) {
-        customPlayer.seekToPreviousPosition(15000)
-      } else {
-        onToggleControlsVisibility()
-      }
-    }, { quantity ->
-      multiplyTapToSeekValues(quantity, false)
-      hideControls()
-      customPlayer.seekToPreviousPosition(15000)
-    })
-
-    rightDoubleTap.tap({ quantity ->
-      multiplyTapToSeekValues(quantity, true)
-      if (rightDoubleTap.effect.visibility == VISIBLE) {
-        customPlayer.seekToNextPosition(15000)
-      } else {
-        onToggleControlsVisibility()
-      }
-    }, { quantity ->
-      multiplyTapToSeekValues(quantity, true)
-      rightDoubleTap.effect.fadeIn(200)
-      hideControls()
-      customPlayer.seekToNextPosition(15000)
-    })
-
     playerController.setSettingsButtonClickListener { viewer ->
       showPopUp(viewer)
     }
@@ -239,28 +216,25 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
 //    })
 
 
-    runnable()
+    startPlaybackProgressUpdater()
+  }
+
+  private fun buildThumbnails() {
+    if (mediaPlayer.thumbnailUrl.isNotBlank()) {
+      thumbnail.generatingThumbnailFrames(mediaPlayer.thumbnailUrl)
+    }
   }
 
   private fun showPopUp(view: View) {
-    val popup = PopupMenu(context, view)
-    menusData.forEach { menuItemTitle ->
-      val item = popup.menu.add(menuItemTitle)
-      item.icon = ContextCompat.getDrawable(context, R.drawable.arrow_forward)
-      item.setOnMenuItemClickListener { menuItem ->
-        val option = readableManager.getReadableMapProps(menuItem.title.toString())
-        contentDialog.showOptionsDialog(option, "") { _, value ->
-          event.send(EventNames.menuItemSelected, this, Arguments.createMap().apply {
-            putString("name", menuItemTitle)
-            putString("value", value.toString())
-          })
-        }
-        true
+    val popupMenu by lazy {
+      PopUpMenu(menusData, context, view) { title, value ->
+        event.send(EventNames.menuItemSelected, this, Arguments.createMap().apply {
+          putString("name", title)
+          putString("value", value.toString())
+        })
       }
     }
-    popup.inflate(R.menu.popup_menu)
-    popup.gravity.also { popup.gravity = 5 }
-    popup.show()
+    popupMenu.show()
   }
 
   private fun onTranslateXThumbnail(currentSeekPoint: Long): Float {
@@ -274,23 +248,17 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
     return translateX
   }
 
-  private fun runnable() {
+  private fun startPlaybackProgressUpdater() {
     val updateIntervalMs = 1000L
     val updateSeekBarTask = (object : Runnable {
       override fun run() {
-        if (exoPlayer.playWhenReady && exoPlayer.isPlaying) {
+        if (exoPlayer.isPlaying) {
           updateTimeBar()
         }
         postDelayed(this, updateIntervalMs)
       }
     })
     post(updateSeekBarTask)
-  }
-
-  fun setMediaItem(url: String) {
-    val startTime = mutableMapLongManager.getMutableMapProps("startTime")
-    customPlayer.buildMediaItem(url, startTime)
-    thumbnail.generatingThumbnailFrames(url)
   }
 
   private fun updateTimeBar() {
@@ -306,22 +274,10 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   }
 
   private fun toggleFullScreen() {
-    val startHeight = this.height
-    val targetHeight = if (isFullScreen) currentHeight else context.resources.displayMetrics.heightPixels
-
-    val heightAnimator = ValueAnimator.ofInt(startHeight, targetHeight)
-    heightAnimator.addUpdateListener { animation ->
-      val newHeight = animation.animatedValue as Int
-      val params = this.layoutParams
-      params.height = newHeight
-      this.layoutParams = params
-    }
-    heightAnimator.duration = 300
-    heightAnimator.interpolator = DecelerateInterpolator()
-    heightAnimator.start()
-
+    if (isFullScreen) layoutParams.height = currentHeight else layoutParams.height =
+      ViewGroup.LayoutParams.MATCH_PARENT
     isFullScreen = !isFullScreen
-    this.requestLayout()
+    requestLayout()
   }
 
   private fun onToggleControlsVisibility() {
@@ -359,32 +315,80 @@ class RNVideoPlayerView(context: ThemedReactContext) : PlayerView(context) {
   }
 
   fun changeQuality(newQualityUrl: String) {
-    customPlayer.changeVideoQuality(newQualityUrl)
+    mediaPlayer.changeVideoQuality(newQualityUrl)
   }
 
   fun changeRate(rate: Float) {
-    customPlayer.changeRate(rate)
+    mediaPlayer.changeRate(rate)
   }
 
   @SuppressLint("SetTextI18n")
   fun changeTapToSeekProps(props: ReadableMap?) {
     val suffixLabel = props?.getString("suffixLabel")
     val value = props?.getInt("value")
-    value?.toDouble()
-      ?.let { mutableMapLongManager.setMutableMapProps(it, "tapToSeekValue") }
 
-    suffixLabel?.let { MutableMapStringManager.getInstance().set("suffixLabel", it) }
+    if (suffixLabel != null) {
+      doubleTapSuffixLabel = suffixLabel
+    }
+    if (value != null) {
+      doubleTapValue = value.toLong()
+    }
+  }
+
+  private fun rightDoubleTapGesture() {
+    rightDoubleTap.tap(
+      onSingleTap = { quantity ->
+        updateRightDoubleTapText(rightDoubleTap, quantity)
+        if (rightDoubleTap.effect.visibility == VISIBLE) {
+          performSeekToNextPosition()
+        } else {
+          onToggleControlsVisibility()
+        }
+      },
+      onDoubleTap = { quantity ->
+        performSeekToNextPosition()
+        updateRightDoubleTapText(rightDoubleTap, quantity)
+        hideControls()
+      }
+    )
+  }
+
+  private fun leftDoubleTapGesture() {
+    leftDoubleTap.tap(
+      onSingleTap = { quantity ->
+        updateDoubleTapText(leftDoubleTap, quantity)
+        if (leftDoubleTap.effect.visibility == VISIBLE) {
+          performSeekToPreviousPosition()
+        } else {
+          onToggleControlsVisibility()
+        }
+      },
+      onDoubleTap = { quantity ->
+        performSeekToPreviousPosition()
+        updateDoubleTapText(leftDoubleTap, quantity)
+        hideControls()
+      })
   }
 
   @SuppressLint("SetTextI18n")
-  private fun multiplyTapToSeekValues(quantity: Int, isForward: Boolean) {
-    val tapToSeekTime = mutableMapLongManager.getMutableMapProps("tapToSeekValue")
-    val suffixLabel = MutableMapStringManager.getInstance().get("suffixLabel")
-    if (isForward) {
-      rightDoubleTap.doubleTapText.text = "${tapToSeekTime?.times(quantity)} $suffixLabel"
-    } else {
-      leftDoubleTap.doubleTapText.text = "-${tapToSeekTime?.times(quantity)} $suffixLabel"
-    }
-
+  private fun updateRightDoubleTapText(doubleTap: CustomDoubleTapSeek, quantity: Int) {
+    doubleTap.doubleTapText.text = "${doubleTapValue.times(quantity)} $doubleTapSuffixLabel"
   }
+  @SuppressLint("SetTextI18n")
+  private fun updateDoubleTapText(doubleTap: CustomDoubleTapSeek, quantity: Int) {
+    doubleTap.doubleTapText.text = "- ${doubleTapValue.times(quantity)} $doubleTapSuffixLabel"
+  }
+
+  private fun performSeekToNextPosition() {
+    this.post {
+      mediaPlayer.seekToNextPosition(doubleTapValue * 1000)
+    }
+  }
+
+  private fun performSeekToPreviousPosition() {
+    this.post {
+      mediaPlayer.seekToPreviousPosition(doubleTapValue * 1000)
+    }
+  }
+
 }
