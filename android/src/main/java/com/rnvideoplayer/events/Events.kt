@@ -14,7 +14,8 @@ val events = listOf(
   "onReady",
   "onBuffer",
   "onBufferCompleted",
-  "onPlayPause"
+  "onPlayPause",
+  "onError"
 )
 
 class Events(private val context: ReactContext) {

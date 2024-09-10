@@ -10,36 +10,52 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.R
 
 @UnstableApi
-class CustomExoPlayer(private val context: ThemedReactContext, private val view: PlayerView) {
-  private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build();
+class MediaPlayerInteractionHandler(private val context: ThemedReactContext, private val view: PlayerView) {
+  val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build()
+  var thumbnailUrl: String = ""
 
   init {
+    inflateLayout()
+  }
+
+  private fun inflateLayout() {
     val inflater = LayoutInflater.from(context)
     inflater.inflate(R.layout.custom_player, view, true)
   }
 
-  fun init() {
+  fun autoPlay(autoPlay: Boolean = true) {
+    exoPlayer.playWhenReady = autoPlay
+  }
+
+  fun build(source: ReadableMap?) {
+    val url = source?.getString("url") as String
+    val startTime = source.getDouble("startTime")
+    val thumbnailProps = source.getMap("thumbnails")
+
+    if (url.isEmpty()) {
+      return
+    }
+
+    val mediaItem = MediaItem.fromUri(Uri.parse(url))
+    exoPlayer.setMediaItem(mediaItem, startTime.toLong())
+
     view.player = exoPlayer
     view.useController = false
     exoPlayer.prepare()
-    exoPlayer.playWhenReady = true
-  }
 
-  fun buildMediaItem(url: String, startTime: Long?) {
-    val mediaItem = MediaItem.fromUri(Uri.parse(url))
-    if (startTime != null) {
-      exoPlayer.setMediaItem(mediaItem, startTime * 1000)
-    } else {
-      exoPlayer.setMediaItem(mediaItem)
+    val thumbnailUrl = thumbnailProps?.getString("url") as String
+    val enabled = thumbnailProps.getBoolean("enableGenerate")
+
+    if (enabled) {
+      if (thumbnailUrl.isNotEmpty()) {
+        this.thumbnailUrl = thumbnailUrl
+      }
     }
-  }
-
-  fun getExoPlayer(): ExoPlayer {
-    return exoPlayer
   }
 
   fun getVideoPlayerView(): PlayerView {
@@ -64,15 +80,18 @@ class CustomExoPlayer(private val context: ThemedReactContext, private val view:
   }
 
   fun seekToNextPosition(position: Long) {
+    println("seekToNextPosition $position")
     exoPlayer.seekTo(exoPlayer.contentPosition + position)
   }
 
   fun seekToPreviousPosition(position: Long) {
     exoPlayer.seekTo(exoPlayer.contentPosition - position)
   }
+
   fun changeRate(rate: Float) {
     exoPlayer.setPlaybackSpeed(rate)
   }
+
   fun playerInitialized(callback: (Boolean) -> Unit) {
     exoPlayer.addListener(object : Player.Listener {
       override fun onPlaybackStateChanged(playbackState: Int) {

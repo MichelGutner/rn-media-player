@@ -1,6 +1,5 @@
 package com.rnvideoplayer
 
-import com.rnvideoplayer.components.CustomBottomDialog
 import android.annotation.SuppressLint
 import android.view.View
 import android.view.ViewGroup
@@ -23,8 +22,7 @@ import com.rnvideoplayer.components.CustomSeekBar
 import com.rnvideoplayer.components.PopUpMenu
 import com.rnvideoplayer.components.ThumbnailPreview
 import com.rnvideoplayer.events.Events
-import com.rnvideoplayer.exoPlayer.MediaPlayerInteractionHandle
-import com.rnvideoplayer.helpers.MutableMapLongManager
+import com.rnvideoplayer.exoPlayer.MediaPlayerInteractionHandler
 import com.rnvideoplayer.helpers.RNVideoHelpers
 import com.rnvideoplayer.helpers.TimeUnitManager
 import com.rnvideoplayer.helpers.TimeoutWork
@@ -42,7 +40,7 @@ import java.util.concurrent.TimeUnit
 )
 class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(context) {
   var mainView = this
-  val mediaPlayer = MediaPlayerInteractionHandle(context, this)
+  val mediaPlayer = MediaPlayerInteractionHandler(context, this)
   private val exoPlayer = mediaPlayer.exoPlayer
 
   private val videoPlayerView = mediaPlayer.getVideoPlayerView()
@@ -53,8 +51,10 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
 
   private val timeBar = CustomSeekBar(this)
   private val loading = CustomLoading(context, this)
-  private val thumbnail = ThumbnailPreview(this)
-  private val playerController = CustomPlayerControls(context, this)
+  private val controls = CustomPlayerControls(context, this)
+
+  private val thumbnail by lazy {  ThumbnailPreview(this) }
+
   private val timeUnitHandler = TimeUnitManager()
 
   private var isVisibleControl: Boolean = false
@@ -82,7 +82,6 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
   init {
     rightDoubleTapGesture()
     leftDoubleTapGesture()
-//    customPlayer.init()
 //    val castContext = CastContext.getSharedInstance(context)
 //    val mediaRouteButton = findViewById<MediaRouteButton>(R.id.media_route_button)
 
@@ -100,18 +99,26 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
         super.onPlaybackStateChanged(playbackState)
         when (playbackState) {
           Player.STATE_BUFFERING -> {
-            playerController.setVisibilityPlayPauseButton(false)
+            controls.setVisibilityPlayPauseButton(false)
             loading.show()
+            event.send(EventNames.videoBuffering, mainView, Arguments.createMap().apply {
+              putBoolean("buffering", true)
+            })
           }
 
           Player.STATE_READY -> {
-            playerController.setVisibilityPlayPauseButton(true)
+            controls.setVisibilityPlayPauseButton(true)
             loading.hide()
+            event.send(EventNames.videoBuffering, mainView, Arguments.createMap().apply {
+              putBoolean("buffering", false)
+            })
+            event.send(EventNames.videoReady, mainView, Arguments.createMap().apply {
+              putBoolean("ready", true)
+            })
             if (!started) {
               started = true
               timeBar.build(exoPlayer.duration)
               timeCodesDuration.text = helper.createTimeCodesFormatted(exoPlayer.duration)
-
               event.send(EventNames.videoLoaded, mainView, Arguments.createMap().apply {
                 putDouble("duration", timeUnitHandler.toSecondsDouble(exoPlayer.duration))
               })
@@ -121,8 +128,11 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
           }
 
           Player.STATE_ENDED -> {
-            playerController.setVisibilityReplayButton(true)
-            playerController.setVisibilityPlayPauseButton(false)
+            controls.setVisibilityReplayButton(true)
+            controls.setVisibilityPlayPauseButton(false)
+            event.send(EventNames.videoCompleted, mainView, Arguments.createMap().apply {
+              putBoolean("completed", true)
+            })
           }
 
           Player.STATE_IDLE -> {}
@@ -132,12 +142,17 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
       }
 
       override fun onPlayerError(error: PlaybackException) {
-//        println("Error: ${error.errorCode} ${error.message} ${error.localizedMessage} ${error.stackTrace} ${error.cause} ${error.errorCodeName} ${error.timestampMs}")
-        // handle errors
+        event.send(EventNames.videoErrorStatus, mainView, Arguments.createMap().apply {
+          putString("error", error.cause.toString())
+          putDouble("code", error.errorCode.toDouble())
+          putString("userInfo", error.message)
+          putString("description", error.stackTrace.toString())
+          putString("failureReason", error.errorCodeName)
+        })
       }
     })
 
-    playerController.setPlayPauseButtonClickListener {
+    controls.setPlayPauseButtonClickListener {
       when {
         exoPlayer.isPlaying -> {
           exoPlayer.pause()
@@ -149,34 +164,38 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
           exoPlayer.play()
         }
       }
-      playerController.morphPlayPause(exoPlayer.isPlaying)
+      controls.morphPlayPause(exoPlayer.isPlaying)
       event.send(EventNames.videoPlayPauseStatus, this, Arguments.createMap().apply {
         putBoolean("isPlaying", exoPlayer.isPlaying)
       })
     }
 
-    playerController.setFullScreenButtonClickListener {
-      playerController.morphFullScreen(isFullScreen)
+    controls.setFullScreenButtonClickListener {
+      controls.morphFullScreen(isFullScreen)
       toggleFullScreen()
     }
 
     timeBar.onScrubListener(object : OnScrubListener {
       override fun onScrubStart(timeBar: TimeBar, position: Long) {
         isSeeking = true
+        controls.playPauseBackground.visibility = View.GONE
+        thumbnail.show()
+        timeoutWork.cancelTimer()
       }
 
+
       override fun onScrubMove(scrubTimeBar: TimeBar, position: Long) {
-        val seconds = TimeUnit.MILLISECONDS.toSeconds(position)
         val duration = TimeUnit.MILLISECONDS.toSeconds(exoPlayer.duration)
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(position)
         val intervalInSeconds = TimeUnit.MILLISECONDS.toSeconds(thumbnail.interval)
         val index = (seconds / intervalInSeconds).toInt()
         val currentSeekPoint = ((((seconds * 100) / duration) * timeBar.width) / 100)
+        thumbnail.getCurrentPlayerPosition(helper.createTimeCodesFormatted(position))
+
         if (index < thumbnail.bitmaps.size) {
           thumbnail.setCurrentImageBitmapByIndex(index)
           thumbnail.translationX = onTranslateXThumbnail(currentSeekPoint)
         }
-        thumbnail.getCurrentPlayerPosition(helper.createTimeCodesFormatted(position))
-        thumbnail.show()
       }
 
       override fun onScrubStop(timeBar: TimeBar, position: Long, canceled: Boolean) {
@@ -184,7 +203,11 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
           exoPlayer.seekTo(position)
           thumbnail.hide()
           isSeeking = false
-          playerController.setVisibilityReplayButton(false)
+          controls.setVisibilityReplayButton(false)
+          timeoutControls()
+          post {
+            controls.playPauseBackground.visibility = View.VISIBLE
+          }
         }
       }
     })
@@ -193,14 +216,14 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
       onToggleControlsVisibility()
     }
 
-    playerController.setSettingsButtonClickListener { viewer ->
+    controls.setSettingsButtonClickListener { viewer ->
       showPopUp(viewer)
     }
 
-    playerController.setReplayButtonClickListener {
+    controls.setReplayButtonClickListener {
       exoPlayer.seekTo(0)
       thumbnail.translationX = 0F
-      playerController.setVisibilityReplayButton(false)
+      controls.setVisibilityReplayButton(false)
     }
 
     //TODO: need implement cast
@@ -238,10 +261,11 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
   }
 
   private fun onTranslateXThumbnail(currentSeekPoint: Long): Float {
+    val timeBarWidth = timeBar.width.toFloat() + context.resources.displayMetrics.widthPixels * 0.10F
     var translateX = 16.0F
-    if (currentSeekPoint.toFloat() + thumbnail.width / 2 >= timeBar.width.toFloat()) {
-      translateX = (timeBar.width.toFloat() - thumbnail.width) - 16
-    } else if (currentSeekPoint.toFloat() >= thumbnail.width / 2 && currentSeekPoint.toFloat() + thumbnail.width / 2 < timeBar.width.toFloat()) {
+    if (currentSeekPoint.toFloat() + thumbnail.width / 2 >= timeBarWidth) {
+      translateX = (timeBarWidth - thumbnail.width) - 16
+    } else if (currentSeekPoint.toFloat() >= thumbnail.width / 2 && currentSeekPoint.toFloat() + thumbnail.width / 2 < timeBarWidth) {
       translateX = currentSeekPoint.toFloat() - thumbnail.width / 2
     }
 

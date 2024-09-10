@@ -1,6 +1,6 @@
 package com.rnvideoplayer.interfaces
 
-interface ICustomThumbnailPreview {
+interface IThumbnailPreview {
   fun setCurrentImageBitmapByIndex(index: Int)
   fun show()
   fun hide()

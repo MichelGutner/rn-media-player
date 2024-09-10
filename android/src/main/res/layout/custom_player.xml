@@ -119,6 +119,7 @@
         </LinearLayout>
 
         <RelativeLayout
+          android:id="@+id/play_pause_background"
           android:layout_width="80dp"
           android:layout_height="80dp"
           android:layout_centerInParent="true"
@@ -157,8 +158,8 @@
 
           <ImageView
             android:id="@+id/preview_image_view"
-            android:layout_width="220dp"
-            android:layout_height="120dp"
+            android:layout_width="250dp"
+            android:layout_height="150dp"
             android:layout_gravity="left"
             android:background="@drawable/rounded_corner_background"
             android:cropToPadding="false"
@@ -242,6 +243,7 @@
             </LinearLayout>
 
             <LinearLayout
+              android:id="@+id/settings_control_layout"
               android:layout_width="45dp"
               android:layout_height="45dp"
               android:layout_gravity="end"

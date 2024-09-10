@@ -14,7 +14,6 @@ import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
 import com.rnvideoplayer.events.events
 import com.rnvideoplayer.helpers.MutableMapLongManager
-import com.rnvideoplayer.helpers.MutableMapStringManager
 import com.rnvideoplayer.helpers.ReadableMapManager
 
 var currentWidth: Int = 0;
@@ -62,16 +61,19 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   @OptIn(UnstableApi::class)
   @ReactProp(name = "source")
   fun setSource(rnVideoPlayerView: RNVideoPlayerView, source: ReadableMap?) {
-    val url = source?.getString("url")
-    if (!url.isNullOrEmpty()) {
-      rnVideoPlayerView.setMediaItem(url)
-    }
+      rnVideoPlayerView.mediaPlayer.build(source)
   }
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "rate")
   fun setRate(rnVideoPlayerView: RNVideoPlayerView, rate: Double) {
     rnVideoPlayerView.changeRate(rate.toFloat())
+  }
+
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "autoPlay")
+  fun setAutoPlay(rnVideoPlayerView: RNVideoPlayerView, autoPlay: Boolean) {
+    rnVideoPlayerView.mediaPlayer.autoPlay(autoPlay)
   }
 
   @OptIn(UnstableApi::class)
@@ -95,7 +97,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   @OptIn(UnstableApi::class)
   @ReactProp(name = "tapToSeek")
   fun setSuffixLabelTapToSeek(player: RNVideoPlayerView, tapToSeek: ReadableMap?) {
-      player.changeTapToSeekProps(tapToSeek)
+    player.changeTapToSeekProps(tapToSeek)
   }
 
   @OptIn(UnstableApi::class)
@@ -114,6 +116,6 @@ public object EventNames {
   const val videoCompleted = "onCompleted"
   const val videoReady = "onReady"
   const val videoBuffering = "onBuffer"
-  const val videoBufferCompleted = "onBufferCompleted"
   const val videoPlayPauseStatus = "onPlayPause"
+  const val videoErrorStatus = "onError"
 }
