@@ -35,9 +35,9 @@ function App(): JSX.Element {
     <>
       <Video
         source={{
-          // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+          url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
           // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-          url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
           title: '',
           // TODO: must be implement ios
           startTime: 35,
@@ -131,7 +131,6 @@ function App(): JSX.Element {
         //   //   titleColor: '#d71e1e',
         //   // },
         // }}
-        onSettings={() => console.log('MORE OPTIONS TAPPED')}
         // onFullScreen={({nativeEvent}) =>
         //   console.log(nativeEvent.fullScreen)
         // }

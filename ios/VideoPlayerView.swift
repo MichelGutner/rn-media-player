@@ -34,6 +34,7 @@ struct VideoPlayerView: View {
     )
     var tapToSeek: NSDictionary? = [:]
     
+    @State private var rate: Float = 0.0
     @State private var isFullScreen: Bool = false
     @State private var controlsVisible: Bool = true
     @State private var isReadyToPlay = false
@@ -102,13 +103,19 @@ struct VideoPlayerView: View {
                             name: .AVPlayerItemDidPlayToEndTime,
                             object: player.currentItem
                         )
-                        
                         NotificationCenter.default.addObserver(
                             playbackObserver,
                             selector: #selector(PlaybackObserver.deviceOrientation(_:)),
                             name: UIDevice.orientationDidChangeNotification,
                             object: nil
                         )
+                        NotificationCenter.default.addObserver(
+                            playbackObserver,
+                            selector: #selector(PlaybackObserver.handleRateChangeNotification(_:)),
+                            name: .AVPlayerRateDidChange,
+                            object: nil
+                        )
+                        
                         periodicTimeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
                             updatePlayerTime(time.seconds)
                         }
@@ -126,6 +133,12 @@ struct VideoPlayerView: View {
                         isFinishedPlaying = isFinished
                         timeoutWorkItem?.cancel()
                     })
+                    .onReceive(playbackObserver.$changedRate) { changedRate in
+                        rate = changedRate
+                        if (player.timeControlStatus == .playing) {
+                            player.rate = changedRate
+                        }
+                    }
                     .onTapGesture {
                         withAnimation {
                             toggleControls()
@@ -233,7 +246,6 @@ struct VideoPlayerView: View {
                 Menu(option.key) {
                     ForEach(option.values, id: \.self) { item in
                         Button(action: {
-                            let name = item["name"] as! String
                             let value = item["value"] as Any
                             controls.optionSelected(option.key, value)
                         }) {
@@ -435,7 +447,7 @@ struct VideoPlayerView: View {
             }
         } else {
             player.play()
-            
+            player.rate = rate
             scheduleHideControls()
         }
     }
@@ -592,4 +604,8 @@ struct DoubleTapManager : View {
     }
     .edgesIgnoringSafeArea(Edge.Set.all)
   }
+}
+
+extension Notification.Name {
+    static let AVPlayerRateDidChange = Notification.Name("AVPlayerRateDidChange")
 }

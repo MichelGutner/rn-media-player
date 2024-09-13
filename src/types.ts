@@ -36,30 +36,8 @@ type TVideoPlayerControlConfig = {
     durationColor?: string;
     slashColor?: string;
   };
-  settings?: {
-    color?: string;
-  };
   fullScreen?: {
     color?: string;
-  };
-  download?: {
-    color?: string;
-    progressBarColor?: string;
-    progressBarFillColor?: string;
-    messageDelete?: string;
-    messageDownload?: string;
-    labelDelete?: string;
-    labelCancel?: string;
-    labelDownload?: string;
-  };
-  toast?: {
-    label?: string;
-    backgroundColor?: string;
-    labelColor?: string;
-  };
-  header?: {
-    leftButtonColor?: string;
-    titleColor?: string;
   };
 };
 
@@ -116,7 +94,6 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
    */
   changeQualityUrl?: string;
   controlsProps?: TVideoPlayerControlConfig;
-  onSettings?: () => void;
   onFullScreen?: TOnVideoFullScreen;
   /**
    * iOS only

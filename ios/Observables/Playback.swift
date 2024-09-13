@@ -8,10 +8,10 @@
 import Foundation
 import AVFoundation
 
-class PlaybackObserver: ObservableObject {
-    @Published var playbackStatus = AVPlayerItem.Status.unknown
+class PlaybackObserver: ObservableObject {    @Published var playbackStatus = AVPlayerItem.Status.unknown
     @Published var deviceOrientation = UIDevice.current.orientation.isPortrait
     @Published var isFinished: Bool = false
+    @Published var changedRate: Float = 0.0
     
     
     @objc func playbackItem(_ notification: Notification) {
@@ -20,15 +20,19 @@ class PlaybackObserver: ObservableObject {
     }
     
     @objc func deviceOrientation(_ notification: Notification) {
-        // Lógica para lidar com a mudança de orientação do dispositivo
         if let device = notification.object as? UIDevice {
             deviceOrientation = device.orientation.isPortrait
         }
     }
     
     @objc func itemDidFinishPlaying(_ notification: Notification) {
-        let avPlayerItem = notification.object as? AVPlayerItem
         isFinished = true
+    }
+    
+    @objc func handleRateChangeNotification(_ notification: Notification) {
+        if let userInfo = notification.userInfo, let rate = userInfo["rate"] as? Float {
+            changedRate = rate
+        }
     }
 }
 

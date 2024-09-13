@@ -56,7 +56,7 @@ class RNVideoPlayerView : UIView {
     
     @objc var rate: Float = 0.0 {
         didSet {
-            self.onChangeRate(rate)
+            NotificationCenter.default.post(name: .AVPlayerRateDidChange, object: nil, userInfo: ["rate": rate])
         }
     }
     
@@ -88,6 +88,8 @@ class RNVideoPlayerView : UIView {
         
         player.actionAtItemEnd = .none
         player.addObserver(self, forKeyPath: "status", options: .new, context: nil)
+        player.addObserver(self, forKeyPath: "rate", options: [.new, .old], context: nil)
+        
         player.currentItem?.addObserver(self, forKeyPath: "playbackBufferEmpty", options: .new, context: nil)
         player.currentItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
         player.currentItem?.addObserver(self, forKeyPath: "playbackBufferFull", options: .new, context: nil)
@@ -212,6 +214,9 @@ class RNVideoPlayerView : UIView {
     }
 
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "rate" {
+            NotificationCenter.default.post(name: .AVPlayerRateDidChange, object: player)
+        }
         if keyPath == "status" {
             if player?.status == .readyToPlay {
 //                setup()
@@ -269,13 +274,6 @@ class RNVideoPlayerView : UIView {
             player?.pause()
         } else {
             player?.play()
-        }
-    }
-    
-    @objc private func onChangeRate(_ rate: Float) {
-        player?.rate = rate
-        if (player?.timeControlStatus == .paused) {
-            player?.pause()
         }
     }
 
