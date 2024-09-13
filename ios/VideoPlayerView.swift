@@ -11,798 +11,564 @@ import Combine
 
 @available(iOS 14.0, *)
 struct VideoPlayerView: View {
-  @ObservedObject private var playbackObserver = PlaybackObserver()
-  @State private var player: AVPlayer
-  @State private var menus: NSDictionary
-    @State private var controlsCallback: Controls
-  @State private var isLoading: Bool = false
-  @State private var title: String = ""
-  @State private var showPlayerControls: Bool = false
-  @State private var isPlaying: Bool? = nil
-  @State private var timeoutTask: DispatchWorkItem?
-  @State private var timeObserver: Any? = nil
-  
-  @GestureState private var isDraggingSlider: Bool = false
-  @State private var sliderProgress = 0.0
-  @State private var lastDraggedProgress: CGFloat = 0
-  @State private var isSeeking: Bool = false
-  @State private var buffering: Double = 0.0
-  @State private var isFinishedPlaying: Bool = false
-  @State private var isObservedAdded: Bool = false
-  @State private var isSeekingByDoubleTap: Bool = false
-  
-  @State private var thumbnailsFrames: [UIImage] = []
-  @State private var draggingImage: UIImage?
-  
-  @State private var duration: Double = 0
-  @State private var currentTime: Double = 0
-  @State private var videoPlayerSize: CGSize!
-  
-  @State private var isFullScreen: Bool = false
-  
-  @State private var isActiveAutoPlay: Bool = false
-  @State private var isActiveLoop: Bool = false
-  @State private var videoGravity: AVLayerVideoGravity!
-  @State private var interval = CMTime(value: 1, timescale: 2)
-  
-  @State private var downloadProgress: Float = 0.0
-  @State private var downloadInProgress: Bool = false
-  @State private var showActionSheetFileManager = false
-  
-  @State private var seekerThumbImageSize: CGSize = .init(width: 12, height: 12)
-  @State private var doubleTapSeekValue: Int = 10
-  @State private var suffixLabelDoubleTapSeek: String = "Seconds"
-  @State private var isPresentToast: Bool = false
-  
-  @State private var controlsProps: HashableControllers? = .init(
-    playbackControl: .init(dictionary: [:]),
-    seekSliderControl: .init(dictionary: [:]),
-    timeCodesControl: .init(dictionary: [:]),
-    settingsControl: .init(dictionary: [:]),
-    fullScreenControl: .init(dictionary: [:]),
-    downloadControl: .init(dictionary: [:]),
-    toastControl: .init(dictionary: [:]),
-    headerControl: .init(dictionary: [:]),
-    loadingControl: .init(dictionary: [:])
-  )
-  
-  var size: CGSize
-  var safeAreaInsets: EdgeInsets
-  var onTapFullScreenControl: (Bool) -> Void
-  var onTapSettingsControl: () -> Void
-  var onTapHeaderGoback: () -> Void
-  
-  private var fileManager = PlayerFileManager()
-  
-  init(
-    size: CGSize,
-    safeAreaInsets: EdgeInsets,
-    player: AVPlayer,
-    menus: NSDictionary,
-    controlsCallback: Controls,
-    isLoading: Bool,
-    title: String,
-    playbackFinished: Bool,
-    thumbnails: [UIImage],
-    onTapFullScreenControl: @escaping (Bool) -> Void,
-    doubleTapSeekValue: Int,
-    suffixLabelDoubleTapSeek: String,
-    isFullScreen: Bool,
-    onTapSettingsControl: @escaping () -> Void,
-    isActiveAutoPlay: Bool,
-    isActiveLoop: Bool,
-    videoGravity: AVLayerVideoGravity,
-    sliderProgress: Double,
-    lastDraggedProgress: Double,
-    isPlaying: Bool?,
-    controllersPropsData: HashableControllers?,
-    downloadInProgress: Bool,
-    downloadProgress: Float,
-    onTapHeaderGoback: @escaping () -> Void
-  ) {
-      self.size = size
-      self.safeAreaInsets = safeAreaInsets
-      self.onTapFullScreenControl = onTapFullScreenControl
-      self.onTapSettingsControl = onTapSettingsControl
-      self.onTapHeaderGoback = onTapHeaderGoback
-      _player = State(initialValue: player)
-      _menus = State(initialValue: menus)
-      _controlsCallback = State(initialValue: controlsCallback)
-      _thumbnailsFrames = State(initialValue: thumbnails)
-      _isFullScreen = State(wrappedValue: isFullScreen)
-      _playbackObserver = ObservedObject(initialValue: PlaybackObserver())
-      _isActiveAutoPlay = State(initialValue: isActiveAutoPlay)
-      _isActiveLoop = State(initialValue: isActiveLoop)
-      _videoGravity = State(wrappedValue: videoGravity)
-      _isFinishedPlaying = State(initialValue: playbackFinished)
-      _isPlaying = State(wrappedValue: isPlaying)
-      _timeObserver = State(initialValue: nil)
-      _title = State(initialValue: title)
-      _isLoading = State(initialValue: isLoading)
-      _doubleTapSeekValue = State(initialValue: doubleTapSeekValue)
-      _suffixLabelDoubleTapSeek = State(initialValue: suffixLabelDoubleTapSeek)
-      _controlsProps = State(initialValue: controllersPropsData)
-      _downloadInProgress = State(initialValue: downloadInProgress)
-      _downloadProgress = State(wrappedValue: downloadProgress)
-  }
-  
-  var body: some View {
-    VStack {
-      let videoPlayerSize: CGSize = .init(width: size.width, height: size.height)
-      
-      ZStack {
-            CustomVideoPlayer(player: player, videoGravity: videoGravity)
-              .edgesIgnoringSafeArea(isFullScreen ? Edge.Set.all : [])
-              .transition(.scale.combined(with: .opacity))
-              .overlay(
-                Rectangle()
-                  .fill(Color.black.opacity(0.4))
-                  .opacity(showPlayerControls || isDraggingSlider ? 1 : 0)
-                  .animation(.easeInOut(duration: AnimationDuration.s035), value: isDraggingSlider)
-                  .edgesIgnoringSafeArea(Edge.Set.all)
-              )
-              .overlay(
-                DoubleTapManager(
-                  onTapBackward: { value in
-                    backwardTime(Double(value))
-                    isSeekingByDoubleTap = true
-                  },
-                  onTapForward: { value in
-                    forwardTime(Double(value))
-                    isSeekingByDoubleTap = true
-                  },
-                  isFinished: {
-                    isSeekingByDoubleTap = false
-                  },
-                  advanceValue: doubleTapSeekValue,
-                  suffixAdvanceValue: suffixLabelDoubleTapSeek
-                )
-              )
-              .onTapGesture {
-                withAnimation(.easeOut(duration: AnimationDuration.s035)) {
-                  showPlayerControls.toggle()
+    @Namespace private var animationNamespace
+    
+    @ObservedObject private var playbackObserver = PlaybackObserver()
+    var safeAreaInsets: UIEdgeInsets
+    var player: AVPlayer
+    @State var options: NSDictionary? = [:]
+    var controls: PlayerControls
+    var thumbNailsProps: NSDictionary? = [:]
+    var enterInFullScreenWhenDeviceRotated = false
+    var videoGravity: AVLayerVideoGravity
+    var UIControlsProps: HashableControllers? = .init(
+        playbackControl: .init(dictionary: [:]),
+        seekSliderControl: .init(dictionary: [:]),
+        timeCodesControl: .init(dictionary: [:]),
+        settingsControl: .init(dictionary: [:]),
+        fullScreenControl: .init(dictionary: [:]),
+        downloadControl: .init(dictionary: [:]),
+        toastControl: .init(dictionary: [:]),
+        headerControl: .init(dictionary: [:]),
+        loadingControl: .init(dictionary: [:])
+    )
+    var tapToSeek: NSDictionary? = [:]
+    
+    @State private var isFullScreen: Bool = false
+    @State private var controlsVisible: Bool = true
+    @State private var isReadyToPlay = false
+    @GestureState private var isDraggedSeekSlider: Bool = false
+    @State private var isSeeking: Bool = false
+    @State private var isSeekingByDoubleTap: Bool = false
+    @State private var isFinishedPlaying: Bool = false
+    
+    @State private var timeoutWorkItem: DispatchWorkItem?
+    @State private var periodicTimeObserver: Any? = nil
+    @State private var interval = CMTime(value: 1, timescale: 2)
+    
+    @State private var sliderProgress: CGFloat = 0.0
+    @State private var bufferingProgress: CGFloat = 0.0
+    @State private var lastDraggedProgresss: CGFloat = 0.0
+    
+    @State private var tolerance = CMTime(seconds: 0.1, preferredTimescale: Int32(NSEC_PER_SEC))
+    @State private var seekerThumbImageSize: CGSize = .init(width: 12, height: 12)
+    @State private var offsetY: CGFloat = 0.0
+    
+    @State private var thumbnailsFrames: [UIImage] = []
+    @State private var draggingImage: UIImage?
+    
+    
+    var body: some View {
+        GeometryReader { geometry in
+            VStack {
+                CustomVideoPlayer(player: player, videoGravity: videoGravity)
+                    .ignoresSafeArea(edges: isFullScreen ? Edge.Set.all : [])
+                    .overlay(
+                        Rectangle()
+                            .fill(Color.black.opacity(0.4))
+                            .opacity(controlsVisible || controlsVisible ? 1 : 0)
+                            .animation(.easeInOut(duration: 0.35), value: isDraggedSeekSlider || controlsVisible)
+                            .edgesIgnoringSafeArea(Edge.Set.all)
+                    )
+                    .overlay(
+                        DoubleTapManager(
+                            onTapBackward: { value in
+                                backwardTime(Double(value))
+                                isSeekingByDoubleTap = true
+                            },
+                            onTapForward: { value in
+                                forwardTime(Double(value))
+                                isSeekingByDoubleTap = true
+                            },
+                            isFinished: {
+                                isSeekingByDoubleTap = false
+                            },
+                            //                        advanceValue: doubleTapSeekValue,
+                            //                        suffixAdvanceValue: suffixLabelDoubleTapSeek
+                            advanceValue: tapToSeek?["value"] as? Int ?? 15,
+                            suffixAdvanceValue: tapToSeek?["suffixLabel"] as? String ?? "seconds"
+                        )
+                    )
+                    .onAppear {
+                        if let thumbNailsEnabled = thumbNailsProps?["enableGenerate"] as? Bool {
+                            if let thumbnailsUrl = thumbNailsProps?["url"] as? String, thumbNailsEnabled {
+                                generatingThumbnailsFrames(thumbnailsUrl)
+                            }
+                        }
+                        
+                        NotificationCenter.default.addObserver(
+                            playbackObserver,
+                            selector: #selector(PlaybackObserver.itemDidFinishPlaying(_:)),
+                            name: .AVPlayerItemDidPlayToEndTime,
+                            object: player.currentItem
+                        )
+                        
+                        NotificationCenter.default.addObserver(
+                            playbackObserver,
+                            selector: #selector(PlaybackObserver.deviceOrientation(_:)),
+                            name: UIDevice.orientationDidChangeNotification,
+                            object: nil
+                        )
+                        periodicTimeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
+                            updatePlayerTime(time.seconds)
+                        }
+                    }
+                    .onReceive(playbackObserver.$deviceOrientation, perform: { isPortrait in
+                        if (enterInFullScreenWhenDeviceRotated) {
+                            if (isFullScreen && isPortrait) {
+                                isFullScreen = true
+                            } else {
+                                isFullScreen = !isPortrait
+                            }
+                        }
+                    })
+                    .onReceive(playbackObserver.$isFinished, perform: { isFinished in
+                        isFinishedPlaying = isFinished
+                        timeoutWorkItem?.cancel()
+                    })
+                    .onTapGesture {
+                        withAnimation {
+                            toggleControls()
+                        }
+                    }
+                    .overlay(
+                        ViewControllers(geometry: geometry)
+                            .onTapGesture {
+                                withAnimation{
+                                    toggleControls()
+                                }
+                            }
+                    )
+                    .overlay (
+                        PlaybackControls()
+                    )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    func ViewControllers(geometry: GeometryProxy) -> some View {
+        VStack {
+            HStack {
+                Button(action: {
+                    controlsVisible = false
+                    controls.toggleFullScreen()
+                    timeoutWorkItem?.cancel()
+                    
+                    if (isFullScreen) {
+                        isFullScreen = false
+                    } else {
+                        isFullScreen = true
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+                        withAnimation {
+                            controlsVisible = true
+                        }
+                    })
+                    
+                    if (player.timeControlStatus == .playing) {
+                        scheduleHideControls()
+                    }
+                    
+                }, label: {
+                    CustomIcon(isFullScreen ? "xmark" : "arrow.up.left.and.arrow.down.right", color: UIControlsProps?.fullScreen.color)
+                })
+                Spacer()
+            }
+            .padding(.top, 12)
+            .opacity(controlsVisible && !isDraggedSeekSlider && !isSeekingByDoubleTap ? 1 : 0)
+            Spacer()
+            VStack {
+                Spacer()
+                HStack(alignment: .bottom) {
+                    if thumbnailsFrames.count > 0 {
+                        VideoSeekerThumbnailView(geometry: geometry)
+                    }
+                    Spacer()
+                }
+                HStack{
+                    SeekSlider()
+                    TimeCodes()
+                        .fixedSize()
+                    CreateCircleMenuButton (
+                        action: {
+                        },
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 14.0, weight: .semibold))
+                            .foregroundColor(.white)
+                    )
+                    .opacity(controlsVisible && !isDraggedSeekSlider && !isSeekingByDoubleTap ? 1 : 0)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 12)
+    }
+    
+    func CreateCircleButton(action: @escaping () -> Void,_ overlay: some View) -> some View {
+        Button(action: action) {
+            Circle()
+                .fill(.gray.opacity(0.15))
+                .frame(width: 40, height: 40)
+                .overlay(overlay)
+        }
+    }
+    
+    func CreateCircleMenuButton(action: @escaping () -> Void, _ overlay: some View) -> some View {
+        var transformedNSDictionaryIntoSwiftDictionary: [(key: String, values: [NSDictionary])] = []
+        
+        if let options = options {
+            transformedNSDictionaryIntoSwiftDictionary = options.compactMap { (key, value) -> (key: String, values: [NSDictionary])? in
+                if let key = key as? String, let values = value as? [NSDictionary] {
+                    return (key: key, values: values)
                 }
                 
-                if player.timeControlStatus == .playing {
-                  timeoutControls()
-                }
-              }
-              .overlay(
-                VStack {
-                  HeaderControls()
-                    .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
-                    .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
-                  Spacer()
-                    
-//                    HStack {
-//     
-//                        Spacer()
-//                    }
-                        //                      DownloadControl()
-                    VStack {
-                        HStack(alignment: .bottom) {
-                            VideoSeekerThumbnailView()
-                            Spacer()
-                        }
-                        HStack {
-                            VideoSeekerView()
-                            TimeCodes()
-                                .fixedSize()
-                            MenuControl()
-                                .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
-                                .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
+                return nil
+            }
+        }
+        
+        return Menu {
+            ForEach(transformedNSDictionaryIntoSwiftDictionary, id: \.key) { option in
+                Menu(option.key) {
+                    ForEach(option.values, id: \.self) { item in
+                        Button(action: {
+                            let name = item["name"] as! String
+                            let value = item["value"] as Any
+                            controls.optionSelected(option.key, value)
+                        }) {
+                            if let name = item["name"] as? String {
+                                Label(name, systemImage: "chevron.right")
+                            }
                         }
                     }
                 }
-                  .padding(.leading)
-                  .padding(.trailing)
-                  .padding(.bottom)
-                  .overlay(
-                    PlaybackControls()
-                  )
-              )
-              
-              .overlay(
-                Group {
-                  if isPresentToast {
-                    Toast()
-                  }
-                }
-              )
-        }
-      .frame(width: videoPlayerSize.width, height: videoPlayerSize.height)
-    }
-    .onAppear {
-      guard !isObservedAdded else { return }
-      guard let currentItem = player.currentItem else { return }
-      let currentTime = currentItem.currentTime().seconds
-      let duration = currentItem.duration.seconds
-      
-      if !duration.isNaN {
-        self.duration = duration
-        self.currentTime = currentTime
-        
-        sliderProgress = currentTime / duration
-        lastDraggedProgress = sliderProgress
-        
-        let loadedTimeRanges = currentItem.loadedTimeRanges
-        if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
-          let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
-          let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
-          let bufferedEnd = CMTimeGetSeconds(firstTimeRange.end)
-          buffering = (bufferedStart + bufferedDuration) / duration
-          notificationPostPlaybackInfo(userInfo: ["buffering": bufferedEnd])
-        }
-      }
-      
-      if isActiveAutoPlay {
-        if isPlaying == nil {
-          player.play()
-        }
-      } else {
-        player.pause()
-      }
-      
-      timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { time in
-        updatePlayerTime(time.seconds)
-      }
-      
-      NotificationCenter.default.addObserver(
-        playbackObserver,
-        selector: #selector(PlaybackObserver.playbackItem(_:)),
-        name: .AVPlayerItemNewAccessLogEntry,
-        object: player.currentItem
-      )
-      
-      NotificationCenter.default.addObserver(
-        playbackObserver,
-        selector: #selector(PlaybackObserver.itemDidFinishPlaying(_:)),
-        name: .AVPlayerItemDidPlayToEndTime,
-        object: player.currentItem
-      )
-      
-      NotificationCenter.default.addObserver(
-        playbackObserver,
-        selector: #selector(PlaybackObserver.getThumbnailFrames(_:)),
-        name: Notification.Name("frames"),
-        object: nil
-      )
-
-      isObservedAdded = true
-    }
-    .onReceive(playbackObserver.$isFinishedPlaying) { [self] finished in
-      if finished {
-        if isActiveLoop {
-          player.seek(to: .zero)
-          return
-        }
-        
-        onFinished()
-      }
-    }
-    .onReceive(playbackObserver.$thumbnailsFrames) { frames in
-        DispatchQueue.main.async {
-            if !frames.isEmpty {
-              self.thumbnailsFrames = frames
+                
             }
+        } label: {
+            Circle()
+                .fill(Color.black.opacity(0.4))
+                .frame(width: 40, height: 40)
+                .overlay(overlay)
         }
     }
-  }
-}
-
-// MARK: -- View Builder
-@available(iOS 14.0, *)
-extension VideoPlayerView {
-  @ViewBuilder
-  func HeaderControls() -> some View {
-      HStack {
-          Button (action: {
-              withAnimation(.easeInOut(duration: 0.35)) {
-                  isFullScreen.toggle()
-              }
-            self.onTapFullScreenControl(isFullScreen)
-          }) {
-            CustomIcon(isFullScreen ? "xmark" : "arrow.up.left.and.arrow.down.right", color: controlsProps?.fullScreen.color)
-          }
-          Spacer()
-      }
-      .padding(.top, 12)
-      .padding(.leading, 8)
-    }
-
-  @ViewBuilder
-  func VideoSeekerThumbnailView() -> some View {
-    let calculatedWidthThumbnailSizeByWidth = calculateSizeByWidth(StandardSizes.extraLarge200, VariantPercent.p40)
-    let calculatedHeightThumbnailSizeByWidth = calculateSizeByWidth(StandardSizes.extraLarge100, VariantPercent.p40)
     
-    let thumbSize: CGSize = .init(width: calculatedWidthThumbnailSizeByWidth, height: calculatedHeightThumbnailSizeByWidth)
-  
-    HStack {
-      if let draggingImage {
-        VStack {
-          Image(uiImage: draggingImage)
-            .resizable()
-            .aspectRatio(contentMode: .fill)
-            .frame(width: thumbSize.width, height: thumbSize.height)
-            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous))
-            .overlay(
-              RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous)
-                .stroke(Color(uiColor: (controlsProps?.seekSlider.thumbnailBorderColor ?? .white)), lineWidth: 2)
-            )
-          Text(stringFromTimeInterval(interval: TimeInterval(truncating: (sliderProgress * duration) as NSNumber)))
-            .font(.caption)
-            .foregroundColor(Color(uiColor: controlsProps?.seekSlider.thumbnailTimeCodeColor ?? .white))
-            .fontWeight(.semibold)
+    @ViewBuilder
+    func SeekSlider() -> some View {
+        ZStack(alignment: .leading) {
+            GeometryReader { geometry in
+                Rectangle()
+                    .fill(Color(uiColor: (UIControlsProps?.seekSlider.maximumTrackColor ?? .systemFill)))
+                    .frame(width: geometry.size.width - seekerThumbImageSize.width)
+                    .cornerRadius(12)
+                    .border(Color(uiColor: (UIControlsProps?.seekSlider.maximumTrackColor ?? .systemFill)), width: /*@START_MENU_TOKEN@*/1/*@END_MENU_TOKEN@*/)
+                    .shadow(radius: 10)
+                
+                Rectangle()
+                    .fill(Color(uiColor: (UIControlsProps?.seekSlider.seekableTintColor ?? .systemGray2)))
+                    .frame(width: bufferingProgress * (geometry.size.width - seekerThumbImageSize.width))
+                    .cornerRadius(12)
+                
+                Rectangle()
+                    .fill(Color(uiColor: (UIControlsProps?.seekSlider.minimumTrackColor ?? .blue)))
+                    .frame(width: sliderProgress * (geometry.size.width - seekerThumbImageSize.width))
+                    .cornerRadius(12)
+                
+                HStack {}
+                    .overlay(
+                        Circle()
+                            .fill(Color(uiColor: (UIControlsProps?.seekSlider.thumbImageColor ?? UIColor.white)))
+                            .frame(width: 12, height: 12)
+                            .frame(width: 40, height: 40)
+                            .background(Color(uiColor: isSeeking ? .systemFill : .clear))
+                            .cornerRadius(.infinity)
+                            .opacity(isSeekingByDoubleTap ? 0.001 : 1)
+                            .contentShape(Rectangle())
+                            .offset(x: sliderProgress * (geometry.size.width - seekerThumbImageSize.width), y: geometry.size.height / 2)
+                            .gesture(
+                                DragGesture()
+                                    .updating($isDraggedSeekSlider, body: {_, out, _ in
+                                        out = true
+                                    })
+                                    .onChanged({ value in
+                                        let translation = value.translation.width / geometry.size.width
+                                        sliderProgress = max(min(translation + lastDraggedProgresss, 1), 0)
+                                        isSeeking = true
+                                        timeoutWorkItem?.cancel()
+                                        
+                                        let dragIndex = Int(sliderProgress / 0.01)
+                                        if thumbnailsFrames.indices.contains(dragIndex) {
+                                            draggingImage = thumbnailsFrames[dragIndex]
+                                        }
+                                    })
+                                    .onEnded({ value in
+                                        lastDraggedProgresss = sliderProgress
+                                        guard let playerItem = player.currentItem else { return }
+                                        
+                                        let targetTime =  playerItem.duration.seconds * sliderProgress
+                                        
+                                        let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
+                                        
+                                        player.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
+                                            if (completed) {
+                                                isSeeking = false
+                                            }
+                                        })
+                                        if  player.timeControlStatus == .playing {
+                                            scheduleHideControls()
+                                        }
+                                    })
+                            )
+                    )
+            }
+            .frame(height: isSeeking ? 8 : 4)
+            .animation(.easeInOut(duration: 0.35), value: isSeeking)
+            .opacity(isSeeking || controlsVisible || isSeekingByDoubleTap ? 1 : 0)
+            .animation(.easeInOut(duration: 0.35), value: isSeeking || controlsVisible || isSeekingByDoubleTap)
         }
-      } else {
-        RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous)
-          .fill(.black)
-          .overlay(
-            RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous)
-              .stroke(Color(uiColor: (controlsProps?.seekSlider.thumbnailBorderColor) ?? .white), lineWidth: 2)
-          )
-      }
     }
-    .frame(width: thumbSize.width, height: thumbSize.height)
-    .opacity(isDraggingSlider ? 1 : 0)
-    .offset(x: sliderProgress * (size.width - thumbSize.width))
-    .animation(.easeInOut(duration: AnimationDuration.s035), value: isDraggingSlider)
     
-  }
-  
-  @ViewBuilder
-    func VideoSeekerView() -> some View {
-        GeometryReader { geometry in
-            VStack {
-                Spacer()
-                ZStack(alignment: .leading) {
-                    Rectangle()
-                        .fill(Color(uiColor: (controlsProps?.seekSlider.maximumTrackColor ?? .systemFill)))
-                        .frame(width: geometry.size.width - seekerThumbImageSize.width)
-                        .cornerRadius(CornerRadius.small)
-                        .border(Color(uiColor: (controlsProps?.seekSlider.maximumTrackColor ?? .systemFill)), width: /*@START_MENU_TOKEN@*/1/*@END_MENU_TOKEN@*/)
-                        .shadow(radius: 10)
-                    
-                    Rectangle()
-                        .fill(Color(uiColor: (controlsProps?.seekSlider.seekableTintColor ?? .systemGray2)))
-                        .frame(width: buffering * (geometry.size.width - seekerThumbImageSize.width))
-                        .cornerRadius(CornerRadius.small)
-                    
-                    Rectangle()
-                        .fill(Color(uiColor: (controlsProps?.seekSlider.minimumTrackColor ?? .systemBlue)))
-                        .frame(width: calculateSliderWidth(geometry))
-                        .cornerRadius(CornerRadius.small)
-                    
-                    HStack {}
+    @ViewBuilder
+    func VideoSeekerThumbnailView(geometry: GeometryProxy) -> some View {
+        let calculatedWidthThumbnailSizeByWidth = calculateSizeByWidth(200, 0.4)
+        let calculatedHeightThumbnailSizeByWidth = calculateSizeByWidth(100, 0.4)
+        
+        let thumbSize: CGSize = .init(width: calculatedWidthThumbnailSizeByWidth, height: calculatedHeightThumbnailSizeByWidth)
+        
+        HStack {
+            if let draggingImage {
+                VStack {
+                    Image(uiImage: draggingImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: thumbSize.width, height: thumbSize.height)
+                        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous))
                         .overlay(
-                            Circle()
-                                .fill(Color(uiColor: (controlsProps?.seekSlider.thumbImageColor ?? UIColor.white)))
-                                .frame(width: seekerThumbImageSize.width, height: seekerThumbImageSize.height)
-                                .frame(width: 40, height: 40)
-                                .background(Color(uiColor: isSeeking ? .systemFill : .clear))
-                                .cornerRadius(CornerRadius.infinity)
-                                .opacity(isSeekingByDoubleTap ? 0.001 : 1)
-                                .contentShape(Rectangle())
-                                .offset(x: calculateSliderWidth(geometry))
-                                .gesture(
-                                    DragGesture()
-                                        .updating($isDraggingSlider, body: { _, out, _ in
-                                            out = true
-                                        })
-                                        .onChanged({ value in
-                                            let translationX = value.translation.width
-                                            let calculatedProgress = (translationX / geometry.size.width) + lastDraggedProgress
-                                            sliderProgress = max(min(calculatedProgress, 1), 0)
-                                            isSeeking = true
-                                            
-                                            let dragIndex = Int(sliderProgress / 0.01)
-                                            if thumbnailsFrames.indices.contains(dragIndex) {
-                                                draggingImage = thumbnailsFrames[dragIndex]
-                                            }
-                                        })
-                                        .onEnded({ value in
-                                            lastDraggedProgress = sliderProgress
-                                            if let currentItem = player.currentItem {
-                                                let duration = currentItem.duration.seconds
-                                                let targetTime = duration * sliderProgress
-                                                
-                                                let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
-                                                let tolerance = CMTime(seconds: 0.1, preferredTimescale: Int32(NSEC_PER_SEC))
-                                                
-                                                if targetTime < duration {
-                                                    isFinishedPlaying = false
-                                                }
-                                                
-                                                player.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
-                                                    isSeeking = false
-                                                })
-                                            }
-                                            
-                                            if isPlaying == true {
-                                                timeoutControls()
-                                            }
-                                        })
-                                )
+                            RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous)
+                                .stroke(Color(uiColor: (UIControlsProps?.seekSlider.thumbnailBorderColor ?? .white)), lineWidth: 2)
                         )
+                    Text(stringFromTimeInterval(interval: TimeInterval(truncating: (sliderProgress * (player.currentItem?.duration.seconds)!) as NSNumber)))
+                        .font(.caption)
+                        .foregroundColor(Color(uiColor: UIControlsProps?.seekSlider.thumbnailTimeCodeColor ?? .white))
+                        .fontWeight(.semibold)
                 }
-                .frame(height: isSeeking ? StandardSizes.seekerViewMaxHeight : StandardSizes.seekerViewMinHeight)
-                .animation(.easeInOut(duration: AnimationDuration.s035), value: isSeeking)
-                .opacity(showPlayerControls || isSeekingByDoubleTap || isDraggingSlider ? 1 : 0)
-                .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls || isSeekingByDoubleTap || isDraggingSlider)
+            } else {
+                RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous)
+                    .fill(.black)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous)
+                            .stroke(Color(uiColor: (UIControlsProps?.seekSlider.thumbnailBorderColor) ?? .white), lineWidth: 2)
+                    )
             }
         }
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(width: thumbSize.width, height: thumbSize.height)
+        .opacity(isDraggedSeekSlider ? 1 : 0)
+        .offset(x: sliderProgress * (geometry.size.width - thumbSize.width))
+        .animation(.easeInOut(duration: 0.35), value: isDraggedSeekSlider)
     }
-  
-  @ViewBuilder
+    
+    @ViewBuilder
     func PlaybackControls() -> some View {
-        let controllerSize = calculateSizeByWidth(StandardSizes.playbackControler, VariantPercent.p20)
-        
-        Rectangle()
-            .fill(Color.black.opacity(0.5))
-            .cornerRadius(.infinity, antialiased: true)
+        Circle()
+            .fill(.black.opacity(0.40))
+            .frame(width: 60, height: 60)
             .overlay(
                 Group {
                     if isFinishedPlaying {
-                        Button(action: {
-                            resetPlaybackStatus()
-                        }) {
+                        Button(action: resetPlaybackStatus) {
                             Image(systemName: "gobackward")
-                                .font(.system(size: controllerSize))
-                                .foregroundColor(Color(uiColor: controlsProps?.playback.color ?? .white))
+                                .font(.system(size: 35))
+                                .foregroundColor(Color(uiColor: UIControlsProps?.playback.color ?? .white))
                         }
                         
                     } else {
                         if player.timeControlStatus == .waitingToPlayAtSpecifiedRate {
-                            CustomLoading(color: controlsProps?.loading.color)
+                            CustomLoading(color: UIControlsProps?.loading.color)
                         } else {
                             CustomPlayPauseButton(
-                                action: { isPlaying in
-                                    onPlaybackManager(playing: isPlaying)
-                                }, isPlaying: player.timeControlStatus != .paused,
-                                frame: .init(origin: .zero, size: .init(width: controllerSize, height: controllerSize)),
-                                color: controlsProps?.playback.color?.cgColor
+                                action: { _ in
+                                    onPlayPause()
+                                },
+                                isPlaying: player.timeControlStatus == .playing,
+                                frame: .init(origin: .zero, size: .init(width: 30, height: 30)),
+                                color: UIControlsProps?.playback.color?.cgColor
                             )
                         }
                     }
                 }
                 
             )
-            .frame(width: controllerSize * 2, height: controllerSize * 2)
-            .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
-            .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
+            .frame(width: 60, height: 60)
+            .opacity(controlsVisible && !isDraggedSeekSlider && !isSeekingByDoubleTap ? 1 : 0)
+            .animation(.easeInOut(duration: 0.35), value: controlsVisible && !isDraggedSeekSlider && !isSeekingByDoubleTap)
     }
-  
-  @ViewBuilder
-  func MenuControl() -> some View {
-      CreateCircleMenuButton(menus: menus,
-          CustomIcon("ellipsis", color: controlsProps?.settings.color)
-      ) { label, value in
-          controlsCallback.menuItemSelected(label, value)
-      }
-  }
-  
-  @ViewBuilder
-  func DownloadControl() -> some View {
-    let cached = PlayerFileManager().videoCached(title: title)
-    let size = calculateSizeByWidth(StandardSizes.small14, VariantPercent.p20)
-    let progressBarSize = calculateSizeByWidth(StandardSizes.medium24, VariantPercent.p10)
     
-    Button (action: {
-      showActionSheetFileManager = true
-    }) {
-      VStack {
-        Image(systemName: "arrow.down")
-          .foregroundColor(Color(uiColor: controlsProps?.download.color ?? .white))
-          .font(.system(size: size))
+    @ViewBuilder
+    func TimeCodes() -> some View {
+        let sizeTimeCodes = calculateSizeByWidth(10, 0.2)
         
-        ZStack(alignment: .leading) {
-          Rectangle()
-            .fill(cached.fileExist ? Color(uiColor: controlsProps?.download.progressBarColor ?? .blue) : Color(uiColor: controlsProps?.download.progressBarColor ?? .white))
-            .frame(width: progressBarSize, height: 2)
-            .cornerRadius(CornerRadius.medium)
+        HStack() {
+            Spacer()
+            //      Text(stringFromTimeInterval(interval: currentTime > duration ? duration : currentTime))
+            //        .font(.system(size: sizeTimeCodes))
+            //        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.currentTimeColor ?? .white)))
+            //
+            //      Text("/")
+            //        .font(.system(size: sizeTimeCodes))
+            //        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.slashColor ?? .white)))
             
-          
-          Rectangle()
-            .fill(Color(uiColor: controlsProps?.download.progressBarFillColor ?? .blue))
-            .frame(width: CGFloat(downloadProgress / 100) * progressBarSize, height: 2)
-            .cornerRadius(CornerRadius.medium)
+            Text(stringFromTimeInterval(interval: player.currentItem?.duration.seconds ?? 0))
+                .font(.system(size: sizeTimeCodes))
+                .foregroundColor(Color(uiColor: (UIControlsProps?.timeCodes.durationColor ?? .white)))
+            
+        }
+        .opacity(controlsVisible || isSeeking ? 1 : 0)
+        .animation(.easeInOut(duration: 0.35), value: controlsVisible)
+    }
+    
+    private func onPlayPause() {
+        if (player.timeControlStatus == .playing) {
+            player.pause()
+            
+            if let timeoutWorkItem {
+                timeoutWorkItem.cancel()
+            }
+        } else {
+            player.play()
+            
+            scheduleHideControls()
+        }
+    }
+    
+    private func toggleControls() {
+        withAnimation(.easeInOut(duration: 0.35)) {
+            controlsVisible.toggle()
         }
         
-      }
-      .padding(.trailing, 4)
+        if controlsVisible {
+            scheduleHideControls()
+        }
     }
-    .actionSheet(isPresented: $showActionSheetFileManager) {
-        let buttons: [ActionSheet.Button]
+    
+    private func scheduleHideControls() {
+        if let timeoutWorkItem {
+            timeoutWorkItem.cancel()
+        }
         
-        if !cached.fileExist {
-          buttons = [
-            .default(Text(controlsProps?.download.labelDownload ?? "Download")) {
-              downloadInProgress = true
-              notificationPostPlaybackInfo(userInfo: ["downloadInProgress": true])
-              fileManager.downloadFile(from: urlOfCurrentPlayerItem(player: player)!, title: title, onProgress: { progress in
-                self.downloadProgress = progress
-                if downloadProgress >= 100 && downloadInProgress {
-                  isPresentToast = true
+        if (player.timeControlStatus == .playing) {
+            
+            timeoutWorkItem = .init(block: {
+                withAnimation(.easeInOut(duration: 0.35)) {
+                    controlsVisible = false
                 }
-                notificationPostPlaybackInfo(userInfo: ["downloadProgress": downloadProgress])
-              }, completion: { response, error in
-                
-                downloadInProgress = false
-                notificationPostPlaybackInfo(userInfo: ["downloadInProgress": false])
-                
-              })
-            },
-            .cancel()
-          ]
-        } else {
-            buttons = [
-              .destructive(Text(controlsProps?.download.labelDelete ?? "Remove")) {
-                  fileManager.deleteFile(title: title, completetion: { message, error in
-                    self.downloadProgress = .zero
-                  })
-                },
-              .cancel(Text(controlsProps?.download.labelCancel ?? "Cancel"))
-            ]
+            })
+            
+            
+            if let timeoutWorkItem {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: timeoutWorkItem)
+            }
+        }
+    }
+    
+    private func updatePlayerTime(_ time: CGFloat) {
+        guard let currentItem = player.currentItem else {
+            return
         }
         
-      return ActionSheet(
-        title:
-          Text(!cached.fileExist
-               ? controlsProps?.download.messageDownload ?? "Do you want to download the video?"
-               : controlsProps?.download.messageDelete ?? "This video has already been downloaded. Do you want to remove the video?"),
-        buttons: buttons
-      )
-    }
-
-  }
-  
-  @ViewBuilder
-  func TimeCodes() -> some View {
-      let sizeTimeCodes = calculateSizeByWidth(StandardSizes.small8 + 2, VariantPercent.p20)
-    
-    HStack() {
-      Spacer()
-//      Text(stringFromTimeInterval(interval: currentTime > duration ? duration : currentTime))
-//        .font(.system(size: sizeTimeCodes))
-//        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.currentTimeColor ?? .white)))
-//      
-//      Text("/")
-//        .font(.system(size: sizeTimeCodes))
-//        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.slashColor ?? .white)))
-      
-      Text(stringFromTimeInterval(interval: duration))
-        .font(.system(size: sizeTimeCodes))
-        .foregroundColor(Color(uiColor: (controlsProps?.timeCodes.durationColor ?? .white)))
-    
-    }
-    .opacity(showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap ? 1 : 0)
-    .animation(.easeInOut(duration: AnimationDuration.s035), value: showPlayerControls && !isDraggingSlider && !isSeekingByDoubleTap)
-  }
-  
-  @ViewBuilder
-  func Toast() -> some View {
-    let size = calculateSizeByWidth(StandardSizes.small8, VariantPercent.p30)
-    
-    VStack {
-      Spacer()
-      Text(controlsProps?.toast.label ?? "Download successful")
-        .font(.system(size: size))
-        .padding()
-        .foregroundColor(Color(uiColor: (controlsProps?.toast.labelColor ?? .white)))
-        .background(Color(uiColor: (controlsProps?.toast.backgroundColor ?? .systemGray2)))
-        .cornerRadius(CornerRadius.medium)
-        .opacity(isPresentToast ? 1 : 0)
-        .animation(.easeInOut(duration: AnimationDuration.s035))
-        .onTapGesture {
-          isPresentToast = false
-          downloadInProgress = false
+        if time.isNaN || currentItem.duration.seconds.isNaN {
+            return
         }
-        .onAppear {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            withAnimation(.easeInOut(duration: AnimationDuration.s020)) {
-              isPresentToast = false
-              downloadInProgress = false
+        
+        //      currentTime = time
+        let duration = currentItem.duration.seconds
+        let calculatedProgress = time / duration
+        
+        let loadedTimeRanges = currentItem.loadedTimeRanges
+        if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
+            let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
+            let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
+            let bufferedEnd = CMTimeGetSeconds(firstTimeRange.end)
+            bufferingProgress = (bufferedStart + bufferedDuration) / duration
+        }
+        
+        if !isSeeking  {
+            if time < duration {
+                sliderProgress = calculatedProgress
+                lastDraggedProgresss = sliderProgress
+                isFinishedPlaying = false
             }
-          }
         }
-        .padding(.bottom, UIScreen.main.bounds.height * 0.07)
-      
-    }
-  }
-}
-
-// MARK: -- Private Functions
-@available(iOS 14.0, *)
-extension VideoPlayerView {
-  private func urlOfCurrentPlayerItem(player : AVPlayer) -> URL? {
-    return ((player.currentItem?.asset) as? AVURLAsset)?.url
-  }
-  
-    private func calculateSliderWidth(_ geometry: GeometryProxy) -> CGFloat {
-        let maximumWidth = (geometry.size.width - seekerThumbImageSize.width)
-      let calculatedWidth = maximumWidth * CGFloat(sliderProgress)
-      return min(maximumWidth, max(0, calculatedWidth))
-  }
-
-  private func timeoutControls() {
-    if let timeoutTask {
-      timeoutTask.cancel()
     }
     
-    timeoutTask = .init(block: {
-      withAnimation(.easeInOut(duration: AnimationDuration.s035)) {
-        showPlayerControls = false
-      }
-    })
-    
-    if let timeoutTask {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: timeoutTask)
-    }
-  }
-    
-  private func updatePlayerTime(_ time: CGFloat) {
-    guard let currentItem = player.currentItem else {
-      return
-    }
-    
-    if time.isNaN || currentItem.duration.seconds.isNaN {
-      return
-    }
-    
-    currentTime = time
-    duration = currentItem.duration.seconds
-    let calculatedProgress = currentTime / duration
-    
-    let loadedTimeRanges = currentItem.loadedTimeRanges
-    if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
-      let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
-      let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
-      let bufferedEnd = CMTimeGetSeconds(firstTimeRange.end)
-      buffering = (bufferedStart + bufferedDuration) / duration
-      notificationPostPlaybackInfo(userInfo: ["buffering": bufferedEnd])
-    }
-    notificationPostPlaybackInfo(userInfo: ["currentTime": currentTime, "duration": duration])
-
-      if !isSeeking  {
-        if currentTime < duration {
-          sliderProgress = calculatedProgress
-          lastDraggedProgress = sliderProgress
-          notificationPostPlaybackInfo(userInfo: ["sliderProgress": calculatedProgress, "lastDraggedProgress": calculatedProgress])
-          
-          isFinishedPlaying = false
-          notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
-        } else {
-          onFinished()
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
-            if isActiveLoop {
-              resetPlaybackStatus()
-            }
-          })
-        }
-      }
-  }
-  
-  private func onPlaybackManager(playing: Bool) {
-      if playing  {
-        player.play()
-        isPlaying = true
-        timeoutControls()
-      } else {
-        player.pause()
-        isPlaying = false
-        if let timeoutTask {
-          timeoutTask.cancel()
-        }
-      }
-      notificationPostPlaybackInfo(userInfo: ["isPlaying": playing])
-  }
-  
-  private func forwardTime(_ timeToChange: Double) {
-    guard let currentItem = player.currentItem else { return }
-    let currentTime = CMTimeGetSeconds(player.currentTime())
-    
-    let newTime = max(currentTime + timeToChange, 0)
-    player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
-                toleranceBefore: .zero,
-                toleranceAfter: .zero,
-                completionHandler: { _ in })
-  }
-  
-  private func backwardTime(_ timeToChange: Double) {
-    guard let currentItem = player.currentItem else { return }
-
-    let currentTime = CMTimeGetSeconds(player.currentTime())
-    let newTime = max(currentTime - timeToChange, 0)
-    player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
-                toleranceBefore: .zero,
-                toleranceAfter: .zero,
-                completionHandler: { _ in })
-  }
-  
-  private func onFinished() {
-    isFinishedPlaying = true
-    notificationPostPlaybackInfo(userInfo: ["playbackFinished": true])
-  }
-  
-  private func resetPlaybackStatus() {
-    showPlayerControls = false
-    isFinishedPlaying = false
-    notificationPostPlaybackInfo(userInfo: ["playbackFinished": false])
-    
-    sliderProgress = .zero
-    lastDraggedProgress = .zero
-    currentTime = .zero
-    player.seek(to: .zero, completionHandler: {completed in
-      if completed && !isFinishedPlaying {
-        player.play()
-      }
-    })
-  }
-  
-  private func onTapGoback() {
-    onTapHeaderGoback()
-  }
-}
-
-// MARK: -- CustomView
-@available(iOS 14.0, *)
-struct CustomView : View {
-    var player: AVPlayer
-    var menus: NSDictionary
-    var controlsCallback: Controls
-    var isLoading: Bool
-    var title: String
-    var playbackFinished: Bool
-    var videoGravity: AVLayerVideoGravity
-    var thumbnails: [UIImage]
-    var onTapFullScreenControl: (Bool) -> Void
-    var tapToSeekValue: Int
-    var suffixLabelDoubleTapSeek: String
-    var isFullScreen: Bool
-    var onTapSettingsControl: () -> Void
-    var isActiveAutoPlay: Bool
-    var isActiveLoop: Bool
-    var sliderProgress: Double
-    var lastDraggedProgress: Double
-    var isPlaying: Bool?
-    var controllersPropsData: HashableControllers?
-    var downloadInProgress: Bool
-    var downloadProgress: Float
-    var onTapHeaderGoback: () -> Void
-    
-    var body: some View {
-        GeometryReader {
-            let size = $0.size
-            let safeAreaInsets = $0.safeAreaInsets
+    private func generatingThumbnailsFrames(_ url: String) {
+        Task.detached { [self] in
+            let asset = AVAsset(url: URL(string: url)!)
             
-            VideoPlayerView(
-                size: size,
-                safeAreaInsets: safeAreaInsets,
-                player: player,
-                menus: menus,
-                controlsCallback: controlsCallback,
-                isLoading: isLoading,
-                title: title,
-                playbackFinished: playbackFinished,
-                thumbnails: thumbnails,
-                onTapFullScreenControl: onTapFullScreenControl,
-                doubleTapSeekValue: tapToSeekValue,
-                suffixLabelDoubleTapSeek: suffixLabelDoubleTapSeek,
-                isFullScreen: isFullScreen,
-                onTapSettingsControl: onTapSettingsControl,
-                isActiveAutoPlay: isActiveAutoPlay,
-                isActiveLoop: isActiveLoop,
-                videoGravity: videoGravity,
-                sliderProgress: sliderProgress,
-                lastDraggedProgress: lastDraggedProgress,
-                isPlaying: isPlaying,
-                controllersPropsData: controllersPropsData,
-                downloadInProgress: downloadInProgress,
-                downloadProgress: downloadProgress,
-                onTapHeaderGoback: onTapHeaderGoback
-            )
+            do {
+                let totalDuration = asset.duration.seconds
+                var framesTimes: [NSValue] = []
+                
+                // Generate thumbnails frames
+                let generator = AVAssetImageGenerator(asset: asset)
+                generator.appliesPreferredTrackTransform = true
+                generator.maximumSize = .init(width: 250, height: 250)
+                
+                //  TODO:
+                for progress in stride(from: 0, to: totalDuration / Double(1 * 100), by: 0.01) {
+                    let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
+                    framesTimes.append(time as NSValue)
+                }
+                let localFrames = framesTimes
+                
+                generator.generateCGImagesAsynchronously(forTimes: localFrames) { requestedTime, image, _, _, error in
+                    guard let cgImage = image, error == nil else {
+                        return
+                    }
+                    
+                    DispatchQueue.main.async { [self] in
+                        let uiImage = UIImage(cgImage: cgImage)
+                        thumbnailsFrames.append(uiImage)
+                    }
+                    
+                }
+            }
         }
+    }
+    
+    private func forwardTime(_ timeToChange: Double) {
+        guard let currentItem = player.currentItem else { return }
+        let currentTime = CMTimeGetSeconds(player.currentTime())
+        
+        let newTime = max(currentTime + timeToChange, 0)
+        player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
+                    toleranceBefore: .zero,
+                    toleranceAfter: .zero,
+                    completionHandler: { _ in })
+    }
+    
+    private func backwardTime(_ timeToChange: Double) {
+        guard let currentItem = player.currentItem else { return }
+        
+        let currentTime = CMTimeGetSeconds(player.currentTime())
+        let newTime = max(currentTime - timeToChange, 0)
+        player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
+                    toleranceBefore: .zero,
+                    toleranceAfter: .zero,
+                    completionHandler: { _ in })
+    }
+    
+    private func resetPlaybackStatus() {
+        isFinishedPlaying = false
+        
+        sliderProgress = .zero
+        lastDraggedProgresss = .zero
+
+        player.seek(to: .zero, completionHandler: { completed in
+            if (completed) {
+                player.play()
+                scheduleHideControls()
+            }
+        })
     }
 }
 

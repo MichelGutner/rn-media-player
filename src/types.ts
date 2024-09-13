@@ -92,27 +92,35 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   source: {
     url: string;
     title?: string;
+    startTime?: number;
+    thumbnails?: {
+      url: string;
+      enableGenerate?: boolean;
+    };
   };
   thumbnailFramesSeconds?: number;
   enterInFullScreenWhenDeviceRotated?: boolean;
   autoPlay?: boolean;
-  loop?: boolean;
   style?: ViewStyle;
   paused?: boolean;
   rate?: number;
   startTime?: number;
   resizeMode?: ResizeMode;
   // lockControls?: boolean;
-  tapToSeekValue?: number;
-  suffixLabelTapToSeek?: string;
+  tapToSeek: {
+    value: number;
+    suffixLabel: string;
+  };
   /**
    * Set this parameter to change the quality of the video
    */
   changeQualityUrl?: string;
   controlsProps?: TVideoPlayerControlConfig;
   onSettings?: () => void;
-  onGoBack?: () => void;
   onFullScreen?: TOnVideoFullScreen;
+  /**
+   * iOS only
+   */
   onBufferCompleted?: TOnVideoBufferCompleted;
   onVideoDownloaded?: TOnVideoDownloaded;
   onBuffer?: TOnVideoBuffer;

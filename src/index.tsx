@@ -1,3 +1,5 @@
+/* eslint-disable react-native/no-inline-styles */
+import React from 'react';
 import { Platform, UIManager, requireNativeComponent } from 'react-native';
 import type { TVideoPlayerProps } from './types';
 export { EResizeMode } from './types';
@@ -10,9 +12,19 @@ const LINKING_ERROR =
 
 const ComponentName = 'RNVideoPlayer';
 
-export const Video =
+const VideoPlayer =
   UIManager.getViewManagerConfig(ComponentName) != null
     ? requireNativeComponent<TVideoPlayerProps>(ComponentName)
     : () => {
         throw new Error(LINKING_ERROR);
       };
+
+export const Video = (props: TVideoPlayerProps) => {
+  return (
+    <VideoPlayer
+      {...props}
+      style={{ ...props?.style, overflow: 'hidden' }}
+      rate={Number(props.rate)}
+    />
+  );
+};

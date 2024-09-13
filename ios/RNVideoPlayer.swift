@@ -17,21 +17,22 @@ class RNVideoPlayer: RCTViewManager {
 }
 
 @available(iOS 14.0, *)
-class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
-    private var hasCalledSetup = false
+class RNVideoPlayerView : UIView {
+    private var uiView = UIView()
+    
     private var player: AVPlayer?
-    private var loading = true
+    private var isInitialized = false
+    private var isFullScreen = false
+    private var UIControlsProps: HashableControllers? = .none
     
-    private var url: URL?
-    private var thumbnailsFrames: [UIImage] = []
-    
-    private var playerView = UIView()
+    @objc var autoPlay: Bool = false
+    @objc var menus: NSDictionary? = [:]
+    @objc var onMenuItemSelected: RCTBubblingEventBlock?
     
     @objc var onVideoProgress: RCTBubblingEventBlock?
     @objc var onLoaded: RCTBubblingEventBlock?
     @objc var onReady: RCTDirectEventBlock?
     @objc var onCompleted: RCTBubblingEventBlock?
-    @objc var onTapSettingsControl: RCTDirectEventBlock?
     @objc var onFullScreen: RCTDirectEventBlock?
     @objc var onError: RCTDirectEventBlock?
     @objc var onBuffer: RCTDirectEventBlock?
@@ -41,45 +42,15 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     @objc var onDownloadVideo: RCTDirectEventBlock?
     @objc var onPlayPause: RCTDirectEventBlock?
     
-    @objc var tapToSeekValue: NSNumber? = 15
-    @objc var suffixLabelTapToSeek: String? = "seconds"
-    
     @objc var thumbnailFramesSeconds: Float = 1.0
     @objc var enterInFullScreenWhenDeviceRotated: Bool = false
-    @objc var autoPlay: Bool = true
-    @objc var loop: Bool = false
     
-    @objc var menus: NSDictionary? = [:]
-    @objc var onMenuItemSelected: RCTBubblingEventBlock?
     @objc var controlsProps: NSDictionary? = [:]
+    @objc var tapToSeek: NSDictionary? = [:]
     
     @objc var source: NSDictionary? = [:] {
         didSet {
-            do {
-                let playbackUrl = source?["url"] as? String
-                cleanupPreviousVideo()
-                let verificatedUrlString = try verifyUrl(urlString: playbackUrl)
-                print(verificatedUrlString)
-                let cached = PlayerFileManager().videoCached(title: source?["title"] as! String)
-                
-                if cached.fileExist {
-                    player = AVPlayer(url: URL(string: "file://\(cached.path)")!)
-                } else {
-                    player = AVPlayer(url: verificatedUrlString)
-                }
-                
-                player?.actionAtItemEnd = .none
-                hasCalledSetup = true
-                
-                player?.addObserver(self, forKeyPath: "status", options: .new, context: nil)
-                player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferEmpty", options: .new, context: nil)
-                player?.currentItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
-                player?.currentItem?.addObserver(self, forKeyPath: "playbackBufferFull", options: .new, context: nil)
-                
-                self.setNeedsLayout()
-            } catch {
-                self.onError?(["userInfo": "Error on get url: error type is \(error)"])
-            }
+            initializePlayer(source)
         }
     }
     
@@ -105,33 +76,28 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
     
     @objc var resizeMode: NSString = "contain"
     
-    @objc var startTime: Float = 0.0 {
-        didSet {
-            player?
-                .currentItem?.seek(
-                    to: CMTime(seconds: Double(startTime), preferredTimescale: 2),
-                    completionHandler: nil
-                )
-        }
+    private func initializePlayer(_ source: NSDictionary?) {
+        let url = source?["url"] as? String
+        let startTime = source?["startTime"] as? Float
+        cleanupPreviousVideo()
+        
+        player = AVPlayer(url: URL(string: url!)!)
+        
+        guard let player = player else { return }
+        player.currentItem?.seek(to: CMTime(seconds: Double(startTime ?? 0), preferredTimescale: 2), completionHandler: nil)
+        
+        player.actionAtItemEnd = .none
+        player.addObserver(self, forKeyPath: "status", options: .new, context: nil)
+        player.currentItem?.addObserver(self, forKeyPath: "playbackBufferEmpty", options: .new, context: nil)
+        player.currentItem?.addObserver(self, forKeyPath: "playbackLikelyToKeepUp", options: .new, context: nil)
+        player.currentItem?.addObserver(self, forKeyPath: "playbackBufferFull", options: .new, context: nil)
+        self.setNeedsLayout()
     }
     
-    private var buffering: Double = 0.0
-    private var currentTime: Double = 0.0
-    private var duration: Double = 0.0
-    private var playbackFinished: Bool = false
-    private var isFullScreen = false
-    private var videoPlayerView = UIView()
-    private var sliderProgress: Double = 0.0
-    private var lastDraggedProgress: Double = 0.0
-    private var isPlaying: Bool? = nil
-    private var controllersPropsData: HashableControllers? = nil
-    private var downloadInProgress: Bool = false
-    private var downloadProgress: Float = 0.0
-    
-    override func layoutSubviews() {
-        guard let player = player else { return }
-        videoPlayerView.removeFromSuperview()
-        
+    private func setup() {
+        uiView.removeFromSuperview()
+        let thumbnailsProps = source?["thumbnails"] as? NSDictionary
+        guard let avPlayer = player else { return }
         if let controllersProps = controlsProps {
             let playbackProps = PlaybackControlHashableProps(dictionary: controllersProps["playback"] as? NSDictionary)
             let seekSliderProps = SeekSliderControlHashableProps(dictionary: controllersProps["seekSlider"] as? NSDictionary)
@@ -143,7 +109,7 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
             let headerProps = HeaderControlHashableProps(dictionary: controllersProps["header"] as? NSDictionary)
             let loadingProps = LoadingHashableProps(dictionary: controllersProps["loading"] as? NSDictionary)
             
-            self.controllersPropsData = HashableControllers(
+            UIControlsProps = HashableControllers(
                 playbackControl: playbackProps,
                 seekSliderControl: seekSliderProps,
                 timeCodesControl: timeCodesProps,
@@ -156,297 +122,186 @@ class RNVideoPlayerView: UIView, UIGestureRecognizerDelegate {
             )
         }
         
-        
-        let title = source?["title"] as? String ?? ""
-        
         let mode = Resize(rawValue: resizeMode as String)
         let videoGravity = self.videoGravity(mode!)
-        print(player)
-        let playerView = UIHostingController(
-            rootView: CustomView(
-                player: player,
-                menus: menus ?? [:],
-                controlsCallback: Controls(
-                    menuItemSelected: { label, value in
-                        self.onMenuItemSelected?(["name": label, "value": value])
+
+        if (autoPlay) {
+            avPlayer.play()
+        }
+
+        let uiHostingView = UIHostingController(rootView: VideoPlayerView(
+            safeAreaInsets: safeAreaInsets,
+            player: avPlayer,
+            options: menus,
+            controls: PlayerControls(
+                togglePlayback: {
+                    if (avPlayer.timeControlStatus == .playing) {
+                        avPlayer.pause()
+                    } else {
+                        avPlayer.play()
                     }
-                ),
-                isLoading: loading,
-                title: title,
-                playbackFinished: playbackFinished,
-                videoGravity: videoGravity,
-                thumbnails: thumbnailsFrames,
-                onTapFullScreenControl: { [self] state in
-                    toggleFullScreen(state)
+                    self.onPlayPause?(["isPlaying": avPlayer.timeControlStatus == .playing])
                 },
-                tapToSeekValue: tapToSeekValue as! Int,
-                suffixLabelDoubleTapSeek: suffixLabelTapToSeek!,
-                isFullScreen: isFullScreen,
-                onTapSettingsControl: onTapSettings,
-                isActiveAutoPlay: autoPlay,
-                isActiveLoop: loop,
-                sliderProgress: sliderProgress,
-                lastDraggedProgress: lastDraggedProgress,
-                isPlaying: isPlaying,
-                controllersPropsData: controllersPropsData,
-                downloadInProgress: downloadInProgress,
-                downloadProgress: downloadProgress,
-                onTapHeaderGoback: onTapGoback
-            )
-        )
-        videoPlayerView = playerView.view
-        videoPlayerView.backgroundColor = .black
-        videoPlayerView.clipsToBounds = true
-        
-        withAnimation(.easeIn(duration: 0.35)) {
-            if videoPlayerView.frame == .zero {
-                if frame.height > UIScreen.main.bounds.height {
-                    withAnimation(.easeInOut(duration: 0.35)) {
-                        videoPlayerView.frame = UIScreen.main.bounds
-                    }
-                    
-                } else {
-                    withAnimation(.easeInOut(duration: 0.35)) {
-                        videoPlayerView.frame = frame
-                    }
+                optionSelected: { name, value in
+                    self.onMenuItemSelected?(["name": name, "value": value])
+                },
+                toggleFullScreen: { [self] in
+                    toggleFullScreen(!isFullScreen)
                 }
-                superview?.addSubview(playerView.view)
-            }
+            ),
+            thumbNailsProps: thumbnailsProps,
+            enterInFullScreenWhenDeviceRotated: enterInFullScreenWhenDeviceRotated,
+            videoGravity: videoGravity,
+            UIControlsProps: UIControlsProps,
+            tapToSeek: tapToSeek
+        ))
+
+        uiView = uiHostingView.view
+    }
+
+    override func layoutSubviews() {
+        if (!isInitialized) {
+            isInitialized = true
+            setup()
         }
         
-        NotificationCenter.default.addObserver(forName: Notification.Name("playbackInfo"), object: nil, queue: .main) { [self] notification in
-            if let buffering = notification.userInfo?["buffering"] as? Double {
-                self.buffering = buffering
+        let currentOrientation = UIDevice.current.orientation
+
+          
+          if enterInFullScreenWhenDeviceRotated, currentOrientation.isLandscape {
+            DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
+              toggleFullScreen(true)
+            }
+          }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
+            uiView.backgroundColor = .black
+            uiView.clipsToBounds = true
+            
+            
+            if (isFullScreen) {
+                uiView.frame = UIScreen.main.bounds
+                return
             }
             
-            if let currentTime = notification.userInfo?["currentTime"] as? Double {
-                self.currentTime = currentTime
+            if frame.height > UIScreen.main.bounds.height {
+                withAnimation(.easeInOut(duration: 0.35)) {
+                    uiView.frame = UIScreen.main.bounds
+                }
+                
+            } else {
+                withAnimation(.easeInOut(duration: 0.35)) {
+                    uiView.frame = bounds
+                }
             }
-            
-            if let duration = notification.userInfo?["duration"] as? Double {
-                self.duration = duration
-            }
-            
-            if let finished = notification.userInfo?["playbackFinished"] as? Bool {
-                self.playbackFinished = finished
-            }
-            
-            if let sliderProgress = notification.userInfo?["sliderProgress"] as? Double {
-                self.sliderProgress = sliderProgress
-            }
-            
-            if let lastDraggedProgress = notification.userInfo?["lastDraggedProgress"] as? Double {
-                self.lastDraggedProgress = lastDraggedProgress
-            }
-            
-            if let isPlaying = notification.userInfo?["isPlaying"] as? Bool {
-                self.onPlayPause?(["isPlaying": isPlaying])
-                self.isPlaying = isPlaying
-            }
-            
-            if let downloadInProgress = notification.userInfo?["downloadInProgress"] as? Bool {
-                self.downloadInProgress = downloadInProgress
-            }
-            
-            if let downloadProgress = notification.userInfo?["downloadProgress"] as? Float {
-                self.downloadProgress = downloadProgress
-            }
-            
-            if !playbackFinished {
-                self.onVideoProgress?(["buffering": buffering, "progress": currentTime])
-            }
-            
+            superview?.addSubview(uiView)
         }
-        
-        NotificationCenter.default.addObserver(forName: UIApplication.willChangeStatusBarOrientationNotification, object: nil, queue: .main) { [self] notification in
-            DispatchQueue.main.async { [self] in
-                NotificationCenter.default.post(name: Notification.Name("frames"), object: nil, userInfo: ["frames": thumbnailsFrames])
-            }
-        }
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(orientationDidChange), name: UIDevice.orientationDidChangeNotification, object: nil)
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(itemDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: player.currentItem)
-        
-        if hasCalledSetup {
-            enableAudioSession()
-        }
+
+        super.layoutSubviews()
     }
     
-    private func generatingThumbnailsFrames() {
-        Task.detached { [self] in
-            guard let asset = await player?.currentItem?.asset else { return }
-            
-            do {
-                let totalDuration = asset.duration.seconds
-                var framesTimes: [NSValue] = []
-                
-                // Generate thumbnails frames
-                let generator = AVAssetImageGenerator(asset: asset)
-                generator.appliesPreferredTrackTransform = true
-                generator.maximumSize = .init(width: 250, height: 250)
-                
-                
-                for progress in await stride(from: 0, to: totalDuration / Double(thumbnailFramesSeconds * 100), by: 0.01) {
-                    let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
-                    framesTimes.append(time as NSValue)
-                }
-                let localFrames = framesTimes
-                
-                generator.generateCGImagesAsynchronously(forTimes: localFrames) { requestedTime, image, _, _, error in
-                    guard let cgImage = image, error == nil else {
-                        return
-                    }
-                    
-                    DispatchQueue.main.async { [self] in
-                        let uiImage = UIImage(cgImage: cgImage)
-                        thumbnailsFrames.append(uiImage)
-                        
-                        NotificationCenter.default.post(name: Notification.Name("frames"), object: nil, userInfo: ["frames": thumbnailsFrames])
-                    }
-                    
-                }
-            }
+    @objc private func orientationDidChange() {
+      let currentOrientation = UIDevice.current.orientation
+
+        
+        if enterInFullScreenWhenDeviceRotated, currentOrientation.isLandscape {
+          DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
+            toggleFullScreen(true)
+          }
         }
     }
-    
+
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if object is AVPlayerItem {
+        if keyPath == "status" {
+            if player?.status == .readyToPlay {
+//                setup()
+            }
+        } else if object is AVPlayerItem {
             switch keyPath {
             case "playbackBufferEmpty":
-                onBuffer?(["buffering": true])
+                // handle buffer empty
+                break
             case "playbackLikelyToKeepUp":
-                onBuffer?(["buffering": false])
+                // handle playback likely to keep up
+                break
             case "playbackBufferFull":
-                onBufferCompleted?(["completed": true])
-            case .none:
+                // handle buffer full
                 break
-            case .some(_):
+            default:
                 break
-            }
-        }
-        if keyPath == "status", let player = player {
-            if player.status == .readyToPlay {
-                self.loading = false
-                onReady?(["ready": true])
-                generatingThumbnailsFrames()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: { [self] in
-                    onLoaded?(["duration": duration])
-                })
-                
-            } else if player.status == .failed {
-                self.onError?(extractPlayerErrors(player.currentItem))
-            } else if player.status == .unknown {
-                self.onError?(extractPlayerErrors(player.currentItem))
             }
         }
     }
     
-    @objc private func itemDidFinishPlaying(_ notification: Notification) {
-        self.playbackFinished = true
-        self.onCompleted?(["completed": true])
-    }
-    
-    private func enableAudioSession() {
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback, options: [.mixWithOthers, .allowAirPlay])
-            try AVAudioSession.sharedInstance().setActive(true)
-        } catch {
-            onError?(["userInfo": "cant able to enable audio background session \(error)"])
-        }
-    }
-}
-
-
-struct Controls {
-    var menuItemSelected: (_ label: String, _ value: Any) -> Void
-}
-
-// player method from bridge
-@available(iOS 14.0, *)
-extension RNVideoPlayerView {
-  @objc private func onPaused(_ paused: Bool) {
-    if paused {
-        player?.pause()
-    } else {
-        player?.play()
-    }
-  }
-  
-  @objc private func onChangeRate(_ rate: Float) {
-      player?.rate = rate
-      if (isPlaying == false) {
-          player?.pause()
-      }
-  }
-}
-
-// player methods
-@available(iOS 14.0, *)
-extension RNVideoPlayerView {
-  @objc private func onTapSettings() {
-    onTapSettingsControl?([:])
-  }
-  
-  @objc private func onTapGoback() {
-    onGoBackTapped?([:])
-    cleanupPreviousVideo()
-  }
-  
     @objc func toggleFullScreen(_ fullScreen: Bool) {
         let transition = CATransition()
         transition.type = .fade
         transition.duration = 0.15
         
-        videoPlayerView.layer.add(transition, forKey: kCATransition)
-        
-        if fullScreen {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: { [self] in
-                videoPlayerView.removeFromSuperview()
-                videoPlayerView.frame = UIScreen.main.bounds
-                superview?.addSubview(videoPlayerView)
-            })
-        } else {
-            videoPlayerView.removeFromSuperview()
-            
-            if frame.height > UIScreen.main.bounds.height {
-                withAnimation(.easeInOut(duration: 0.35)) {
-                    videoPlayerView.frame = UIScreen.main.bounds
-                }
+        uiView.layer.add(transition, forKey: kCATransition)
+            if fullScreen {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: { [self] in
+                    uiView.removeFromSuperview()
+                    uiView.frame = UIScreen.main.bounds
+                    superview?.addSubview(uiView)
+                })
             } else {
-                withAnimation(.easeInOut(duration: 0.35)) {
-                    videoPlayerView.frame = frame
+                uiView.removeFromSuperview()
+                
+                if frame.height > UIScreen.main.bounds.height {
+                    withAnimation(.easeInOut(duration: 0.35)) {
+                        uiView.frame = UIScreen.main.bounds
+                    }
+                } else {
+                    withAnimation(.easeInOut(duration: 0.35)) {
+                        uiView.frame = frame
+                    }
                 }
+                
+                superview?.addSubview(uiView)
             }
             
-            superview?.addSubview(videoPlayerView)
+            isFullScreen = fullScreen
+    }
+    
+    @objc private func onPaused(_ paused: Bool) {
+        if paused {
+            player?.pause()
+        } else {
+            player?.play()
         }
-        
-        isFullScreen = fullScreen
-        onFullScreen?(["fullScreen": fullScreen])
+    }
+    
+    @objc private func onChangeRate(_ rate: Float) {
+        player?.rate = rate
+        if (player?.timeControlStatus == .paused) {
+            player?.pause()
+        }
     }
 
-  
-  @objc private func orientationDidChange() {
-    let currentOrientation = UIDevice.current.orientation
-    videoPlayerView.removeFromSuperview()
-    
-    if currentOrientation == .portrait || currentOrientation == .portraitUpsideDown {
-      DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
-        toggleFullScreen(false)
-      }
-    } else {
-      if enterInFullScreenWhenDeviceRotated {
-        DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
-          toggleFullScreen(true)
-        }
-      } else {
-        DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
-          toggleFullScreen(false)
-        }
-      }
+    deinit {
+        player?.removeObserver(self, forKeyPath: "status")
+        player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferEmpty")
+        player?.currentItem?.removeObserver(self, forKeyPath: "playbackLikelyToKeepUp")
+        player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferFull")
     }
-  }
+}
+
+
+protocol PlayerControlsProtocol {
+    func togglePlayback()
+}
+
+struct PlayerControls {
+    var togglePlayback: () -> Void
+    var optionSelected: (_ label: String, _ value: Any) -> Void
+    var toggleFullScreen: () -> Void
+}
+
+
+
+struct Controls {
+    var menuItemSelected: (_ label: String, _ value: Any) -> Void
 }
 
 @available(iOS 14.0, *)
@@ -483,20 +338,10 @@ extension RNVideoPlayerView {
                     self?.onError?(extractPlayerErrors(item))
                     return
                 }
-                
-                self?.loading = false
                 playerItemStatusObservation?.invalidate()
             }
         })
     }
-  
-  private func verifyUrl(urlString: String?) throws -> URL {
-    if let urlString = urlString, let url = URL(string: urlString), UIApplication.shared.canOpenURL(url) {
-      return url
-    } else {
-      throw RNVideoUrlError.invalidURL
-    }
-  }
   
   private func urlOfCurrentPlayerItem(player : AVPlayer) -> URL? {
     return ((player.currentItem?.asset) as? AVURLAsset)?.url
@@ -511,29 +356,5 @@ extension RNVideoPlayerView {
       player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferFull")
     
       player = nil
-    
-    resetToInitialState()
   }
-  
-    private func resetToInitialState() {
-        // Reset all relevant properties to their initial values
-        hasCalledSetup = false
-        player = nil
-        loading = true
-        thumbnailsFrames.removeAll()
-        url = nil
-        playerView.removeFromSuperview()
-        buffering = 0.0
-        currentTime = 0.0
-        duration = 0.0
-        playbackFinished = false
-        isFullScreen = false
-        videoPlayerView.removeFromSuperview()
-        sliderProgress = 0.0
-        lastDraggedProgress = 0.0
-        isPlaying = nil
-        controllersPropsData = nil
-        downloadInProgress = false
-        downloadProgress = 0.0
-    }
 }

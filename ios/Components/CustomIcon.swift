@@ -19,7 +19,7 @@ struct CustomIcon : View {
   }
   
   var body: some View {
-    let iconSize = calculateSizeByWidth(StandardSizes.small16, VariantPercent.p20)
+    let iconSize = calculateSizeByWidth(StandardSizes.small18, VariantPercent.p20)
     
     Image(systemName: name)
       .font(.system(size: iconSize))

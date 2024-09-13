@@ -15,14 +15,19 @@ struct CustomVideoPlayer : UIViewControllerRepresentable {
   var videoGravity: AVLayerVideoGravity
   
   
-  func makeUIViewController(context: Context) -> AVPlayerViewController {
-    let controller  = AVPlayerViewController()
-    controller.player = player
-    controller.showsPlaybackControls = false
-    controller.player?.automaticallyWaitsToMinimizeStalling = true
-
-    return controller
-  }
+    func makeUIViewController(context: Context) -> AVPlayerViewController {
+        let controller  = AVPlayerViewController()
+        controller.player = player
+        controller.showsPlaybackControls = false
+        controller.player?.automaticallyWaitsToMinimizeStalling = true
+        if #available(iOS 16.0, *) {
+            controller.allowsVideoFrameAnalysis = false
+        } else {
+            // Fallback on earlier versions
+        }
+        
+        return controller
+    }
   
   func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
     uiViewController.videoGravity = videoGravity

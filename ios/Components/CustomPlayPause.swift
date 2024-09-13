@@ -38,7 +38,7 @@ struct CustomPlayPauseButton: UIViewRepresentable {
   
   func makeUIView(context: Context) -> some UIView {
     let uiView = PlayPauseButton(frame: frame, action: action, isPlaying: isPlaying, color: color)
-    uiView.center = CGPoint(x: frame.width / 2, y: frame.height / 2)
+      uiView.center = CGPoint(x: frame.midX, y: frame.midY)
     return uiView
   }
   
@@ -120,7 +120,7 @@ class PlayPauseButton: UIButton {
       let animation = CABasicAnimation(keyPath: "path")
       
       animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-      animation.duration = 0.3
+      animation.duration = 0.5
       
       if playing {
         playLayer.isHidden = true
