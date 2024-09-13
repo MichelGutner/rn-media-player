@@ -37,14 +37,13 @@ function App(): JSX.Element {
         source={{
           // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
           // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-          // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-          url: 'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
+          url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
           title: '',
           // TODO: must be implement ios
           startTime: 35,
           thumbnails: {
             enableGenerate: true,
-            url: 'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
+            url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
           },
         }}
         style={{ height: 320 }}
