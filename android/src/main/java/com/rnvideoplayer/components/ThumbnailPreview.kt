@@ -14,34 +14,34 @@ class ThumbnailPreview(view: View) : IThumbnailPreview {
   private var timestamp = 0L
   val interval = 5000L
   val bitmaps = ArrayList<Bitmap>()
-  private val thumbnail = view.findViewById<ImageView>(R.id.preview_image_view)
+  val view = view.findViewById<ImageView>(R.id.preview_image_view)
   private val timeCodesPreview = view.findViewById<TextView>(R.id.time_codes_preview)
-  var translationX = 0f;
+  var translationX = 0f
   var width = 0; private set
 
   init {
-    thumbnail.viewTreeObserver.addOnGlobalLayoutListener {
-      width = thumbnail.width
+    this.view.viewTreeObserver.addOnGlobalLayoutListener {
+      width = this.view.width
     }
   }
 
   override fun setCurrentImageBitmapByIndex(index: Int) {
-    val translateXTimesCodePreview = translationX + thumbnail.width / 2 - timeCodesPreview.width / 2
+    val translateXTimesCodePreview = translationX + view.width / 2 - timeCodesPreview.width / 2
 
-    thumbnail.translationX = translationX
+    view.translationX = translationX
     timeCodesPreview.translationX = translateXTimesCodePreview
-    thumbnail.drawToBitmap(Bitmap.Config.ARGB_8888)
-    thumbnail.setImageBitmap(bitmaps[index])
+    view.drawToBitmap(Bitmap.Config.ARGB_8888)
+    view.setImageBitmap(bitmaps[index])
   }
 
   override fun show() {
     if (bitmaps.size <= 5) return
-    thumbnail.visibility = View.VISIBLE
+    view.visibility = View.VISIBLE
     timeCodesPreview.visibility = View.VISIBLE
   }
 
   override fun hide() {
-    thumbnail.visibility = View.GONE
+    view.visibility = View.GONE
     timeCodesPreview.visibility = View.GONE
   }
 

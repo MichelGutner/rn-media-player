@@ -222,6 +222,7 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
 
     controls.setReplayButtonClickListener {
       exoPlayer.seekTo(0)
+      thumbnail.view.translationX = 0F
       thumbnail.translationX = 0F
       controls.setVisibilityReplayButton(false)
     }
