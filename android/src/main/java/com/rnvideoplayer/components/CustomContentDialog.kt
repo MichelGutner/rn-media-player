@@ -38,7 +38,7 @@ class CustomContentDialog(private val context: ThemedReactContext, private val d
       val optionCheckImageView: ImageView = optionView.findViewById(R.id.checkImage)
 
       optionNameTextView.text = option.name
-      optionCheckImageView.visibility = if (option.name == selectedOption) PlayerView.VISIBLE else PlayerView.GONE
+      optionCheckImageView.visibility = if (option.name == selectedOption) PlayerView.VISIBLE else PlayerView.VISIBLE
 
       optionView.setOnClickListener {
         if (selectedOption == option.name) {

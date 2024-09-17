@@ -30,7 +30,7 @@ class ThumbnailPreview(view: View) : IThumbnailPreview {
 
     view.translationX = translationX
     timeCodesPreview.translationX = translateXTimesCodePreview
-    view.drawToBitmap(Bitmap.Config.ARGB_8888)
+//    view.drawToBitmap(Bitmap.Config.ARGB_8888)
     view.setImageBitmap(bitmaps[index])
   }
 
@@ -41,8 +41,8 @@ class ThumbnailPreview(view: View) : IThumbnailPreview {
   }
 
   override fun hide() {
-    view.visibility = View.GONE
-    timeCodesPreview.visibility = View.GONE
+    view.visibility = View.INVISIBLE
+    timeCodesPreview.visibility = View.INVISIBLE
   }
 
 

@@ -18,7 +18,6 @@ class CustomBottomDialog(
     val displayMetrics = context.resources.displayMetrics
     val isPortrait = displayMetrics.widthPixels < displayMetrics.heightPixels
     val maxWidth = if (isPortrait) displayMetrics.widthPixels else displayMetrics.heightPixels
-    val maxHeight = if (isPortrait) (displayMetrics.heightPixels * 0.35).toInt() else (displayMetrics.heightPixels * 0.8).toInt()
 
     window?.setLayout(maxWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
 

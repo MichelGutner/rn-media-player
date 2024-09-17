@@ -22,7 +22,7 @@ fun View.fadeOut(duration: Long = 500) {
       .setDuration(duration)
       .setListener(object : AnimatorListenerAdapter() {
         override fun onAnimationEnd(animation: Animator) {
-          this@fadeOut.visibility = View.GONE
+          this@fadeOut.visibility = View.INVISIBLE
         }
       })
   }
@@ -30,7 +30,7 @@ fun View.fadeOut(duration: Long = 500) {
 
 
 fun scaleView(isForward: Boolean, view: View) {
-  val scale = 2f
+  val scale = 1.1f
   if (isForward) {
     view.pivotX = 0f
     view.translationX = (view.width.toFloat() / 2f + 80)

@@ -1,10 +1,14 @@
 package com.rnvideoplayer
 
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
+import android.widget.FrameLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.core.view.allViews
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -107,32 +111,36 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
           }
 
           Player.STATE_READY -> {
-            controls.setVisibilityPlayPauseButton(true)
+
             loading.hide()
-            event.send(EventNames.videoBuffering, mainView, Arguments.createMap().apply {
-              putBoolean("buffering", false)
-            })
-            event.send(EventNames.videoReady, mainView, Arguments.createMap().apply {
-              putBoolean("ready", true)
-            })
+            controls.setVisibilityPlayPauseButton(true)
+//            event.send(EventNames.videoBuffering, mainView, Arguments.createMap().apply {
+//              putBoolean("buffering", false)
+//            })
+//            event.send(EventNames.videoReady, mainView, Arguments.createMap().apply {
+//              putBoolean("ready", true)
+//            })
             if (!started) {
               started = true
               timeBar.build(exoPlayer.duration)
               timeCodesDuration.text = helper.createTimeCodesFormatted(exoPlayer.duration)
-              event.send(EventNames.videoLoaded, mainView, Arguments.createMap().apply {
-                putDouble("duration", timeUnitHandler.toSecondsDouble(exoPlayer.duration))
-              })
+//              event.send(EventNames.videoLoaded, mainView, Arguments.createMap().apply {
+//                putDouble("duration", timeUnitHandler.toSecondsDouble(exoPlayer.duration))
+//              })
               timeoutControls()
               buildThumbnails()
             }
           }
 
           Player.STATE_ENDED -> {
-            controls.setVisibilityReplayButton(true)
-            controls.setVisibilityPlayPauseButton(false)
-            event.send(EventNames.videoCompleted, mainView, Arguments.createMap().apply {
-              putBoolean("completed", true)
-            })
+            post {
+              controls.setVisibilityReplayButton(true)
+              controls.setVisibilityPlayPauseButton(false)
+            }
+//            event.send(EventNames.videoCompleted, mainView, Arguments.createMap().apply {
+//              putBoolean("completed", true)
+//            })
+            postInvalidate()
           }
 
           Player.STATE_IDLE -> {}
@@ -298,11 +306,63 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
     })
   }
 
+  private var currentParent: ViewGroup? = null
+  private var currentIndexInParent: Int = -1
+
   private fun toggleFullScreen() {
-    if (isFullScreen) layoutParams.height = currentHeight else layoutParams.height =
-      ViewGroup.LayoutParams.MATCH_PARENT
+    val activity = context.currentActivity ?: return
+
+    if (isFullScreen) {
+      (this.parent as? ViewGroup)?.removeView(this)
+
+      currentParent?.also { parent ->
+        layoutParams = layoutParams.apply {
+          height = ViewGroup.LayoutParams.WRAP_CONTENT
+          width = ViewGroup.LayoutParams.WRAP_CONTENT
+        }
+        activity.window.decorView.systemUiVisibility = (
+          View.SYSTEM_UI_FLAG_VISIBLE
+          )
+        activity.window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+
+        parent.addView(this, currentIndexInParent)
+      }
+    } else {
+      currentParent = this.parent as? ViewGroup
+      currentIndexInParent = currentParent?.indexOfChild(this) ?: -1
+
+      currentParent?.removeView(this)
+
+      activity.window.decorView.systemUiVisibility = (
+        View.SYSTEM_UI_FLAG_FULLSCREEN or
+          View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+          View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        )
+
+      activity.window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+
+      (activity.window?.decorView as ViewGroup).addView(this@RNVideoPlayerView).apply {
+        layoutParams = layoutParams.apply {
+          height = ViewGroup.LayoutParams.MATCH_PARENT
+          width = ViewGroup.LayoutParams.WRAP_CONTENT
+        }
+      }
+    }
+
+    this.requestLayout()
+    this.postInvalidate()
+
     isFullScreen = !isFullScreen
-    requestLayout()
+  }
+
+  override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+    super.onWindowFocusChanged(hasWindowFocus)
+    if (hasWindowFocus) {
+      videoPlayerView.allViews.forEach {
+        it.requestLayout()
+        it.postInvalidate()
+      }
+    }
   }
 
   private fun onToggleControlsVisibility() {

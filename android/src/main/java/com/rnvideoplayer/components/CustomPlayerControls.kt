@@ -59,11 +59,11 @@ class CustomPlayerControls(private val context: ThemedReactContext, view: View) 
   }
 
   override fun setVisibilityPlayPauseButton(isVisible: Boolean) {
-    playPauseButton?.visibility = if (isVisible) View.VISIBLE else View.GONE
+    playPauseButton?.visibility = if (isVisible) View.VISIBLE else View.INVISIBLE
   }
 
   override fun setVisibilityReplayButton(isVisible: Boolean) {
-    replayButton?.visibility = if (isVisible) View.VISIBLE else View.GONE
+    replayButton?.visibility = if (isVisible) View.VISIBLE else View.INVISIBLE
   }
 
   override fun setFullScreenButtonClickListener(listener: View.OnClickListener) {

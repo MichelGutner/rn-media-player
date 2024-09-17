@@ -37,13 +37,9 @@ class RNVideoPlayer : SimpleViewManager<View>() {
         rnVideoPlayerView.viewTreeObserver.removeOnGlobalLayoutListener(this)
         currentHeight = rnVideoPlayerView.height
         currentWidth = rnVideoPlayerView.width
-        (rnVideoPlayerView.parent as? ViewGroup)?.removeView(rnVideoPlayerView)
-
-        (reactContext.currentActivity?.window?.decorView as? ViewGroup)?.addView(
-          rnVideoPlayerView,
-          ViewGroup.LayoutParams.MATCH_PARENT,
-          currentHeight
-        )
+//        (rnVideoPlayerView.parent as? ViewGroup)?.removeView(rnVideoPlayerView)
+//
+//        (reactContext.currentActivity?.parent?.window?.decorView as? ViewGroup)?.addView(rnVideoPlayerView)
       }
     })
 

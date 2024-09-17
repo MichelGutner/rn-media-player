@@ -21,6 +21,6 @@ class CustomLoading(context: ThemedReactContext, view: View, attrs: ReadableArra
   }
 
   fun hide() {
-    loading.visibility = View.GONE
+    loading.visibility = View.INVISIBLE
   }
 }
