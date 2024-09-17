@@ -26,22 +26,6 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   override fun createViewInstance(reactContext: ThemedReactContext): RNVideoPlayerView {
     val rnVideoPlayerView = RNVideoPlayerView(reactContext)
     rnVideoPlayerView.setBackgroundColor(Color.parseColor("black"))
-    reactContext.currentActivity?.window?.setFlags(
-      WindowManager.LayoutParams.FLAG_FULLSCREEN,
-      WindowManager.LayoutParams.FLAG_FULLSCREEN
-    )
-
-    rnVideoPlayerView.viewTreeObserver.addOnGlobalLayoutListener(object :
-      ViewTreeObserver.OnGlobalLayoutListener {
-      override fun onGlobalLayout() {
-        rnVideoPlayerView.viewTreeObserver.removeOnGlobalLayoutListener(this)
-        currentHeight = rnVideoPlayerView.height
-        currentWidth = rnVideoPlayerView.width
-//        (rnVideoPlayerView.parent as? ViewGroup)?.removeView(rnVideoPlayerView)
-//
-//        (reactContext.currentActivity?.parent?.window?.decorView as? ViewGroup)?.addView(rnVideoPlayerView)
-      }
-    })
 
     return rnVideoPlayerView
   }

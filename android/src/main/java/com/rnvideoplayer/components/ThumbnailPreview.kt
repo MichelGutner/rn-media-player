@@ -5,6 +5,7 @@ import android.media.MediaMetadataRetriever
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import androidx.core.view.drawToBitmap
 import com.rnvideoplayer.R
 import com.rnvideoplayer.interfaces.IThumbnailPreview
@@ -16,6 +17,7 @@ class ThumbnailPreview(view: View) : IThumbnailPreview {
   val bitmaps = ArrayList<Bitmap>()
   val view = view.findViewById<ImageView>(R.id.preview_image_view)
   private val timeCodesPreview = view.findViewById<TextView>(R.id.time_codes_preview)
+
   var translationX = 0f
   var width = 0; private set
 
@@ -30,8 +32,13 @@ class ThumbnailPreview(view: View) : IThumbnailPreview {
 
     view.translationX = translationX
     timeCodesPreview.translationX = translateXTimesCodePreview
-//    view.drawToBitmap(Bitmap.Config.ARGB_8888)
-    view.setImageBitmap(bitmaps[index])
+    val bitmap = bitmaps[index]
+
+    val roundedDrawable = RoundedBitmapDrawableFactory.create(view.context.resources, bitmap)
+    roundedDrawable.cornerRadius = view.context.resources.getDimension(R.dimen.corner_radius)
+    roundedDrawable.isFilterBitmap = true
+
+    view.setImageDrawable(roundedDrawable)
   }
 
   override fun show() {

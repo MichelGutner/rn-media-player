@@ -30,7 +30,7 @@ fun View.fadeOut(duration: Long = 500) {
 
 
 fun scaleView(isForward: Boolean, view: View) {
-  val scale = 1.1f
+  val scale = 1f
   if (isForward) {
     view.pivotX = 0f
     view.translationX = (view.width.toFloat() / 2f + 80)

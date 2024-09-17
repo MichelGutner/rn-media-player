@@ -186,7 +186,8 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
     timeBar.onScrubListener(object : OnScrubListener {
       override fun onScrubStart(timeBar: TimeBar, position: Long) {
         isSeeking = true
-        controls.playPauseBackground.visibility = View.GONE
+        controls.playPauseBackground.visibility = View.INVISIBLE
+        controls.setVisibilitySettingsButton(false)
         thumbnail.show()
         timeoutWork.cancelTimer()
       }
@@ -212,6 +213,7 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
           thumbnail.hide()
           isSeeking = false
           controls.setVisibilityReplayButton(false)
+          controls.setVisibilitySettingsButton(true)
           timeoutControls()
           post {
             controls.playPauseBackground.visibility = View.VISIBLE

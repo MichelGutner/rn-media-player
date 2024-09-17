@@ -10,6 +10,7 @@ interface ICustomPlayerControls {
   fun morphPlayPause(isPlaying: Boolean)
   fun setVisibilityPlayPauseButton(isVisible: Boolean)
   fun setVisibilityReplayButton(isVisible: Boolean)
+  fun setVisibilitySettingsButton(isVisible: Boolean)
   fun morphFullScreen(isFullScreen: Boolean)
   fun hideControls()
   fun showControls()
