@@ -15,7 +15,7 @@ fun View.fadeIn(duration: Long = 500) {
   }
 }
 
-fun View.fadeOut(duration: Long = 500) {
+fun View.fadeOut(duration: Long = 500, completion: (() -> Unit)? = null) {
   this.post {
     this.animate()
       .alpha(0f)
@@ -23,6 +23,9 @@ fun View.fadeOut(duration: Long = 500) {
       .setListener(object : AnimatorListenerAdapter() {
         override fun onAnimationEnd(animation: Animator) {
           this@fadeOut.visibility = View.INVISIBLE
+          completion.also {
+            it?.invoke()
+          }
         }
       })
   }

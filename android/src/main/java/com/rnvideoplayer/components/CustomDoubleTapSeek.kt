@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
@@ -11,6 +12,8 @@ import android.widget.TextView
 import androidx.media3.ui.PlayerView
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.R
+import com.rnvideoplayer.helpers.SharedStore
+import com.rnvideoplayer.helpers.SharedStoreKey
 import com.rnvideoplayer.helpers.TimeoutWork
 import com.rnvideoplayer.utils.fadeIn
 import com.rnvideoplayer.utils.fadeOut
@@ -19,25 +22,32 @@ import com.rnvideoplayer.utils.scaleView
 @SuppressLint("SetTextI18n")
 class CustomDoubleTapSeek(
   private val context: ThemedReactContext,
-  view: View,
-  isForward: Boolean
+  private val view: View,
+  private val isForward: Boolean
 ) {
-  private val doubleTapViewId = if (!isForward) R.id.double_tap_view else R.id.double_tap_right_view
-  private val doubleTapEffectId = if (!isForward) R.id.double_tap else R.id.double_tap_2
-  private val doubleTapTextId = if (!isForward) R.id.double_tap_text else R.id.double_tap_text_2
+  private val doubleTapViewId = if (!isForward) R.id.left_double_tap_view else R.id.right_double_tap_view
+  private val doubleTapEffectId = if (!isForward) R.id.left_double_tap_background_effect else R.id.right_double_tap_background_effect
+  private val doubleTapTextId = if (!isForward) R.id.left_double_tap_text else R.id.right_double_tap_text
 
   private val doubleTapView: LinearLayout = view.findViewById(doubleTapViewId)
-  val effect: RelativeLayout = view.findViewById(doubleTapEffectId)
+  val doubleTapBackground: RelativeLayout = view.findViewById(doubleTapEffectId)
   val doubleTapText: TextView = view.findViewById(doubleTapTextId)
-  private var tappedQuantity: Int = 0
+  private var tappedQuantity: Int = 1
   private val timeoutWork = TimeoutWork()
+  private var suffixLabel: String = "seconds"
+  private var doubleTapValue: Long = 15000
 
   init {
-    setupLayout(view, isForward)
+    setupLayout()
   }
 
-  private fun setupLayout(view: View, isForward: Boolean) {
+  private fun setupLayout() {
     doubleTapView.viewTreeObserver.addOnGlobalLayoutListener {
+      suffixLabel = SharedStore.getInstance().getString(SharedStoreKey.SUFFIX_LABEL).toString()
+      SharedStore.getInstance().getLong(SharedStoreKey.DOUBLE_TAP_VALUE)?.also {
+        doubleTapValue = it
+      }
+      doubleTapText.text = "${doubleTapValue.times(tappedQuantity)} $suffixLabel"
       scaleView(isForward, doubleTapView)
       val layoutParams = doubleTapText.layoutParams as ViewGroup.MarginLayoutParams
       if (isForward) {
@@ -47,38 +57,43 @@ class CustomDoubleTapSeek(
       }
       doubleTapText.layoutParams = layoutParams
       doubleTapView.requestLayout()
+      doubleTapBackground.requestLayout()
+      doubleTapText.requestLayout()
     }
   }
 
   @SuppressLint("ClickableViewAccessibility")
-  fun tap(onSingleTap: (tapQuantity: Int) -> Unit, onDoubleTap: (tapQuantity: Int) -> Unit) {
+  fun tap(onSingleTap: () -> Unit, onDoubleTap: () -> Unit) {
     doubleTapView.setOnTouchListener(object : View.OnTouchListener {
       val gestureDetector =
         GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
           override fun onDoubleTap(e: MotionEvent): Boolean {
             tappedQuantity++
             timeoutWork.cancelTimer()
-            effect.fadeIn(100)
+            doubleTapBackground.fadeIn(100)
             timeoutWork.createTask {
-              effect.fadeOut(100)
-              tappedQuantity = 0
+              doubleTapBackground.fadeOut(100, completion = {
+                tappedQuantity = 0
+              })
             }
-            onDoubleTap(tappedQuantity)
+            onDoubleTap()
+            doubleTapText.text = "${doubleTapValue.times(tappedQuantity)} $suffixLabel"
+
             return super.onDoubleTap(e)
           }
 
           override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-            if (tappedQuantity > 0) {
-              tappedQuantity++
-            }
             timeoutWork.cancelTimer()
-            if (effect.visibility == PlayerView.VISIBLE) {
+            if (doubleTapBackground.visibility == VISIBLE) {
+              tappedQuantity++
               timeoutWork.createTask {
-                tappedQuantity = 0
-                effect.fadeOut(100)
+                doubleTapBackground.fadeOut(100, completion = {
+                  tappedQuantity = 0
+                })
               }
             }
-            onSingleTap(tappedQuantity)
+            onSingleTap()
+            doubleTapText.text = "${doubleTapValue.times(tappedQuantity)} $suffixLabel"
             return super.onSingleTapConfirmed(e)
           }
         })

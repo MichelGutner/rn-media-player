@@ -1,14 +1,11 @@
 package com.rnvideoplayer
 
 import android.annotation.SuppressLint
-import android.app.Dialog
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.widget.FrameLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.core.view.allViews
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -57,7 +54,7 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
   private val loading = CustomLoading(context, this)
   private val controls = CustomPlayerControls(context, this)
 
-  private val thumbnail by lazy {  ThumbnailPreview(this) }
+  private val thumbnail by lazy { ThumbnailPreview(this) }
 
   private val timeUnitHandler = TimeUnitManager()
 
@@ -66,7 +63,7 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
   private var isSeeking: Boolean = false
   private var started: Boolean = false
 
-  private var doubleTapSuffixLabel: String = "seconds"
+  private var doubleTapSuffixLabel: String = "Seconds"
   private var doubleTapValue: Long = 15000
 
   private val overlayView: RelativeLayout
@@ -272,7 +269,8 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
   }
 
   private fun onTranslateXThumbnail(currentSeekPoint: Long): Float {
-    val timeBarWidth = timeBar.width.toFloat() + context.resources.displayMetrics.widthPixels * 0.10F
+    val timeBarWidth =
+      timeBar.width.toFloat() + context.resources.displayMetrics.widthPixels * 0.10F
     var translateX = 16.0F
     if (currentSeekPoint.toFloat() + thumbnail.width / 2 >= timeBarWidth) {
       translateX = (timeBarWidth - thumbnail.width) - 16
@@ -322,9 +320,7 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
           height = ViewGroup.LayoutParams.WRAP_CONTENT
           width = ViewGroup.LayoutParams.WRAP_CONTENT
         }
-        activity.window.decorView.systemUiVisibility = (
-          View.SYSTEM_UI_FLAG_VISIBLE
-          )
+        activity.window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_VISIBLE)
         activity.window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
         parent.addView(this, currentIndexInParent)
@@ -335,36 +331,23 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
 
       currentParent?.removeView(this)
 
-      activity.window.decorView.systemUiVisibility = (
-        View.SYSTEM_UI_FLAG_FULLSCREEN or
-          View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-          View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        )
-
-      activity.window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-
       (activity.window?.decorView as ViewGroup).addView(this@RNVideoPlayerView).apply {
-        layoutParams = layoutParams.apply {
+        layoutParams.apply {
           height = ViewGroup.LayoutParams.MATCH_PARENT
-          width = ViewGroup.LayoutParams.WRAP_CONTENT
+          width = ViewGroup.LayoutParams.MATCH_PARENT
         }
       }
+
+      activity.window.decorView.systemUiVisibility =
+        (View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
+
+      activity.window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
     }
 
     this.requestLayout()
     this.postInvalidate()
 
     isFullScreen = !isFullScreen
-  }
-
-  override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
-    super.onWindowFocusChanged(hasWindowFocus)
-    if (hasWindowFocus) {
-      videoPlayerView.allViews.forEach {
-        it.requestLayout()
-        it.postInvalidate()
-      }
-    }
   }
 
   private fun onToggleControlsVisibility() {
@@ -424,46 +407,30 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
 
   private fun rightDoubleTapGesture() {
     rightDoubleTap.tap(
-      onSingleTap = { quantity ->
-        updateRightDoubleTapText(rightDoubleTap, quantity)
-        if (rightDoubleTap.effect.visibility == VISIBLE) {
+      onSingleTap = {
+        if (rightDoubleTap.doubleTapBackground.visibility == VISIBLE) {
           performSeekToNextPosition()
         } else {
           onToggleControlsVisibility()
         }
-      },
-      onDoubleTap = { quantity ->
+      }, onDoubleTap = {
         performSeekToNextPosition()
-        updateRightDoubleTapText(rightDoubleTap, quantity)
-        hideControls()
-      }
-    )
-  }
-
-  private fun leftDoubleTapGesture() {
-    leftDoubleTap.tap(
-      onSingleTap = { quantity ->
-        updateDoubleTapText(leftDoubleTap, quantity)
-        if (leftDoubleTap.effect.visibility == VISIBLE) {
-          performSeekToPreviousPosition()
-        } else {
-          onToggleControlsVisibility()
-        }
-      },
-      onDoubleTap = { quantity ->
-        performSeekToPreviousPosition()
-        updateDoubleTapText(leftDoubleTap, quantity)
         hideControls()
       })
   }
 
-  @SuppressLint("SetTextI18n")
-  private fun updateRightDoubleTapText(doubleTap: CustomDoubleTapSeek, quantity: Int) {
-    doubleTap.doubleTapText.text = "${doubleTapValue.times(quantity)} $doubleTapSuffixLabel"
-  }
-  @SuppressLint("SetTextI18n")
-  private fun updateDoubleTapText(doubleTap: CustomDoubleTapSeek, quantity: Int) {
-    doubleTap.doubleTapText.text = "- ${doubleTapValue.times(quantity)} $doubleTapSuffixLabel"
+  private fun leftDoubleTapGesture() {
+    leftDoubleTap.tap(
+      onSingleTap = {
+        if (leftDoubleTap.doubleTapBackground.visibility == VISIBLE) {
+          performSeekToPreviousPosition()
+        } else {
+          onToggleControlsVisibility()
+        }
+      }, onDoubleTap = {
+        performSeekToPreviousPosition()
+        hideControls()
+      })
   }
 
   private fun performSeekToNextPosition() {
