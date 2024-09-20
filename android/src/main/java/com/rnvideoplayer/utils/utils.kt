@@ -33,17 +33,17 @@ fun View.fadeOut(duration: Long = 500, completion: (() -> Unit)? = null) {
 
 
 fun scaleView(isForward: Boolean, view: View) {
-  val scale = 1f
+  val playPauseButtonSize = 80f
   if (isForward) {
     view.pivotX = 0f
-    view.translationX = (view.width.toFloat() / 2f + 80)
+    view.translationX = (view.width.toFloat() / 2f + playPauseButtonSize)
   } else {
   view.pivotX = view.width.toFloat()
-  view.translationX = -(view.width.toFloat() / 2f + 80)
+  view.translationX = -(view.width.toFloat() / 2f + playPauseButtonSize)
 
   }
   view.pivotY = view.height / 2f
-  view.animate().scaleX(scale).scaleY(scale).setDuration(200).start()
+  view.animate().scaleX(1f).scaleY(1f).setDuration(200).start()
   view.requestLayout()
 }
 

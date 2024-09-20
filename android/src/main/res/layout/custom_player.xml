@@ -36,9 +36,9 @@
 
           <TextView
             android:id="@+id/left_double_tap_text"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
+            android:gravity="end"
             android:layout_centerVertical="true"
             android:textColor="#fff"
             android:textSize="@dimen/double_tap_text_size"

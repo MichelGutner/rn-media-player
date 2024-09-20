@@ -4,5 +4,5 @@
   <dimen name="list_item_spacing_half">8dp</dimen>
   <dimen name="corner_radius">16dp</dimen>
   <dimen name="double_tap_text_size">12sp</dimen>
-  <dimen name="padding_controls">16dp</dimen>
+  <dimen name="padding_controls">12dp</dimen>
 </resources>

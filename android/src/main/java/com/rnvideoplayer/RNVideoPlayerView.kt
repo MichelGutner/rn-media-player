@@ -270,10 +270,10 @@ class RNVideoPlayerView(private val context: ThemedReactContext) : PlayerView(co
 
   private fun onTranslateXThumbnail(currentSeekPoint: Long): Float {
     val timeBarWidth =
-      timeBar.width.toFloat() + context.resources.displayMetrics.widthPixels * 0.10F
+      timeBar.width.toFloat() + width * 0.10F
     var translateX = 16.0F
-    if (currentSeekPoint.toFloat() + thumbnail.width / 2 >= timeBarWidth) {
-      translateX = (timeBarWidth - thumbnail.width) - 16
+    if ((currentSeekPoint.toFloat() + thumbnail.width / 2) + width * 0.10F >= timeBarWidth) {
+      translateX = (timeBarWidth - thumbnail.width) - width * 0.10F
     } else if (currentSeekPoint.toFloat() >= thumbnail.width / 2 && currentSeekPoint.toFloat() + thumbnail.width / 2 < timeBarWidth) {
       translateX = currentSeekPoint.toFloat() - thumbnail.width / 2
     }
