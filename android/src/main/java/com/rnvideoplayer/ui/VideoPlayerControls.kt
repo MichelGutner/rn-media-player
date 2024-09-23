@@ -3,20 +3,17 @@ package com.rnvideoplayer.ui
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.TypedValue
-import android.view.Gravity
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageButton
-import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.ui.DefaultTimeBar
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.R
 import com.rnvideoplayer.fadeIn
 import com.rnvideoplayer.fadeOut
+import com.rnvideoplayer.ui.components.Thumbnails
 import com.rnvideoplayer.ui.controls.BottomControls
 import com.rnvideoplayer.utilities.ColorUtils
 import com.rnvideoplayer.utilities.layoutParamsCenter
@@ -28,20 +25,20 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
   private val mainLayout = createMainFrameLayout(context)
   private var playPauseRoundedBackground = createPlayPauseBackground(context)
   val playPauseButton = createPlayPauseButtonAnimated(context)
+
   private val drawables = AnimatedDrawables(context)
   private val bottomControls = BottomControls(context)
 
+  val thumbnails = bottomControls.thumbnails
   val timeBar = bottomControls.timeBar
-  val timeCodesDurationView = bottomControls.timeCodesDurationView
   val menuControlLayout = bottomControls.menuControlLayout
-  val fullscreenControlLayout = bottomControls.fullscreenControlLayout
+  val fullscreenButton = bottomControls.fullscreenButton
 
   init {
     playPauseRoundedBackground.addView(playPauseButton)
 
     mainLayout.addView(playPauseRoundedBackground)
     mainLayout.addView(bottomControls)
-
     overlayView.addView(mainLayout)
     addView(overlayView)
   }
@@ -54,6 +51,16 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
     } else {
       playPauseButton.setImageDrawable(drawables.pauseToPlay)
       drawables.pauseToPlay.start()
+    }
+  }
+
+  fun updateFullscreenIcon(isFullscreen: Boolean) {
+    if (isFullscreen) {
+      fullscreenButton.setImageDrawable(drawables.fullscreenToExit)
+      drawables.fullscreenToExit.start()
+    } else {
+      fullscreenButton.setImageDrawable(drawables.exitToFullscreen)
+      drawables.exitToFullscreen.start()
     }
   }
 

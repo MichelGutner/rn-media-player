@@ -30,25 +30,22 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
 
   init {
     setupLayout()
-    viewControls.playPauseButton.setOnClickListener {
-      playPauseManager()
-    }
+
     viewControls.setOnClickListener {
       viewControls.toggleOverlay()
     }
   }
 
   fun setFullscreenOnClickListener(listener: OnClickListener) {
-    viewControls.fullscreenControlLayout.setOnClickListener(listener)
+    viewControls.fullscreenButton.setOnClickListener(listener)
   }
 
-  private fun playPauseManager() {
-    if (player?.isPlaying == true) {
-      player?.pause()
-    } else {
-      player?.play()
-    }
-    viewControls.updatePlayPauseIcon(player?.isPlaying ?: true)
+  fun setPlayPauseOnClickListener(listener: OnClickListener) {
+    viewControls.playPauseButton.setOnClickListener(listener)
+  }
+
+  fun setMenuOnClickListener(listener: OnClickListener) {
+    viewControls.menuControlLayout.setOnClickListener(listener)
   }
 
   private fun setupLayout() {
@@ -82,10 +79,10 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
     requestLayout()
   }
 
-  fun setResizeMode(mode: Int) {
-    aspectRatioFrameLayout.resizeMode = mode
-    requestLayout()
-  }
+//  fun setResizeMode(mode: Int) {
+//    aspectRatioFrameLayout.resizeMode = mode
+//    requestLayout()
+//  }
 
   private fun calculateModeFitAspectRatio(context: ThemedReactContext): Float {
     val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -105,9 +102,5 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
       return width.toFloat() / height.toFloat()
     }
     return height.toFloat() / width.toFloat()
-  }
-
-  private fun dpToPx(dp: Int): Int {
-    return (dp * context.resources.displayMetrics.density).toInt()
   }
 }
