@@ -13,6 +13,7 @@ import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.R
 import com.rnvideoplayer.fadeIn
 import com.rnvideoplayer.fadeOut
+import com.rnvideoplayer.ui.components.DoubleTapSeek
 import com.rnvideoplayer.ui.components.Thumbnails
 import com.rnvideoplayer.ui.controls.BottomControls
 import com.rnvideoplayer.utilities.ColorUtils
@@ -28,6 +29,8 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
 
   private val drawables = AnimatedDrawables(context)
   private val bottomControls = BottomControls(context)
+  val leftDoubleTap = DoubleTapSeek(context, false)
+  val rightDoubleTap = DoubleTapSeek(context, true)
 
   val thumbnails = bottomControls.thumbnails
   val timeBar = bottomControls.timeBar
@@ -40,6 +43,9 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
     mainLayout.addView(playPauseRoundedBackground)
     mainLayout.addView(bottomControls)
     overlayView.addView(mainLayout)
+
+    addView(leftDoubleTap)
+    addView(rightDoubleTap)
     addView(overlayView)
   }
 

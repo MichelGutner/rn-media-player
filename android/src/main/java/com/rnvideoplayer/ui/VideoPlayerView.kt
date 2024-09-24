@@ -36,6 +36,21 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
     }
   }
 
+  fun setLeftDoubleTapListener(
+    onSingleTap: (doubleTapValue: Long) -> Unit,
+    onDoubleTap: (doubleTapValue: Long) -> Unit
+  ) {
+    viewControls.leftDoubleTap.tap(onSingleTap, onDoubleTap)
+  }
+
+  fun setRightDoubleTapListener(
+    onSingleTap: (doubleTapValue: Long) -> Unit,
+    onDoubleTap: (doubleTapValue: Long) -> Unit
+  ) {
+    viewControls.rightDoubleTap.tap(onSingleTap, onDoubleTap)
+  }
+
+
   fun setFullscreenOnClickListener(listener: OnClickListener) {
     viewControls.fullscreenButton.setOnClickListener(listener)
   }
