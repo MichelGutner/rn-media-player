@@ -30,10 +30,38 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
 
   init {
     setupLayout()
+  }
 
-    viewControls.setOnClickListener {
-      viewControls.toggleOverlay()
-    }
+  fun playbackViewClickListener(listener: OnClickListener) {
+    viewControls.setOnClickListener(listener)
+  }
+
+  fun hideLoading() {
+    viewControls.loading.hide()
+    viewControls.playPauseButton.visibility = VISIBLE
+    viewControls.fullscreenLayout.visibility = VISIBLE
+    viewControls.menuControlLayout.visibility = VISIBLE
+    viewControls.timeBar.visibility = VISIBLE
+  }
+
+  fun showLoading() {
+    viewControls.loading.show()
+    viewControls.playPauseButton.visibility = INVISIBLE
+    viewControls.fullscreenLayout.visibility = INVISIBLE
+    viewControls.menuControlLayout.visibility = INVISIBLE
+    viewControls.timeBar.visibility = INVISIBLE
+  }
+
+  fun hideButtons() {
+    viewControls.playPauseRoundedBackground.visibility = INVISIBLE
+    viewControls.fullscreenLayout.visibility = INVISIBLE
+    viewControls.menuControlLayout.visibility = INVISIBLE
+  }
+
+  fun showButtons() {
+    viewControls.playPauseRoundedBackground.visibility = VISIBLE
+    viewControls.fullscreenLayout.visibility = VISIBLE
+    viewControls.menuControlLayout.visibility = VISIBLE
   }
 
   fun setLeftDoubleTapListener(
@@ -88,16 +116,11 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
 
 
   fun setAspectRatio(aspectRatio: Float) {
-    aspectRatioFrameLayout.setAspectRatio(0f)
+    aspectRatioFrameLayout.setAspectRatio(aspectRatio)
     aspectRatioFrameLayout.layoutParams =
       layoutParamsCenter(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
     requestLayout()
   }
-
-//  fun setResizeMode(mode: Int) {
-//    aspectRatioFrameLayout.resizeMode = mode
-//    requestLayout()
-//  }
 
   private fun calculateModeFitAspectRatio(context: ThemedReactContext): Float {
     val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager

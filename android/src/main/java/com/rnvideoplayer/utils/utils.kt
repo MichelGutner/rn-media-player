@@ -4,7 +4,7 @@ import android.view.View
 
 
 fun scaleView(isForward: Boolean, view: View) {
-  val playPauseButtonSize = 120f
+  val playPauseButtonSize = 70f
   if (isForward) {
     view.pivotX = 0f
     view.translationX = (view.width.toFloat() / 2f + playPauseButtonSize)

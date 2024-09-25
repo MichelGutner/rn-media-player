@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ProgressBar
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.facebook.react.uimanager.ThemedReactContext
@@ -14,7 +15,7 @@ import com.rnvideoplayer.R
 import com.rnvideoplayer.fadeIn
 import com.rnvideoplayer.fadeOut
 import com.rnvideoplayer.ui.components.DoubleTapSeek
-import com.rnvideoplayer.ui.components.Thumbnails
+import com.rnvideoplayer.ui.components.Loading
 import com.rnvideoplayer.ui.controls.BottomControls
 import com.rnvideoplayer.utilities.ColorUtils
 import com.rnvideoplayer.utilities.layoutParamsCenter
@@ -22,23 +23,28 @@ import com.rnvideoplayer.utilities.layoutParamsCenter
 @OptIn(UnstableApi::class)
 @SuppressLint("ViewConstructor")
 class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context) {
-  private var overlayView = createOverlayView(context, ColorUtils.blackOpacity50)
+  var overlayView = createOverlayView(context, ColorUtils.blackOpacity50)
   private val mainLayout = createMainFrameLayout(context)
-  private var playPauseRoundedBackground = createPlayPauseBackground(context)
+
+  var playPauseRoundedBackground = createPlayPauseBackground(context)
   val playPauseButton = createPlayPauseButtonAnimated(context)
+  val loading by lazy {  Loading(context) }
 
   private val drawables = AnimatedDrawables(context)
   private val bottomControls = BottomControls(context)
+
   val leftDoubleTap = DoubleTapSeek(context, false)
   val rightDoubleTap = DoubleTapSeek(context, true)
 
   val thumbnails = bottomControls.thumbnails
   val timeBar = bottomControls.timeBar
   val menuControlLayout = bottomControls.menuControlLayout
+  val fullscreenLayout = bottomControls.fullscreenControlLayout
   val fullscreenButton = bottomControls.fullscreenButton
 
   init {
     playPauseRoundedBackground.addView(playPauseButton)
+    playPauseRoundedBackground.addView(loading)
 
     mainLayout.addView(playPauseRoundedBackground)
     mainLayout.addView(bottomControls)
@@ -84,7 +90,7 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
   private fun createPlayPauseBackground(context: Context): FrameLayout {
     val sizeInPx = TypedValue.applyDimension(
       TypedValue.COMPLEX_UNIT_DIP,
-      80f,
+      70f,
       context.resources.displayMetrics
     ).toInt()
 
@@ -107,6 +113,7 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
       )
       setBackgroundResource(typedValue.resourceId)
       setImageResource(R.drawable.animated_play_to_pause)
+      visibility = INVISIBLE
     }
   }
 
@@ -117,37 +124,11 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
     return mainLayout
   }
 
-  fun toggleOverlay() {
-    if (overlayView.visibility == VISIBLE) {
-      hideControls()
-    } else {
-      showControls()
-    }
-  }
-
   fun hideControls() {
-    animationAppear(bottomControls, 0f, context.resources.displayMetrics.heightPixels.toFloat()) {
       overlayView.fadeOut()
-    }
   }
 
   fun showControls() {
-    animationAppear(bottomControls, context.resources.displayMetrics.heightPixels.toFloat(), 0f)
     overlayView.fadeIn()
-  }
-
-  private fun animationAppear(
-    view: FrameLayout,
-    fromValue: Float,
-    toValue: Float,
-    withEndAction: () -> Unit = {}
-  ) {
-    view.translationY = fromValue
-    bottomControls.animate()
-      .translationY(toValue)
-      .setDuration(300)
-      .setInterpolator(AccelerateDecelerateInterpolator())
-      .withEndAction(withEndAction)
-      .start()
   }
 }

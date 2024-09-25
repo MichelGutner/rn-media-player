@@ -69,6 +69,7 @@ class BottomControls(context: Context) : FrameLayout(context) {
       setBackgroundResource(R.drawable.rounded_background)
       isClickable = true
       isFocusable = true
+      visibility = INVISIBLE
     }
 
     val menuIcon = ImageButton(context).apply {
@@ -96,6 +97,7 @@ class BottomControls(context: Context) : FrameLayout(context) {
         setMargins(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(8))
       }
       setBackgroundResource(R.drawable.rounded_background)
+      visibility = INVISIBLE
     }
   }
 

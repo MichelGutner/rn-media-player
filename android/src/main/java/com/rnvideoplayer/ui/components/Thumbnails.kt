@@ -3,6 +3,7 @@ package com.rnvideoplayer.ui.components
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.view.ViewGroup
@@ -21,10 +22,12 @@ import com.rnvideoplayer.utilities.ColorUtils
 import kotlin.concurrent.thread
 
 class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
+  private val isLandscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
   private val helper = RNVideoHelpers()
   private var timestamp = 0L
-  private val thumbWidth = 850
-  private val thumbHeight = 500
+  val thumbWidth = dpToPx(240)
+  private val thumbHeight = dpToPx(140)
 
   val interval = 5000L
   val bitmaps = ArrayList<Bitmap>()
@@ -33,9 +36,9 @@ class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
       orientation = LinearLayout.VERTICAL
     }
   }
-  val thumbnailView = createThumbnailView(context)
+  private val thumbnailView = createThumbnailView(context)
   private val thumbnailTimeCodes = createThumbnailTimeCodes(context)
-  var translateXTimesCodePreview: Int = 0
+  private var translateXTimesCodePreview: Int = 0
 
   var translationXThumbnailView = 0f
 
@@ -53,7 +56,7 @@ class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
     roundedDrawable.isFilterBitmap = true
     thumbnailView.setImageDrawable(roundedDrawable)
 
-    translateXTimesCodePreview = ((translationXThumbnailView + 850 / 2 - thumbnailTimeCodes.width / 2).toInt())
+    translateXTimesCodePreview = ((translationXThumbnailView + thumbWidth / 2 - thumbnailTimeCodes.width / 2).toInt())
     thumbnailView.translationX = translationXThumbnailView
     thumbnailTimeCodes.translationX = translateXTimesCodePreview.toFloat()
   }
@@ -152,5 +155,8 @@ class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
       }
     }
     return timeCodes
+  }
+  private fun dpToPx(dp: Int): Int {
+    return (dp * context.resources.displayMetrics.density).toInt()
   }
 }

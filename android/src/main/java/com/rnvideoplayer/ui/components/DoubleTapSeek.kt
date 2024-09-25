@@ -80,7 +80,7 @@ class DoubleTapSeek(
                 tappedQuantity = 0
               })
             }
-            onDoubleTap(doubleTapValue)
+            onDoubleTap(doubleTapValue * 1000)
             doubleTapText.text = "${doubleTapValue.times(tappedQuantity)} $suffixLabel"
 
             return super.onDoubleTap(e)
@@ -96,7 +96,7 @@ class DoubleTapSeek(
                 })
               }
             }
-            onSingleTap(doubleTapValue)
+            onSingleTap(doubleTapValue * 1000)
             doubleTapText.text = "${doubleTapValue.times(tappedQuantity)} $suffixLabel"
             return super.onSingleTapConfirmed(e)
           }
@@ -146,7 +146,6 @@ class DoubleTapSeek(
 
   private fun createDoubleTapText(): TextView {
     val textView = TextView(context).apply {
-      id = View.generateViewId() // Or use a fixed ID: R.id.left_double_tap_text
       layoutParams = RelativeLayout.LayoutParams(
         RelativeLayout.LayoutParams.MATCH_PARENT,
         RelativeLayout.LayoutParams.WRAP_CONTENT
