@@ -1,4 +1,4 @@
-package com.rnvideoplayer.components
+package com.rnvideoplayer.ui.components
 
 import android.content.Context
 import android.view.Gravity
@@ -22,10 +22,10 @@ class CustomTimeBar(context: Context) : LinearLayout(context), ICustomSeekBar {
     private set
 
   private val timeCodesDurationView = createTimeCodesDurationView(context)
-  val timeCodesDuration = createTimeCodesDuration(context)
+  private val timeCodesDuration = createTimeCodesDuration(context)
 
   private val barWithTimeCodesDuration = LinearLayout(context).apply {
-    orientation = LinearLayout.HORIZONTAL
+    orientation = HORIZONTAL
   }
 
   private val timeBar = createTimeBar(context)
@@ -38,6 +38,7 @@ class CustomTimeBar(context: Context) : LinearLayout(context), ICustomSeekBar {
     timeBar.viewTreeObserver.addOnGlobalLayoutListener {
       timeBarWidth = timeBar.width
     }
+    visibility = INVISIBLE
     addView(barWithTimeCodesDuration)
   }
 

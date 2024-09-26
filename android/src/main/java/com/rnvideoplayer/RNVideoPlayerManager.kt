@@ -32,7 +32,6 @@ class RNVideoPlayer : SimpleViewManager<View>() {
     return rnVideoPlayerView
   }
 
-
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> {
     val mapBuilder = MapBuilder.builder<String, Any>()
     events.forEach { event ->
@@ -42,68 +41,74 @@ class RNVideoPlayer : SimpleViewManager<View>() {
     return mapBuilder.build()
   }
 
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "resizeMode")
+  fun setResizeMode(rnVideoPlayerView: RNVideoPlayerViewX, resizeMode: String) {
+    val resizeModeValue = when (resizeMode) {
+      "contain" -> 1.5
+      "cover" -> 0
+      else -> 1.5
+    }
+    rnVideoPlayerView.changeResizeMode(resizeModeValue.toFloat())
+  }
 
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "resizeMode")
-//  fun setResizeMode(rnVideoPlayerView: CustomExoPlayerView, resizeMode: String) {
-//    val resizeModeInt = when (resizeMode) {
-//      "contain" -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-//      "cover" -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-//      else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-//    }
-//    rnVideoPlayerView.setResizeMode(resizeModeInt)
-//  }
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "screenBehavior")
+  fun setScreenBehavior(rnVideoPlayerView: RNVideoPlayerViewX, screenBehavior: ReadableMap?) {
+    println("screenBehavior: $screenBehavior")
+    SharedStore.getInstance().putBoolean("autoEnterFullscreenOnLandscape", screenBehavior?.getBoolean("autoEnterFullscreenOnLandscape") ?: false)
+    SharedStore.getInstance().putBoolean("forceLandscapeInFullscreen", screenBehavior?.getBoolean("forceLandscapeInFullscreen") ?: false)
+  }
 
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "source")
-//  fun setSource(rnVideoPlayerView: RNVideoPlayerView, source: ReadableMap?) {
-//      rnVideoPlayerView.mediaPlayer.build(source)
-//  }
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "source")
+  fun setSource(rnVideoPlayerView: RNVideoPlayerViewX, source: ReadableMap?) {
+      rnVideoPlayerView.build(source)
+  }
+
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "rate")
+  fun setRate(rnVideoPlayerView: RNVideoPlayerViewX, rate: Double) {
+    rnVideoPlayerView.changeRate(rate.toFloat())
+  }
 //
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "rate")
-//  fun setRate(rnVideoPlayerView: RNVideoPlayerView, rate: Double) {
-//    rnVideoPlayerView.changeRate(rate.toFloat())
-//  }
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "autoPlay")
+  fun setAutoPlay(rnVideoPlayerView: RNVideoPlayerViewX, autoPlay: Boolean) {
+    rnVideoPlayerView.autoPlay(autoPlay)
+  }
 //
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "autoPlay")
-//  fun setAutoPlay(rnVideoPlayerView: RNVideoPlayerView, autoPlay: Boolean) {
-//    rnVideoPlayerView.mediaPlayer.autoPlay(autoPlay)
-//  }
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "menus")
+  fun setMenus(rnVideoPlayerView: RNVideoPlayerViewX, menus: ReadableMap) {
+    val menusData = mutableSetOf<String>()
+    rnVideoPlayerView.getMenus(menus.toHashMap().keys)
+    menus.entryIterator.forEach { i ->
+      menusData.add(i.key)
+      ReadableMapManager.getInstance().setReadableMapProps(i.value, i.key)
+    }
+    rnVideoPlayerView.getMenus(menusData)
+  }
 //
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "menus")
-//  fun setMenus(rnVideoPlayerView: RNVideoPlayerView, menus: ReadableMap) {
-//    val menusData = mutableSetOf<String>()
-//    rnVideoPlayerView.getMenus(menus.toHashMap().keys)
-//    menus.entryIterator.forEach { i ->
-//      menusData.add(i.key)
-//      ReadableMapManager.getInstance().setReadableMapProps(i.value, i.key)
-//    }
-//    rnVideoPlayerView.getMenus(menusData)
-//  }
-//
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "tapToSeek")
-//  fun setSuffixLabelTapToSeek(player: RNVideoPlayerView, tapToSeek: ReadableMap?) {
-//    val suffixLabel = tapToSeek?.getString("suffixLabel")
-//    val value = tapToSeek?.getDouble("value")
-//    if (suffixLabel != null) {
-//      SharedStore.getInstance().putString(SharedStoreKey.SUFFIX_LABEL, suffixLabel)
-//    }
-//    if (value != null) {
-//      SharedStore.getInstance().putLong(SharedStoreKey.DOUBLE_TAP_VALUE, value.toLong())
-//    }
-//  }
-//
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "changeQualityUrl")
-//  fun setChangeQualityUrl(player: RNVideoPlayerView, changeQualityUrl: String) {
-//    if (changeQualityUrl.isNotEmpty()) {
-//      player.changeQuality(changeQualityUrl)
-//    }
-//  }
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "tapToSeek")
+  fun setSuffixLabelTapToSeek(player: RNVideoPlayerViewX, tapToSeek: ReadableMap?) {
+    val suffixLabel = tapToSeek?.getString("suffixLabel")
+    val value = tapToSeek?.getDouble("value")
+    if (suffixLabel != null) {
+      SharedStore.getInstance().putString(SharedStoreKey.SUFFIX_LABEL, suffixLabel)
+    }
+    if (value != null) {
+      SharedStore.getInstance().putLong(SharedStoreKey.DOUBLE_TAP_VALUE, value.toLong())
+    }
+  }
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "changeQualityUrl")
+  fun setChangeQualityUrl(player: RNVideoPlayerViewX, changeQualityUrl: String) {
+    if (changeQualityUrl.isNotEmpty()) {
+      player.changeVideoQuality(changeQualityUrl)
+    }
+  }
 }
 
 object EventNames {
@@ -111,10 +116,10 @@ object EventNames {
   const val videoProgress = "onVideoProgress"
   const val videoLoaded = "onLoaded"
   const val videoCompleted = "onCompleted"
-  const val videoReady = "onReady"
   const val videoBuffering = "onBuffer"
   const val videoPlayPauseStatus = "onPlayPause"
   const val videoErrorStatus = "onError"
+  const val videoBufferCompleted = "onBufferCompleted"
 }
 
 fun View.fadeIn(duration: Long = 500) {

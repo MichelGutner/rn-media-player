@@ -1,13 +1,9 @@
 package com.rnvideoplayer.ui.components
 
-import android.animation.AnimatorSet
-import android.animation.ValueAnimator
 import android.content.Context
-import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.view.ViewGroup
-import android.view.ViewTreeObserver
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -22,8 +18,6 @@ import com.rnvideoplayer.utilities.ColorUtils
 import kotlin.concurrent.thread
 
 class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
-  private val isLandscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-
   private val helper = RNVideoHelpers()
   private var timestamp = 0L
   val thumbWidth = dpToPx(240)

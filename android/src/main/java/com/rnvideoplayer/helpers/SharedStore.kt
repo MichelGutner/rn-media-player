@@ -27,6 +27,14 @@ class SharedStore {
     return stringMap[key] as? Long
   }
 
+  fun putBoolean(key: String, value: Boolean) {
+    stringMap[key] = value
+  }
+
+  fun getBoolean(key: String): Boolean? {
+    return stringMap[key] as? Boolean
+  }
+
   companion object {
     @Volatile
     private var instance: SharedStore? = null

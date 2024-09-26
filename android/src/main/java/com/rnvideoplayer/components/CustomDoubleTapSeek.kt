@@ -9,14 +9,13 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.media3.ui.PlayerView
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.R
+import com.rnvideoplayer.fadeIn
+import com.rnvideoplayer.fadeOut
 import com.rnvideoplayer.helpers.SharedStore
 import com.rnvideoplayer.helpers.SharedStoreKey
 import com.rnvideoplayer.helpers.TimeoutWork
-import com.rnvideoplayer.utils.fadeIn
-import com.rnvideoplayer.utils.fadeOut
 import com.rnvideoplayer.utils.scaleView
 
 @SuppressLint("SetTextI18n")
@@ -63,7 +62,7 @@ class CustomDoubleTapSeek(
   }
 
   @SuppressLint("ClickableViewAccessibility")
-  fun tap(onSingleTap: () -> Unit, onDoubleTap: () -> Unit) {
+  fun tap(onSingleTap: (doubleTapValue: Long) -> Unit, onDoubleTap: (doubleTapValue: Long) -> Unit) {
     doubleTapView.setOnTouchListener(object : View.OnTouchListener {
       val gestureDetector =
         GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
@@ -76,7 +75,7 @@ class CustomDoubleTapSeek(
                 tappedQuantity = 0
               })
             }
-            onDoubleTap()
+            onDoubleTap(doubleTapValue)
             doubleTapText.text = "${doubleTapValue.times(tappedQuantity)} $suffixLabel"
 
             return super.onDoubleTap(e)
@@ -92,7 +91,7 @@ class CustomDoubleTapSeek(
                 })
               }
             }
-            onSingleTap()
+            onSingleTap(doubleTapValue)
             doubleTapText.text = "${doubleTapValue.times(tappedQuantity)} $suffixLabel"
             return super.onSingleTapConfirmed(e)
           }

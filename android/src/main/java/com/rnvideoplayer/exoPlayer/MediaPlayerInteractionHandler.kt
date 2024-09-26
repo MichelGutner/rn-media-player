@@ -2,6 +2,7 @@ package com.rnvideoplayer.exoPlayer
 
 import android.net.Uri
 import android.view.LayoutInflater
+import android.view.ViewTreeObserver
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -9,6 +10,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ThemedReactContext
@@ -38,6 +40,7 @@ class MediaPlayerInteractionHandler(private val context: ThemedReactContext, pri
     val thumbnailProps = source.getMap("thumbnails")
 
     if (url.isEmpty()) {
+      println("URL is empty")
       return
     }
 
@@ -46,6 +49,7 @@ class MediaPlayerInteractionHandler(private val context: ThemedReactContext, pri
 
     view.player = exoPlayer
     view.useController = false
+
     exoPlayer.prepare()
 
     val thumbnailUrl = thumbnailProps?.getString("url") as String
@@ -80,27 +84,18 @@ class MediaPlayerInteractionHandler(private val context: ThemedReactContext, pri
   }
 
   fun seekToNextPosition(position: Long) {
-    println("seekToNextPosition $position")
-    exoPlayer.seekTo(exoPlayer.contentPosition + position)
+    exoPlayer.seekTo(exoPlayer.contentPosition + position * 1000)
   }
 
   fun seekToPreviousPosition(position: Long) {
-    exoPlayer.seekTo(exoPlayer.contentPosition - position)
+    exoPlayer.seekTo(exoPlayer.contentPosition - position * 1000)
   }
 
   fun changeRate(rate: Float) {
     exoPlayer.setPlaybackSpeed(rate)
   }
 
-  fun playerInitialized(callback: (Boolean) -> Unit) {
-    exoPlayer.addListener(object : Player.Listener {
-      override fun onPlaybackStateChanged(playbackState: Int) {
-        super.onPlaybackStateChanged(playbackState)
-        if (playbackState == Player.STATE_READY) {
-            callback(true)
-        }
-      }
-    })
-
+  fun changeResizeMode(resizeMode: Int) {
+    view.resizeMode = resizeMode
   }
 }

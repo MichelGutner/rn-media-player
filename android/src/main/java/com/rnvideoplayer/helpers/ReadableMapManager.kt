@@ -1,8 +1,6 @@
 package com.rnvideoplayer.helpers
 
-import com.facebook.react.bridge.ReadableMap
-import com.facebook.react.bridge.ReadableNativeArray
-import com.rnvideoplayer.components.CustomContentDialog
+import com.facebook.react.bridge.ReadableNativeMap
 
 class ReadableMapManager {
   private val map: MutableMap<String, Any> = mutableMapOf()
@@ -11,8 +9,8 @@ class ReadableMapManager {
     map[key] = readableMap
   }
 
-  fun getReadableMapProps(key: String): ReadableNativeArray {
-    return map[key] as ReadableNativeArray
+  fun getReadableMapProps(key: String): ReadableNativeMap {
+    return map[key] as ReadableNativeMap
   }
 
   companion object {

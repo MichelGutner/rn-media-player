@@ -8,14 +8,11 @@ import android.view.View.OnClickListener
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
-import android.widget.TextView
-import com.facebook.react.bridge.Arguments
 import com.facebook.react.uimanager.ThemedReactContext
-import com.rnvideoplayer.EventNames
 import com.rnvideoplayer.R
+import com.rnvideoplayer.fadeIn
+import com.rnvideoplayer.fadeOut
 import com.rnvideoplayer.helpers.TimeoutWork
-import com.rnvideoplayer.utils.fadeIn
-import com.rnvideoplayer.utils.fadeOut
 
 @SuppressLint("UseCompatLoadingForDrawables")
 class CustomPlayerControls(private val context: ThemedReactContext, view: View) :
@@ -26,6 +23,7 @@ class CustomPlayerControls(private val context: ThemedReactContext, view: View) 
   private val playerView: View = view.findViewById(R.id.player)
 
   val playPauseBackground by lazy { view.findViewById<RelativeLayout>(R.id.play_pause_background) }
+  val fullscreenBackggrorund by lazy { view.findViewById<LinearLayout>(R.id.fullscreen_background) }
 
   private val playPauseButton: ImageButton? = view.findViewById(R.id.animated_play_to_pause)
   private val fullScreenButton: ImageButton? = view.findViewById(R.id.animated_full_to_exit)

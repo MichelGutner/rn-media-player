@@ -2,11 +2,15 @@ package com.rnvideoplayer.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.Point
 import android.os.Build
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
@@ -14,7 +18,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import com.facebook.react.uimanager.ThemedReactContext
+import com.rnvideoplayer.helpers.SharedStore
 import com.rnvideoplayer.utilities.layoutParamsCenter
+import java.lang.ref.WeakReference
 
 @SuppressLint("ViewConstructor")
 @UnstableApi
@@ -22,14 +28,47 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
   var player: ExoPlayer? = null
   private val isLandscape =
     context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+  private val activity = context.currentActivity
+  var isFullscreen = false
+  private var currentIndexInParent: Int = -1
+
+  private var aspectRatio: Float = 1.5f
+
+  private var autoEnterFullscreenOnLandscape = false
+  private var forceLandscapeInFullscreen = false
 
   val viewControls = VideoPlayerControls(context)
 
   val aspectRatioFrameLayout = AspectRatioFrameLayout(context)
   private val surfaceView: SurfaceView = SurfaceView(context)
 
+  val weakActivity = WeakReference(activity)
+
   init {
+    viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
+      override fun onGlobalLayout() {
+        weakActivity.get() ?: return
+        autoEnterFullscreenOnLandscape =
+          SharedStore.getInstance().getBoolean("autoEnterFullscreenOnLandscape") ?: false
+        forceLandscapeInFullscreen =
+          SharedStore.getInstance().getBoolean("forceLandscapeInFullscreen") ?: false
+        viewTreeObserver.removeOnGlobalLayoutListener(this)
+      }
+    })
+
     setupLayout()
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration?) {
+    super.onConfigurationChanged(newConfig)
+    val landscapeOrientation = newConfig?.orientation == Configuration.ORIENTATION_LANDSCAPE
+    if (autoEnterFullscreenOnLandscape && !isFullscreen && landscapeOrientation) {
+      enterInFullScreen()
+    }
+  }
+
+  fun setReplayOnClickListener(listener: OnClickListener) {
+    viewControls.replayButton.setOnClickListener(listener)
   }
 
   fun playbackViewClickListener(listener: OnClickListener) {
@@ -94,7 +133,7 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
   private fun setupLayout() {
     viewControls.updatePlayPauseIcon(player?.isPlaying ?: true)
     setAspectRatio(calculateModeFitAspectRatio(context))
-    setBackgroundColor(ContextCompat.getColor(context, android.R.color.holo_green_dark))
+    setBackgroundColor(ContextCompat.getColor(context, android.R.color.black))
 
     aspectRatioFrameLayout.addView(surfaceView, 0)
     addView(aspectRatioFrameLayout, -1)
@@ -140,5 +179,62 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
       return width.toFloat() / height.toFloat()
     }
     return height.toFloat() / width.toFloat()
+  }
+
+  fun enterInFullScreen() {
+    currentIndexInParent = indexOfChild(aspectRatioFrameLayout)
+    removeView(aspectRatioFrameLayout)
+    removeView(viewControls)
+
+    (activity?.window?.decorView as? ViewGroup)?.addView(aspectRatioFrameLayout)
+    (activity?.window?.decorView as? ViewGroup)?.addView(viewControls)
+    viewControls.bringToFront()
+
+    aspectRatioFrameLayout.layoutParams = layoutParamsCenter(
+      LayoutParams.MATCH_PARENT,
+      LayoutParams.MATCH_PARENT
+    )
+
+    aspectRatioFrameLayout.setAspectRatio(0f)
+    if (forceLandscapeInFullscreen) {
+      activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    }
+
+    activity?.window?.decorView?.systemUiVisibility = (
+      View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+      )
+
+    activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+    isFullscreen = true
+    viewControls.updateFullscreenIcon(true)
+    aspectRatioFrameLayout.requestLayout()
+    aspectRatioFrameLayout.postInvalidate()
+  }
+
+  fun exitFromFullScreen() {
+    (aspectRatioFrameLayout.parent as? ViewGroup)?.removeView(aspectRatioFrameLayout)
+    (viewControls.parent as? ViewGroup)?.removeView(viewControls)
+
+    addView(aspectRatioFrameLayout, currentIndexInParent)
+    addView(viewControls, 1)
+
+    val layoutParams = layoutParamsCenter(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
+    aspectRatioFrameLayout.layoutParams = layoutParams
+    aspectRatioFrameLayout.setAspectRatio(aspectRatio)
+
+    activity?.window?.apply {
+      decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+      clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+    }
+
+    ActivityInfo.SCREEN_ORIENTATION_FULL_USER.also { activity?.requestedOrientation = it }
+
+    isFullscreen = false
+    viewControls.updateFullscreenIcon(false)
+    aspectRatioFrameLayout.requestLayout()
+    aspectRatioFrameLayout.postInvalidate()
   }
 }

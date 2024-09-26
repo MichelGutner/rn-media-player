@@ -1,10 +1,9 @@
-package com.rnvideoplayer.components
+package com.rnvideoplayer.ui.components
 
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.os.Bundle
 import android.view.Gravity
-import android.view.View
 import android.view.ViewGroup
 import com.facebook.react.uimanager.ThemedReactContext
 

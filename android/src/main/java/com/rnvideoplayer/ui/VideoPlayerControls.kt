@@ -10,10 +10,12 @@ import android.widget.ImageButton
 import android.widget.ProgressBar
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.R
 import com.rnvideoplayer.fadeIn
 import com.rnvideoplayer.fadeOut
+import com.rnvideoplayer.ui.components.CastPlayerView
 import com.rnvideoplayer.ui.components.DoubleTapSeek
 import com.rnvideoplayer.ui.components.Loading
 import com.rnvideoplayer.ui.controls.BottomControls
@@ -28,13 +30,14 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
 
   var playPauseRoundedBackground = createPlayPauseBackground(context)
   val playPauseButton = createPlayPauseButtonAnimated(context)
-  val loading by lazy {  Loading(context) }
+  val replayButton by lazy { createReplayButton(context) }
+  val loading by lazy { Loading(context) }
 
   private val drawables = AnimatedDrawables(context)
   private val bottomControls = BottomControls(context)
 
-  val leftDoubleTap = DoubleTapSeek(context, false)
-  val rightDoubleTap = DoubleTapSeek(context, true)
+  val leftDoubleTap by lazy { DoubleTapSeek(context, false) }
+  val rightDoubleTap by lazy { DoubleTapSeek(context, true) }
 
   val thumbnails = bottomControls.thumbnails
   val timeBar = bottomControls.timeBar
@@ -44,6 +47,7 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
 
   init {
     playPauseRoundedBackground.addView(playPauseButton)
+    playPauseRoundedBackground.addView(replayButton)
     playPauseRoundedBackground.addView(loading)
 
     mainLayout.addView(playPauseRoundedBackground)
@@ -57,7 +61,7 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
 
   fun updatePlayPauseIcon(isPlaying: Boolean) {
     if (isPlaying) {
-//      replayButton?.visibility = View.INVISIBLE
+      replayButton.visibility = INVISIBLE
       playPauseButton.setImageDrawable(drawables.playToPause)
       drawables.playToPause.start()
     } else {
@@ -100,6 +104,21 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
     }
   }
 
+  private fun createReplayButton(context: Context): ImageButton {
+    return ImageButton(context).apply {
+      layoutParams = layoutParamsCenter(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+      val typedValue = TypedValue()
+      context.theme.resolveAttribute(
+        android.R.attr.selectableItemBackgroundBorderless,
+        typedValue,
+        true
+      )
+      setBackgroundResource(typedValue.resourceId)
+      setImageResource(R.drawable.replay_to_pause)
+      visibility = INVISIBLE
+    }
+  }
+
   @SuppressLint("ResourceType")
   fun createPlayPauseButtonAnimated(context: Context): ImageButton {
     return ImageButton(context).apply {
@@ -125,10 +144,20 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
   }
 
   fun hideControls() {
-      overlayView.fadeOut()
+    overlayView.fadeOut()
   }
 
   fun showControls() {
     overlayView.fadeIn()
   }
+
+//  <ImageButton
+//  android:id="@+id/replay_to_pause"
+//  android:layout_width="match_parent"
+//  android:layout_height="match_parent"
+//  android:background="?android:attr/selectableItemBackgroundBorderless"
+//  android:importantForAccessibility="no"
+//  android:src="@drawable/replay_to_pause"
+//  android:visibility="invisible"
+//  tools:ignore="HardcodedText" />
 }

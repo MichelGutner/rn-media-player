@@ -11,7 +11,7 @@ import android.widget.LinearLayout
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.rnvideoplayer.R
-import com.rnvideoplayer.components.CustomTimeBar
+import com.rnvideoplayer.ui.components.CustomTimeBar
 import com.rnvideoplayer.ui.components.Thumbnails
 import com.rnvideoplayer.utilities.layoutParamsCenter
 
