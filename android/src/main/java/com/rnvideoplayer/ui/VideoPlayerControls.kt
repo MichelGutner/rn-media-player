@@ -26,7 +26,7 @@ import com.rnvideoplayer.utilities.layoutParamsCenter
 @SuppressLint("ViewConstructor")
 class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context) {
   var overlayView = createOverlayView(context, ColorUtils.blackOpacity50)
-  private val mainLayout = createMainFrameLayout(context)
+  val mainLayout = createMainFrameLayout(context)
 
   var playPauseRoundedBackground = createPlayPauseBackground(context)
   val playPauseButton = createPlayPauseButtonAnimated(context)

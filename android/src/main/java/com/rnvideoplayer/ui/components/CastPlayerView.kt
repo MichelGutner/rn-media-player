@@ -2,6 +2,7 @@ package com.rnvideoplayer.ui.components
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.view.Gravity
 import android.widget.FrameLayout
 import androidx.media3.cast.CastPlayer
 import androidx.media3.cast.SessionAvailabilityListener
@@ -43,6 +44,9 @@ class CastPlayerView(context: Context, private val exoPlayer: ExoPlayer): FrameL
     })
 
     // Add the cast button to the view
+    layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+      gravity = Gravity.TOP or Gravity.END
+    }
     addView(mediaRouteButton)
   }
 

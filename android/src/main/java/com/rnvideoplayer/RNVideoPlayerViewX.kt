@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit
 class RNVideoPlayerViewX(val context: ThemedReactContext) : VideoPlayerView(context) {
   private val exoPlayer = ExoPlayer.Builder(context).build()
   private val activity = context.currentActivity
-  val castPlayer = CastPlayerView(context, exoPlayer)
+  private val castPlayer = CastPlayerView(context, exoPlayer)
 
   private var menusData: MutableSet<String> = mutableSetOf()
   private val event = Events(context)
@@ -46,7 +46,7 @@ class RNVideoPlayerViewX(val context: ThemedReactContext) : VideoPlayerView(cont
   private val timeoutWork = TimeoutWork()
 
   init {
-    viewControls.overlayView.addView(castPlayer)
+//    viewControls.mainLayout.addView(castPlayer)
     this.post {
       startPlaybackProgressUpdater()
     }
@@ -100,6 +100,7 @@ class RNVideoPlayerViewX(val context: ThemedReactContext) : VideoPlayerView(cont
           Player.STATE_READY -> {
             hideLoading()
             viewControls.timeBar.visibility = VISIBLE
+            castPlayer.visibility = VISIBLE
 
             if (!started) {
               started = true
@@ -120,6 +121,7 @@ class RNVideoPlayerViewX(val context: ThemedReactContext) : VideoPlayerView(cont
               showLoading()
             }, 100)
             viewControls.timeBar.visibility = INVISIBLE
+            castPlayer.visibility = INVISIBLE
 
             event.send(
               EventNames.videoBuffering,
