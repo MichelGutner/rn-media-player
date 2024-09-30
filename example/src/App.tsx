@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { Video, EResizeMode } from 'rn-media-player';
 
 const SpeedsKey = 'Velocidades';
@@ -7,7 +7,7 @@ const Qualities = 'Qualidades';
 
 const speedsValues = [
   { name: '0.5x', value: 0.5 },
-  { name: '1.0x', value: 1.0 },
+  { name: 'Normal', value: 1.0 },
   { name: '1.5x', value: 1.5 },
   { name: '2.0x', value: 2.0 },
 ];
@@ -15,15 +15,15 @@ const speedsValues = [
 const qualitiesValues = [
   {
     name: 'Baixa',
-    value: 'https://content.jwplatform.com/videos/MGAxJ46m-fQPeQtU3.mp4',
+    value: 'https://content.jwplatform.com/videos/PfytNvO9-VIgN1lMW.mp4',
   },
   {
     name: 'Média',
-    value: 'https://content.jwplatform.com/videos/MGAxJ46m-zZbIuxVJ.mp4',
+    value: 'https://content.jwplatform.com/videos/PfytNvO9-zZbIuxVJ.mp4',
   },
   {
     name: 'Alta',
-    value: 'https://content.jwplatform.com/videos/MGAxJ46m-aoHqIe.mp4',
+    value: 'https://content.jwplatform.com/videos/PfytNvO9-aoHq8DIe.mp4',
   },
 ];
 
@@ -32,32 +32,33 @@ function App(): JSX.Element {
   const [playbackQuality, setPlaybackQuality] = useState('');
 
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <Video
         source={{
-          url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+          // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
           // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-          // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          url: qualitiesValues[2]?.value as string,
           title: '',
-          // TODO: must be implement ios
-          startTime: 35,
+          startTime: 95,
           thumbnails: {
-            enableGenerate: true,
-            url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+            enabled: true,
+            url: qualitiesValues[0]?.value as string,
           },
         }}
-        style={{ height: 320 }}
+        style={{ height: 375 }}
         rate={rate}
         autoPlay={true}
         changeQualityUrl={playbackQuality}
         tapToSeek={{
-          // TODO: must be implement ios
           value: 8,
           suffixLabel: 'segundos',
         }}
         menus={{
-          [Qualities]: qualitiesValues,
-          [SpeedsKey]: speedsValues,
+          [SpeedsKey]: { data: speedsValues, initialItemSelected: 'Normal' },
+          [Qualities]: {
+            data: qualitiesValues,
+            initialItemSelected: qualitiesValues[0]?.name as string,
+          },
         }}
         onMenuItemSelected={({ nativeEvent }) => {
           if (nativeEvent.name === SpeedsKey) {
@@ -67,22 +68,25 @@ function App(): JSX.Element {
             setPlaybackQuality(nativeEvent.value);
           }
         }}
-        onLoaded={({ nativeEvent }) => console.log(nativeEvent.duration)}
+        // onLoaded={({ nativeEvent }) => console.log(nativeEvent.duration)}
         // onVideoProgress={(data) => {
         //   console.log('video progress', data.nativeEvent);
         // }}
         onPlayPause={(event) => console.log(event.nativeEvent.isPlaying)}
-        onCompleted={({ nativeEvent: { completed } }) => console.log(completed)}
-        onBufferCompleted={(e) =>
-          console.log(`BUFFER COMPLETED ${JSON.stringify(e.nativeEvent)}`)
-        }
-        onBuffer={(e) =>
-          console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)
-        }
-        onError={(e) => console.log('native Error', e.nativeEvent)}
+        // onCompleted={({ nativeEvent: { completed } }) => console.log(completed)}
+        // onBufferCompleted={(e) =>
+        //   console.log(`BUFFER COMPLETED ${JSON.stringify(e.nativeEvent)}`)
+        // }
+        // onBuffer={(e) =>
+        //   console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)
+        // }
+        // onError={(e) => console.log('native Error', e.nativeEvent)}
+        resizeMode={EResizeMode.Contain}
+        screenBehavior={{
+          autoEnterFullscreenOnLandscape: false,
+          forceLandscapeInFullscreen: false, // Must be implemented for iOS
+        }}
         // -------->
-        resizeMode={EResizeMode.Contain} // must be implement android
-        enterInFullScreenWhenDeviceRotated={false} // must be implemented android
         paused={false}
         // lockControls={true}
         // controlsProps={{
@@ -136,9 +140,9 @@ function App(): JSX.Element {
         // }
       />
       <TouchableOpacity onPress={() => console.log('oi')}>
-        <Text>Olá Mundo</Text>
+        <Text style={{}}>Olá Mundo</Text>
       </TouchableOpacity>
-    </>
+    </View>
   );
 }
 

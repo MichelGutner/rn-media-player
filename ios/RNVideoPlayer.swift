@@ -24,6 +24,7 @@ class RNVideoPlayerView : UIView {
     private var isInitialized = false
     private var isFullScreen = false
     private var UIControlsProps: HashableControllers? = .none
+    private var autoEnterFullscreenOnLandscape = false
     
     @objc var autoPlay: Bool = false
     @objc var menus: NSDictionary? = [:]
@@ -31,7 +32,6 @@ class RNVideoPlayerView : UIView {
     
     @objc var onVideoProgress: RCTBubblingEventBlock?
     @objc var onLoaded: RCTBubblingEventBlock?
-    @objc var onReady: RCTDirectEventBlock?
     @objc var onCompleted: RCTBubblingEventBlock?
     @objc var onFullScreen: RCTDirectEventBlock?
     @objc var onError: RCTDirectEventBlock?
@@ -43,7 +43,7 @@ class RNVideoPlayerView : UIView {
     @objc var onPlayPause: RCTDirectEventBlock?
     
     @objc var thumbnailFramesSeconds: Float = 1.0
-    @objc var enterInFullScreenWhenDeviceRotated: Bool = false
+    @objc var screenBehavior: NSDictionary = [:]
     
     @objc var controlsProps: NSDictionary? = [:]
     @objc var tapToSeek: NSDictionary? = [:]
@@ -96,117 +96,132 @@ class RNVideoPlayerView : UIView {
         self.setNeedsLayout()
     }
     
-    private func setup() {
-        uiView.removeFromSuperview()
-        let thumbnailsProps = source?["thumbnails"] as? NSDictionary
-        guard let avPlayer = player else { return }
-        if let controllersProps = controlsProps {
-            let playbackProps = PlaybackControlHashableProps(dictionary: controllersProps["playback"] as? NSDictionary)
-            let seekSliderProps = SeekSliderControlHashableProps(dictionary: controllersProps["seekSlider"] as? NSDictionary)
-            let timeCodesProps = TimeCodesHashableProps(dictionary: controllersProps["timeCodes"] as? NSDictionary)
-            let settingsProps = SettingsControlHashableProps(dictionary: controllersProps["settings"] as? NSDictionary)
-            let fullScreenProps = FullScreenControlHashableProps(dictionary: controllersProps["fullScreen"] as? NSDictionary)
-            let downloadProps = DownloadControlHashableProps(dictionary: controllersProps["download"] as? NSDictionary)
-            let toastProps = ToastHashableProps(dictionary: controllersProps["toast"] as? NSDictionary)
-            let headerProps = HeaderControlHashableProps(dictionary: controllersProps["header"] as? NSDictionary)
-            let loadingProps = LoadingHashableProps(dictionary: controllersProps["loading"] as? NSDictionary)
-            
-            UIControlsProps = HashableControllers(
-                playbackControl: playbackProps,
-                seekSliderControl: seekSliderProps,
-                timeCodesControl: timeCodesProps,
-                settingsControl: settingsProps,
-                fullScreenControl: fullScreenProps,
-                downloadControl: downloadProps,
-                toastControl: toastProps,
-                headerControl: headerProps,
-                loadingControl: loadingProps
-            )
-        }
-        
-        let mode = Resize(rawValue: resizeMode as String)
-        let videoGravity = self.videoGravity(mode!)
-
-        if (autoPlay) {
+  private func setup() {
+    uiView.removeFromSuperview()
+    let thumbnailsProps = source?["thumbnails"] as? NSDictionary
+    
+    guard let avPlayer = player else { return }
+    if let controllersProps = controlsProps {
+      let playbackProps = PlaybackControlHashableProps(dictionary: controllersProps["playback"] as? NSDictionary)
+      let seekSliderProps = SeekSliderControlHashableProps(dictionary: controllersProps["seekSlider"] as? NSDictionary)
+      let timeCodesProps = TimeCodesHashableProps(dictionary: controllersProps["timeCodes"] as? NSDictionary)
+      let settingsProps = SettingsControlHashableProps(dictionary: controllersProps["settings"] as? NSDictionary)
+      let fullScreenProps = FullScreenControlHashableProps(dictionary: controllersProps["fullScreen"] as? NSDictionary)
+      let downloadProps = DownloadControlHashableProps(dictionary: controllersProps["download"] as? NSDictionary)
+      let toastProps = ToastHashableProps(dictionary: controllersProps["toast"] as? NSDictionary)
+      let headerProps = HeaderControlHashableProps(dictionary: controllersProps["header"] as? NSDictionary)
+      let loadingProps = LoadingHashableProps(dictionary: controllersProps["loading"] as? NSDictionary)
+      
+      UIControlsProps = HashableControllers(
+        playbackControl: playbackProps,
+        seekSliderControl: seekSliderProps,
+        timeCodesControl: timeCodesProps,
+        settingsControl: settingsProps,
+        fullScreenControl: fullScreenProps,
+        downloadControl: downloadProps,
+        toastControl: toastProps,
+        headerControl: headerProps,
+        loadingControl: loadingProps
+      )
+    }
+    
+    let mode = Resize(rawValue: resizeMode as String)
+    let videoGravity = self.videoGravity(mode!)
+    
+    if (autoPlay) {
+      avPlayer.play()
+    }
+    
+    if let autoEnterFullscreen = screenBehavior["autoEnterFullscreenOnLandscape"] as? Bool {
+      self.autoEnterFullscreenOnLandscape = autoEnterFullscreen
+    }
+    
+    let uiHostingView = UIHostingController(rootView: VideoPlayerView(
+      safeAreaInsets: safeAreaInsets,
+      player: avPlayer,
+      options: menus,
+      controls: PlayerControls(
+        togglePlayback: {
+          if (avPlayer.timeControlStatus == .playing) {
+            avPlayer.pause()
+          } else {
+            avPlayer.rate = self.rate
             avPlayer.play()
-        }
-
-        let uiHostingView = UIHostingController(rootView: VideoPlayerView(
-            safeAreaInsets: safeAreaInsets,
-            player: avPlayer,
-            options: menus,
-            controls: PlayerControls(
-                togglePlayback: {
-                    if (avPlayer.timeControlStatus == .playing) {
-                        avPlayer.pause()
-                    } else {
-                        avPlayer.play()
-                    }
-                    self.onPlayPause?(["isPlaying": avPlayer.timeControlStatus == .playing])
-                },
-                optionSelected: { name, value in
-                    self.onMenuItemSelected?(["name": name, "value": value])
-                },
-                toggleFullScreen: { [self] in
-                    toggleFullScreen(!isFullScreen)
-                }
-            ),
-            thumbNailsProps: thumbnailsProps,
-            enterInFullScreenWhenDeviceRotated: enterInFullScreenWhenDeviceRotated,
-            videoGravity: videoGravity,
-            UIControlsProps: UIControlsProps,
-            tapToSeek: tapToSeek
-        ))
-
-        uiView = uiHostingView.view
-    }
-
-    override func layoutSubviews() {
-        if (!isInitialized) {
-            isInitialized = true
-            setup()
-        }
-        
-        let currentOrientation = UIDevice.current.orientation
-
-          
-          if enterInFullScreenWhenDeviceRotated, currentOrientation.isLandscape {
-            DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
-              toggleFullScreen(true)
-            }
           }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
-            uiView.backgroundColor = .black
-            uiView.clipsToBounds = true
-            
-            
-            if (isFullScreen) {
-                uiView.frame = UIScreen.main.bounds
-                return
-            }
-            
-            if frame.height > UIScreen.main.bounds.height {
-                withAnimation(.easeInOut(duration: 0.35)) {
-                    uiView.frame = UIScreen.main.bounds
-                }
-                
-            } else {
-                withAnimation(.easeInOut(duration: 0.35)) {
-                    uiView.frame = bounds
-                }
-            }
-            superview?.addSubview(uiView)
+          self.onPlayPause?(["isPlaying": avPlayer.timeControlStatus == .playing])
+        },
+        optionSelected: { name, value in
+          self.onMenuItemSelected?(["name": name, "value": value])
+        },
+        toggleFullScreen: { [self] in
+          toggleFullScreen(!isFullScreen)
         }
-
-        super.layoutSubviews()
+      ),
+      thumbNailsProps: thumbnailsProps,
+      enterInFullScreenWhenDeviceRotated: autoEnterFullscreenOnLandscape,
+      videoGravity: videoGravity,
+      UIControlsProps: UIControlsProps,
+      tapToSeek: tapToSeek
+    ))
+    
+    uiView = uiHostingView.view
+  }
+  
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    uiView.backgroundColor = .black
+  }
+  
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+  
+  override func layoutSubviews() {
+    if (!isInitialized) {
+      isInitialized = true
+      setup()
     }
+
+    let currentOrientation = UIDevice.current.orientation
+    
+    
+    if autoEnterFullscreenOnLandscape, currentOrientation.isLandscape {
+      DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
+        toggleFullScreen(true)
+      }
+    }
+    
+    DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
+      uiView.backgroundColor = .black
+      uiView.clipsToBounds = true
+      
+      
+      if (isFullScreen) {
+        uiView.frame = UIScreen.main.bounds
+        return
+      }
+      
+      if frame.height > UIScreen.main.bounds.height {
+        withAnimation(.easeInOut(duration: 0.35)) {
+          uiView.frame = UIScreen.main.bounds
+        }
+        
+      } else {
+        withAnimation(.easeInOut(duration: 0.35)) {
+          uiView.frame = bounds
+        }
+      }
+      superview?.addSubview(uiView)
+    }
+    
+    super.layoutSubviews()
+  }
     
     @objc private func orientationDidChange() {
       let currentOrientation = UIDevice.current.orientation
 
         
-        if enterInFullScreenWhenDeviceRotated, currentOrientation.isLandscape {
+        if autoEnterFullscreenOnLandscape, currentOrientation.isLandscape {
           DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
             toggleFullScreen(true)
           }
@@ -239,11 +254,11 @@ class RNVideoPlayerView : UIView {
     }
     
     @objc func toggleFullScreen(_ fullScreen: Bool) {
-        let transition = CATransition()
-        transition.type = .fade
-        transition.duration = 0.15
-        
-        uiView.layer.add(transition, forKey: kCATransition)
+//        let transition = CATransition()
+//        transition.type = .fade
+//        transition.duration = 0.15
+//        
+//        uiView.layer.add(transition, forKey: kCATransition)
             if fullScreen {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05, execute: { [self] in
                     uiView.removeFromSuperview()

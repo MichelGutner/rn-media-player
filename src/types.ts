@@ -60,8 +60,10 @@ type TOnVideoDownloaded = TGenericEventHandler<{
 type TOnVideoBuffer = TGenericEventHandler<{ buffering: boolean }>;
 type TOnVideoCompleted = TGenericEventHandler<{ completed: boolean }>;
 type TOnVideoPlayPause = TGenericEventHandler<{ isPlaying: boolean }>;
-type TOnVideoLoaded = TGenericEventHandler<{ duration: Float }>;
-type TOnVideoFullScreen = TGenericEventHandler<{ fullScreen: boolean }>;
+type TOnVideoLoaded = TGenericEventHandler<{
+  duration: Float;
+  loaded: boolean;
+}>;
 type TOnVideoBufferCompleted = TGenericEventHandler<{
   completed: boolean;
 }>;
@@ -73,11 +75,15 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
     startTime?: number;
     thumbnails?: {
       url: string;
-      enableGenerate?: boolean;
+      enabled?: boolean;
     };
   };
   thumbnailFramesSeconds?: number;
-  enterInFullScreenWhenDeviceRotated?: boolean;
+  screenBehavior: {
+    autoEnterFullscreenOnLandscape?: boolean;
+    forceLandscapeInFullscreen?: boolean; // Must be implemented for iOS
+    forcePortraitOnExitFullscreen?: boolean;
+  };
   autoPlay?: boolean;
   style?: ViewStyle;
   paused?: boolean;
@@ -94,7 +100,6 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
    */
   changeQualityUrl?: string;
   controlsProps?: TVideoPlayerControlConfig;
-  onFullScreen?: TOnVideoFullScreen;
   /**
    * iOS only
    */
@@ -107,7 +112,10 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   onCompleted?: TOnVideoCompleted;
   onError?: TOnError;
   menus: {
-    [key: string]: unknown[];
+    [key: string]: {
+      readonly data: { name: string; value: unknown }[];
+      readonly initialItemSelected: string;
+    };
   };
   /**
    * Get menu item selected on settings
