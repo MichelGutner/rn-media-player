@@ -32,11 +32,12 @@ type TVideoPlayerControlConfig = {
     thumbnailTimeCodeColor?: string;
   };
   timeCodes?: {
-    currentTimeColor?: string;
     durationColor?: string;
-    slashColor?: string;
   };
   fullScreen?: {
+    color?: string;
+  };
+  menus?: {
     color?: string;
   };
 };
@@ -82,7 +83,6 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   screenBehavior: {
     autoEnterFullscreenOnLandscape?: boolean;
     forceLandscapeInFullscreen?: boolean; // Must be implemented for iOS
-    forcePortraitOnExitFullscreen?: boolean;
   };
   autoPlay?: boolean;
   style?: ViewStyle;
@@ -111,7 +111,7 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   onPlayPause?: TOnVideoPlayPause;
   onCompleted?: TOnVideoCompleted;
   onError?: TOnError;
-  menus: {
+  menus?: {
     [key: string]: {
       readonly data: { name: string; value: unknown }[];
       readonly initialItemSelected: string;

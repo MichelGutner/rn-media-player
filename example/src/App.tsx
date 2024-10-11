@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { Video, EResizeMode } from 'rn-media-player';
+import { Video } from 'rn-media-player';
 
 const SpeedsKey = 'Velocidades';
 const Qualities = 'Qualidades';
@@ -15,15 +15,15 @@ const speedsValues = [
 const qualitiesValues = [
   {
     name: 'Baixa',
-    value: 'https://content.jwplatform.com/videos/PfytNvO9-VIgN1lMW.mp4',
+    value: 'https://content.jwplatform.com/videos/ijHnL627-VIgN1lMW.mp4',
   },
   {
     name: 'Média',
-    value: 'https://content.jwplatform.com/videos/PfytNvO9-zZbIuxVJ.mp4',
+    value: 'https://content.jwplatform.com/videos/ijHnL627-zZbIuxVJ.mp4',
   },
   {
     name: 'Alta',
-    value: 'https://content.jwplatform.com/videos/PfytNvO9-aoHq8DIe.mp4',
+    value: 'https://content.jwplatform.com/videos/ijHnL627-aoHq8DIe.mp4',
   },
 ];
 
@@ -72,7 +72,7 @@ function App(): JSX.Element {
         // onVideoProgress={(data) => {
         //   console.log('video progress', data.nativeEvent);
         // }}
-        onPlayPause={(event) => console.log(event.nativeEvent.isPlaying)}
+        // onPlayPause={(event) => console.log(event.nativeEvent.isPlaying)}
         // onCompleted={({ nativeEvent: { completed } }) => console.log(completed)}
         // onBufferCompleted={(e) =>
         //   console.log(`BUFFER COMPLETED ${JSON.stringify(e.nativeEvent)}`)
@@ -81,63 +81,60 @@ function App(): JSX.Element {
         //   console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)
         // }
         // onError={(e) => console.log('native Error', e.nativeEvent)}
-        resizeMode={EResizeMode.Contain}
+        // resizeMode={EResizeMode.Contain}
         screenBehavior={{
           autoEnterFullscreenOnLandscape: false,
-          forceLandscapeInFullscreen: false, // Must be implemented for iOS
+          forceLandscapeInFullscreen: true, // Must be implemented for iOS
         }}
         // -------->
         paused={false}
         // lockControls={true}
-        // controlsProps={{
-        //   loading: {
-        //     color: '#a90ee6',
-        //   },
-        //   playback: {
-        //     color: '#a90ee6',
-        //   },
-        //   seekSlider: {
-        //     maximumTrackColor: '#4f4c50',
-        //     minimumTrackColor: '#890cba',
-        //     seekableTintColor: '#b6b6b6',
-        //     thumbImageColor: '#a90ee6',
-        //     // thumbnailBorderColor: '#a90ee6',
-        //     // thumbnailTimeCodeColor: '#a90ee6',
-        //   },
-        //   // timeCodes: {
-        //   //   currentTimeColor: '#f3e9f7',
-        //   //   durationColor: '#1a161c',
-        //   //   slashColor: '#a90ee6',
-        //   // },
-        //   settings: {
-        //     color: '#a90ee6',
-        //   },
-        //   fullScreen: {
-        //     color: '#a90ee6',
-        //   },
-        //   // download: {
-        //   //   color: '#696969',
-        //   //   progressBarColor: '#908c91',
-        //   //   progressBarFillColor: '#0df85f',
-        //   //   messageDelete: 'Delete',
-        //   //   messageDownload: 'Download',
-        //   //   labelDelete: 'Delete',
-        //   //   labelCancel: 'Cancel',
-        //   //   labelDownload: 'Download',
-        //   // },
-        //   // toast: {
-        //   //   // label: 'Video baixado com sucesso',
-        //   //   // backgroundColor: '#0df85f',
-        //   //   // labelColor: '#ffff',
-        //   // },
-        //   // header: {
-        //   //   leftButtonColor: 'rgba(255,255,255,1)',
-        //   //   titleColor: '#d71e1e',
-        //   // },
-        // }}
-        // onFullScreen={({nativeEvent}) =>
-        //   console.log(nativeEvent.fullScreen)
-        // }
+        controlsProps={{
+          loading: {
+            color: '#a90ee6',
+          },
+          playback: {
+            color: '#a90ee6',
+          },
+          seekSlider: {
+            maximumTrackColor: '#f2f2f2',
+            minimumTrackColor: '#890cba',
+            seekableTintColor: '#df3030',
+            thumbImageColor: '#a90ee6',
+            // thumbnailBorderColor: '#a90ee6',
+            // thumbnailTimeCodeColor: '#a90ee6',
+          },
+          // timeCodes: {
+          //   currentTimeColor: '#f3e9f7',
+          //   durationColor: '#1a161c',
+          //   slashColor: '#a90ee6',
+          // },
+          menus: {
+            color: '#a90ee6',
+          },
+          fullScreen: {
+            color: '#a90ee6',
+          },
+          // download: {
+          //   color: '#696969',
+          //   progressBarColor: '#908c91',
+          //   progressBarFillColor: '#0df85f',
+          //   messageDelete: 'Delete',
+          //   messageDownload: 'Download',
+          //   labelDelete: 'Delete',
+          //   labelCancel: 'Cancel',
+          //   labelDownload: 'Download',
+          // },
+          // toast: {
+          //   // label: 'Video baixado com sucesso',
+          //   // backgroundColor: '#0df85f',
+          //   // labelColor: '#ffff',
+          // },
+          // header: {
+          //   leftButtonColor: 'rgba(255,255,255,1)',
+          //   titleColor: '#d71e1e',
+          // },
+        }}
       />
       <TouchableOpacity onPress={() => console.log('oi')}>
         <Text style={{}}>Olá Mundo</Text>

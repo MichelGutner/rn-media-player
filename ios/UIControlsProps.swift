@@ -98,7 +98,7 @@ struct TimeCodesHashableProps : Hashable {
   }
 }
 
-struct SettingsControlHashableProps: Hashable {
+struct MenusUIConfig: Hashable {
   var color: UIColor?
   
   init(color: UIColor) {
@@ -113,7 +113,7 @@ struct SettingsControlHashableProps: Hashable {
     hasher.combine(color)
   }
   
-  static func == (lhs: SettingsControlHashableProps, rhs: SettingsControlHashableProps) -> Bool {
+  static func == (lhs: MenusUIConfig, rhs: MenusUIConfig) -> Bool {
     return lhs.color == rhs.color
   }
 }
@@ -264,7 +264,7 @@ struct HashableControllers: Hashable {
   var playback: PlaybackControlHashableProps
   var seekSlider: SeekSliderControlHashableProps
   var timeCodes: TimeCodesHashableProps
-  var settings: SettingsControlHashableProps
+  var menus: MenusUIConfig
   var fullScreen: FullScreenControlHashableProps
   var download: DownloadControlHashableProps
   var toast: ToastHashableProps
@@ -275,7 +275,7 @@ struct HashableControllers: Hashable {
     playbackControl: PlaybackControlHashableProps,
     seekSliderControl: SeekSliderControlHashableProps,
     timeCodesControl: TimeCodesHashableProps,
-    settingsControl: SettingsControlHashableProps,
+    menusControl: MenusUIConfig,
     fullScreenControl: FullScreenControlHashableProps,
     downloadControl: DownloadControlHashableProps,
     toastControl: ToastHashableProps,
@@ -285,7 +285,7 @@ struct HashableControllers: Hashable {
     self.playback = playbackControl
     self.seekSlider = seekSliderControl
     self.timeCodes = timeCodesControl
-    self.settings = settingsControl
+    self.menus = menusControl
     self.fullScreen = fullScreenControl
     self.download = downloadControl
     self.toast = toastControl
@@ -297,7 +297,7 @@ struct HashableControllers: Hashable {
     hasher.combine(playback)
     hasher.combine(seekSlider)
     hasher.combine(timeCodes)
-    hasher.combine(settings)
+    hasher.combine(menus)
     hasher.combine(fullScreen)
     hasher.combine(download)
     hasher.combine(toast)
@@ -306,6 +306,6 @@ struct HashableControllers: Hashable {
   }
   
   static func == (lhs: HashableControllers, rhs: HashableControllers) -> Bool {
-    return lhs.playback == rhs.playback && lhs.seekSlider == rhs.seekSlider && lhs.timeCodes == rhs.timeCodes && lhs.settings == rhs.settings && lhs.fullScreen == rhs.fullScreen && lhs.download == rhs.download && lhs.toast == rhs.toast && lhs.header == rhs.header && lhs.loading == rhs.loading
+    return lhs.playback == rhs.playback && lhs.seekSlider == rhs.seekSlider && lhs.timeCodes == rhs.timeCodes && lhs.menus == rhs.menus && lhs.fullScreen == rhs.fullScreen && lhs.download == rhs.download && lhs.toast == rhs.toast && lhs.header == rhs.header && lhs.loading == rhs.loading
   }
 }

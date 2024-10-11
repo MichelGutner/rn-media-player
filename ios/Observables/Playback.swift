@@ -35,12 +35,3 @@ class PlaybackObserver: ObservableObject {    @Published var playbackStatus = AV
         }
     }
 }
-
-
-public func notificationPostModal(userInfo: [String: Any]) {
-  NotificationCenter.default.post(name: Notification.Name("modal"), object: nil, userInfo: userInfo)
-}
-
-public func notificationPostPlaybackInfo(userInfo: [String: Any]) {
-  NotificationCenter.default.post(name: Notification.Name("playbackInfo"), object: nil, userInfo: userInfo)
-}
