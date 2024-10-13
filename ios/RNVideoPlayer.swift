@@ -81,7 +81,7 @@ class RNVideoPlayerView : UIView {
   private func initializePlayer(_ source: NSDictionary?) {
     let url = source?["url"] as? String
     let startTime = source?["startTime"] as? Float
-    cleanupPreviousVideo()
+    releasePlayerResources()
     
     player = AVPlayer(url: URL(string: url!)!)
     
@@ -165,7 +165,9 @@ class RNVideoPlayerView : UIView {
           videoGravity: videoGravity,
           UIControlsProps: .constant(UIControlsProps),
           tapToSeek: tapToSeek
-        ))
+        ).onDisappear { [self] in
+          releasePlayerResources()
+        })
     
     uiView = uiHostingView.view
   }
@@ -188,11 +190,10 @@ class RNVideoPlayerView : UIView {
     
     let currentOrientation = UIDevice.current.orientation
     
+    // TODO: not working
     if forceLandscapeInFullscreen, isFullScreen {
            DispatchQueue.main.async {
-               // Forçar a orientação para landscape
              UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
-               // Atualiza a interface com a nova orientação
                UIViewController.attemptRotationToDeviceOrientation()
            }
        }
@@ -323,19 +324,6 @@ class RNVideoPlayerView : UIView {
   @objc private func handleWillResignActiveNotification() {
     print("lose")
   }
-  
-  deinit {
-    DispatchQueue.main.async { [self] in
-      player?.pause()
-      NotificationCenter.default.removeObserver(self)
-      player?.removeObserver(self, forKeyPath: "status")
-      player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferEmpty")
-      player?.currentItem?.removeObserver(self, forKeyPath: "playbackLikelyToKeepUp")
-      player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferFull")
-      
-      cleanupPreviousVideo()
-    }
-  }
 }
 
 
@@ -398,12 +386,23 @@ extension RNVideoPlayerView {
     return ((player.currentItem?.asset) as? AVURLAsset)?.url
   }
   
-  private func cleanupPreviousVideo() {
-    player?.removeObserver(self, forKeyPath: "status")
-    player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferEmpty")
-    player?.currentItem?.removeObserver(self, forKeyPath: "playbackLikelyToKeepUp")
-    player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferFull")
-    
-    superview?.removeFromSuperview()
+  private func releasePlayerResources() {
+      player?.removeObserver(self, forKeyPath: "status")
+      player?.removeObserver(self, forKeyPath: "rate")
+      player?.removeObserver(self, forKeyPath: "timeControlStatus")
+      
+      if let currentItem = player?.currentItem {
+          currentItem.removeObserver(self, forKeyPath: "playbackBufferEmpty")
+          currentItem.removeObserver(self, forKeyPath: "playbackLikelyToKeepUp")
+          currentItem.removeObserver(self, forKeyPath: "playbackBufferFull")
+      }
+      
+      player?.pause()
+      player = nil
+      
+      NotificationCenter.default.removeObserver(self)
+      
+      uiView.removeFromSuperview()
+      print("Video player removed with successfully.")
   }
 }
