@@ -36,7 +36,7 @@ struct CustomVideoPlayer : UIViewControllerRepresentable {
   }
   
   func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
-//    uiViewController.videoGravity = videoGravity
+    uiViewController.videoGravity = videoGravity
   }
 }
 

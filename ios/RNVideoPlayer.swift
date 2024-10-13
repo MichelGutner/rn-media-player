@@ -26,6 +26,7 @@ class RNVideoPlayerView : UIView {
   private var isFullScreen = false
   private var UIControlsProps: HashableControllers? = .none
   private var autoEnterFullscreenOnLandscape = false
+  private var forceLandscapeInFullscreen = false
   
   @objc var autoPlay: Bool = false
   @objc var menus: NSDictionary? = [:]
@@ -134,6 +135,9 @@ class RNVideoPlayerView : UIView {
     if let autoEnterFullscreen = screenBehavior["autoEnterFullscreenOnLandscape"] as? Bool {
       self.autoEnterFullscreenOnLandscape = autoEnterFullscreen
     }
+    if let forceLandscapeInFullscreen = screenBehavior["forceLandscapeInFullscreen"] as? Bool {
+      self.forceLandscapeInFullscreen = forceLandscapeInFullscreen
+    }
     
         let uiHostingView = UIHostingController(rootView: VideoPlayerView(
           player: avPlayer,
@@ -184,9 +188,17 @@ class RNVideoPlayerView : UIView {
     
     let currentOrientation = UIDevice.current.orientation
     
+    if forceLandscapeInFullscreen, isFullScreen {
+           DispatchQueue.main.async {
+               // Forçar a orientação para landscape
+             UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
+               // Atualiza a interface com a nova orientação
+               UIViewController.attemptRotationToDeviceOrientation()
+           }
+       }
     
     if autoEnterFullscreenOnLandscape, currentOrientation.isLandscape {
-      DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
+      DispatchQueue.main.async { [self] in
         toggleFullScreen(true)
       }
     }
@@ -313,13 +325,16 @@ class RNVideoPlayerView : UIView {
   }
   
   deinit {
-    NotificationCenter.default.removeObserver(self)
-    player?.removeObserver(self, forKeyPath: "status")
-    player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferEmpty")
-    player?.currentItem?.removeObserver(self, forKeyPath: "playbackLikelyToKeepUp")
-    player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferFull")
-    
-    cleanupPreviousVideo()
+    DispatchQueue.main.async { [self] in
+      player?.pause()
+      NotificationCenter.default.removeObserver(self)
+      player?.removeObserver(self, forKeyPath: "status")
+      player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferEmpty")
+      player?.currentItem?.removeObserver(self, forKeyPath: "playbackLikelyToKeepUp")
+      player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferFull")
+      
+      cleanupPreviousVideo()
+    }
   }
 }
 
@@ -384,14 +399,11 @@ extension RNVideoPlayerView {
   }
   
   private func cleanupPreviousVideo() {
-    player?.pause()
-    
     player?.removeObserver(self, forKeyPath: "status")
     player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferEmpty")
     player?.currentItem?.removeObserver(self, forKeyPath: "playbackLikelyToKeepUp")
     player?.currentItem?.removeObserver(self, forKeyPath: "playbackBufferFull")
     
-    player = nil
     superview?.removeFromSuperview()
   }
 }

@@ -17,7 +17,7 @@ struct TimeCodes: View {
     
     HStack() {
       Text(stringFromTimeInterval(interval: observable.duration))
-        .font(.system(size: sizeTimeCodes))
+        .font(.system(size: 12))
         .foregroundColor(Color(uiColor: (UIControlsProps?.timeCodes.durationColor ?? .white)))
       
     }

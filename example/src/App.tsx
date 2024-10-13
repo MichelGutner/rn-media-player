@@ -83,58 +83,60 @@ function App(): JSX.Element {
         // onError={(e) => console.log('native Error', e.nativeEvent)}
         // resizeMode={EResizeMode.Contain}
         screenBehavior={{
-          autoEnterFullscreenOnLandscape: false,
-          forceLandscapeInFullscreen: true, // Must be implemented for iOS
+          autoEnterFullscreenOnLandscape: true,
+          forceLandscapeInFullscreen: true,
         }}
         // -------->
         paused={false}
         // lockControls={true}
-        controlsProps={{
-          loading: {
-            color: '#a90ee6',
-          },
-          playback: {
-            color: '#a90ee6',
-          },
-          seekSlider: {
-            maximumTrackColor: '#f2f2f2',
-            minimumTrackColor: '#890cba',
-            seekableTintColor: '#df3030',
-            thumbImageColor: '#a90ee6',
+        controlsProps={
+          {
+            // loading: {
+            //   color: '#a90ee6',
+            // },
+            // playback: {
+            //   color: '#a90ee6',
+            // },
+            // seekSlider: {
+            //   maximumTrackColor: '#f2f2f2',
+            //   minimumTrackColor: '#890cba',
+            //   seekableTintColor: '#df3030',
+            //   thumbImageColor: '#a90ee6',
             // thumbnailBorderColor: '#a90ee6',
             // thumbnailTimeCodeColor: '#a90ee6',
-          },
-          // timeCodes: {
-          //   currentTimeColor: '#f3e9f7',
-          //   durationColor: '#1a161c',
-          //   slashColor: '#a90ee6',
-          // },
-          menus: {
-            color: '#a90ee6',
-          },
-          fullScreen: {
-            color: '#a90ee6',
-          },
-          // download: {
-          //   color: '#696969',
-          //   progressBarColor: '#908c91',
-          //   progressBarFillColor: '#0df85f',
-          //   messageDelete: 'Delete',
-          //   messageDownload: 'Download',
-          //   labelDelete: 'Delete',
-          //   labelCancel: 'Cancel',
-          //   labelDownload: 'Download',
-          // },
-          // toast: {
-          //   // label: 'Video baixado com sucesso',
-          //   // backgroundColor: '#0df85f',
-          //   // labelColor: '#ffff',
-          // },
-          // header: {
-          //   leftButtonColor: 'rgba(255,255,255,1)',
-          //   titleColor: '#d71e1e',
-          // },
-        }}
+            // },
+            // timeCodes: {
+            //   currentTimeColor: '#f3e9f7',
+            //   durationColor: '#1a161c',
+            //   slashColor: '#a90ee6',
+            // },
+            // menus: {
+            //   color: '#a90ee6',
+            // },
+            // fullScreen: {
+            //   color: '#a90ee6',
+            // },
+            // download: {
+            //   color: '#696969',
+            //   progressBarColor: '#908c91',
+            //   progressBarFillColor: '#0df85f',
+            //   messageDelete: 'Delete',
+            //   messageDownload: 'Download',
+            //   labelDelete: 'Delete',
+            //   labelCancel: 'Cancel',
+            //   labelDownload: 'Download',
+            // },
+            // toast: {
+            //   // label: 'Video baixado com sucesso',
+            //   // backgroundColor: '#0df85f',
+            //   // labelColor: '#ffff',
+            // },
+            // header: {
+            //   leftButtonColor: 'rgba(255,255,255,1)',
+            //   titleColor: '#d71e1e',
+            // },
+          }
+        }
       />
       <TouchableOpacity onPress={() => console.log('oi')}>
         <Text style={{}}>Olá Mundo</Text>

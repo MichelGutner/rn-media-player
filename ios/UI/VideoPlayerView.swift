@@ -133,6 +133,11 @@ struct VideoPlayerView: View {
                 player.rate = changedRate
               }
             }
+            .onReceive(playbackObserver.$deviceOrientation, perform: { isPortrait in
+              if (!isPortrait) {
+                isFullScreen = true
+              }
+            })
             .onTapGesture {
               withAnimation {
                 toggleControls()
@@ -196,9 +201,9 @@ struct VideoPlayerView: View {
             draggingImage: $draggingImage
           )
           TimeCodes(UIControlsProps: $UIControlsProps)
-            .fixedSize()
         }
         .padding(.horizontal, 12)
+        .padding(.bottom, 4)
         .opacity(isSeeking || controlsVisible || isSeekingByDoubleTap ? 1 : 0)
         .animation(.easeInOut(duration: 0.35), value: isSeeking || controlsVisible || isSeekingByDoubleTap)
         HStack {
@@ -250,7 +255,9 @@ struct VideoPlayerView: View {
                   controls.togglePlayback()
                   onPlayPauseStatus()
                   if (isPlaying) {
-                    player.rate = rate
+                    if (rate > 0.0) {
+                      player.rate = rate
+                    }
                   }
                 },
                 isPlaying: autoPlay,

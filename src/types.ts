@@ -82,7 +82,10 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   thumbnailFramesSeconds?: number;
   screenBehavior: {
     autoEnterFullscreenOnLandscape?: boolean;
-    forceLandscapeInFullscreen?: boolean; // Must be implemented for iOS
+    /**
+     * Only android
+     */
+    forceLandscapeInFullscreen?: boolean;
   };
   autoPlay?: boolean;
   style?: ViewStyle;

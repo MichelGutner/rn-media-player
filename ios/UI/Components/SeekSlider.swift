@@ -40,10 +40,9 @@ struct CustomSeekSlider : View {
             .fill(Color(uiColor: (UIControlsProps?.seekSlider.maximumTrackColor ?? .systemFill)))
             .frame(width: geometry.size.width)
             .cornerRadius(16)
-            .border(Color(uiColor: (UIControlsProps?.seekSlider.maximumTrackColor ?? .systemFill)), width: /*@START_MENU_TOKEN@*/1/*@END_MENU_TOKEN@*/)
           
           Rectangle()
-            .fill(Color(uiColor: (UIControlsProps?.seekSlider.seekableTintColor ?? .systemGray2)))
+            .fill(Color(uiColor: (UIControlsProps?.seekSlider.seekableTintColor ?? .systemGray3)))
             .frame(width: bufferingProgress * geometry.size.width)
             .cornerRadius(12)
           

@@ -15,7 +15,6 @@ struct Menus: View {
   var color: UIColor?
   
   var body: some View {
-    // Transformar NSDictionary em Swift Dictionary
     let transformedNSDictionaryIntoSwiftDictionary: [(key: String, values: NSDictionary)] = options?.compactMap { (key, value) -> (key: String, values: NSDictionary)? in
       if let key = key as? String, let values = value as? NSDictionary {
         return (key: key, values: values)
@@ -33,19 +32,19 @@ struct Menus: View {
             Button(action: {
               if let value = item["value"], let selectedName = item["name"] as? String {
                 controls.optionSelected(option.key, value)
-                selectedOptionItem[option.key] = selectedName // Atualiza a opção selecionada
+                selectedOptionItem[option.key] = selectedName
               }
             }) {
               if let name = item["name"] as? String {
                 if selectedOptionItem[option.key] == nil {
                   if name == initialSelected {
-                    Label(name, systemImage: "checkmark") // Exibe o ícone de checkmark para a opção inicial
+                    Label(name, systemImage: "checkmark")
                   } else {
-                    Text(name) // Exibe apenas o texto para as outras opções
+                    Text(name)
                   }
                 } else {
                   if let selectedOption = selectedOptionItem[option.key], name == selectedOption {
-                    Label(name, systemImage: "checkmark") // Exibe o ícone de checkmark para a opção selecionada
+                    Label(name, systemImage: "checkmark")
                   } else {
                     Text(name)
                   }
