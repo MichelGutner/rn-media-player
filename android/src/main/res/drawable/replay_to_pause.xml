@@ -3,8 +3,8 @@
   <aapt:attr name="android:drawable">
     <vector
       android:name="vector"
-      android:width="40dp"
-      android:height="40dp"
+      android:width="32dp"
+      android:height="32dp"
       android:viewportWidth="28"
       android:viewportHeight="28">
       <path

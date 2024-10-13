@@ -94,7 +94,7 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
   private fun createPlayPauseBackground(context: Context): FrameLayout {
     val sizeInPx = TypedValue.applyDimension(
       TypedValue.COMPLEX_UNIT_DIP,
-      70f,
+      60f,
       context.resources.displayMetrics
     ).toInt()
 
@@ -150,14 +150,4 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
   fun showControls() {
     overlayView.fadeIn()
   }
-
-//  <ImageButton
-//  android:id="@+id/replay_to_pause"
-//  android:layout_width="match_parent"
-//  android:layout_height="match_parent"
-//  android:background="?android:attr/selectableItemBackgroundBorderless"
-//  android:importantForAccessibility="no"
-//  android:src="@drawable/replay_to_pause"
-//  android:visibility="invisible"
-//  tools:ignore="HardcodedText" />
 }

@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
@@ -22,16 +23,16 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.ui.components.PopUpMenu
 import com.rnvideoplayer.events.Events
+import com.rnvideoplayer.helpers.SharedStore
 import com.rnvideoplayer.helpers.TimeUnitManager
 import com.rnvideoplayer.helpers.TimeoutWork
 import com.rnvideoplayer.ui.VideoPlayerView
 import com.rnvideoplayer.ui.components.CastPlayerView
-import com.rnvideoplayer.utilities.layoutParamsCenter
 import java.util.concurrent.TimeUnit
 
 @OptIn(UnstableApi::class)
 @SuppressLint("viewConstructor")
-class RNVideoPlayerViewX(val context: ThemedReactContext) : VideoPlayerView(context) {
+class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(context) {
   private val exoPlayer = ExoPlayer.Builder(context).build()
   private val activity = context.currentActivity
   private val castPlayer = CastPlayerView(context, exoPlayer)
@@ -42,11 +43,20 @@ class RNVideoPlayerViewX(val context: ThemedReactContext) : VideoPlayerView(cont
   private var started: Boolean = false
   private var isSeeking: Boolean = false
   private var aspectRatio: Float = 1.5f
+  private var autoOrientationOnFullscreen = false
 
   private val timeoutWork = TimeoutWork()
 
   init {
 //    viewControls.mainLayout.addView(castPlayer)
+    viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
+      override fun onGlobalLayout() {
+        weakActivity.get() ?: return
+        autoOrientationOnFullscreen =
+          SharedStore.getInstance().getBoolean("autoOrientationOnFullscreen") ?: false
+        viewTreeObserver.removeOnGlobalLayoutListener(this)
+      }
+    })
     this.post {
       startPlaybackProgressUpdater()
     }
@@ -107,7 +117,7 @@ class RNVideoPlayerViewX(val context: ThemedReactContext) : VideoPlayerView(cont
               viewControls.timeBar.build(exoPlayer.duration)
               event.send(
                 EventNames.videoLoaded,
-                this@RNVideoPlayerViewX,
+                this@RNVideoPlayerView,
                 Arguments.createMap().apply {
                   putDouble("duration", timeUnitHandler.toSecondsDouble(exoPlayer.duration))
                   putBoolean("loaded", true)
@@ -125,7 +135,7 @@ class RNVideoPlayerViewX(val context: ThemedReactContext) : VideoPlayerView(cont
 
             event.send(
               EventNames.videoBuffering,
-              this@RNVideoPlayerViewX,
+              this@RNVideoPlayerView,
               Arguments.createMap().apply {
                 putBoolean("buffering", true)
               })
@@ -138,7 +148,7 @@ class RNVideoPlayerViewX(val context: ThemedReactContext) : VideoPlayerView(cont
             }
             event.send(
               EventNames.videoCompleted,
-              this@RNVideoPlayerViewX,
+              this@RNVideoPlayerView,
               Arguments.createMap().apply {
                 putBoolean("completed", true)
               })
@@ -152,7 +162,7 @@ class RNVideoPlayerViewX(val context: ThemedReactContext) : VideoPlayerView(cont
       override fun onPlayerError(error: PlaybackException) {
         event.send(
           EventNames.videoErrorStatus,
-          this@RNVideoPlayerViewX,
+          this@RNVideoPlayerView,
           Arguments.createMap().apply {
             putString("error", error.cause.toString())
             putDouble("code", error.errorCode.toDouble())
@@ -343,6 +353,15 @@ class RNVideoPlayerViewX(val context: ThemedReactContext) : VideoPlayerView(cont
       exitFromFullScreen()
     } else {
       enterInFullScreen()
+    }
+
+    if (autoOrientationOnFullscreen) {
+      println("autoOrientationOnFullscreen: ${resources?.configuration?.orientation == Configuration.ORIENTATION_PORTRAIT}")
+      if (resources?.configuration?.orientation == Configuration.ORIENTATION_PORTRAIT && isFullscreen) {
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+      } else {
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+      }
     }
   }
 

@@ -26,7 +26,7 @@ class RNVideoPlayerView : UIView {
   private var isFullScreen = false
   private var UIControlsProps: HashableControllers? = .none
   private var autoEnterFullscreenOnLandscape = false
-  private var forceLandscapeInFullscreen = false
+  private var autoOrientationOnFullscreen = false
   
   @objc var autoPlay: Bool = false
   @objc var menus: NSDictionary? = [:]
@@ -135,8 +135,8 @@ class RNVideoPlayerView : UIView {
     if let autoEnterFullscreen = screenBehavior["autoEnterFullscreenOnLandscape"] as? Bool {
       self.autoEnterFullscreenOnLandscape = autoEnterFullscreen
     }
-    if let forceLandscapeInFullscreen = screenBehavior["forceLandscapeInFullscreen"] as? Bool {
-      self.forceLandscapeInFullscreen = forceLandscapeInFullscreen
+    if let autoOrientationOnFullscreen = screenBehavior["autoOrientationOnFullscreen"] as? Bool {
+      self.autoOrientationOnFullscreen = autoOrientationOnFullscreen
     }
     
         let uiHostingView = UIHostingController(rootView: VideoPlayerView(
@@ -189,14 +189,6 @@ class RNVideoPlayerView : UIView {
     }
     
     let currentOrientation = UIDevice.current.orientation
-    
-    // TODO: not working
-    if forceLandscapeInFullscreen, isFullScreen {
-           DispatchQueue.main.async {
-             UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
-               UIViewController.attemptRotationToDeviceOrientation()
-           }
-       }
     
     if autoEnterFullscreenOnLandscape, currentOrientation.isLandscape {
       DispatchQueue.main.async { [self] in
@@ -291,13 +283,33 @@ class RNVideoPlayerView : UIView {
           uiView.frame = frame
         }
       }
-      
       superview?.addSubview(uiView)
+    }
+    
+    if autoOrientationOnFullscreen {
+      DispatchQueue.main.async {
+        if #available(iOS 16.0, *) {
+          guard let windowSceen = self.window?.windowScene else { return }
+          if windowSceen.interfaceOrientation == .portrait {
+            windowSceen.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape))
+          } else {
+            windowSceen.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
+          }
+        } else {
+          if UIDevice.current.orientation == .portrait {
+            let orientation = UIInterfaceOrientation.landscapeRight.rawValue
+            UIDevice.current.setValue(orientation, forKey: "orientation")
+          } else {
+            let orientation = UIInterfaceOrientation.portrait.rawValue
+            UIDevice.current.setValue(orientation, forKey: "orientation")
+          }
+        }
+      }
     }
     
     isFullScreen = fullScreen
   }
-  
+
   
   @objc private func onPaused(_ paused: Bool) {
     if paused {

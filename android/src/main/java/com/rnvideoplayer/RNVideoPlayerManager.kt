@@ -2,15 +2,9 @@ package com.rnvideoplayer
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
-import android.annotation.SuppressLint
-import android.graphics.Color
 import android.view.View
-import android.view.ViewGroup
-import android.view.ViewTreeObserver
-import android.view.WindowManager
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.ui.AspectRatioFrameLayout
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.common.MapBuilder
 import com.facebook.react.uimanager.SimpleViewManager
@@ -20,14 +14,13 @@ import com.rnvideoplayer.events.events
 import com.rnvideoplayer.helpers.ReadableMapManager
 import com.rnvideoplayer.helpers.SharedStore
 import com.rnvideoplayer.helpers.SharedStoreKey
-import com.rnvideoplayer.helpers.SharedViewInstance
 
 class RNVideoPlayer : SimpleViewManager<View>() {
   override fun getName() = "RNVideoPlayer"
 
   @OptIn(UnstableApi::class)
-  override fun createViewInstance(reactContext: ThemedReactContext): RNVideoPlayerViewX {
-    val rnVideoPlayerView = RNVideoPlayerViewX(reactContext)
+  override fun createViewInstance(reactContext: ThemedReactContext): RNVideoPlayerView {
+    val rnVideoPlayerView = RNVideoPlayerView(reactContext)
 
     return rnVideoPlayerView
   }
@@ -43,7 +36,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "resizeMode")
-  fun setResizeMode(rnVideoPlayerView: RNVideoPlayerViewX, resizeMode: String) {
+  fun setResizeMode(rnVideoPlayerView: RNVideoPlayerView, resizeMode: String) {
     val resizeModeValue = when (resizeMode) {
       "contain" -> 1.5
       "cover" -> 0
@@ -54,33 +47,32 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "screenBehavior")
-  fun setScreenBehavior(rnVideoPlayerView: RNVideoPlayerViewX, screenBehavior: ReadableMap?) {
-    println("screenBehavior: $screenBehavior")
+  fun setScreenBehavior(rnVideoPlayerView: RNVideoPlayerView, screenBehavior: ReadableMap?) {
     SharedStore.getInstance().putBoolean("autoEnterFullscreenOnLandscape", screenBehavior?.getBoolean("autoEnterFullscreenOnLandscape") ?: false)
-    SharedStore.getInstance().putBoolean("forceLandscapeInFullscreen", screenBehavior?.getBoolean("forceLandscapeInFullscreen") ?: false)
+    SharedStore.getInstance().putBoolean("autoOrientationOnFullscreen", screenBehavior?.getBoolean("autoOrientationOnFullscreen") ?: false)
   }
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "source")
-  fun setSource(rnVideoPlayerView: RNVideoPlayerViewX, source: ReadableMap?) {
+  fun setSource(rnVideoPlayerView: RNVideoPlayerView, source: ReadableMap?) {
       rnVideoPlayerView.build(source)
   }
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "rate")
-  fun setRate(rnVideoPlayerView: RNVideoPlayerViewX, rate: Double) {
+  fun setRate(rnVideoPlayerView: RNVideoPlayerView, rate: Double) {
     rnVideoPlayerView.changeRate(rate.toFloat())
   }
 //
   @OptIn(UnstableApi::class)
   @ReactProp(name = "autoPlay")
-  fun setAutoPlay(rnVideoPlayerView: RNVideoPlayerViewX, autoPlay: Boolean) {
+  fun setAutoPlay(rnVideoPlayerView: RNVideoPlayerView, autoPlay: Boolean) {
     rnVideoPlayerView.autoPlay(autoPlay)
   }
 //
   @OptIn(UnstableApi::class)
   @ReactProp(name = "menus")
-  fun setMenus(rnVideoPlayerView: RNVideoPlayerViewX, menus: ReadableMap) {
+  fun setMenus(rnVideoPlayerView: RNVideoPlayerView, menus: ReadableMap) {
     val menusData = mutableSetOf<String>()
     rnVideoPlayerView.getMenus(menus.toHashMap().keys)
     menus.entryIterator.forEach { i ->
@@ -92,7 +84,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 //
   @OptIn(UnstableApi::class)
   @ReactProp(name = "tapToSeek")
-  fun setSuffixLabelTapToSeek(player: RNVideoPlayerViewX, tapToSeek: ReadableMap?) {
+  fun setSuffixLabelTapToSeek(player: RNVideoPlayerView, tapToSeek: ReadableMap?) {
     val suffixLabel = tapToSeek?.getString("suffixLabel")
     val value = tapToSeek?.getDouble("value")
     if (suffixLabel != null) {
@@ -104,7 +96,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   }
   @OptIn(UnstableApi::class)
   @ReactProp(name = "changeQualityUrl")
-  fun setChangeQualityUrl(player: RNVideoPlayerViewX, changeQualityUrl: String) {
+  fun setChangeQualityUrl(player: RNVideoPlayerView, changeQualityUrl: String) {
     if (changeQualityUrl.isNotEmpty()) {
       player.changeVideoQuality(changeQualityUrl)
     }

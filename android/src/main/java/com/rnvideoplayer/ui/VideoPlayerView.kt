@@ -35,7 +35,6 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
   private var aspectRatio: Float = 1.5f
 
   private var autoEnterFullscreenOnLandscape = false
-  private var forceLandscapeInFullscreen = false
 
   val viewControls = VideoPlayerControls(context)
 
@@ -50,8 +49,6 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
         weakActivity.get() ?: return
         autoEnterFullscreenOnLandscape =
           SharedStore.getInstance().getBoolean("autoEnterFullscreenOnLandscape") ?: false
-        forceLandscapeInFullscreen =
-          SharedStore.getInstance().getBoolean("forceLandscapeInFullscreen") ?: false
         viewTreeObserver.removeOnGlobalLayoutListener(this)
       }
     })
@@ -196,9 +193,6 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
     )
 
     aspectRatioFrameLayout.setAspectRatio(0f)
-    if (forceLandscapeInFullscreen) {
-      activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-    }
 
     activity?.window?.decorView?.systemUiVisibility = (
       View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or

@@ -41,7 +41,8 @@
     "video",
     "player",
     "video-player",
-    "media"
+    "media",
+    "media-player"
   ],
   "repository": {
     "type": "git",

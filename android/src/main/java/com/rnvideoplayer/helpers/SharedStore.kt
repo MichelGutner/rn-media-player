@@ -11,14 +11,6 @@ class SharedStore {
     return stringMap[key] as? String
   }
 
-  fun putDouble(key: String, value: Double) {
-    stringMap[key] = value
-  }
-
-  fun getDouble(key: String): Double? {
-    return stringMap[key] as? Double
-  }
-
   fun putLong(key: String, value: Long) {
     stringMap[key] = value
   }

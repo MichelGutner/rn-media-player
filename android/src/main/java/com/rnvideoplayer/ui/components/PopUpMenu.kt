@@ -23,7 +23,6 @@ class PopUpMenu(
   init {
     data.forEach { menuItemTitle ->
       val item = popup.menu.add(menuItemTitle)
-      item.icon = ContextCompat.getDrawable(context, R.drawable.arrow_forward)
       item.setOnMenuItemClickListener { menuItem ->
         val option = ReadableMapManager.getInstance().getReadableMapProps(menuItem.title.toString())
         selectedItem = option.getString("initialItemSelected") ?: ""

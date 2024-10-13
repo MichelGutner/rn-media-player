@@ -84,7 +84,8 @@ function App(): JSX.Element {
         // resizeMode={EResizeMode.Contain}
         screenBehavior={{
           autoEnterFullscreenOnLandscape: true,
-          forceLandscapeInFullscreen: true,
+          autoExitFullscreenOnLandscape: true,
+          autoOrientationOnFullscreen: true,
         }}
         // -------->
         paused={false}

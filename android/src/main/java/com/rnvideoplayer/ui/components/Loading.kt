@@ -30,7 +30,7 @@ class Loading(context: ThemedReactContext): FrameLayout(context) {
   private fun createLoading(context: Context): ProgressBar {
     val sizeInPx = TypedValue.applyDimension(
       TypedValue.COMPLEX_UNIT_DIP,
-      70f,
+      50f,
       context.resources.displayMetrics
     ).toInt()
     return ProgressBar(context).apply {
