@@ -227,7 +227,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
     val thumbnailProps = source.getMap("thumbnails")
 
     val mediaItem = MediaItem.fromUri(Uri.parse(url))
-    exoPlayer.setMediaItem(mediaItem, startTime.toLong())
+    exoPlayer.setMediaItem(mediaItem, (startTime * 1000).toLong())
 
     exoPlayer.prepare()
     this.player = exoPlayer
@@ -356,7 +356,6 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
     }
 
     if (autoOrientationOnFullscreen) {
-      println("autoOrientationOnFullscreen: ${resources?.configuration?.orientation == Configuration.ORIENTATION_PORTRAIT}")
       if (resources?.configuration?.orientation == Configuration.ORIENTATION_PORTRAIT && isFullscreen) {
         activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
       } else {
