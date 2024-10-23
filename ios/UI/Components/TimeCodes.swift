@@ -9,17 +9,12 @@ import AVKit
 
 @available(iOS 14.0, *)
 struct TimeCodes: View {
-  @StateObject private var observable = PlaybackObservable()
-  @Binding var UIControlsProps: HashableControllers?
+  @Binding var time: Double
+  @Binding var UIControlsProps: HashableUIControls?
     
   var body: some View {
-    let sizeTimeCodes = calculateSizeByWidth(10, 0.2)
-    
-    HStack() {
-      Text(stringFromTimeInterval(interval: observable.duration))
-        .font(.system(size: 12))
-        .foregroundColor(Color(uiColor: (UIControlsProps?.timeCodes.durationColor ?? .white)))
-      
-    }
+    Text(stringFromTimeInterval(interval: time))
+      .font(.system(size: 12))
+      .foregroundColor(Color(uiColor: (UIControlsProps?.timeCodes.durationColor ?? .white)))
   }
 }

@@ -13,6 +13,7 @@ struct Menus: View {
   var controls: PlayerControls
   @State private var selectedOptionItem: [String: String] = [:]
   var color: UIColor?
+  @State private var isHidden = true
   
   var body: some View {
     let transformedNSDictionaryIntoSwiftDictionary: [(key: String, values: NSDictionary)] = options?.compactMap { (key, value) -> (key: String, values: NSDictionary)? in
@@ -64,5 +65,17 @@ struct Menus: View {
             .foregroundColor(Color(uiColor: color ?? .white))
         )
     }
+    .onAppear {
+      NotificationCenter.default.addObserver(forName: .SeekingNotification, object: nil, queue: .main, using: { notification in
+        self.isHidden = notification.object as! Bool
+      })
+      NotificationCenter.default.addObserver(forName: .DoubleTapNotification, object: nil, queue: .main, using: { notification in
+        self.isHidden = notification.object as! Bool
+      })
+      NotificationCenter.default.addObserver(forName: .AVPlayerInitialLoading, object: nil, queue: .main, using: { notification in
+        self.isHidden = notification.object as! Bool
+      })
+    }
+    .opacity(isHidden ? 0 : 1)
   }
 }

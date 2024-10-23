@@ -260,7 +260,7 @@ struct LoadingHashableProps: Hashable {
 
 ///----- 
 
-struct HashableControllers: Hashable {
+struct HashableUIControls: Hashable {
   var playback: PlaybackControlHashableProps
   var seekSlider: SeekSliderControlHashableProps
   var timeCodes: TimeCodesHashableProps
@@ -305,7 +305,7 @@ struct HashableControllers: Hashable {
     hasher.combine(loading)
   }
   
-  static func == (lhs: HashableControllers, rhs: HashableControllers) -> Bool {
+  static func == (lhs: HashableUIControls, rhs: HashableUIControls) -> Bool {
     return lhs.playback == rhs.playback && lhs.seekSlider == rhs.seekSlider && lhs.timeCodes == rhs.timeCodes && lhs.menus == rhs.menus && lhs.fullScreen == rhs.fullScreen && lhs.download == rhs.download && lhs.toast == rhs.toast && lhs.header == rhs.header && lhs.loading == rhs.loading
   }
 }

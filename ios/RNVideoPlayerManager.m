@@ -36,7 +36,6 @@ RCT_EXPORT_VIEW_PROPERTY(onBufferCompleted, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onBuffer, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onPlayPause, RCTDirectEventBlock)
 
-// -- Settings Options data
 RCT_EXPORT_VIEW_PROPERTY(menus, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(onMenuItemSelected, RCTBubblingEventBlock)
 

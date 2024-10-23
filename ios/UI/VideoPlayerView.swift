@@ -5,19 +5,6 @@
 //  Created by Michel Gutner on 22/02/24.
 //
 
-let defaultOptions: NSDictionary = [
-    "Speeds": [
-        "data": [
-            ["name": "x0.5", "value": "0.5"],
-            ["name": "Normal", "value": "1"],
-            ["name": "x1.5", "value": "1.5"],
-            ["name": "x2.0", "value": "2.0"],
-        ],
-        "initialItemSelected": "Normal"
-    ]
-]
-
-
 import SwiftUI
 import AVKit
 import Combine
@@ -28,13 +15,14 @@ struct VideoPlayerView: View {
     
     @ObservedObject private var playbackObserver = PlaybackObserver()
     var player: AVPlayer
+    var bounds: CGRect
     @Binding var autoPlay: Bool
     @State var options: NSDictionary? = [:]
     var controls: PlayerControls
     var thumbNailsProps: NSDictionary? = [:]
     var enterInFullScreenWhenDeviceRotated = false
     var videoGravity: AVLayerVideoGravity
-    @Binding var UIControlsProps: HashableControllers?
+    @Binding var UIControlsProps: HashableUIControls?
     var tapToSeek: NSDictionary? = [:]
     
     @State private var rate: Float = 0.0
@@ -64,6 +52,8 @@ struct VideoPlayerView: View {
   @State private var seekerThumbImageSize: CGSize = .init(width: 12, height: 12)
   @State private var thumbnailsFrames: [UIImage] = []
   @State private var draggingImage: UIImage?
+  
+  var releaseResources: () -> Void
     
     
   var body: some View {
@@ -86,42 +76,25 @@ struct VideoPlayerView: View {
                 .animation(.easeInOut(duration: 0.35), value: isSeeking || controlsVisible || isSeekingByDoubleTap)
                 .edgesIgnoringSafeArea(Edge.Set.all)
             )
-            .overlay(
-                DoubleTapManager(
-                  onTapBackward: { value in
-                    backwardTime(Double(value))
-                    isSeekingByDoubleTap = true
-                  },
-                  onTapForward: { value in
-                    forwardTime(Double(value))
-                    isSeekingByDoubleTap = true
-                  },
-                  isFinished: {
-                    isSeekingByDoubleTap = false
-                  },
-                  advanceValue: tapToSeek?["value"] as? Int ?? 15,
-                  suffixAdvanceValue: tapToSeek?["suffixLabel"] as? String ?? "seconds"
-                )
-            )
+//            .overlay(
+//                DoubleTapManager(
+//                  onTapBackward: { value in
+//                    backwardTime(Double(value))
+//                    isSeekingByDoubleTap = true
+//                  },
+//                  onTapForward: { value in
+//                    forwardTime(Double(value))
+//                    isSeekingByDoubleTap = true
+//                  },
+//                  isFinished: {
+//                    isSeekingByDoubleTap = false
+//                  },
+//                  advanceValue: tapToSeek?["value"] as? Int ?? 15,
+//                  suffixAdvanceValue: tapToSeek?["suffixLabel"] as? String ?? "seconds"
+//                )
+//            )
             .onAppear {
-              NotificationCenter.default.addObserver(
-                playbackObserver,
-                selector: #selector(PlaybackObserver.itemDidFinishPlaying(_:)),
-                name: .AVPlayerItemDidPlayToEndTime,
-                object: player.currentItem
-              )
-              NotificationCenter.default.addObserver(
-                playbackObserver,
-                selector: #selector(PlaybackObserver.deviceOrientation(_:)),
-                name: UIDevice.orientationDidChangeNotification,
-                object: nil
-              )
-              NotificationCenter.default.addObserver(
-                playbackObserver,
-                selector: #selector(PlaybackObserver.handleRateChangeNotification(_:)),
-                name: .AVPlayerRateDidChange,
-                object: nil
-              )
+              setupNotifications()
             }
             .onReceive(playbackObserver.$isFinished, perform: { isFinished in
               isFinishedPlaying = isFinished
@@ -144,19 +117,23 @@ struct VideoPlayerView: View {
               }
             }
             .overlay(
-              ViewControllers(geometry: geometry)
+              Group {
+                ViewControllers(geometry: geometry)
+                  .onAppear {
+                    scheduleHideControls()
+                  }
+              }
             )
-            .overlay (
-              PlaybackControls()
+            .overlay(
+              PlayPauseControl()
             )
         }
       }
     }
+    .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
     .preferredColorScheme(.dark)
     .onAppear {
-      if player.timeControlStatus == .playing {
-        scheduleHideControls()
-      }
+      thumbnailsFrames.removeAll()
       
       if let thumbNailsEnabled = thumbNailsProps?["enabled"] as? Bool {
         if let thumbnailsUrl = thumbNailsProps?["url"] as? String, thumbNailsEnabled {
@@ -164,76 +141,63 @@ struct VideoPlayerView: View {
         }
       }
     }
+    .onDisappear {
+      releaseResources()
+    }
   }
     
     @ViewBuilder
   func ViewControllers(geometry: GeometryProxy) -> some View {
     VStack {
       Spacer()
-      VStack {
-        Spacer()
-        HStack(alignment: .bottom) {
-          Thumbnails(
-            player: .constant(player),
-            geometry: geometry,
-            UIControlsProps: $UIControlsProps,
-            thumbnails: .constant(thumbNailsProps),
-            sliderProgress: $sliderProgress,
-            isSeeking: $isSeeking,
-            draggingImage: $draggingImage
-          )
-          .padding(.bottom, 12)
-          Spacer()
-        }
-        HStack {
-          CustomSeekSlider(
-            player: player,
-            UIControlsProps: $UIControlsProps,
-            timeoutWorkItem: $timeoutWorkItem,
-            scheduleHideControls: scheduleHideControls,
-            sliderProgress: $sliderProgress,
-            lastDraggedProgresss: $lastDraggedProgresss,
-            isDraggedSeekSlider: isDraggedSeekSlider,
-            isSeeking: $isSeeking,
-            isSeekingByDoubleTap: $isSeekingByDoubleTap,
-            seekerThumbImageSize: $seekerThumbImageSize,
-            thumbnailsFrames: $thumbnailsFrames,
-            draggingImage: $draggingImage
-          )
-          TimeCodes(UIControlsProps: $UIControlsProps)
-        }
-        .padding(.horizontal, 12)
-        .padding(.bottom, 4)
-        .opacity(isSeeking || controlsVisible || isSeekingByDoubleTap ? 1 : 0)
-        .animation(.easeInOut(duration: 0.35), value: isSeeking || controlsVisible || isSeekingByDoubleTap)
-        HStack {
-          Spacer()
-          Menus(options: options != [:] ? options : defaultOptions, controls: controls, color: UIControlsProps?.menus.color)
-          FullScreen(fullScreen: $isFullScreen, color: UIControlsProps?.fullScreen.color, action: {
-            controls.toggleFullScreen()
-            timeoutWorkItem?.cancel()
-            
-            if (isFullScreen) {
-              isFullScreen = false
-            } else {
-              isFullScreen = true
-            }
-            
-            if (player.timeControlStatus == .playing) {
-              scheduleHideControls()
-            }
-          })
-        }
-        .padding(.bottom, 12)
-        .padding(.trailing, 12)
-        .padding(.leading, 12)
-        .opacity(controlsVisible && !isSeeking && !isSeekingByDoubleTap ? 1 : 0)
+      HStack(alignment: .bottom) {
+//        Thumbnails(
+//          player: player,
+//          geometry: geometry,
+//          UIControlsProps: $UIControlsProps,
+//          thumbnails: .constant(thumbNailsProps),
+//          sliderProgress: $sliderProgress,
+//          isSeeking: $isSeeking,
+//          draggingImage: $draggingImage
+//        )
+//        .padding(.bottom, 12)
+//        Spacer()
       }
+      HStack {
+
+      }
+      .padding(.horizontal, 12)
+      .padding(.bottom, 4)
+      .opacity(isSeeking || controlsVisible || isSeekingByDoubleTap ? 1 : 0)
+      .animation(.easeInOut(duration: 0.35), value: isSeeking || controlsVisible || isSeekingByDoubleTap)
+      HStack {
+        Spacer()
+//        Menus(options: options, controls: controls, color: UIControlsProps?.menus.color)
+        FullScreen(fullScreen: $isFullScreen, color: UIControlsProps?.fullScreen.color, action: {
+//          controls.toggleFullScreen()
+          toggleFullScreen()
+          timeoutWorkItem?.cancel()
+//          
+//          if (isFullScreen) {
+//            isFullScreen = false
+//          } else {
+//            isFullScreen = true
+//          }
+          
+          if (player.timeControlStatus == .playing) {
+            scheduleHideControls()
+          }
+        })
+      }
+      .padding(.bottom, 12)
+      .padding(.trailing, 12)
+      .padding(.leading, 12)
+      .opacity(controlsVisible && !isSeeking && !isSeekingByDoubleTap ? 1 : 0)
     }
   }
   
   @ViewBuilder
-  func PlaybackControls() -> some View {
+  func PlayPauseControl() -> some View {
     Circle()
       .fill(.black.opacity(0.50))
       .frame(width: 60, height: 60)
@@ -250,23 +214,23 @@ struct VideoPlayerView: View {
             if player.timeControlStatus == .waitingToPlayAtSpecifiedRate {
               CustomLoading(color: UIControlsProps?.loading.color)
             } else {
-              CustomPlayPauseButton(
-                action: { isPlaying in
-                  controls.togglePlayback()
-                  onPlayPauseStatus()
-                  if (isPlaying) {
-                    if (rate > 0.0) {
-                      player.rate = rate
-                    }
-                  }
-                },
-                isPlaying: autoPlay,
-                frame: .init(origin: .zero, size: .init(width: 30, height: 30)),
-                color: UIControlsProps?.playback.color?.cgColor
-              )
-              .onAppear {
-                scheduleHideControls()
-              }
+//              CustomPlayPauseButton(
+//                action: { isPlaying in
+//                  controls.togglePlayback()
+//                  onPlayPauseStatus()
+//                  if (isPlaying) {
+//                    if (rate > 0.0) {
+//                      player.rate = rate
+//                    }
+//                  }
+//                },
+//                isPlaying: player.timeControlStatus == .playing,
+//                frame: .init(origin: .zero, size: .init(width: 30, height: 30)),
+//                color: UIControlsProps?.playback.color?.cgColor
+//              )
+//              .onAppear {
+//                scheduleHideControls()
+//              }
             }
           }
         }
@@ -385,26 +349,70 @@ struct VideoPlayerView: View {
             }
         })
     }
-}
-
-@available(iOS 14.0, *)
-struct DoubleTapManager : View {
-  var onTapBackward: (Int) -> Void
-  var onTapForward: (Int) -> Void
-  var isFinished: () -> Void
-  var advanceValue: Int
-  var suffixAdvanceValue: String
   
-  var body: some View {
-    ZStack {
-      Color(.clear).opacity(VariantPercent.p10)
-      VStack {
-        HStack(spacing: StandardSizes.large55) {
-          DoubleTapSeek(onTap:  onTapBackward, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: isFinished)
-          DoubleTapSeek(isForward: true, onTap:  onTapForward, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: isFinished)
+  private func setupNotifications() {
+    NotificationCenter.default.addObserver(
+      playbackObserver,
+      selector: #selector(PlaybackObserver.itemDidFinishPlaying(_:)),
+      name: .AVPlayerItemDidPlayToEndTime,
+      object: player.currentItem
+    )
+    NotificationCenter.default.addObserver(
+      playbackObserver,
+      selector: #selector(PlaybackObserver.deviceOrientation(_:)),
+      name: UIDevice.orientationDidChangeNotification,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      playbackObserver,
+      selector: #selector(PlaybackObserver.handleRateChangeNotification(_:)),
+      name: .AVPlayerRateDidChange,
+      object: nil
+    )
+  }
+  
+ private func toggleFullScreen() {
+    if isFullScreen {
+      exitOnFullscreen()
+    } else {
+      enterOnFullscreen()
+    }
+    
+//    if autoOrientationOnFullscreen {
+      DispatchQueue.main.async {
+        if #available(iOS 16.0, *) {
+          guard let windowSceen = getWindowScene() else { return }
+          if windowSceen.interfaceOrientation == .portrait && self.isFullScreen {
+            windowSceen.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape))
+          } else {
+            windowSceen.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
+          }
+        } else {
+          if UIDevice.current.orientation == .portrait && self.isFullScreen {
+            let orientation = UIInterfaceOrientation.landscapeRight.rawValue
+            UIDevice.current.setValue(orientation, forKey: "orientation")
+          } else {
+            let orientation = UIInterfaceOrientation.portrait.rawValue
+            UIDevice.current.setValue(orientation, forKey: "orientation")
+          }
         }
       }
-    }
-    .edgesIgnoringSafeArea(Edge.Set.all)
+//    }
   }
+  
+  private func enterOnFullscreen() {
+    self.isFullScreen = true
+  }
+  
+  private func exitOnFullscreen() {
+    self.isFullScreen = false
+//    uiView.frame = bounds
+  }
+}
+
+extension View {
+    func getWindowScene() -> UIWindowScene? {
+        return UIApplication.shared.connectedScenes
+            .first(where: { $0 is UIWindowScene }) as? UIWindowScene
+    }
 }

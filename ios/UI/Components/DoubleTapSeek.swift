@@ -1,12 +1,37 @@
 import SwiftUI
 
+@available(iOS 14.0, *)
+struct OverlayManager : View {
+  var onTapBackward: (Int) -> Void
+  var onTapForward: (Int) -> Void
+  var isFinished: () -> Void
+  var advanceValue: Int
+  var suffixAdvanceValue: String
+  var onTapOverlay: () -> Void
+  @State private var isTapped: Bool = false
+  @State private var isTappedLeft: Bool = false
+  
+  var body: some View {
+    VStack {
+      HStack(spacing: StandardSizes.large55) {
+        DoubleTapSeek(isTapped: $isTappedLeft, onTap:  onTapBackward, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: isFinished)
+        DoubleTapSeek(isTapped: $isTapped, isForward: true, onTap:  onTapForward, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: isFinished)
+      }
+    }
+    .onTapGesture {
+      onTapOverlay()
+    }
+  }
+}
+
+
 struct DoubleTapSeek: View {
   @State private var tappedQuantity: Int = 0
-  @State private var isTapped: Bool = false
   @State private var showArrows: [Bool] = [false, false, false]
   @State private var resetDuration: TimeInterval = 0.7
   @State private var resetTimer: Timer?
   
+  @Binding var isTapped: Bool
   var isForward: Bool = false
   var onTap: (Int) -> Void
   var advanceValue: Int = 10
@@ -43,6 +68,7 @@ struct DoubleTapSeek: View {
       .opacity(isTapped ? 1 : 0)
       .contentShape(Rectangle())
       .onTapGesture(count: isTapped ? 1 : 2) {
+        NotificationCenter.default.post(name: .DoubleTapNotification, object: true)
         self.isTapped = true
         tappedQuantity += 1
         onTap(advanceValue)
@@ -71,7 +97,9 @@ struct DoubleTapSeek: View {
           self.isTapped = false
           tappedQuantity = 0
           isFinished()
+          NotificationCenter.default.post(name: .DoubleTapNotification, object: false)
         }
       }
   }
 }
+
