@@ -44,10 +44,11 @@ type TVideoPlayerControlConfig = {
 
 type TOnError = TGenericEventHandler<{
   code: number;
-  userInfo: string;
-  description: string;
-  failureReason: string;
-  fixSuggestion: string;
+  userInfo: {
+    description: string;
+    failureReason: string;
+    fixSuggestion: string;
+  };
 }>;
 type TOnVideoProgress = TGenericEventHandler<{
   buffering: Float;
@@ -82,12 +83,10 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   thumbnailFramesSeconds?: number;
   screenBehavior: {
     autoEnterFullscreenOnLandscape?: boolean;
-    autoExitFullscreenOnLandscape?: boolean;
     autoOrientationOnFullscreen?: boolean;
   };
   autoPlay?: boolean;
   style?: ViewStyle;
-  paused?: boolean;
   rate?: number;
   startTime?: number;
   resizeMode?: ResizeMode;

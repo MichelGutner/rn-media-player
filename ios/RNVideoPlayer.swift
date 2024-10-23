@@ -21,7 +21,7 @@ class RNVideoPlayerView : UIView {
   private var session = AVAudioSession.sharedInstance()
   private var uiView = UIView()
   
-  private var player: AVPlayer?
+  weak var player: AVPlayer? = nil
   private var isInitialized = false
   private var isFullScreen = false
   private var UIControlsProps: HashableUIControls? = .none
@@ -52,15 +52,13 @@ class RNVideoPlayerView : UIView {
   
   @objc var source: NSDictionary? = [:] {
     didSet {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: {
-        NotificationCenter.default.post(name: .AVPlayerSource, object: self.source)
-      })
+      setupPlayer()
     }
   }
   
   @objc var rate: Float = 0.0 {
     didSet {
-      NotificationCenter.default.post(name: .AVPlayerRateDidChange, object: rate)
+            NotificationCenter.default.post(name: .AVPlayerRateDidChange, object: rate)
     }
   }
   
@@ -100,9 +98,21 @@ class RNVideoPlayerView : UIView {
   
   @objc var resizeMode: NSString = "contain"
   
-  private func setup() {
-    uiView.removeFromSuperview()
+  private func setupPlayer() {
+    DispatchQueue.main.async { [self] in
+      releaseResources()
+      if let url = source?["url"] as? String, let videoURL = URL(string: url) {
+        
+        self.player = AVPlayer(url: videoURL)
+        self.initializePlayer()
+      }
+    }
+  }
+  
+  private func initializePlayer() {
     let thumbnailsProps = source?["thumbnails"] as? NSDictionary
+    let startTime = source?["startTime"] as? Double ?? 0.0
+    player?.seek(to: CMTime(seconds: startTime, preferredTimescale: 1))
     
     if let controllersProps = controlsProps {
       let playbackProps = PlaybackControlHashableProps(dictionary: controllersProps["playback"] as? NSDictionary)
@@ -140,13 +150,13 @@ class RNVideoPlayerView : UIView {
     
     let viewController = UIHostingController(
       rootView: ViewController(
-        source: source,
+        player: player,
         autoPlay: autoPlay,
         menus: menus,
         bridgeControls: PlayerControls (
           togglePlayback: {_ in },
-          optionSelected: { name, value in
-            self.onMenuItemSelected?(["name": name, "value": value])
+          optionSelected: { [weak self] name, value in
+            self?.onMenuItemSelected?(["name": name, "value": value])
           }
         ),
         autoOrientationOnFullscreen: autoOrientationOnFullscreen,
@@ -160,19 +170,30 @@ class RNVideoPlayerView : UIView {
     
     uiView = viewController.view
     uiView.clipsToBounds = true
+    addSubview(uiView)
+    setNeedsLayout()
   }
   
   override func layoutSubviews() {
     uiView.frame = bounds
-    
-    if (!isInitialized) {
-      print("did enter")
-        self.setup()
-        self.superview?.addSubview(self.uiView)
-      isInitialized = true
-    }
-    
     super.layoutSubviews()
+  }
+  
+  override func removeFromSuperview() {
+    super.removeFromSuperview()
+    uiView.removeFromSuperview()
+    releaseResources()
+  }
+  
+  private func releaseResources() {
+    player?.replaceCurrentItem(with: nil)
+    player?.pause()
+    player = nil
+    NotificationCenter.default.removeObserver(self, name: .AVPlayerErrors, object: nil)
+    NotificationCenter.default.removeObserver(self, name: .AVPlayerSource, object: nil)
+    NotificationCenter.default.removeObserver(self, name: .AVPlayerRateDidChange, object: nil)
+    NotificationCenter.default.removeObserver(self, name: .AVPlayerUrlChanged, object: nil)
+    setNeedsLayout()
   }
 }
 

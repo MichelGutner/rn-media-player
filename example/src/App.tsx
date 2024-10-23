@@ -28,6 +28,9 @@ const qualitiesValues = [
 ];
 
 function App(): JSX.Element {
+  const [url, setUrl] = useState(
+    'https://content.jwplatform.com/videos/ijHnL627-zZbIuxVJ.mp4'
+  );
   const [rate, setRate] = useState(1);
   const [playbackQuality, setPlaybackQuality] = useState('');
 
@@ -35,14 +38,15 @@ function App(): JSX.Element {
     <View style={{ flex: 1 }}>
       <Video
         source={{
-          // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+          url,
           // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-          url: qualitiesValues[2]?.value as string,
+          // url: qualitiesValues[2]?.value as string,
           title: '',
-          startTime: 95,
+          startTime: 94,
           thumbnails: {
-            enabled: true,
-            url: qualitiesValues[0]?.value as string,
+            enabled: false,
+            // url: qualitiesValues[0]?.value as string,
+            url: url,
           },
         }}
         style={{ height: 375 }}
@@ -83,12 +87,9 @@ function App(): JSX.Element {
         // onError={(e) => console.log('native Error', e.nativeEvent)}
         // resizeMode={EResizeMode.Contain}
         screenBehavior={{
-          autoEnterFullscreenOnLandscape: true,
-          autoExitFullscreenOnLandscape: true,
-          autoOrientationOnFullscreen: true,
+          autoEnterFullscreenOnLandscape: false,
+          autoOrientationOnFullscreen: false,
         }}
-        // -------->
-        paused={false}
         // lockControls={true}
         controlsProps={
           {
@@ -139,7 +140,13 @@ function App(): JSX.Element {
           }
         }
       />
-      <TouchableOpacity onPress={() => console.log('oi')}>
+      <TouchableOpacity
+        onPress={() =>
+          setUrl(
+            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
+          )
+        }
+      >
         <Text style={{}}>Olá Mundo</Text>
       </TouchableOpacity>
     </View>
