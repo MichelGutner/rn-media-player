@@ -160,15 +160,21 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
       }
 
       override fun onPlayerError(error: PlaybackException) {
+        val mediaItem = player?.currentMediaItem
+        val uri = mediaItem?.localConfiguration?.uri
+
         event.send(
           EventNames.videoErrorStatus,
           this@RNVideoPlayerView,
           Arguments.createMap().apply {
+            putString("domain", uri.toString())
             putString("error", error.cause.toString())
             putDouble("code", error.errorCode.toDouble())
-            putString("userInfo", error.message)
-            putString("description", error.stackTrace.toString())
-            putString("failureReason", error.errorCodeName)
+            putString("userInfo", mapOf(
+              "NSLocalizedDescriptionKey" to error.message,
+              "NSLocalizedFailureReasonErrorKey" to "Failed to play the video.",
+              "NSLocalizedRecoverySuggestionErrorKey" to "Please check the video source or try again later."
+            ).toString())
           })
       }
     })
