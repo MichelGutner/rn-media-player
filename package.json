@@ -1,6 +1,6 @@
 {
   "name": "rn-media-player",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Video Player",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
