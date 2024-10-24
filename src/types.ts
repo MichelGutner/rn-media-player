@@ -81,7 +81,7 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
     };
   };
   thumbnailFramesSeconds?: number;
-  screenBehavior: {
+  screenBehavior?: {
     autoEnterFullscreenOnLandscape?: boolean;
     autoOrientationOnFullscreen?: boolean;
   };
@@ -91,7 +91,7 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
   startTime?: number;
   resizeMode?: ResizeMode;
   // lockControls?: boolean;
-  tapToSeek: {
+  tapToSeek?: {
     value: number;
     suffixLabel: string;
   };
