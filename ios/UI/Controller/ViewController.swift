@@ -12,7 +12,7 @@ struct ViewController: UIViewControllerRepresentable {
   var autoEnterFullscreenOnLandscape: Bool
   var thumbnails: NSDictionary?
   var tapToSeek: NSDictionary?
-  var UIControls: HashableUIControls?
+  var UIControls: Styles?
   var videoGravity: AVLayerVideoGravity
   
   @State var thumbnailsUIImageFrames: [UIImage] = []
@@ -25,31 +25,27 @@ struct ViewController: UIViewControllerRepresentable {
     context.coordinator.cleanup()
     context.coordinator.configureAudioSession()
     let controller = CustomUIViewController()
-  
+    
     controller.onDisappear = {
-        context.coordinator.cleanup()
+      context.coordinator.cleanup()
     }
     
-    if let thumbNailsEnabled = thumbnails?["enabled"] as? Bool {
-      thumbnailsUIImageFrames.removeAll()
-      if let thumbnailsUrl = thumbnails?["url"] as? String, thumbNailsEnabled {
-        context.coordinator.generatingThumbnailsFrames(thumbnailsUrl)
+    DispatchQueue.main.async {
+      if let thumbNailsEnabled = thumbnails?["enabled"] as? Bool {
+        thumbnailsUIImageFrames.removeAll()
+        if let thumbnailsUrl = thumbnails?["url"] as? String, thumbNailsEnabled {
+          context.coordinator.generatingThumbnailsFrames(thumbnailsUrl)
+        }
       }
     }
     
-//    initializerPlayer(context: context) { url, startTime in
-//      context.coordinator.cleanup()
-//      player = AVPlayer(url: url!)
-//      player?.seek(to: CMTime(seconds: Double(startTime), preferredTimescale: 1))
-      
-      context.coordinator.addObservers(to: player)
-      context.coordinator.addNotificationObservers()
-      
-      if autoPlay {
-        player?.play()
-      }
-//    }
-
+    context.coordinator.addObservers(to: player)
+    context.coordinator.addNotificationObservers()
+    
+    if autoPlay {
+      player?.play()
+    }
+    
     return controller
   }
   
@@ -78,21 +74,28 @@ struct ViewController: UIViewControllerRepresentable {
     let overlay = UIHostingController(rootView: OverlayManager(
       onTapBackward: context.coordinator.onBackwardTime,
       onTapForward: context.coordinator.onForwardTime,
-      isFinished: context.coordinator.scheduleHideControls,
+      scheduleHideControls: context.coordinator.scheduleHideControls,
       advanceValue: tapToSeek?["value"] as? Int ?? 15,
       suffixAdvanceValue: tapToSeek?["suffixLabel"] as? String ?? "seconds",
       onTapOverlay: context.coordinator.toggleOverlay
     ))
     
-    let fullScreenButton = FullScreenButton(frame: CGRect(x: 50, y: 200, width: 40, height: 40), isFullScreen: false, buttonColor: UIControls?.fullScreen.color ?? .white) {}
+    let fullScreenButton = FullScreenButton(frame: CGRect(x: 0, y: 0, width: 40, height: 40), isFullScreen: false, buttonColor: UIControls?.fullScreen.color ?? .white) {}
     
     let playPauseButton = PlayPauseButton(
       frame: .init(origin: .zero, size: CGSize(width: 30, height: 30)),
       action: {
         context.coordinator.togglePlayback()
       },
-      isPlaying: autoPlay,
       color: UIControls?.playback.color?.cgColor
+    )
+    
+    let replayButton = ReplayButton(
+      frame: .init(origin: .zero, size: CGSize(width: 60, height: 60)),
+      buttonColor: UIControls?.playback.color ?? .white,
+      action: {
+        context.coordinator.resetPlaybackStatus()
+      }
     )
     
     let menuButton = UIHostingController(
@@ -109,7 +112,13 @@ struct ViewController: UIViewControllerRepresentable {
         UIControlsProps: .constant(UIControls),
         cancelTimeoutWorkItem: context.coordinator.cancelTimeoutWorkItem,
         scheduleHideControls: context.coordinator.scheduleHideControls,
-        isFinishedPlaying: $isFinishedPlaying
+        canPlaying: {
+          DispatchQueue.main.async { [self] in
+            replayButton.isHidden = true
+            context.coordinator.scheduleHideControls()
+            player?.play()
+          }
+        }
       )
     )
     
@@ -132,6 +141,7 @@ struct ViewController: UIViewControllerRepresentable {
     overlay.view.addSubview(seekSlider.view)
     overlay.view.addSubview(playPauseButton)
     overlay.view.addSubview(loading.view)
+    overlay.view.addSubview(replayButton)
     
     
     playPauseButton.translatesAutoresizingMaskIntoConstraints = false
@@ -141,6 +151,15 @@ struct ViewController: UIViewControllerRepresentable {
       playPauseButton.centerYAnchor.constraint(equalTo: overlay.view.safeAreaLayoutGuide.centerYAnchor),
       playPauseButton.heightAnchor.constraint(equalToConstant: 60),
       playPauseButton.widthAnchor.constraint(equalToConstant: 60)
+    ])
+    
+    replayButton.translatesAutoresizingMaskIntoConstraints = false
+    replayButton.isHidden = true
+    NSLayoutConstraint.activate([
+      replayButton.centerXAnchor.constraint(equalTo: overlay.view.safeAreaLayoutGuide.centerXAnchor),
+      replayButton.centerYAnchor.constraint(equalTo: overlay.view.safeAreaLayoutGuide.centerYAnchor),
+      replayButton.heightAnchor.constraint(equalToConstant: 60),
+      replayButton.widthAnchor.constraint(equalToConstant: 60)
     ])
     
     loading.view.translatesAutoresizingMaskIntoConstraints = false
@@ -192,6 +211,7 @@ struct ViewController: UIViewControllerRepresentable {
     context.coordinator.autoEnterFullscreenOnLandscape = autoEnterFullscreenOnLandscape
     context.coordinator.thumbnailsUIImageFrames = thumbnailsUIImageFrames
     context.coordinator.loading = loading.view
+    context.coordinator.playPauseButton = playPauseButton
   }
   
   class Coordinator: NSObject {
@@ -202,6 +222,7 @@ struct ViewController: UIViewControllerRepresentable {
     var fullScreenController: UIViewController?
     var overlay: UIView!
     var fullScreenButton: FullScreenButton?
+    var playPauseButton: PlayPauseButton?
     var autoOrientationOnFullscreen: Bool = false
     var autoEnterFullscreenOnLandscape: Bool = false
     var controlsVisible: Bool = true
@@ -244,7 +265,6 @@ struct ViewController: UIViewControllerRepresentable {
       NotificationCenter.default.removeObserver(self, name: .AVPlayerUrlChanged, object: nil)
       NotificationCenter.default.removeObserver(self, name: .AVPlayerRateDidChange, object: nil)
       
-      // Liberar outras propriedades associadas
       player = nil
       parentController = nil
       playerView = nil
@@ -257,27 +277,10 @@ struct ViewController: UIViewControllerRepresentable {
     }
     
     func addNotificationObservers() {
-      NotificationCenter.default.addObserver(
-        self,
-        selector: #selector(Coordinator.orientationDidChange(_:)),
-        name: UIDevice.orientationDidChangeNotification,
-        object: nil
-      )
-      
-      NotificationCenter.default.addObserver(
-          self,
-          selector: #selector(handleAppDidEnterBackground),
-          name: UIApplication.didEnterBackgroundNotification,
-          object: nil
-      )
-
-      NotificationCenter.default.addObserver(
-          self,
-          selector: #selector(handleAppWillEnterForeground),
-          name: UIApplication.willEnterForegroundNotification,
-          object: nil
-      )
-      
+      NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying(_:)), name: .AVPlayerItemDidPlayToEndTime, object: player)
+      NotificationCenter.default.addObserver(self, selector: #selector(Coordinator.orientationDidChange(_:)), name: UIDevice.orientationDidChangeNotification, object: nil)
+      NotificationCenter.default.addObserver(self, selector: #selector(handleAppDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+      NotificationCenter.default.addObserver(self, selector: #selector(handleAppWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
       NotificationCenter.default.addObserver(forName: .AVPlayerUrlChanged, object: nil, queue: .main, using: onChangePlaybackQuality)
       NotificationCenter.default.addObserver(forName: .AVPlayerRateDidChange, object: nil, queue: .main, using: onChangePlaybackRate)
     }
@@ -472,55 +475,68 @@ struct ViewController: UIViewControllerRepresentable {
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
       let player = object as? AVPlayer
-      if keyPath == #keyPath(AVPlayerItem.status) {
-          if let statusNumber = change?[.newKey] as? NSNumber,
-             let status = AVPlayerItem.Status(rawValue: statusNumber.intValue) {
-            
-            switch status {
-            case .readyToPlay:
-              DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
-                self.loading.isHidden = true
-                NotificationCenter.default.post(name: .AVPlayerInitialLoading, object: false)
-              })
-            case .failed:
-              let nsError = NSError(
-                domain: urlOfCurrentPlayerItem(to: player)?.absoluteString ?? "Unknown",
-                code: -1,
-                userInfo: [
-                  NSLocalizedDescriptionKey: "An unknown error occurred while playing.",
-                  NSLocalizedFailureReasonErrorKey: "Failed to play the video.",
-                  NSLocalizedRecoverySuggestionErrorKey: "Please check the video source or try again later."
-                ]
-              )
-              NotificationCenter.default.post(name: .AVPlayerErrors, object: nsError)
-            case .unknown:
-              let nsError = NSError(
-                domain: urlOfCurrentPlayerItem(to: player)?.absoluteString ?? "Unknown",
-                code: -1,
-                userInfo: [
-                  NSLocalizedDescriptionKey: "Error occurred with the URL. Received an unknown status code.",
-                  NSLocalizedFailureReasonErrorKey: "The status of the player is unknown.",
-                  NSLocalizedRecoverySuggestionErrorKey: "Please check the URL and try again."
-                ]
-              )
-              NotificationCenter.default.post(name: .AVPlayerErrors, object: nsError)
-            @unknown default:
-              let nsError = NSError(
-                domain: "UnknownStatus",
-                code: -1,
-                userInfo: [
-                  NSLocalizedDescriptionKey: "An unknown player status occurred.",
-                  NSLocalizedFailureReasonErrorKey: "Unhandled AVPlayerItem status detected.",
-                  NSLocalizedRecoverySuggestionErrorKey: "Please update the app to handle this status."
-                ]
-              )
-              NotificationCenter.default.post(name: .AVPlayerErrors, object: nsError)
-            }
-            
+      if keyPath == #keyPath(AVPlayer.timeControlStatus) {
+        if let statusNumber = change?[.newKey] as? NSNumber, let status = AVPlayer.TimeControlStatus(rawValue: statusNumber.intValue) {
+          switch status {
+          case .playing:
+            NotificationCenter.default.post(name: .AVPlayerTimeControlStatus, object: true)
+          case .waitingToPlayAtSpecifiedRate:
+            NotificationCenter.default.post(name: .AVPlayerTimeControlStatus, object: false)
+          case .paused:
+            NotificationCenter.default.post(name: .AVPlayerTimeControlStatus, object: false)
+          default:
+            break
           }
         }
+      }
+      
+      if keyPath == #keyPath(AVPlayerItem.status) {
+        if let statusNumber = change?[.newKey] as? NSNumber,
+           let status = AVPlayerItem.Status(rawValue: statusNumber.intValue) {
+          switch status {
+          case .readyToPlay:
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: {
+              self.loading.isHidden = true
+              NotificationCenter.default.post(name: .AVPlayerInitialLoading, object: false)
+            })
+          case .failed:
+            let nsError = NSError(
+              domain: urlOfCurrentPlayerItem(to: player)?.absoluteString ?? "Unknown",
+              code: -1,
+              userInfo: [
+                NSLocalizedDescriptionKey: "An unknown error occurred while playing.",
+                NSLocalizedFailureReasonErrorKey: "Failed to play the video.",
+                NSLocalizedRecoverySuggestionErrorKey: "Please check the video source or try again later."
+              ]
+            )
+            NotificationCenter.default.post(name: .AVPlayerErrors, object: nsError)
+          case .unknown:
+            let nsError = NSError(
+              domain: urlOfCurrentPlayerItem(to: player)?.absoluteString ?? "Unknown",
+              code: -1,
+              userInfo: [
+                NSLocalizedDescriptionKey: "Error occurred with the URL. Received an unknown status code.",
+                NSLocalizedFailureReasonErrorKey: "The status of the player is unknown.",
+                NSLocalizedRecoverySuggestionErrorKey: "Please check the URL and try again."
+              ]
+            )
+            NotificationCenter.default.post(name: .AVPlayerErrors, object: nsError)
+          @unknown default:
+            let nsError = NSError(
+              domain: "UnknownStatus",
+              code: -1,
+              userInfo: [
+                NSLocalizedDescriptionKey: "An unknown player status occurred.",
+                NSLocalizedFailureReasonErrorKey: "Unhandled AVPlayerItem status detected.",
+                NSLocalizedRecoverySuggestionErrorKey: "Please update the app to handle this status."
+              ]
+            )
+            NotificationCenter.default.post(name: .AVPlayerErrors, object: nsError)
+          }
+          
+        }
+      }
     }
-    
     
     func addToSubviewAndBringToFront(view: UIView, superview: UIView) {
       superview.addSubview(view)
@@ -655,6 +671,19 @@ struct ViewController: UIViewControllerRepresentable {
       return ((player?.currentItem?.asset) as? AVURLAsset)?.url
     }
     
+    @objc func playerDidFinishPlaying(_ notification: Notification) {
+      player.pause()
+    }
+    
+    func resetPlaybackStatus() {
+      self.player?.seek(to: .zero, completionHandler: { completed in
+            if (completed) {
+              self.player?.play()
+              self.scheduleHideControls()
+              self.playPauseButton?.isHidden = false
+            }
+        })
+    }
   }
   
   func makeCoordinator() -> Coordinator {

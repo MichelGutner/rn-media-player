@@ -9,7 +9,7 @@
 @interface RCT_EXTERN_MODULE(RNVideoPlayer, RCTViewManager)
 
 RCT_EXPORT_VIEW_PROPERTY(source, NSDictionary);
-RCT_EXPORT_VIEW_PROPERTY(controlsProps, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(controlsStyles, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(tapToSeek, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(screenBehavior, NSDictionary)
 

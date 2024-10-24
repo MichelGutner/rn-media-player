@@ -44,7 +44,7 @@ function App(): JSX.Element {
           title: '',
           startTime: 94,
           thumbnails: {
-            enabled: false,
+            enabled: true,
             // url: qualitiesValues[0]?.value as string,
             url: url,
           },
@@ -91,54 +91,52 @@ function App(): JSX.Element {
           autoOrientationOnFullscreen: false,
         }}
         // lockControls={true}
-        controlsProps={
-          {
-            // loading: {
-            //   color: '#a90ee6',
-            // },
-            // playback: {
-            //   color: '#a90ee6',
-            // },
-            // seekSlider: {
-            //   maximumTrackColor: '#f2f2f2',
-            //   minimumTrackColor: '#890cba',
-            //   seekableTintColor: '#df3030',
-            //   thumbImageColor: '#a90ee6',
-            // thumbnailBorderColor: '#a90ee6',
-            // thumbnailTimeCodeColor: '#a90ee6',
-            // },
-            // timeCodes: {
-            //   currentTimeColor: '#f3e9f7',
-            //   durationColor: '#1a161c',
-            //   slashColor: '#a90ee6',
-            // },
-            // menus: {
-            //   color: '#a90ee6',
-            // },
-            // fullScreen: {
-            //   color: '#a90ee6',
-            // },
-            // download: {
-            //   color: '#696969',
-            //   progressBarColor: '#908c91',
-            //   progressBarFillColor: '#0df85f',
-            //   messageDelete: 'Delete',
-            //   messageDownload: 'Download',
-            //   labelDelete: 'Delete',
-            //   labelCancel: 'Cancel',
-            //   labelDownload: 'Download',
-            // },
-            // toast: {
-            //   // label: 'Video baixado com sucesso',
-            //   // backgroundColor: '#0df85f',
-            //   // labelColor: '#ffff',
-            // },
-            // header: {
-            //   leftButtonColor: 'rgba(255,255,255,1)',
-            //   titleColor: '#d71e1e',
-            // },
-          }
-        }
+        controlsStyles={{
+          loading: {
+            color: '#cab9d1',
+          },
+          // playback: {
+          //   color: '#a90ee6',
+          // },
+          // seekSlider: {
+          //   maximumTrackColor: '#f2f2f2',
+          //   minimumTrackColor: '#890cba',
+          //   seekableTintColor: '#df3030',
+          //   thumbImageColor: '#a90ee6',
+          // thumbnailBorderColor: '#a90ee6',
+          // thumbnailTimeCodeColor: '#a90ee6',
+          // },
+          // timeCodes: {
+          //   currentTimeColor: '#f3e9f7',
+          //   durationColor: '#1a161c',
+          //   slashColor: '#a90ee6',
+          // },
+          // menus: {
+          //   color: '#a90ee6',
+          // },
+          // fullScreen: {
+          //   color: '#a90ee6',
+          // },
+          // download: {
+          //   color: '#696969',
+          //   progressBarColor: '#908c91',
+          //   progressBarFillColor: '#0df85f',
+          //   messageDelete: 'Delete',
+          //   messageDownload: 'Download',
+          //   labelDelete: 'Delete',
+          //   labelCancel: 'Cancel',
+          //   labelDownload: 'Download',
+          // },
+          // toast: {
+          //   // label: 'Video baixado com sucesso',
+          //   // backgroundColor: '#0df85f',
+          //   // labelColor: '#ffff',
+          // },
+          // header: {
+          //   leftButtonColor: 'rgba(255,255,255,1)',
+          //   titleColor: '#d71e1e',
+          // },
+        }}
       />
       <TouchableOpacity
         onPress={() =>

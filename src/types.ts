@@ -99,7 +99,7 @@ export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
    * Set this parameter to change the quality of the video
    */
   changeQualityUrl?: string;
-  controlsProps?: TVideoPlayerControlConfig;
+  controlsStyles?: TVideoPlayerControlConfig;
   /**
    * iOS only
    */

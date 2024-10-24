@@ -19,12 +19,11 @@ class RNVideoPlayer: RCTViewManager {
 @available(iOS 14.0, *)
 class RNVideoPlayerView : UIView {
   private var session = AVAudioSession.sharedInstance()
-  private var uiView = UIView()
+  private var mainView = UIView()
   
   weak var player: AVPlayer? = nil
   private var isInitialized = false
-  private var isFullScreen = false
-  private var UIControlsProps: HashableUIControls? = .none
+  private var UIControlsProps: Styles? = .none
   private var autoEnterFullscreenOnLandscape = false
   private var autoOrientationOnFullscreen = false
   
@@ -47,7 +46,7 @@ class RNVideoPlayerView : UIView {
   @objc var thumbnailFramesSeconds: Float = 1.0
   @objc var screenBehavior: NSDictionary = [:]
   
-  @objc var controlsProps: NSDictionary? = [:]
+  @objc var controlsStyles: NSDictionary? = [:]
   @objc var tapToSeek: NSDictionary? = [:]
   
   @objc var source: NSDictionary? = [:] {
@@ -58,7 +57,7 @@ class RNVideoPlayerView : UIView {
   
   @objc var rate: Float = 0.0 {
     didSet {
-            NotificationCenter.default.post(name: .AVPlayerRateDidChange, object: rate)
+      NotificationCenter.default.post(name: .AVPlayerRateDidChange, object: rate)
     }
   }
   
@@ -81,8 +80,8 @@ class RNVideoPlayerView : UIView {
     NotificationCenter.default.addObserver(forName: .AVPlayerErrors, object: nil, queue: .main, using: { notification in
       let error = notification.object as? NSError
       self.onError?([
-        "domain": error?.domain,
-        "code": error?.code,
+        "domain": error?.domain ?? "",
+        "code": error?.code ??  0,
         "userInfo": [
           "description": error?.userInfo[NSLocalizedDescriptionKey],
           "failureReason": error?.userInfo[NSLocalizedFailureReasonErrorKey],
@@ -114,18 +113,18 @@ class RNVideoPlayerView : UIView {
     let startTime = source?["startTime"] as? Double ?? 0.0
     player?.seek(to: CMTime(seconds: startTime, preferredTimescale: 1))
     
-    if let controllersProps = controlsProps {
-      let playbackProps = PlaybackControlHashableProps(dictionary: controllersProps["playback"] as? NSDictionary)
-      let seekSliderProps = SeekSliderControlHashableProps(dictionary: controllersProps["seekSlider"] as? NSDictionary)
-      let timeCodesProps = TimeCodesHashableProps(dictionary: controllersProps["timeCodes"] as? NSDictionary)
-      let menusUiConfig = MenusUIConfig(dictionary: controllersProps["menus"] as? NSDictionary)
-      let fullScreenProps = FullScreenControlHashableProps(dictionary: controllersProps["fullScreen"] as? NSDictionary)
+    if let controllersProps = controlsStyles {
+      let playbackProps = PlaybackControlsStyle(dictionary: controllersProps["playback"] as? NSDictionary)
+      let seekSliderProps = SeekSliderStyle(dictionary: controllersProps["seekSlider"] as? NSDictionary)
+      let timeCodesProps = TimeCodesStyle(dictionary: controllersProps["timeCodes"] as? NSDictionary)
+      let menusUiConfig = MenusStyle(dictionary: controllersProps["menus"] as? NSDictionary)
+      let fullScreenProps = FullScreenButtonStyle(dictionary: controllersProps["fullScreen"] as? NSDictionary)
       let downloadProps = DownloadControlHashableProps(dictionary: controllersProps["download"] as? NSDictionary)
-      let toastProps = ToastHashableProps(dictionary: controllersProps["toast"] as? NSDictionary)
-      let headerProps = HeaderControlHashableProps(dictionary: controllersProps["header"] as? NSDictionary)
-      let loadingProps = LoadingHashableProps(dictionary: controllersProps["loading"] as? NSDictionary)
+      let toastProps = ToastStyle(dictionary: controllersProps["toast"] as? NSDictionary)
+      let headerProps = HeaderStyle(dictionary: controllersProps["header"] as? NSDictionary)
+      let loadingProps = LoadingStyle(dictionary: controllersProps["loading"] as? NSDictionary)
       
-      UIControlsProps = HashableUIControls(
+      UIControlsProps = Styles(
         playbackControl: playbackProps,
         seekSliderControl: seekSliderProps,
         timeCodesControl: timeCodesProps,
@@ -168,20 +167,20 @@ class RNVideoPlayerView : UIView {
       )
     )
     
-    uiView = viewController.view
-    uiView.clipsToBounds = true
-    addSubview(uiView)
+    mainView = viewController.view
+    mainView.clipsToBounds = true
+    addSubview(mainView)
     setNeedsLayout()
   }
   
   override func layoutSubviews() {
-    uiView.frame = bounds
+    mainView.frame = bounds
     super.layoutSubviews()
   }
   
   override func removeFromSuperview() {
     super.removeFromSuperview()
-    uiView.removeFromSuperview()
+    mainView.removeFromSuperview()
     releaseResources()
   }
   
@@ -197,20 +196,9 @@ class RNVideoPlayerView : UIView {
   }
 }
 
-
-protocol PlayerControlsProtocol {
-    func togglePlayback()
-}
-
 struct PlayerControls {
   var togglePlayback: (_ status: Bool) -> Void
   var optionSelected: (_ label: String, _ value: Any) -> Void
-}
-
-
-
-struct Controls {
-    var menuItemSelected: (_ label: String, _ value: Any) -> Void
 }
 
 @available(iOS 14.0, *)

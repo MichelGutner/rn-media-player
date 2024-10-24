@@ -12,7 +12,7 @@ import AVKit
 struct Thumbnails : View {
   @Binding var duration: Double
   var geometry: GeometryProxy
-  @Binding var UIControlsProps: HashableUIControls?
+  @Binding var UIControlsProps: Styles?
   
   @Binding var sliderProgress: CGFloat
   @Binding var isSeeking: Bool

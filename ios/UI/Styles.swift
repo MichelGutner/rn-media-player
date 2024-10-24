@@ -5,7 +5,7 @@
 //  Created by Michel Gutner on 13/03/24.
 //
 
-struct PlaybackControlHashableProps: Hashable {
+struct PlaybackControlsStyle: Hashable {
   var color: UIColor?
   
   init(color: UIColor) {
@@ -20,12 +20,12 @@ struct PlaybackControlHashableProps: Hashable {
     hasher.combine(color)
   }
   
-  static func == (lhs: PlaybackControlHashableProps, rhs: PlaybackControlHashableProps) -> Bool {
+  static func == (lhs: PlaybackControlsStyle, rhs: PlaybackControlsStyle) -> Bool {
     return lhs.color == rhs.color
   }
 }
 
-struct SeekSliderControlHashableProps : Hashable {
+struct SeekSliderStyle : Hashable {
   var maximumTrackColor: UIColor?
   var minimumTrackColor: UIColor?
   var seekableTintColor: UIColor?
@@ -60,7 +60,7 @@ struct SeekSliderControlHashableProps : Hashable {
     hasher.combine(thumbnailTimeCodeColor)
   }
   
-  static func == (lhs: SeekSliderControlHashableProps, rhs: SeekSliderControlHashableProps) -> Bool {
+  static func == (lhs: SeekSliderStyle, rhs: SeekSliderStyle) -> Bool {
     return lhs.maximumTrackColor == rhs.maximumTrackColor &&
     lhs.minimumTrackColor == rhs.minimumTrackColor &&
     lhs.seekableTintColor == rhs.seekableTintColor &&
@@ -70,7 +70,7 @@ struct SeekSliderControlHashableProps : Hashable {
   }
 }
 
-struct TimeCodesHashableProps : Hashable {
+struct TimeCodesStyle : Hashable {
   var currentTimeColor: UIColor?
   var durationColor: UIColor?
   var slashColor: UIColor?
@@ -93,12 +93,12 @@ struct TimeCodesHashableProps : Hashable {
     hasher.combine(slashColor)
   }
   
-  static func == (lhs: TimeCodesHashableProps, rhs: TimeCodesHashableProps) -> Bool {
+  static func == (lhs: TimeCodesStyle, rhs: TimeCodesStyle) -> Bool {
     return lhs.currentTimeColor == rhs.currentTimeColor && lhs.durationColor == rhs.durationColor && lhs.slashColor == rhs.slashColor
   }
 }
 
-struct MenusUIConfig: Hashable {
+struct MenusStyle: Hashable {
   var color: UIColor?
   
   init(color: UIColor) {
@@ -113,12 +113,12 @@ struct MenusUIConfig: Hashable {
     hasher.combine(color)
   }
   
-  static func == (lhs: MenusUIConfig, rhs: MenusUIConfig) -> Bool {
+  static func == (lhs: MenusStyle, rhs: MenusStyle) -> Bool {
     return lhs.color == rhs.color
   }
 }
 
-struct FullScreenControlHashableProps: Hashable {
+struct FullScreenButtonStyle: Hashable {
   var color: UIColor?
   
   init(color: UIColor) {
@@ -133,12 +133,12 @@ struct FullScreenControlHashableProps: Hashable {
     hasher.combine(color)
   }
   
-  static func == (lhs: FullScreenControlHashableProps, rhs: FullScreenControlHashableProps) -> Bool {
+  static func == (lhs: FullScreenButtonStyle, rhs: FullScreenButtonStyle) -> Bool {
     return lhs.color == rhs.color
   }
 }
 
-struct HeaderControlHashableProps: Hashable {
+struct HeaderStyle: Hashable {
   var leftButtonColor: UIColor?
   var titleColor: UIColor?
   
@@ -158,7 +158,7 @@ struct HeaderControlHashableProps: Hashable {
     hasher.combine(titleColor)
   }
 
-  static func == (lhs: HeaderControlHashableProps, rhs: HeaderControlHashableProps) -> Bool {
+  static func == (lhs: HeaderStyle, rhs: HeaderStyle) -> Bool {
     return lhs.leftButtonColor == rhs.leftButtonColor && lhs.titleColor == rhs.titleColor
   }
 }
@@ -218,7 +218,7 @@ struct DownloadControlHashableProps: Hashable {
   }
 }
 
-struct ToastHashableProps: Hashable {
+struct ToastStyle: Hashable {
   var label: String?
   var labelColor: UIColor?
   var backgroundColor: UIColor?
@@ -236,12 +236,12 @@ struct ToastHashableProps: Hashable {
   }
   
   
-  static func == (lhs: ToastHashableProps, rhs: ToastHashableProps) -> Bool {
+  static func == (lhs: ToastStyle, rhs: ToastStyle) -> Bool {
     return lhs.label == rhs.label && lhs.labelColor == rhs.labelColor && lhs.backgroundColor == rhs.backgroundColor
   }
 }
 
-struct LoadingHashableProps: Hashable {
+struct LoadingStyle: Hashable {
   var color: UIColor?
   
   init(color: UIColor) {
@@ -253,34 +253,34 @@ struct LoadingHashableProps: Hashable {
   }
   
   
-  static func == (lhs: LoadingHashableProps, rhs: LoadingHashableProps) -> Bool {
+  static func == (lhs: LoadingStyle, rhs: LoadingStyle) -> Bool {
     return lhs.color == rhs.color
   }
 }
 
 ///----- 
 
-struct HashableUIControls: Hashable {
-  var playback: PlaybackControlHashableProps
-  var seekSlider: SeekSliderControlHashableProps
-  var timeCodes: TimeCodesHashableProps
-  var menus: MenusUIConfig
-  var fullScreen: FullScreenControlHashableProps
+struct Styles: Hashable {
+  var playback: PlaybackControlsStyle
+  var seekSlider: SeekSliderStyle
+  var timeCodes: TimeCodesStyle
+  var menus: MenusStyle
+  var fullScreen: FullScreenButtonStyle
   var download: DownloadControlHashableProps
-  var toast: ToastHashableProps
-  var header: HeaderControlHashableProps
-  var loading: LoadingHashableProps
+  var toast: ToastStyle
+  var header: HeaderStyle
+  var loading: LoadingStyle
   
   init(
-    playbackControl: PlaybackControlHashableProps,
-    seekSliderControl: SeekSliderControlHashableProps,
-    timeCodesControl: TimeCodesHashableProps,
-    menusControl: MenusUIConfig,
-    fullScreenControl: FullScreenControlHashableProps,
+    playbackControl: PlaybackControlsStyle,
+    seekSliderControl: SeekSliderStyle,
+    timeCodesControl: TimeCodesStyle,
+    menusControl: MenusStyle,
+    fullScreenControl: FullScreenButtonStyle,
     downloadControl: DownloadControlHashableProps,
-    toastControl: ToastHashableProps,
-    headerControl: HeaderControlHashableProps,
-    loadingControl: LoadingHashableProps
+    toastControl: ToastStyle,
+    headerControl: HeaderStyle,
+    loadingControl: LoadingStyle
   ) {
     self.playback = playbackControl
     self.seekSlider = seekSliderControl
@@ -305,7 +305,7 @@ struct HashableUIControls: Hashable {
     hasher.combine(loading)
   }
   
-  static func == (lhs: HashableUIControls, rhs: HashableUIControls) -> Bool {
+  static func == (lhs: Styles, rhs: Styles) -> Bool {
     return lhs.playback == rhs.playback && lhs.seekSlider == rhs.seekSlider && lhs.timeCodes == rhs.timeCodes && lhs.menus == rhs.menus && lhs.fullScreen == rhs.fullScreen && lhs.download == rhs.download && lhs.toast == rhs.toast && lhs.header == rhs.header && lhs.loading == rhs.loading
   }
 }

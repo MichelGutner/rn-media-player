@@ -11,9 +11,10 @@ import SwiftUI
 @available(iOS 14.0, *)
 struct CustomSeekSlider : View {
   @State var player: AVPlayer? = nil
-  @Binding var UIControlsProps: HashableUIControls?
+  @Binding var UIControlsProps: Styles?
   var cancelTimeoutWorkItem: () -> Void
   var scheduleHideControls: () -> Void
+  var canPlaying: () -> Void
   @State private var interval = CMTime(value: 1, timescale: 2)
   
   @State private var sliderProgress: CGFloat = 0.0
@@ -29,9 +30,6 @@ struct CustomSeekSlider : View {
   @State private var seekerThumbImageSize: CGSize = .init(width: 12, height: 12)
   @State private var thumbnailsUIImageFrames: [UIImage] = []
   @State private var draggingImage: UIImage? = nil
-  
-  @Binding var isFinishedPlaying: Bool
-  
   @State private var isStarted: Bool = false
   
   @State private var duration: Double = 0.0
@@ -103,6 +101,10 @@ struct CustomSeekSlider : View {
                         
                         let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
                         
+                        if sliderProgress < 1 {
+                          canPlaying()
+                        }
+                        
                         NotificationCenter.default.post(name: .SeekingNotification, object: false)
                         player?.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
                           if (completed) {
@@ -144,33 +146,34 @@ struct CustomSeekSlider : View {
     guard let player = player else { return }
     guard let _ = player.currentItem else {return}
     
-      player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: .main) { [self] time in
-        let strongSelf = self
-        guard let currentItem = player.currentItem else {
-            return
-        }
-        
-        if time.seconds.isNaN || currentItem.duration.seconds.isNaN {
-            return
-        }
-        
-        guard let duration = player.currentItem?.duration.seconds else { return }
-          self.duration = duration
-        
-        let loadedTimeRanges = currentItem.loadedTimeRanges
-        if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
-            let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
-            let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
-            let totalBuffering = (bufferedStart + bufferedDuration) / duration
-            strongSelf.updateBufferProgress(totalBuffering)
-        }
-        
+    player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: .main) { [self] time in
+      let strongSelf = self
+      guard let currentItem = player.currentItem else {
+        return
+      }
+      
+      if time.seconds.isNaN || currentItem.duration.seconds.isNaN {
+        return
+      }
+      
+      guard let duration = player.currentItem?.duration.seconds else { return }
+      self.duration = duration
+      
+      let loadedTimeRanges = currentItem.loadedTimeRanges
+      if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
+        let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
+        let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
+        let totalBuffering = (bufferedStart + bufferedDuration) / duration
+        strongSelf.updateBufferProgress(totalBuffering)
+      }
+      
+      DispatchQueue.main.async {
         if !strongSelf.isSeeking, time.seconds <= currentItem.duration.seconds {
           strongSelf.sliderProgress = CGFloat(time.seconds / duration)
           strongSelf.lastDraggedProgresss = strongSelf.sliderProgress
-          strongSelf.isFinishedPlaying = false
         }
       }
+    }
   }
   
   private func updateBufferProgress(_ progress: CGFloat) {
