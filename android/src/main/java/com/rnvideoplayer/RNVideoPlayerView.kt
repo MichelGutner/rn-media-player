@@ -238,14 +238,17 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
     exoPlayer.prepare()
     this.player = exoPlayer
 
-    val thumbnailUrl = thumbnailProps?.getString("url") as String
-    val enabled = thumbnailProps.getBoolean("enabled")
+    if (thumbnailProps != null) {
+      val thumbnailUrl = thumbnailProps.getString("url") as String
+      val enabled = thumbnailProps.getBoolean("enabled")
 
-    if (enabled) {
-      if (thumbnailUrl.isNotEmpty()) {
-        viewControls.thumbnails.generatingThumbnailFrames(thumbnailUrl)
+      if (enabled) {
+        if (thumbnailUrl.isNotEmpty()) {
+          viewControls.thumbnails.generatingThumbnailFrames(thumbnailUrl)
+        }
       }
     }
+
   }
 
   fun changeVideoQuality(newQualityUrl: String) {
@@ -385,7 +388,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
     event.send(EventNames.videoPlayPauseStatus, this, Arguments.createMap().apply {
       putBoolean("isPlaying", exoPlayer.isPlaying)
     })
-    viewControls.updatePlayPauseIcon(player?.isPlaying ?: true)
+    viewControls.updatePlayPauseIcon(player?.isPlaying ?: false)
   }
 
   private fun timeoutControls() {
