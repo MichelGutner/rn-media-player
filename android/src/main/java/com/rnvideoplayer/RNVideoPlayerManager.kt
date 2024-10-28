@@ -21,7 +21,6 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   @OptIn(UnstableApi::class)
   override fun createViewInstance(reactContext: ThemedReactContext): RNVideoPlayerView {
     val rnVideoPlayerView = RNVideoPlayerView(reactContext)
-
     return rnVideoPlayerView
   }
 

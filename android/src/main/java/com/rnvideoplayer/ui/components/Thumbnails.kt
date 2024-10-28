@@ -103,6 +103,8 @@ class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
 
 
   override fun generatingThumbnailFrames(url: String) {
+    timestamp = 0
+    bitmaps.clear()
     thread {
       val retriever = MediaMetadataRetriever()
       retriever.setDataSource(url)

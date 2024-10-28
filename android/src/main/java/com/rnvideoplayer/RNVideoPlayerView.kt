@@ -231,12 +231,15 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
     val url = source?.getString("url") as String
     val startTime = source.getDouble("startTime")
     val thumbnailProps = source.getMap("thumbnails")
+    started = false
 
     val mediaItem = MediaItem.fromUri(Uri.parse(url))
     exoPlayer.setMediaItem(mediaItem, (startTime * 1000).toLong())
 
     exoPlayer.prepare()
     this.player = exoPlayer
+
+    viewControls.updatePlayPauseIcon(exoPlayer.isPlaying)
 
     if (thumbnailProps != null) {
       val thumbnailUrl = thumbnailProps.getString("url") as String
@@ -273,7 +276,11 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
   }
 
   fun autoPlay(autoPlay: Boolean?) {
-    exoPlayer.playWhenReady = autoPlay ?: true
+    exoPlayer.playWhenReady = autoPlay ?: false
+
+    if (autoPlay == true) {
+      timeoutControls()
+    }
   }
 
   fun changeResizeMode(ratio: Float) {
@@ -288,6 +295,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
   }
 
   private fun detachPlayerWindow() {
+    exoPlayer.clearMediaItems()
     val activity = context.currentActivity ?: return
 
     (aspectRatioFrameLayout.parent as? ViewGroup)?.removeView(aspectRatioFrameLayout)
