@@ -19,8 +19,6 @@ struct ViewController: UIViewControllerRepresentable {
   @State var isFinishedPlaying: Bool = false
   @State private var isStarted: Bool = false
   
-//  @State private var player: AVPlayer? = nil
-  
   func makeUIViewController(context: Context) -> some UIViewController {
     context.coordinator.cleanup()
     context.coordinator.configureAudioSession()

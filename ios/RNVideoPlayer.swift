@@ -18,10 +18,13 @@ class RNVideoPlayer: RCTViewManager {
 
 @available(iOS 14.0, *)
 class RNVideoPlayerView : UIView {
+  private var wrapper: UIViewController? = .none
+  weak var player: AVPlayer? = nil
+  private var playerLayer : AVPlayerLayer? = nil
+  
   private var session = AVAudioSession.sharedInstance()
   private var mainView = UIView()
-  
-  weak var player: AVPlayer? = nil
+
   private var isInitialized = false
   private var UIControlsProps: Styles? = .none
   private var autoEnterFullscreenOnLandscape = false
@@ -51,7 +54,7 @@ class RNVideoPlayerView : UIView {
   
   @objc var source: NSDictionary? = [:] {
     didSet {
-      setupPlayer()
+//      setupPlayer()
     }
   }
   
@@ -99,13 +102,38 @@ class RNVideoPlayerView : UIView {
   
   private func setupPlayer() {
     DispatchQueue.main.async { [self] in
-      releaseResources()
+      //      releaseResources()
       if let url = source?["url"] as? String, let videoURL = URL(string: url) {
+        backgroundColor = .black
         
         self.player = AVPlayer(url: videoURL)
-        self.initializePlayer()
+        self.player?.play()
+        
+        playerLayer = AVPlayerLayer(player: player)
+
+        if let playerLayer {
+          wrapper = RNVideoPlayerUIViewController(playerLayer)
+          if let wrapper = wrapper?.view {
+            playerLayer.frame = bounds
+            wrapper.layer.addSublayer(playerLayer)
+            addSubview(wrapper)
+          }
+        }
       }
+      
+      NotificationCenter.default.addObserver(self, selector: #selector(orientationDidChange(_:)), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
+  }
+  
+  @objc func orientationDidChange(_ notification: Notification) {
+    guard let device = notification.object as? UIDevice else { return }
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    
+//    playerLayer?.frame = UIScreen.main.bounds
+//    playerLayer?.position = CGPoint(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)
+    
+    CATransaction.commit()
   }
   
   private func initializePlayer() {
@@ -174,15 +202,19 @@ class RNVideoPlayerView : UIView {
   }
   
   override func layoutSubviews() {
-    mainView.frame = bounds
+    wrapper?.view.frame = bounds
+    if !isInitialized {
+      isInitialized.toggle()
+      setupPlayer()
+    }
     super.layoutSubviews()
   }
   
-  override func removeFromSuperview() {
-    super.removeFromSuperview()
-    mainView.removeFromSuperview()
-    releaseResources()
-  }
+//  override func removeFromSuperview() {
+////    super.removeFromSuperview()
+////    mainView.removeFromSuperview()
+////    releaseResources()
+//  }
   
   private func releaseResources() {
     player?.replaceCurrentItem(with: nil)

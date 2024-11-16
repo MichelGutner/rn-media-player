@@ -1,9 +1,9 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 import { Platform, UIManager, requireNativeComponent } from 'react-native';
-import type { TVideoPlayerProps } from './types';
+import type { TVideoPlayer } from './types';
 export { EResizeMode } from './types';
-export type { TVideoPlayerProps } from './types';
+export type { TVideoPlayer as TVideoPlayerProps } from './types';
 
 const LINKING_ERROR =
   "The package 'rn-media-player' doesn't seem to be linked. Make sure: \n\n" +
@@ -14,12 +14,12 @@ const ComponentName = 'RNVideoPlayer';
 
 const VideoPlayer =
   UIManager.getViewManagerConfig(ComponentName) != null
-    ? requireNativeComponent<TVideoPlayerProps>(ComponentName)
+    ? requireNativeComponent<TVideoPlayer>(ComponentName)
     : () => {
         throw new Error(LINKING_ERROR);
       };
 
-export const Video = (props: TVideoPlayerProps) => {
+export const Video = (props: TVideoPlayer) => {
   return (
     <VideoPlayer
       {...props}

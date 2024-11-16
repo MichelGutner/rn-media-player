@@ -70,7 +70,7 @@ type TOnVideoBufferCompleted = TGenericEventHandler<{
   completed: boolean;
 }>;
 
-export type TVideoPlayerProps = Omit<ViewProps, 'style'> & {
+export type TVideoPlayer = Omit<ViewProps, 'style'> & {
   source: {
     url: string;
     title?: string;
