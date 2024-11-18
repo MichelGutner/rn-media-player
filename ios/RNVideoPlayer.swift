@@ -20,7 +20,7 @@ class RNVideoPlayer: RCTViewManager {
 class RNVideoPlayerView : UIView {
   private var wrapper: UIViewController? = .none
   weak var player: AVPlayer? = nil
-  private var playerLayer : AVPlayerLayer? = nil
+//  private var playerLayer : AVPlayerLayer? = nil
   
   private var session = AVAudioSession.sharedInstance()
   private var mainView = UIView()
@@ -102,38 +102,21 @@ class RNVideoPlayerView : UIView {
   
   private func setupPlayer() {
     DispatchQueue.main.async { [self] in
-      //      releaseResources()
       if let url = source?["url"] as? String, let videoURL = URL(string: url) {
-        backgroundColor = .black
-        
         self.player = AVPlayer(url: videoURL)
         self.player?.play()
         
-        playerLayer = AVPlayerLayer(player: player)
+//        playerLayer = AVPlayerLayer(player: player)
 
-        if let playerLayer {
-          wrapper = RNVideoPlayerUIViewController(playerLayer)
+        if let player {
+          wrapper = VideoPlayerController(player: player)
           if let wrapper = wrapper?.view {
-            playerLayer.frame = bounds
-            wrapper.layer.addSublayer(playerLayer)
             addSubview(wrapper)
           }
         }
       }
       
-      NotificationCenter.default.addObserver(self, selector: #selector(orientationDidChange(_:)), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
-  }
-  
-  @objc func orientationDidChange(_ notification: Notification) {
-    guard let device = notification.object as? UIDevice else { return }
-    CATransaction.begin()
-    CATransaction.setDisableActions(true)
-    
-//    playerLayer?.frame = UIScreen.main.bounds
-//    playerLayer?.position = CGPoint(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)
-    
-    CATransaction.commit()
   }
   
   private func initializePlayer() {
