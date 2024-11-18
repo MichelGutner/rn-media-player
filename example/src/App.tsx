@@ -37,121 +37,126 @@ function App(): JSX.Element {
   const [playbackQuality, setPlaybackQuality] = useState('');
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <Video
-        source={{
-          url,
-          // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-          // url: qualitiesValues[2]?.value as string,
-          title: '',
-          startTime: 94,
-          thumbnails: {
-            enabled: true,
-            // url: qualitiesValues[0]?.value as string,
-            url: url,
-          },
-        }}
-        style={{ height: 375, width: '100%', alignSelf: 'center' }}
-        rate={rate}
-        autoPlay={true}
-        changeQualityUrl={playbackQuality}
-        tapToSeek={{
-          value: 8,
-          suffixLabel: 'segundos',
-        }}
-        menus={{
-          [SpeedsKey]: { data: speedsValues, initialItemSelected: 'Normal' },
-          [Qualities]: {
-            data: qualitiesValues,
-            initialItemSelected: qualitiesValues[0]?.name as string,
-          },
-        }}
-        onMenuItemSelected={({ nativeEvent }) => {
-          if (nativeEvent.name === SpeedsKey) {
-            setRate(nativeEvent.value);
-          }
-          if (nativeEvent.name === Qualities) {
-            setPlaybackQuality(nativeEvent.value);
-          }
-        }}
-        // onLoaded={({ nativeEvent }) => console.log(nativeEvent.duration)}
-        // onVideoProgress={(data) => {
-        //   console.log('video progress', data.nativeEvent);
-        // }}
-        // onPlayPause={(event) => console.log(event.nativeEvent.isPlaying)}
-        // onCompleted={({ nativeEvent: { completed } }) => console.log(completed)}
-        // onBufferCompleted={(e) =>
-        //   console.log(`BUFFER COMPLETED ${JSON.stringify(e.nativeEvent)}`)
-        // }
-        // onBuffer={(e) =>
-        //   console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)
-        // }
-        // onError={(e) => console.log('native Error', e.nativeEvent)}
-        // resizeMode={EResizeMode.Contain}
-        // screenBehavior={{
-        //   autoEnterFullscreenOnLandscape: false,
-        //   autoOrientationOnFullscreen: false,
-        // }}
-        // lockControls={true}
-        controlsStyles={{
-          loading: {
-            color: '#cab9d1',
-          },
-          // playback: {
-          //   color: '#a90ee6',
-          // },
-          // seekSlider: {
-          //   maximumTrackColor: '#f2f2f2',
-          //   minimumTrackColor: '#890cba',
-          //   seekableTintColor: '#df3030',
-          //   thumbImageColor: '#a90ee6',
-          // thumbnailBorderColor: '#a90ee6',
-          // thumbnailTimeCodeColor: '#a90ee6',
-          // },
-          // timeCodes: {
-          //   currentTimeColor: '#f3e9f7',
-          //   durationColor: '#1a161c',
-          //   slashColor: '#a90ee6',
-          // },
-          // menus: {
-          //   color: '#a90ee6',
-          // },
-          // fullScreen: {
-          //   color: '#a90ee6',
-          // },
-          // download: {
-          //   color: '#696969',
-          //   progressBarColor: '#908c91',
-          //   progressBarFillColor: '#0df85f',
-          //   messageDelete: 'Delete',
-          //   messageDownload: 'Download',
-          //   labelDelete: 'Delete',
-          //   labelCancel: 'Cancel',
-          //   labelDownload: 'Download',
-          // },
-          // toast: {
-          //   // label: 'Video baixado com sucesso',
-          //   // backgroundColor: '#0df85f',
-          //   // labelColor: '#ffff',
-          // },
-          // header: {
-          //   leftButtonColor: 'rgba(255,255,255,1)',
-          //   titleColor: '#d71e1e',
-          // },
-        }}
-      />
-      <TouchableOpacity
-        style={{ height: 50, backgroundColor: 'red' }}
-        onPress={
-          () => navigation.goBack()
-          // setUrl(
-          //   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
-          // )
+    // <SafeAreaView style={{ flex: 1 }}>
+    <Video
+      source={{
+        url,
+        // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+        // url: qualitiesValues[2]?.value as string,
+        title: '',
+        startTime: 94,
+        thumbnails: {
+          enabled: true,
+          // url: qualitiesValues[0]?.value as string,
+          url: url,
+        },
+      }}
+      style={{
+        height: 375,
+        width: '100%',
+        alignSelf: 'center',
+        backgroundColor: 'black',
+      }}
+      rate={rate}
+      autoPlay={true}
+      changeQualityUrl={playbackQuality}
+      tapToSeek={{
+        value: 8,
+        suffixLabel: 'segundos',
+      }}
+      menus={{
+        [SpeedsKey]: { data: speedsValues, initialItemSelected: 'Normal' },
+        [Qualities]: {
+          data: qualitiesValues,
+          initialItemSelected: qualitiesValues[0]?.name as string,
+        },
+      }}
+      onMenuItemSelected={({ nativeEvent }) => {
+        if (nativeEvent.name === SpeedsKey) {
+          setRate(nativeEvent.value);
         }
-      >
-        <Text style={{}}>Olá Mundo</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+        if (nativeEvent.name === Qualities) {
+          setPlaybackQuality(nativeEvent.value);
+        }
+      }}
+      // onLoaded={({ nativeEvent }) => console.log(nativeEvent.duration)}
+      // onVideoProgress={(data) => {
+      //   console.log('video progress', data.nativeEvent);
+      // }}
+      // onPlayPause={(event) => console.log(event.nativeEvent.isPlaying)}
+      // onCompleted={({ nativeEvent: { completed } }) => console.log(completed)}
+      // onBufferCompleted={(e) =>
+      //   console.log(`BUFFER COMPLETED ${JSON.stringify(e.nativeEvent)}`)
+      // }
+      // onBuffer={(e) =>
+      //   console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)
+      // }
+      // onError={(e) => console.log('native Error', e.nativeEvent)}
+      // resizeMode={EResizeMode.Contain}
+      // screenBehavior={{
+      //   autoEnterFullscreenOnLandscape: false,
+      //   autoOrientationOnFullscreen: false,
+      // }}
+      // lockControls={true}
+      controlsStyles={{
+        loading: {
+          color: '#cab9d1',
+        },
+        // playback: {
+        //   color: '#a90ee6',
+        // },
+        // seekSlider: {
+        //   maximumTrackColor: '#f2f2f2',
+        //   minimumTrackColor: '#890cba',
+        //   seekableTintColor: '#df3030',
+        //   thumbImageColor: '#a90ee6',
+        // thumbnailBorderColor: '#a90ee6',
+        // thumbnailTimeCodeColor: '#a90ee6',
+        // },
+        // timeCodes: {
+        //   currentTimeColor: '#f3e9f7',
+        //   durationColor: '#1a161c',
+        //   slashColor: '#a90ee6',
+        // },
+        // menus: {
+        //   color: '#a90ee6',
+        // },
+        // fullScreen: {
+        //   color: '#a90ee6',
+        // },
+        // download: {
+        //   color: '#696969',
+        //   progressBarColor: '#908c91',
+        //   progressBarFillColor: '#0df85f',
+        //   messageDelete: 'Delete',
+        //   messageDownload: 'Download',
+        //   labelDelete: 'Delete',
+        //   labelCancel: 'Cancel',
+        //   labelDownload: 'Download',
+        // },
+        // toast: {
+        //   // label: 'Video baixado com sucesso',
+        //   // backgroundColor: '#0df85f',
+        //   // labelColor: '#ffff',
+        // },
+        // header: {
+        //   leftButtonColor: 'rgba(255,255,255,1)',
+        //   titleColor: '#d71e1e',
+        // },
+      }}
+    />
+    //   <TouchableOpacity
+    //     style={{ height: 50, backgroundColor: 'red' }}
+    //     onPress={
+    //       () => navigation.goBack()
+    //       // setUrl(
+    //       //   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
+    //       // )
+    //     }
+    //   >
+    //     <Text style={{}}>Olá Mundo</Text>
+    //   </TouchableOpacity>
+    // </SafeAreaView>
   );
 }
 

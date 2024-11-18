@@ -29,7 +29,7 @@ class VideoPlayerController : UIViewController {
   private var fullscreenVC = UIViewController()
   private let rootVC = UIApplication.shared.windows.first?.rootViewController
   
-  private var overlayHostingController = UIViewController()
+  private var playbackControls: UIHostingController<OverlayManager>?
   private var isTransitioning: Bool = false
 
   
@@ -62,6 +62,9 @@ class VideoPlayerController : UIViewController {
   override func viewDidDisappear(_ animated: Bool) {
     playerLayer.removeFromSuperlayer()
     playerLayer.player?.replaceCurrentItem(with: nil)
+    rootVC?.removeFromParent()
+    fullscreenVC.removeFromParent()
+    removeFromParent()
   }
   
   @objc private func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
@@ -85,7 +88,7 @@ class VideoPlayerController : UIViewController {
   }
   
   private func addOverlayIfNeeded(to controller: UIViewController) {
-    let doubleTapToSeek = UIHostingController(
+    playbackControls = UIHostingController(
       rootView:
         OverlayManager(
           player: playerLayer.player,
@@ -101,22 +104,20 @@ class VideoPlayerController : UIViewController {
             self.toggleFullScreen()
           }
         ))
-    doubleTapToSeek.removeFromParent()
-    doubleTapToSeek.view.removeFromSuperview()
-    controller.view.subviews.forEach {
-      $0.removeFromSuperview()
+    
+    if let playbackControls {
+      controller.view.addSubview(playbackControls.view)
+      
+      playbackControls.view.backgroundColor = .clear
+      
+      playbackControls.view.translatesAutoresizingMaskIntoConstraints = false
+      NSLayoutConstraint.activate([
+        playbackControls.view.leadingAnchor.constraint(equalTo: controller.view.leadingAnchor),
+        playbackControls.view.trailingAnchor.constraint(equalTo: controller.view.trailingAnchor),
+        playbackControls.view.topAnchor.constraint(equalTo: controller.view.topAnchor),
+        playbackControls.view.bottomAnchor.constraint(equalTo: controller.view.bottomAnchor)
+      ])
     }
-    controller.view.addSubview(doubleTapToSeek.view)
-    
-    doubleTapToSeek.view.backgroundColor = .clear
-    
-    doubleTapToSeek.view.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      doubleTapToSeek.view.leadingAnchor.constraint(equalTo: controller.view.leadingAnchor),
-      doubleTapToSeek.view.trailingAnchor.constraint(equalTo: controller.view.trailingAnchor),
-      doubleTapToSeek.view.topAnchor.constraint(equalTo: controller.view.topAnchor),
-      doubleTapToSeek.view.bottomAnchor.constraint(equalTo: controller.view.bottomAnchor)
-    ])
   }
   
   @objc func toggleFullScreen() {
@@ -191,22 +192,16 @@ class VideoPlayerController : UIViewController {
   private func dismissFullscreenController() {
       isTransitioning = true
 
-      self.playerLayer.frame = self.view.bounds
       self.playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
 
       UIView.animate(withDuration: 0.5, animations: {
           self.fullscreenVC.view.backgroundColor = .clear
-          self.playerLayer.frame = self.view.bounds
       })
 
       self.fullscreenVC.dismiss(animated: false) {
-          self.playerLayer.removeFromSuperlayer()
-
-          self.playerLayer.frame = self.view.bounds
           self.playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
-
+        self.addPlayerLayerFrameWithSafeArea(self.view.bounds)
           self.view.layer.addSublayer(self.playerLayer)
-
           self.addOverlayIfNeeded(to: self)
           self.isTransitioning = false
       }
