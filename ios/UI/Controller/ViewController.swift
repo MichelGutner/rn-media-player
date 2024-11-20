@@ -70,12 +70,12 @@ struct ViewController: UIViewControllerRepresentable {
     
     
     let overlay = UIHostingController(rootView: OverlayManager(
-      onTapBackward: context.coordinator.onBackwardTime,
-      onTapForward: context.coordinator.onForwardTime,
+//      onTapBackward: context.coordinator.onBackwardTime,
+//      onTapForward: context.coordinator.onForwardTime,
       scheduleHideControls: context.coordinator.scheduleHideControls,
       advanceValue: tapToSeek?["value"] as? Int ?? 15,
       suffixAdvanceValue: tapToSeek?["suffixLabel"] as? String ?? "seconds",
-      onTapOverlay: context.coordinator.toggleOverlay
+      onTapOverlay: context.coordinator.toggleOverlay, menus: .constant([:])
     ))
     
     let fullScreenButton = FullScreenButton(frame: CGRect(x: 0, y: 0, width: 40, height: 40), isFullScreen: false, buttonColor: UIControls?.fullScreen.color ?? .white) {}
@@ -107,6 +107,7 @@ struct ViewController: UIViewControllerRepresentable {
     let seekSlider = UIHostingController(
       rootView: CustomSeekSlider(
         player: player,
+        observable: ObservableObjectManager(),
         UIControlsProps: .constant(UIControls),
         cancelTimeoutWorkItem: context.coordinator.cancelTimeoutWorkItem,
         scheduleHideControls: context.coordinator.scheduleHideControls,

@@ -40,8 +40,8 @@ function App(): JSX.Element {
     // <SafeAreaView style={{ flex: 1 }}>
     <Video
       source={{
-        url,
-        // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+        // url,
+        url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
         // url: qualitiesValues[2]?.value as string,
         title: '',
         startTime: 94,

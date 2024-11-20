@@ -20,6 +20,8 @@ class RNVideoPlayer: RCTViewManager {
 class RNVideoPlayerView : UIView {
   private var wrapper: UIViewController? = .none
   weak var player: AVPlayer? = nil
+  
+  @State private var thumbnailsUIImageFrames: [UIImage] = []
 //  private var playerLayer : AVPlayerLayer? = nil
   
   private var session = AVAudioSession.sharedInstance()
@@ -109,13 +111,15 @@ class RNVideoPlayerView : UIView {
 //        playerLayer = AVPlayerLayer(player: player)
 
         if let player {
-          wrapper = VideoPlayerController(player: player)
+          wrapper = VideoPlayerController(player: player, menus: menus)
           if let wrapper = wrapper?.view {
             addSubview(wrapper)
           }
         }
       }
-      
+      if let thumbnails = source?["thumbnails"] as? NSDictionary {
+        NotificationCenter.default.post(name: .AVPlayerThumbnails, object: thumbnails)
+      }
     }
   }
   
@@ -186,10 +190,12 @@ class RNVideoPlayerView : UIView {
   
   override func layoutSubviews() {
     wrapper?.view.frame = bounds
+
     if !isInitialized {
       isInitialized.toggle()
       setupPlayer()
     }
+    
     super.layoutSubviews()
   }
   
@@ -208,6 +214,41 @@ class RNVideoPlayerView : UIView {
     NotificationCenter.default.removeObserver(self, name: .AVPlayerRateDidChange, object: nil)
     NotificationCenter.default.removeObserver(self, name: .AVPlayerUrlChanged, object: nil)
     setNeedsLayout()
+  }
+  
+  private func generatingThumbnailsFrames(_ url: String) {
+    Task.detached { [self] in
+      let asset = AVAsset(url: URL(string: url)!)
+      
+      do {
+        let totalDuration = asset.duration.seconds
+        var framesTimes: [NSValue] = []
+        
+        // Generate thumbnails frames
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = .init(width: 250, height: 150)
+        
+        //  TODO:
+        for progress in stride(from: 0, to: totalDuration / Double(1 * 100), by: 0.01) {
+          let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
+          framesTimes.append(time as NSValue)
+        }
+        let localFrames = framesTimes
+        
+        generator.generateCGImagesAsynchronously(forTimes: localFrames) { requestedTime, image, _, _, error in
+          guard let cgImage = image, error == nil else {
+            return
+          }
+          
+          DispatchQueue.main.async { [self] in
+            let uiImage = UIImage(cgImage: cgImage)
+            thumbnailsUIImageFrames.append(uiImage)
+            NotificationCenter.default.post(name: .AVPlayerThumbnails, object: thumbnailsUIImageFrames)
+          }
+        }
+      }
+    }
   }
 }
 
