@@ -17,7 +17,6 @@ struct OverlayManager : View {
   var scheduleHideControls: () -> Void
   var advanceValue: Int
   var suffixAdvanceValue: String
-  var onTapOverlay: () -> Void
   var onTapFullscreen: (() -> Void)?
   @Binding var menus: NSDictionary?
   
@@ -31,36 +30,28 @@ struct OverlayManager : View {
   @State private var cancellables = Set<AnyCancellable>()
   
   @State private var selectedOptionItem: [String: String] = [:]
-  
-  ////
-  ///
-  ///
-  ///
 
   var body: some View {
     ZStack {
+      LinearGradient(gradient: Gradient(colors: [Color.black.opacity(0.6), Color.clear, Color.black.opacity(0.6)]), startPoint: .top, endPoint: .bottom)
+             .frame(maxWidth: .infinity, maxHeight: .infinity)
+             .ignoresSafeArea()
       HStack(spacing: StandardSizes.large55) {
         DoubleTapSeek(isTapped: $isTappedLeft, onTap:  onBackwardTime, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: scheduleHideControls)
         DoubleTapSeek(isTapped: $isTapped, isForward: true, onTap:  onForwardTime, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: scheduleHideControls)
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(Color.black.opacity(0.2))
-    .ignoresSafeArea(.all)
     .opacity(showOverlay ? 1 : 0.0001)
     .animation(.easeInOut(duration: 0.35), value: showOverlay)
     .overlay(
       ZStack(alignment: .center) {
-        if let player = player {
+        if let player {
           if isBuffering {
             CustomLoading(color: UIColor.white)
           } else {
             Button(action: {
-              if player.timeControlStatus == .paused {
-                player.play()
-              } else {
-                player.pause()
-              }
+              togglePlayback()
             }) {
               Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                 .resizable()
@@ -94,7 +85,7 @@ struct OverlayManager : View {
                                   Button(action: {
                                       if let value = item["value"] {
                                           selectedOptionItem[option.key] = name
-                                          // controls.optionSelected(option.key, value)
+                                        NotificationCenter.default.post(name: .MenuSelectedOption, object: (option.key, value))
                                       }
                                   }) {
                                     if #available(iOS 14.5, *) {
@@ -122,6 +113,7 @@ struct OverlayManager : View {
                       .padding(8)
                       .background(Color.black.opacity(0.4))
                       .foregroundColor(.white)
+                      .font(.system(size: 20, weight: .bold))
                       .clipShape(Circle())
               }
               
@@ -155,13 +147,24 @@ struct OverlayManager : View {
     .onReceive(NotificationCenter.default.publisher(for: AVPlayerItem.didPlayToEndTimeNotification), perform: { output in
       print("Player chegou ao fim do vídeo.")
     })
+    .onReceive(NotificationCenter.default.publisher(for: .AVPlayerUrlChanged), perform: { output in
+      guard let newUrl = output.object as? String else { return }
+      replacePlayerWithNewUrl(url: newUrl)
+    })
+    .onReceive(NotificationCenter.default.publisher(for: .AVPlayerRateDidChange), perform: { output in
+      guard let newRate = output.object as? Float else { return }
+      DispatchQueue.main.async(execute: { [self] in
+        if (self.player?.timeControlStatus == .playing) {
+          self.player?.rate = newRate
+        }
+      })
+    })
     .onAppear {
       scheduleHideControls()
       setupPlayerObservation()
     }
     .onDisappear {
       menus = [:]
-      print("testingx") // must be checked if can be not removed when transition to full screen
     }
   }
   
@@ -174,26 +177,28 @@ extension OverlayManager {
   private func setupPlayerObservation() {
     guard let player else { return }
     
-    // Observe the timeControlStatus using Combine
     player.publisher(for: \.timeControlStatus)
-      .sink { [self] status in
-        switch status {
-        case .playing:
-          self.isPlaying = true
-          self.isBuffering = false
-        case .paused:
-          self.isPlaying = false
-          self.isBuffering = false
-        case .waitingToPlayAtSpecifiedRate:
-          self.isBuffering = true
-        @unknown default:
-          break
+        .sink { [self] status in
+            self.isPlaying = (status == .playing)
+            self.isBuffering = (status == .waitingToPlayAtSpecifiedRate)
         }
-      }
-      .store(in: &self.cancellables)
+        .store(in: &cancellables)
   }
   
-  func onBackwardTime(_ timeToChange: Int) {
+  private func togglePlayback() {
+    DispatchQueue.main.async { [self] in
+      guard let player else { return }
+      if player.timeControlStatus == .playing {
+        player.pause()
+      } else {
+        player.play()
+        player.rate = observable.newRate
+//        self.scheduleHideControls()
+      }
+    }
+  }
+  
+  private func onBackwardTime(_ timeToChange: Int) {
     guard let player else { return }
     guard let currentItem = player.currentItem else { return }
     
@@ -205,7 +210,7 @@ extension OverlayManager {
                 completionHandler: { _ in })
   }
   
-  func onForwardTime(_ timeToChange: Int) {
+  private func onForwardTime(_ timeToChange: Int) {
     guard let player else { return }
     guard let currentItem = player.currentItem else { return }
     let currentTime = CMTimeGetSeconds(player.currentTime())
@@ -218,14 +223,37 @@ extension OverlayManager {
   }
   
   private var menuOptions: [(key: String, values: NSDictionary)] {
-      guard let menus = menus else { return [] }
-      return menus.compactMap { (key, value) in
-          guard let key = key as? String, let values = value as? NSDictionary else { return nil }
-          return (key: key, values: values)
-      }
+    guard let menus = menus else { return [] }
+    return menus.compactMap { (key, value) in
+      guard let key = key as? String, let values = value as? NSDictionary else { return nil }
+      return (key: key, values: values)
+    }
   }
-
+  
+  private func replacePlayerWithNewUrl(url: String) {
+    guard let player = player else { return }
+    let newUrl = URL(string: url)
+    
+    if (newUrl == observable.urlOfCurrentPlayerItem(to: player)) {
+      return
+    }
+    
+    let currentTime = player.currentItem?.currentTime() ?? CMTime.zero
+    let asset = AVURLAsset(url: newUrl!)
+    let newPlayerItem = AVPlayerItem(asset: asset)
+    
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+      player.replaceCurrentItem(with: newPlayerItem)
+      player.seek(to: currentTime)
+    
+      var playerItemStatusObservation: NSKeyValueObservation?
+      playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { (item, _) in
+        NotificationCenter.default.post(name: .AVPlayerErrors, object: extractPlayerItemError(item))
+        guard item.status == .readyToPlay else {
+          return
+        }
+        playerItemStatusObservation?.invalidate()
+      }
+    })
+  }
 }
-
-@available(iOS 14.0, *)
-extension OverlayManager {}

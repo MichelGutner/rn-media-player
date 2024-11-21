@@ -18,8 +18,8 @@ class RNVideoPlayer: RCTViewManager {
 
 @available(iOS 14.0, *)
 class RNVideoPlayerView : UIView {
-  private var wrapper: UIViewController? = .none
-  weak var player: AVPlayer? = nil
+  private var wrapper: VideoPlayerController? = .none
+  private var player: AVPlayer? = nil
   
   @State private var thumbnailsUIImageFrames: [UIImage] = []
 //  private var playerLayer : AVPlayerLayer? = nil
@@ -56,7 +56,7 @@ class RNVideoPlayerView : UIView {
   
   @objc var source: NSDictionary? = [:] {
     didSet {
-//      setupPlayer()
+      setupPlayer()
     }
   }
   
@@ -82,6 +82,13 @@ class RNVideoPlayerView : UIView {
   
   override init(frame: CGRect) {
     super.init(frame: frame)
+    NotificationCenter.default.addObserver(forName: .MenuSelectedOption, object: nil, queue: .main, using: { notification in
+      let tupleValues = notification.object as? (String, Any)
+      let name = tupleValues?.0
+      let value = tupleValues?.1
+      self.onMenuItemSelected?(["name": name ?? "", "value": value as Any])
+    })
+    
     NotificationCenter.default.addObserver(forName: .AVPlayerErrors, object: nil, queue: .main, using: { notification in
       let error = notification.object as? NSError
       self.onError?([
@@ -103,6 +110,7 @@ class RNVideoPlayerView : UIView {
   @objc var resizeMode: NSString = "contain"
   
   private func setupPlayer() {
+    wrapper?.releaseResources()
     DispatchQueue.main.async { [self] in
       if let url = source?["url"] as? String, let videoURL = URL(string: url) {
         self.player = AVPlayer(url: videoURL)
@@ -190,12 +198,6 @@ class RNVideoPlayerView : UIView {
   
   override func layoutSubviews() {
     wrapper?.view.frame = bounds
-
-    if !isInitialized {
-      isInitialized.toggle()
-      setupPlayer()
-    }
-    
     super.layoutSubviews()
   }
   
@@ -214,41 +216,6 @@ class RNVideoPlayerView : UIView {
     NotificationCenter.default.removeObserver(self, name: .AVPlayerRateDidChange, object: nil)
     NotificationCenter.default.removeObserver(self, name: .AVPlayerUrlChanged, object: nil)
     setNeedsLayout()
-  }
-  
-  private func generatingThumbnailsFrames(_ url: String) {
-    Task.detached { [self] in
-      let asset = AVAsset(url: URL(string: url)!)
-      
-      do {
-        let totalDuration = asset.duration.seconds
-        var framesTimes: [NSValue] = []
-        
-        // Generate thumbnails frames
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        generator.maximumSize = .init(width: 250, height: 150)
-        
-        //  TODO:
-        for progress in stride(from: 0, to: totalDuration / Double(1 * 100), by: 0.01) {
-          let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
-          framesTimes.append(time as NSValue)
-        }
-        let localFrames = framesTimes
-        
-        generator.generateCGImagesAsynchronously(forTimes: localFrames) { requestedTime, image, _, _, error in
-          guard let cgImage = image, error == nil else {
-            return
-          }
-          
-          DispatchQueue.main.async { [self] in
-            let uiImage = UIImage(cgImage: cgImage)
-            thumbnailsUIImageFrames.append(uiImage)
-            NotificationCenter.default.post(name: .AVPlayerThumbnails, object: thumbnailsUIImageFrames)
-          }
-        }
-      }
-    }
   }
 }
 

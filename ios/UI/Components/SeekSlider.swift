@@ -140,10 +140,11 @@ struct CustomSeekSlider : View {
               enabled,
               let url = thumbnails["url"] as? String
       else { return }
+      print("testings", url)
       generatingThumbnailsFrames(url)
     })
     .onAppear {
-      setupTimeCodesObserver()
+      setupPeriodicTimeObserver()
     }
     .onDisappear {
       thumbnailsUIImageFrames.removeAll()
@@ -154,7 +155,7 @@ struct CustomSeekSlider : View {
     }
   }
   
-  private func setupTimeCodesObserver() {
+  private func setupPeriodicTimeObserver() {
     guard let player = player else { return }
     guard let _ = player.currentItem else {return}
     
@@ -221,7 +222,6 @@ struct CustomSeekSlider : View {
           DispatchQueue.main.async {
             let uiImage = UIImage(cgImage: cgImage)
             thumbnailsUIImageFrames.append(uiImage)
-//            NotificationCenter.default.post(name: .AVPlayerThumbnails, object: thumbnailsUIImageFrames)
           }
         }
       }

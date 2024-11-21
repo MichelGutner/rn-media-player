@@ -15,12 +15,19 @@ import Combine
 class ObservableObjectManager: ObservableObject {
   @Published var isFullscreen: Bool = false
   @Published var thumbnailsDictionary: NSDictionary? = nil
+  @Published var newRate: Float = 1.0
   
   init() {
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleThumbnailsNotification(_:)),
       name: .AVPlayerThumbnails,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handlePlaybackRate(_:)),
+      name: .AVPlayerRateDidChange,
       object: nil
     )
   }
@@ -33,9 +40,18 @@ class ObservableObjectManager: ObservableObject {
     }
   }
   
+  @objc private func handlePlaybackRate(_ notification: Notification) {
+    self.newRate = notification.object as! Float
+  }
+  
+  func urlOfCurrentPlayerItem(to player : AVPlayer?) -> URL? {
+    return ((player?.currentItem?.asset) as? AVURLAsset)?.url
+  }
+  
   public func clear() {
     thumbnailsDictionary = [:]
     NotificationCenter.default.removeObserver(self, name: .AVPlayerThumbnails, object: nil)
+    NotificationCenter.default.removeObserver(self, name: .AVPlayerUrlChanged, object: nil)
   }
 }
 
@@ -66,9 +82,7 @@ class VideoPlayerController : UIViewController {
     
     super.init(nibName: nil, bundle: nil)
     self.playerLayer.frame = view.bounds
-    view.layer.addSublayer(playerLayer)
-    addPlaybackControlsToController(to: self)
-    self.addChild(self.playbackControls!)
+    restoreToMainController(to: self)
   }
   
   required init?(coder: NSCoder) {
@@ -80,7 +94,7 @@ class VideoPlayerController : UIViewController {
     
     let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
     view.addGestureRecognizer(pinchGesture)
-    
+    view.layer.addSublayer(playerLayer)
     playbackControls = UIHostingController(
       rootView:
         OverlayManager(
@@ -88,9 +102,6 @@ class VideoPlayerController : UIViewController {
           scheduleHideControls: {},
           advanceValue: 10,
           suffixAdvanceValue: "seconds",
-          onTapOverlay: {
-            //            self.playbackVC.toggleController()
-          },
           onTapFullscreen: {
             self.toggleFullScreen()
           },
@@ -104,8 +115,16 @@ class VideoPlayerController : UIViewController {
   }
   
   override func viewDidDisappear(_ animated: Bool) {
+    releaseResources()
+  }
+  
+  public func releaseResources() {
     playerLayer.removeFromSuperlayer()
     playerLayer.player?.replaceCurrentItem(with: nil)
+    playbackControls?.view.removeFromSuperview()
+    playbackControls?.removeFromParent()
+    self.view.removeFromSuperview()
+    self.removeFromParent()
     observable.clear()
   }
   
@@ -129,18 +148,15 @@ class VideoPlayerController : UIViewController {
     catch {}
   }
   
-  private func addPlaybackControlsToController(to controller: UIViewController) {
+  private func restoreToMainController(to controller: UIViewController) {
       if let playbackControls {
           if playbackControls.parent != controller {
-              playbackControls.willMove(toParent: nil)
-              playbackControls.view.removeFromSuperview()
               playbackControls.removeFromParent()
-              
+
               playbackControls.view.backgroundColor = .clear
-              controller.addChild(playbackControls)
               controller.view.addSubview(playbackControls.view)
-              playbackControls.didMove(toParent: controller)
-              
+              playbackControls.didMove(toParent: self)
+
               playbackControls.view.translatesAutoresizingMaskIntoConstraints = false
               NSLayoutConstraint.activate([
                   playbackControls.view.leadingAnchor.constraint(equalTo: controller.view.leadingAnchor),
@@ -151,6 +167,7 @@ class VideoPlayerController : UIViewController {
           }
       }
   }
+
 
   @objc func toggleFullScreen() {
     if (!observable.isFullscreen) {
@@ -210,9 +227,28 @@ class VideoPlayerController : UIViewController {
     rootVC?.present(fullscreenVC, animated: false) {
       UIView.animate(withDuration: 0.5, animations: {
         self.playerLayer.position = CGPoint(x: UIScreen.main.bounds.midX, y: self.fullscreenVC.view.bounds.midY)
-      }, completion: { _ in
-        self.isTransitioning = false
-        self.addPlaybackControlsToController(to: self.fullscreenVC)
+      }, completion: { [self] _ in
+        isTransitioning = false
+
+        if let playbackControls {
+          playbackControls.willMove(toParent: nil)
+          playbackControls.view.removeFromSuperview()
+          playbackControls.removeFromParent()
+          
+          playbackControls.view.backgroundColor = .clear
+          fullscreenVC.addChild(playbackControls)
+          fullscreenVC.view.addSubview(playbackControls.view)
+          playbackControls.didMove(toParent: fullscreenVC)
+          
+          playbackControls.view.translatesAutoresizingMaskIntoConstraints = false
+          NSLayoutConstraint.activate([
+              playbackControls.view.leadingAnchor.constraint(equalTo: fullscreenVC.view.leadingAnchor),
+              playbackControls.view.trailingAnchor.constraint(equalTo: fullscreenVC.view.trailingAnchor),
+              playbackControls.view.topAnchor.constraint(equalTo: fullscreenVC.view.topAnchor),
+              playbackControls.view.bottomAnchor.constraint(equalTo: fullscreenVC.view.bottomAnchor)
+          ])
+          
+        }
       })
     }
   }
@@ -225,24 +261,13 @@ class VideoPlayerController : UIViewController {
       UIView.animate(withDuration: 0.5, animations: {
           self.fullscreenVC.view.backgroundColor = .clear
       })
-
-      self.fullscreenVC.dismiss(animated: false) {
-          self.playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
-        self.addPlayerLayerFrameWithSafeArea(self.view.bounds)
-          self.view.layer.addSublayer(self.playerLayer)
-          self.addPlaybackControlsToController(to: self)
-          self.isTransitioning = false
-      }
-  }
-}
-
-struct Identifier {
-  struct LayerNames {
-    static let player = "PlayerLayer"
-    static let overlay = "OverlayLayer"
-  }
-
-  struct ViewNames {
-    static let controlsView = "ControlsView"
+        
+    self.fullscreenVC.dismiss(animated: false) {
+      self.playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
+      self.addPlayerLayerFrameWithSafeArea(self.view.bounds)
+      self.view.layer.addSublayer(self.playerLayer)
+      self.restoreToMainController(to: self)
+      self.isTransitioning = false
+    }
   }
 }
