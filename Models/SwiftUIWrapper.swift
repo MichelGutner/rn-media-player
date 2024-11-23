@@ -16,6 +16,8 @@ class ObservableObjectManager: ObservableObject {
   @Published var isFullscreen: Bool = false
   @Published var thumbnailsDictionary: NSDictionary? = nil
   @Published var newRate: Float = 1.0
+  @Published var isPlaying: Bool = true
+  @Published var isBuffering: Bool = true
   
   init() {
     NotificationCenter.default.addObserver(
@@ -98,6 +100,7 @@ class VideoPlayerController : UIViewController {
     playbackControls = UIHostingController(
       rootView:
         OverlayManager(
+          observable: observable,
           player: playerLayer.player,
           scheduleHideControls: {},
           advanceValue: 10,
@@ -167,7 +170,6 @@ class VideoPlayerController : UIViewController {
           }
       }
   }
-
 
   @objc func toggleFullScreen() {
     if (!observable.isFullscreen) {

@@ -24,6 +24,7 @@ struct CustomSeekSlider : View {
   @State private var lastDraggedProgresss: CGFloat = 0.0
   @GestureState private var isDraggedSeekSlider: Bool = false
   @State private var isSeeking: Bool = false
+  @State private var isSeekingWithTap: Bool = false
   
   @State private var isSeekingByDoubleTap: Bool = false
   
@@ -32,7 +33,6 @@ struct CustomSeekSlider : View {
   @State private var seekerThumbImageSize: CGSize = .init(width: 12, height: 12)
   @State private var thumbnailsUIImageFrames: [UIImage] = []
   @State private var draggingImage: UIImage? = nil
-  @State private var isStarted: Bool = false
   
   @State private var duration: Double = 0.0
   @State private var missingDuration: Double = 0.0
@@ -54,23 +54,65 @@ struct CustomSeekSlider : View {
               draggingImage: $draggingImage
             )
             ZStack(alignment: .leading) {
-              Rectangle()
-              //                .fill(Color(uiColor: (UIControlsProps?.seekSlider.maximumTrackColor ?? .systemFill)))
-                .fill(Color(uiColor: (.systemFill)))
-                .frame(width: geometry.size.width)
-                .cornerRadius(16)
-              
-              Rectangle()
-              //                .fill(Color(uiColor: (UIControlsProps?.seekSlider.seekableTintColor ?? .systemGray3)))
-                .fill(Color(uiColor: (.systemGray3)))
-                .frame(width: bufferingProgress * geometry.size.width)
+              if #available(iOS 16.0, *) {
+                ZStack(alignment: .leading) {
+                  Rectangle()
+                  //                .fill(Color(uiColor: (UIControlsProps?.seekSlider.maximumTrackColor ?? .systemFill)))
+                    .fill(Color(uiColor: (.systemFill)))
+                    .frame(width: geometry.size.width)
+                  
+                  Rectangle()
+                  //                .fill(Color(uiColor: (UIControlsProps?.seekSlider.seekableTintColor ?? .systemGray3)))
+                    .fill(Color(uiColor: (.systemGray3)))
+                    .frame(width: bufferingProgress * geometry.size.width)
+                  
+                  Rectangle()
+                  //                .fill(Color(uiColor: (UIControlsProps?.seekSlider.minimumTrackColor ?? .blue)))
+                    .fill(Color(uiColor: (.blue)))
+                    .frame(width: sliderProgress * geometry.size.width)
+                }
+                .onTapGesture(coordinateSpace: .local) { value in
+                  isSeekingWithTap = true
+                  let translation = value.x / geometry.size.width
+                  sliderProgress = max(min(translation, 1), 0)
+                  
+                  lastDraggedProgresss = sliderProgress
+                  guard let playerItem = player?.currentItem else { return }
+                  
+                  let targetTime =  playerItem.duration.seconds * sliderProgress
+                  let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
+                  player?.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
+                    if (completed) {
+                      DispatchQueue.main.async {
+                          self.isSeekingWithTap = false
+                      }
+                    }
+                  })
+                }
                 .cornerRadius(12)
-              
-              Rectangle()
-              //                .fill(Color(uiColor: (UIControlsProps?.seekSlider.minimumTrackColor ?? .blue)))
-                .fill(Color(uiColor: (.blue)))
-                .frame(width: sliderProgress * geometry.size.width)
+                .scaleEffect(x: isSeeking ? 1.02 : 1, y: isSeeking ? 1.5 : 1, anchor: .bottom)
+                .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: isSeeking)
+              } else {
+                ZStack(alignment: .leading) {
+                  Rectangle()
+                  //                .fill(Color(uiColor: (UIControlsProps?.seekSlider.maximumTrackColor ?? .systemFill)))
+                    .fill(Color(uiColor: (.systemFill)))
+                    .frame(width: geometry.size.width)
+                  
+                  Rectangle()
+                  //                .fill(Color(uiColor: (UIControlsProps?.seekSlider.seekableTintColor ?? .systemGray3)))
+                    .fill(Color(uiColor: (.systemGray3)))
+                    .frame(width: bufferingProgress * geometry.size.width)
+                  
+                  Rectangle()
+                  //                .fill(Color(uiColor: (UIControlsProps?.seekSlider.minimumTrackColor ?? .blue)))
+                    .fill(Color(uiColor: (.blue)))
+                    .frame(width: sliderProgress * geometry.size.width)
+                }
                 .cornerRadius(12)
+                .scaleEffect(x: isSeeking ? 1.02 : 1, y: isSeeking ? 1.5 : 1, anchor: .bottom)
+                .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: isSeeking)
+              }
               
               HStack {}
                 .overlay(
@@ -80,8 +122,10 @@ struct CustomSeekSlider : View {
                     .frame(width: 12, height: 12)
                     .frame(width: 40, height: 40)
                     .background(Color(uiColor: isDraggedSeekSlider ? .systemFill : .clear))
+                    .scaleEffect(x: isSeeking ? 1.5 : 1, y: isSeeking ? 1.5 : 1, anchor: .zero)
+                    .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: isSeeking)
                     .cornerRadius(.infinity)
-                    .opacity(isSeekingByDoubleTap ? 0.001 : 1)
+                    .opacity(0.0001)
                     .contentShape(Rectangle())
                     .offset(x: sliderProgress * geometry.size.width)
                     .gesture(
@@ -90,15 +134,18 @@ struct CustomSeekSlider : View {
                           out = true
                         })
                         .onChanged({ value in
-                          NotificationCenter.default.post(name: .SeekingNotification, object: true)
                           //                          cancelTimeoutWorkItem()
                           let translation = value.translation.width / geometry.size.width
-                          sliderProgress = max(min(translation + lastDraggedProgresss, 1), 0)
-                          isSeeking = true
-                          
-                          let dragIndex = Int(sliderProgress / 0.01)
-                          if thumbnailsUIImageFrames.indices.contains(dragIndex) {
-                            draggingImage = thumbnailsUIImageFrames[dragIndex]
+                          DispatchQueue.main.async {
+                            self.isSeeking = true // ou false dependendo do caso
+                            
+                            sliderProgress = max(min(translation + lastDraggedProgresss, 1), 0)
+                            isSeeking = true
+                            
+                            let dragIndex = Int(sliderProgress / 0.01)
+                            if thumbnailsUIImageFrames.indices.contains(dragIndex) {
+                              draggingImage = thumbnailsUIImageFrames[dragIndex]
+                            }
                           }
                         })
                         .onEnded({ value in
@@ -114,10 +161,12 @@ struct CustomSeekSlider : View {
                             //                            canPlaying()
                           }
                           
-                          NotificationCenter.default.post(name: .SeekingNotification, object: false)
+//                          NotificationCenter.default.post(name: .SeekingNotification, object: false)
                           player?.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
                             if (completed) {
-                              isSeeking = false
+                              DispatchQueue.main.async {
+                                  self.isSeeking = false
+                              }
                             }
                           })
                         })
@@ -125,12 +174,13 @@ struct CustomSeekSlider : View {
                 )
             }
           }
-          .frame(height: 6)
+          .frame(height: 8)
+          .frame(maxWidth: .infinity)
         }
         HStack {
           TimeCodes(time: $currentTime, UIControlsProps: .constant(.none))
           Spacer()
-          TimeCodes(time: $missingDuration, UIControlsProps: .constant(.none))
+          TimeCodes(time: $missingDuration, UIControlsProps: .constant(.none), suffixValue: "-")
         }
       }
     }
@@ -140,7 +190,6 @@ struct CustomSeekSlider : View {
               enabled,
               let url = thumbnails["url"] as? String
       else { return }
-      print("testings", url)
       generatingThumbnailsFrames(url)
     })
     .onAppear {

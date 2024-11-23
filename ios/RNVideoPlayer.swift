@@ -116,8 +116,6 @@ class RNVideoPlayerView : UIView {
         self.player = AVPlayer(url: videoURL)
         self.player?.play()
         
-//        playerLayer = AVPlayerLayer(player: player)
-
         if let player {
           wrapper = VideoPlayerController(player: player, menus: menus)
           if let wrapper = wrapper?.view {

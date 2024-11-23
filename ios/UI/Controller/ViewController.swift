@@ -72,6 +72,7 @@ struct ViewController: UIViewControllerRepresentable {
     let overlay = UIHostingController(rootView: OverlayManager(
 //      onTapBackward: context.coordinator.onBackwardTime,
 //      onTapForward: context.coordinator.onForwardTime,
+      observable: ObservableObjectManager(),
       scheduleHideControls: context.coordinator.scheduleHideControls,
       advanceValue: tapToSeek?["value"] as? Int ?? 15,
       suffixAdvanceValue: tapToSeek?["suffixLabel"] as? String ?? "seconds",

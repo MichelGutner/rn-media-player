@@ -11,9 +11,10 @@ import AVKit
 struct TimeCodes: View {
   @Binding var time: Double
   @Binding var UIControlsProps: Styles?
+  var suffixValue: String = ""
     
   var body: some View {
-    Text(stringFromTimeInterval(interval: time))
+    Text(suffixValue.appending(stringFromTimeInterval(interval: time)))
       .font(.system(size: 12))
       .foregroundColor(Color(uiColor: (UIControlsProps?.timeCodes.durationColor ?? .white)))
   }

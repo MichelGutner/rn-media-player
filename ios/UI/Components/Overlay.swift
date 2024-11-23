@@ -11,7 +11,7 @@ import Combine
 
 @available(iOS 14.0, *)
 struct OverlayManager : View {
-  @ObservedObject private var observable = ObservableObjectManager()
+  @ObservedObject var observable: ObservableObjectManager
   
   weak var player: AVPlayer?
   var scheduleHideControls: () -> Void
@@ -24,16 +24,15 @@ struct OverlayManager : View {
   @State private var isTappedLeft: Bool = false
   @State private var showOverlay = true // TODO: must be initial false
   
-  @State private var isBuffering = false
-  @State private var isPlaying = false
-  
+  @State private var playPauseTransparency = 0.0
+
   @State private var cancellables = Set<AnyCancellable>()
   
   @State private var selectedOptionItem: [String: String] = [:]
 
   var body: some View {
     ZStack {
-      LinearGradient(gradient: Gradient(colors: [Color.black.opacity(0.6), Color.clear, Color.black.opacity(0.6)]), startPoint: .top, endPoint: .bottom)
+      LinearGradient(gradient: Gradient(colors: [Color.black.opacity(0.4), Color.black.opacity(0.1), Color.black.opacity(0.4)]), startPoint: .top, endPoint: .bottom)
              .frame(maxWidth: .infinity, maxHeight: .infinity)
              .ignoresSafeArea()
       HStack(spacing: StandardSizes.large55) {
@@ -46,24 +45,45 @@ struct OverlayManager : View {
     .animation(.easeInOut(duration: 0.35), value: showOverlay)
     .overlay(
       ZStack(alignment: .center) {
-        if let player {
-          if isBuffering {
+        if observable.isBuffering {
             CustomLoading(color: UIColor.white)
-          } else {
-            Button(action: {
-              togglePlayback()
-            }) {
-              Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                .resizable()
-                .frame(width: 24, height: 24)
-                .padding()
-                .background(Color.black.opacity(0.4))
+        } else {
+          Button(action: {
+            togglePlayback()
+            playPauseTransparency = 0.6
+            withAnimation(.easeIn(duration: 0.2), {
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
+                playPauseTransparency = 0.0
+              })
+            })
+          }) {
+            ZStack {
+              Circle()
+                .fill(Color(uiColor: .systemFill))
+                .frame(width: 80, height: 80)
+                .opacity(playPauseTransparency)
+              
+              
+              // Ícone de pausa
+              Image(systemName: "pause.fill")
+                .font(.system(size: 55))
                 .foregroundColor(.white)
-                .clipShape(Circle())
+                .scaleEffect(observable.isPlaying ? 1 : 0)
+                .opacity(observable.isPlaying ? 1 : 0)
+                .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: observable.isPlaying)
+              
+              // Ícone de play
+              Image(systemName: "play.fill")
+                .font(.system(size: 55))
+                .foregroundColor(.white)
+                .scaleEffect(!observable.isPlaying ? 1 : 0)
+                .opacity(!observable.isPlaying ? 1 : 0)
+                .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: observable.isPlaying)
+              
             }
-            .opacity(showOverlay ? 1 : 0.0001)
-            .animation(.easeInOut(duration: 0.35), value: showOverlay)
           }
+          .opacity(showOverlay ? 1 : 0.0001)
+          .animation(.easeInOut(duration: 0.35), value: showOverlay)
         }
         
         VStack {
@@ -108,31 +128,32 @@ struct OverlayManager : View {
                       }
                   }
               } label: {
-                  Image(systemName: "ellipsis")
+                  Image(systemName: "ellipsis.circle")
                       .frame(width: 20, height: 20)
                       .padding(8)
-                      .background(Color.black.opacity(0.4))
+//                      .background(Color.black.opacity(0.4))
                       .foregroundColor(.white)
-                      .font(.system(size: 20, weight: .bold))
-                      .clipShape(Circle())
+                      .font(.system(size: 20))
+//                      .clipShape(Circle())
               }
               
               Button(action: {
                 onTapFullscreen?()
               }, label: {
-                Image(systemName: "arrow.up.left.and.arrow.down.right")
+                Image(systemName: observable.isFullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                  .rotationEffect(.degrees(90))
                   .frame(width: 20, height: 20)
-                  .padding(.all, 8)
-                  .background(Color.black.opacity(0.4))
+                  .padding(8)
                   .foregroundColor(.white)
-                  .clipShape(Circle())
+                  .font(.system(size: 20))
               })
             }
             CustomSeekSlider(player: player, observable: observable, UIControlsProps: .constant(.none), cancelTimeoutWorkItem: {}, scheduleHideControls: {}, canPlaying: {})
           }
           .padding()
-          .opacity(showOverlay ? 1 : 0.0001)
-          .animation(.easeInOut(duration: 0.35), value: showOverlay)
+          .offset(y: showOverlay ? 0 : 5)
+          .opacity(showOverlay ? 1 : 0)
+          .animation(.easeInOut(duration: 0.2), value: showOverlay)
         }
       }
         .background(Color.clear) // Unsure player layer interactable
@@ -179,8 +200,8 @@ extension OverlayManager {
     
     player.publisher(for: \.timeControlStatus)
         .sink { [self] status in
-            self.isPlaying = (status == .playing)
-            self.isBuffering = (status == .waitingToPlayAtSpecifiedRate)
+            observable.isPlaying = (status == .playing)
+            observable.isBuffering = (status == .waitingToPlayAtSpecifiedRate)
         }
         .store(in: &cancellables)
   }
