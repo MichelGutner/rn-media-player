@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, Text, TouchableOpacity } from 'react-native';
 import { Video } from 'rn-media-player';
 
 const SpeedsKey = 'Velocidades';
@@ -28,6 +28,7 @@ const qualitiesValues = [
 ];
 
 function App(): JSX.Element {
+  // const navigation = useNavigation();
   const [url, setUrl] = useState(
     'https://content.jwplatform.com/videos/ijHnL627-zZbIuxVJ.mp4'
   );
@@ -35,7 +36,7 @@ function App(): JSX.Element {
   const [playbackQuality, setPlaybackQuality] = useState('');
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }}>
       <Video
         source={{
           url,
@@ -49,7 +50,12 @@ function App(): JSX.Element {
             url: url,
           },
         }}
-        style={{ height: 375 }}
+        style={{
+          height: 375,
+          width: '100%',
+          alignSelf: 'center',
+          backgroundColor: 'black',
+        }}
         rate={rate}
         autoPlay={true}
         changeQualityUrl={playbackQuality}
@@ -86,10 +92,10 @@ function App(): JSX.Element {
         // }
         // onError={(e) => console.log('native Error', e.nativeEvent)}
         // resizeMode={EResizeMode.Contain}
-        screenBehavior={{
-          autoEnterFullscreenOnLandscape: false,
-          autoOrientationOnFullscreen: false,
-        }}
+        // screenBehavior={{
+        //   autoEnterFullscreenOnLandscape: false,
+        //   autoOrientationOnFullscreen: false,
+        // }}
         // lockControls={true}
         controlsStyles={{
           loading: {
@@ -139,6 +145,7 @@ function App(): JSX.Element {
         }}
       />
       <TouchableOpacity
+        style={{ height: 50, backgroundColor: 'red' }}
         onPress={() =>
           setUrl(
             'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
@@ -147,7 +154,7 @@ function App(): JSX.Element {
       >
         <Text style={{}}>Olá Mundo</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -18,10 +18,15 @@ class RNVideoPlayer: RCTViewManager {
 
 @available(iOS 14.0, *)
 class RNVideoPlayerView : UIView {
+  private var wrapper: VideoPlayerController? = .none
+  private var player: AVPlayer? = nil
+  
+  @State private var thumbnailsUIImageFrames: [UIImage] = []
+//  private var playerLayer : AVPlayerLayer? = nil
+  
   private var session = AVAudioSession.sharedInstance()
   private var mainView = UIView()
-  
-  weak var player: AVPlayer? = nil
+
   private var isInitialized = false
   private var UIControlsProps: Styles? = .none
   private var autoEnterFullscreenOnLandscape = false
@@ -77,6 +82,13 @@ class RNVideoPlayerView : UIView {
   
   override init(frame: CGRect) {
     super.init(frame: frame)
+    NotificationCenter.default.addObserver(forName: .MenuSelectedOption, object: nil, queue: .main, using: { notification in
+      let tupleValues = notification.object as? (String, Any)
+      let name = tupleValues?.0
+      let value = tupleValues?.1
+      self.onMenuItemSelected?(["name": name ?? "", "value": value as Any])
+    })
+    
     NotificationCenter.default.addObserver(forName: .AVPlayerErrors, object: nil, queue: .main, using: { notification in
       let error = notification.object as? NSError
       self.onError?([
@@ -98,12 +110,21 @@ class RNVideoPlayerView : UIView {
   @objc var resizeMode: NSString = "contain"
   
   private func setupPlayer() {
+    wrapper?.releaseResources()
     DispatchQueue.main.async { [self] in
-      releaseResources()
       if let url = source?["url"] as? String, let videoURL = URL(string: url) {
-        
         self.player = AVPlayer(url: videoURL)
-        self.initializePlayer()
+        self.player?.play()
+        
+        if let player {
+          wrapper = VideoPlayerController(player: player, menus: menus)
+          if let wrapper = wrapper?.view {
+            addSubview(wrapper)
+          }
+        }
+      }
+      if let thumbnails = source?["thumbnails"] as? NSDictionary {
+        NotificationCenter.default.post(name: .AVPlayerThumbnails, object: thumbnails)
       }
     }
   }
@@ -174,15 +195,15 @@ class RNVideoPlayerView : UIView {
   }
   
   override func layoutSubviews() {
-    mainView.frame = bounds
+    wrapper?.view.frame = bounds
     super.layoutSubviews()
   }
   
-  override func removeFromSuperview() {
-    super.removeFromSuperview()
-    mainView.removeFromSuperview()
-    releaseResources()
-  }
+//  override func removeFromSuperview() {
+////    super.removeFromSuperview()
+////    mainView.removeFromSuperview()
+////    releaseResources()
+//  }
   
   private func releaseResources() {
     player?.replaceCurrentItem(with: nil)

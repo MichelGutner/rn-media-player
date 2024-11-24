@@ -19,4 +19,5 @@ extension Notification.Name {
   static let SeekingNotification = Notification.Name("SeekingNotification")
   static let AVPlayerInitialLoading = Notification.Name("AVPlayerLoading")
   static let AVPlayerSource = Notification.Name("AVPlayerSource")
+  static let MenuSelectedOption = Notification.Name("MenuSelectedOption")
 }
