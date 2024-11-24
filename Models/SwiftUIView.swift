@@ -12,38 +12,32 @@
 //
 //  Created by Michel Gutner on 07/11/24.
 //
-
-import Foundation
 import SwiftUI
+import AVFoundation
+import MediaPlayer
 import AVKit
 
-struct SwiftUIView: View {
-    var player: AVPlayer?
-    @State private var playerLayer: AVPlayerLayer?
-
-    var body: some View {
-//        GeometryReader { geometry in
-//            let size = geometry.size
-//            
-            Group {
-                if let player = player {
-//                    CustomAVPlayer(player: player)
-                } else {
-                    Text("Loading player...")
-                }
-            }
-//            .frame(width: size.width, height: size.height)
-//        }
-        .onAppear {
-            // Inicializa o player quando a view aparece
-//            if let url = videoURL {
-//                player = AVPlayer(url: url)
-//            }
-        }
+struct RoutePickerView: UIViewRepresentable {
+    func makeUIView(context: Context) -> AVRoutePickerView {
+        let routePickerView = AVRoutePickerView()
+        routePickerView.activeTintColor = .white
+        routePickerView.tintColor = .white
+        routePickerView.prioritizesVideoDevices = true
+        return routePickerView
     }
-
-    var videoURL: URL? {
-        let urlString = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
-        return URL(string: urlString)
+    
+    func updateUIView(_ uiView: AVRoutePickerView, context: Context) {
+        // Update logic if needed in future
     }
+}
+
+struct VolumeView : UIViewRepresentable {
+  func makeUIView(context: Context) -> some UIView {
+    let mpController = MPVolumeView()
+    mpController.showsVolumeSlider = true
+    return mpController
+  }
+  func updateUIView(_ uiView: UIViewType, context: Context) {
+    //
+  }
 }

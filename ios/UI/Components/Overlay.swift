@@ -32,7 +32,7 @@ struct OverlayManager : View {
 
   var body: some View {
     ZStack {
-      LinearGradient(gradient: Gradient(colors: [Color.black.opacity(0.4), Color.black.opacity(0.1), Color.black.opacity(0.4)]), startPoint: .top, endPoint: .bottom)
+      LinearGradient(gradient: Gradient(colors: [Color.black.opacity(0.5), Color.black.opacity(0.2), Color.black.opacity(0.5)]), startPoint: .top, endPoint: .bottom)
              .frame(maxWidth: .infinity, maxHeight: .infinity)
              .ignoresSafeArea()
       HStack(spacing: StandardSizes.large55) {
@@ -87,6 +87,17 @@ struct OverlayManager : View {
         }
         
         VStack {
+          HStack {
+            RoutePickerView()
+              .frame(width: 35, height: 35)
+            Spacer()
+            VolumeView()
+              .frame(width: 35, height: 35)
+            
+          }
+          .offset(y: showOverlay ? 0 : -5)
+          .opacity(showOverlay ? 1 : 0)
+          .animation(.easeInOut(duration: 0.2), value: showOverlay)
           Spacer()
           VStack {
             HStack {
@@ -136,7 +147,6 @@ struct OverlayManager : View {
                       .font(.system(size: 20))
 //                      .clipShape(Circle())
               }
-              
               Button(action: {
                 onTapFullscreen?()
               }, label: {
@@ -150,11 +160,11 @@ struct OverlayManager : View {
             }
             CustomSeekSlider(player: player, observable: observable, UIControlsProps: .constant(.none), cancelTimeoutWorkItem: {}, scheduleHideControls: {}, canPlaying: {})
           }
-          .padding()
           .offset(y: showOverlay ? 0 : 5)
           .opacity(showOverlay ? 1 : 0)
           .animation(.easeInOut(duration: 0.2), value: showOverlay)
         }
+        .padding(16)
       }
         .background(Color.clear) // Unsure player layer interactable
     )

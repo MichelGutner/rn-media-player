@@ -1,6 +1,5 @@
-import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
-import { SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, Text, TouchableOpacity } from 'react-native';
 import { Video } from 'rn-media-player';
 
 const SpeedsKey = 'Velocidades';
@@ -29,7 +28,7 @@ const qualitiesValues = [
 ];
 
 function App(): JSX.Element {
-  const navigation = useNavigation();
+  // const navigation = useNavigation();
   const [url, setUrl] = useState(
     'https://content.jwplatform.com/videos/ijHnL627-zZbIuxVJ.mp4'
   );

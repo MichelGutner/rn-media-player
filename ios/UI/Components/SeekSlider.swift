@@ -23,7 +23,6 @@ struct CustomSeekSlider : View {
   @State private var bufferingProgress: CGFloat = 0.0
   @State private var lastDraggedProgresss: CGFloat = 0.0
   @GestureState private var isDraggedSeekSlider: Bool = false
-  @State private var isSeeking: Bool = false
   @State private var isSeekingWithTap: Bool = false
   
   @State private var isSeekingByDoubleTap: Bool = false
@@ -63,12 +62,12 @@ struct CustomSeekSlider : View {
                   
                   Rectangle()
                   //                .fill(Color(uiColor: (UIControlsProps?.seekSlider.seekableTintColor ?? .systemGray3)))
-                    .fill(Color(uiColor: (.systemGray3)))
+                    .fill(Color(uiColor: (.secondarySystemFill)))
                     .frame(width: bufferingProgress * geometry.size.width)
                   
                   Rectangle()
                   //                .fill(Color(uiColor: (UIControlsProps?.seekSlider.minimumTrackColor ?? .blue)))
-                    .fill(Color(uiColor: (.blue)))
+                    .fill(Color(uiColor: (.white)))
                     .frame(width: sliderProgress * geometry.size.width)
                 }
                 .onTapGesture(coordinateSpace: .local) { value in
@@ -90,8 +89,8 @@ struct CustomSeekSlider : View {
                   })
                 }
                 .cornerRadius(12)
-                .scaleEffect(x: isSeeking ? 1.02 : 1, y: isSeeking ? 1.5 : 1, anchor: .bottom)
-                .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: isSeeking)
+                .scaleEffect(x: observable.isSeeking ? 1.02 : 1, y: observable.isSeeking ? 1.5 : 1, anchor: .bottom)
+                .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: observable.isSeeking)
               } else {
                 ZStack(alignment: .leading) {
                   Rectangle()
@@ -110,8 +109,8 @@ struct CustomSeekSlider : View {
                     .frame(width: sliderProgress * geometry.size.width)
                 }
                 .cornerRadius(12)
-                .scaleEffect(x: isSeeking ? 1.02 : 1, y: isSeeking ? 1.5 : 1, anchor: .bottom)
-                .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: isSeeking)
+                .scaleEffect(x: observable.isSeeking ? 1.02 : 1, y: observable.isSeeking ? 1.5 : 1, anchor: .bottom)
+                .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: observable.isSeeking)
               }
               
               HStack {}
@@ -122,8 +121,8 @@ struct CustomSeekSlider : View {
                     .frame(width: 12, height: 12)
                     .frame(width: 40, height: 40)
                     .background(Color(uiColor: isDraggedSeekSlider ? .systemFill : .clear))
-                    .scaleEffect(x: isSeeking ? 1.5 : 1, y: isSeeking ? 1.5 : 1, anchor: .zero)
-                    .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: isSeeking)
+                    .scaleEffect(x: observable.isSeeking ? 1.5 : 1, y: observable.isSeeking ? 1.5 : 1, anchor: .zero)
+                    .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: observable.isSeeking)
                     .cornerRadius(.infinity)
                     .opacity(0.0001)
                     .contentShape(Rectangle())
@@ -137,10 +136,10 @@ struct CustomSeekSlider : View {
                           //                          cancelTimeoutWorkItem()
                           let translation = value.translation.width / geometry.size.width
                           DispatchQueue.main.async {
-                            self.isSeeking = true // ou false dependendo do caso
+                            observable.isSeeking = true // ou false dependendo do caso
                             
                             sliderProgress = max(min(translation + lastDraggedProgresss, 1), 0)
-                            isSeeking = true
+                            observable.isSeeking = true
                             
                             let dragIndex = Int(sliderProgress / 0.01)
                             if thumbnailsUIImageFrames.indices.contains(dragIndex) {
@@ -165,7 +164,7 @@ struct CustomSeekSlider : View {
                           player?.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
                             if (completed) {
                               DispatchQueue.main.async {
-                                  self.isSeeking = false
+                                observable.isSeeking = false
                               }
                             }
                           })
@@ -231,7 +230,7 @@ struct CustomSeekSlider : View {
       }
       
       DispatchQueue.main.async {
-        if !self.isSeeking, time.seconds <= currentItem.duration.seconds {
+        if !observable.isSeeking, time.seconds <= currentItem.duration.seconds {
           self.sliderProgress = CGFloat(time.seconds / duration)
           self.lastDraggedProgresss = self.sliderProgress
         }

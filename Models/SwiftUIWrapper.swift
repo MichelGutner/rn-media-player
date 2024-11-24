@@ -18,6 +18,7 @@ class ObservableObjectManager: ObservableObject {
   @Published var newRate: Float = 1.0
   @Published var isPlaying: Bool = true
   @Published var isBuffering: Bool = true
+  @Published var isSeeking: Bool = false
   
   init() {
     NotificationCenter.default.addObserver(
@@ -145,10 +146,14 @@ class VideoPlayerController : UIViewController {
   }
   
   private func initializeAudioSession() {
-    do {
-      try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-    }
-    catch {}
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setCategory(.playback, mode: .default, options: [])
+            try audioSession.setActive(true)
+            print("Audio session activated")
+        } catch {
+            print("Failed to activate audio session: \(error.localizedDescription)")
+        }
   }
   
   private func restoreToMainController(to controller: UIViewController) {
