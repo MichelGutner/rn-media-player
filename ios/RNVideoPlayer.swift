@@ -18,7 +18,7 @@ class RNVideoPlayer: RCTViewManager {
 
 @available(iOS 14.0, *)
 class RNVideoPlayerView : UIView {
-  private var wrapper: VideoPlayerController? = .none
+  private var videoPlayerView: VideoPlayerController? = .none
   private var player: AVPlayer? = nil
   
   @State private var thumbnailsUIImageFrames: [UIImage] = []
@@ -110,23 +110,74 @@ class RNVideoPlayerView : UIView {
   @objc var resizeMode: NSString = "contain"
   
   private func setupPlayer() {
-    wrapper?.releaseResources()
+    videoPlayerView?.releaseResources()
+    
+    guard let urlString = source?["url"] as? String,
+          let videoURL = URL(string: urlString) else {
+      print("URL not found.")
+      return
+    }
+    
     DispatchQueue.main.async { [self] in
-      if let url = source?["url"] as? String, let videoURL = URL(string: url) {
-        self.player = AVPlayer(url: videoURL)
-        self.player?.play()
-        
-        if let player {
-          wrapper = VideoPlayerController(player: player, menus: menus)
-          if let wrapper = wrapper?.view {
-            addSubview(wrapper)
-          }
+      let startTime = source?["startTime"] as? Double ?? 0
+      self.player = AVPlayer(url: videoURL)
+      self.player?.seek(to: CMTime(seconds: startTime, preferredTimescale: 1))
+      
+      if self.autoPlay == true {
+          self.player?.play()
+      }
+      
+      if let metadata = source?["metadata"] as? NSDictionary {
+        player?.currentItem!.externalMetadata = createMetadata(for: metadata)
+      }
+      
+      if let player {
+        videoPlayerView = VideoPlayerController(player: player, menus: menus)
+        if let wrapper = videoPlayerView?.view {
+          addSubview(wrapper)
         }
       }
-      if let thumbnails = source?["thumbnails"] as? NSDictionary {
-        NotificationCenter.default.post(name: .AVPlayerThumbnails, object: thumbnails)
+    }
+    if let thumbnails = source?["thumbnails"] as? NSDictionary {
+      NotificationCenter.default.post(name: .AVPlayerThumbnails, object: thumbnails)
+    }
+  }
+  
+  private func createMetadata(for source: NSDictionary?) -> [AVMetadataItem] {
+    var metadataItems: [AVMetadataItem] = []
+    
+    if let source {
+      for (key, value) in source {
+        guard let keyString = key as? String,
+              let valueString = value as? String else {
+            continue
+        }
+        
+        guard let identifier = mapKeyToMetadataIdentifier(keyString) else { continue }
+        
+        let metadataItem = AVMutableMetadataItem()
+        metadataItem.identifier = identifier
+        metadataItem.value = valueString as NSString
+        metadataItem.locale = Locale.current
+        
+        metadataItems.append(metadataItem)
       }
     }
+    
+    return metadataItems
+  }
+  
+  private func mapKeyToMetadataIdentifier(_ key: String) -> AVMetadataIdentifier? {
+      switch key {
+      case "title":
+          return .commonIdentifierTitle
+      case "artist":
+          return .commonIdentifierArtist
+      case "albumName":
+          return .commonIdentifierAlbumName
+      default:
+          return nil
+      }
   }
   
   private func initializePlayer() {
@@ -195,16 +246,10 @@ class RNVideoPlayerView : UIView {
   }
   
   override func layoutSubviews() {
-    wrapper?.view.frame = bounds
+    videoPlayerView?.view.frame = bounds
     super.layoutSubviews()
   }
-  
-//  override func removeFromSuperview() {
-////    super.removeFromSuperview()
-////    mainView.removeFromSuperview()
-////    releaseResources()
-//  }
-  
+
   private func releaseResources() {
     player?.replaceCurrentItem(with: nil)
     player?.pause()

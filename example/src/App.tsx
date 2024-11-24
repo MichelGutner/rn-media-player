@@ -40,20 +40,18 @@ function App(): JSX.Element {
       <Video
         source={{
           url,
-          // url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-          // url: qualitiesValues[2]?.value as string,
-          title: '',
+          metadata: {
+            title: 'Sintel',
+            artist: 'Google',
+          },
           startTime: 94,
           thumbnails: {
             enabled: true,
-            // url: qualitiesValues[0]?.value as string,
             url: url,
           },
         }}
         style={{
           height: 375,
-          width: '100%',
-          alignSelf: 'center',
           backgroundColor: 'black',
         }}
         rate={rate}

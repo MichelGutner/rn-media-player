@@ -11,12 +11,8 @@ import Combine
 
 @available(iOS 14.0, *)
 struct CustomSeekSlider : View {
-  @State var player: AVPlayer? = nil
-  var observable: ObservableObjectManager
+  var mediaSession: MediaSessionManager
   @Binding var UIControlsProps: Styles?
-  var cancelTimeoutWorkItem: () -> Void
-  var scheduleHideControls: () -> Void
-  var canPlaying: () -> Void
   
   @State private var interval = CMTime(value: 1, timescale: 2)
   @State private var sliderProgress: CGFloat = 0.0
@@ -24,8 +20,6 @@ struct CustomSeekSlider : View {
   @State private var lastDraggedProgresss: CGFloat = 0.0
   @GestureState private var isDraggedSeekSlider: Bool = false
   @State private var isSeekingWithTap: Bool = false
-  
-  @State private var isSeekingByDoubleTap: Bool = false
   
   @State private var tolerance = CMTime(seconds: 0.1, preferredTimescale: Int32(NSEC_PER_SEC))
   
@@ -71,16 +65,17 @@ struct CustomSeekSlider : View {
                     .frame(width: sliderProgress * geometry.size.width)
                 }
                 .onTapGesture(coordinateSpace: .local) { value in
+                  guard let player = mediaSession.player else { return }
                   isSeekingWithTap = true
                   let translation = value.x / geometry.size.width
                   sliderProgress = max(min(translation, 1), 0)
                   
                   lastDraggedProgresss = sliderProgress
-                  guard let playerItem = player?.currentItem else { return }
+                  guard let playerItem = player.currentItem else { return }
                   
                   let targetTime =  playerItem.duration.seconds * sliderProgress
                   let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
-                  player?.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
+                  player.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
                     if (completed) {
                       DispatchQueue.main.async {
                           self.isSeekingWithTap = false
@@ -89,8 +84,8 @@ struct CustomSeekSlider : View {
                   })
                 }
                 .cornerRadius(12)
-                .scaleEffect(x: observable.isSeeking ? 1.02 : 1, y: observable.isSeeking ? 1.5 : 1, anchor: .bottom)
-                .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: observable.isSeeking)
+                .scaleEffect(x: mediaSession.isSeeking ? 1.02 : 1, y: mediaSession.isSeeking ? 1.5 : 1, anchor: .bottom)
+                .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: mediaSession.isSeeking)
               } else {
                 ZStack(alignment: .leading) {
                   Rectangle()
@@ -109,8 +104,8 @@ struct CustomSeekSlider : View {
                     .frame(width: sliderProgress * geometry.size.width)
                 }
                 .cornerRadius(12)
-                .scaleEffect(x: observable.isSeeking ? 1.02 : 1, y: observable.isSeeking ? 1.5 : 1, anchor: .bottom)
-                .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: observable.isSeeking)
+                .scaleEffect(x: mediaSession.isSeeking ? 1.02 : 1, y: mediaSession.isSeeking ? 1.5 : 1, anchor: .bottom)
+                .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: mediaSession.isSeeking)
               }
               
               HStack {}
@@ -121,8 +116,8 @@ struct CustomSeekSlider : View {
                     .frame(width: 12, height: 12)
                     .frame(width: 40, height: 40)
                     .background(Color(uiColor: isDraggedSeekSlider ? .systemFill : .clear))
-                    .scaleEffect(x: observable.isSeeking ? 1.5 : 1, y: observable.isSeeking ? 1.5 : 1, anchor: .zero)
-                    .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: observable.isSeeking)
+                    .scaleEffect(x: mediaSession.isSeeking ? 1.5 : 1, y: mediaSession.isSeeking ? 1.5 : 1, anchor: .zero)
+                    .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: mediaSession.isSeeking)
                     .cornerRadius(.infinity)
                     .opacity(0.0001)
                     .contentShape(Rectangle())
@@ -133,13 +128,11 @@ struct CustomSeekSlider : View {
                           out = true
                         })
                         .onChanged({ value in
-                          //                          cancelTimeoutWorkItem()
+                          mediaSession.cancelTimeoutWorkItem()
                           let translation = value.translation.width / geometry.size.width
                           DispatchQueue.main.async {
-                            observable.isSeeking = true // ou false dependendo do caso
-                            
+                            mediaSession.isSeeking = true
                             sliderProgress = max(min(translation + lastDraggedProgresss, 1), 0)
-                            observable.isSeeking = true
                             
                             let dragIndex = Int(sliderProgress / 0.01)
                             if thumbnailsUIImageFrames.indices.contains(dragIndex) {
@@ -148,23 +141,24 @@ struct CustomSeekSlider : View {
                           }
                         })
                         .onEnded({ value in
-                          scheduleHideControls()
+                          guard let player = mediaSession.player else { return }
+                          mediaSession.scheduleHideControls()
                           lastDraggedProgresss = sliderProgress
-                          guard let playerItem = player?.currentItem else { return }
+                          guard let playerItem = player.currentItem else { return }
                           
                           let targetTime =  playerItem.duration.seconds * sliderProgress
                           
                           let targetCMTime = CMTime(seconds: targetTime, preferredTimescale: Int32(NSEC_PER_SEC))
                           
                           if sliderProgress < 1 {
-                            //                            canPlaying()
+                            mediaSession.isFinished = false
+                            mediaSession.scheduleHideControls()
                           }
                           
-//                          NotificationCenter.default.post(name: .SeekingNotification, object: false)
-                          player?.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
+                          player.seek(to: targetCMTime, toleranceBefore: tolerance, toleranceAfter: tolerance, completionHandler: { completed in
                             if (completed) {
                               DispatchQueue.main.async {
-                                observable.isSeeking = false
+                                mediaSession.isSeeking = false
                               }
                             }
                           })
@@ -174,6 +168,7 @@ struct CustomSeekSlider : View {
             }
           }
           .frame(height: 8)
+          .background(Color.clear)
           .frame(maxWidth: .infinity)
         }
         HStack {
@@ -183,7 +178,7 @@ struct CustomSeekSlider : View {
         }
       }
     }
-    .onReceive(observable.$thumbnailsDictionary, perform: { thumbnails in
+    .onReceive(mediaSession.$thumbnailsDictionary, perform: { thumbnails in
       guard let thumbnails,
               let enabled = thumbnails["enabled"] as? Bool,
               enabled,
@@ -198,13 +193,14 @@ struct CustomSeekSlider : View {
       thumbnailsUIImageFrames.removeAll()
       draggingImage = nil
       if let timeObserver {
-        player?.removeTimeObserver(timeObserver)
+        guard let player = mediaSession.player else { return }
+        player.removeTimeObserver(timeObserver)
       }
     }
   }
   
   private func setupPeriodicTimeObserver() {
-    guard let player = player else { return }
+    guard let player = mediaSession.player else { return }
     guard let _ = player.currentItem else {return}
     
     timeObserver = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: .main) { [self] time in
@@ -220,6 +216,7 @@ struct CustomSeekSlider : View {
       self.duration = duration
       self.missingDuration = duration - time.seconds
       self.currentTime = time.seconds
+      mediaSession.updateNowPlayingInfo(time: time.seconds)
       
       let loadedTimeRanges = currentItem.loadedTimeRanges
       if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
@@ -230,7 +227,7 @@ struct CustomSeekSlider : View {
       }
       
       DispatchQueue.main.async {
-        if !observable.isSeeking, time.seconds <= currentItem.duration.seconds {
+        if !mediaSession.isSeeking, time.seconds <= currentItem.duration.seconds {
           self.sliderProgress = CGFloat(time.seconds / duration)
           self.lastDraggedProgresss = self.sliderProgress
         }
@@ -255,7 +252,7 @@ struct CustomSeekSlider : View {
         generator.appliesPreferredTrackTransform = true
         generator.maximumSize = .init(width: 250, height: 150)
         
-        //  TODO:
+        //  TODO: must be implemented frame times per seconds from bridge
         for progress in stride(from: 0, to: totalDuration / Double(1 * 100), by: 0.01) {
           let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
           framesTimes.append(time as NSValue)

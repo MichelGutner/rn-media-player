@@ -30,14 +30,3 @@ struct RoutePickerView: UIViewRepresentable {
         // Update logic if needed in future
     }
 }
-
-struct VolumeView : UIViewRepresentable {
-  func makeUIView(context: Context) -> some UIView {
-    let mpController = MPVolumeView()
-    mpController.showsVolumeSlider = true
-    return mpController
-  }
-  func updateUIView(_ uiView: UIViewType, context: Context) {
-    //
-  }
-}

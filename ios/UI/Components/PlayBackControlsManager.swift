@@ -10,11 +10,8 @@ import AVKit
 import Combine
 
 @available(iOS 14.0, *)
-struct OverlayManager : View {
-  @ObservedObject var observable: ObservableObjectManager
-  
-  weak var player: AVPlayer?
-  var scheduleHideControls: () -> Void
+struct PlayBackControlsManager : View {
+  @ObservedObject var mediaSession: MediaSessionManager
   var advanceValue: Int
   var suffixAdvanceValue: String
   var onTapFullscreen: (() -> Void)?
@@ -22,7 +19,8 @@ struct OverlayManager : View {
   
   @State private var isTapped: Bool = false
   @State private var isTappedLeft: Bool = false
-  @State private var showOverlay = true // TODO: must be initial false
+  @State private var isBuffering: Bool = true
+//  @State private var observable.isControlsVisible = true // TODO: must be initial false
   
   @State private var playPauseTransparency = 0.0
 
@@ -36,16 +34,16 @@ struct OverlayManager : View {
              .frame(maxWidth: .infinity, maxHeight: .infinity)
              .ignoresSafeArea()
       HStack(spacing: StandardSizes.large55) {
-        DoubleTapSeek(isTapped: $isTappedLeft, onTap:  onBackwardTime, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: scheduleHideControls)
-        DoubleTapSeek(isTapped: $isTapped, isForward: true, onTap:  onForwardTime, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: scheduleHideControls)
+        DoubleTapSeek(isTapped: $isTappedLeft, onTap:  onBackwardTime, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: mediaSession.scheduleHideControls)
+        DoubleTapSeek(isTapped: $isTapped, isForward: true, onTap:  onForwardTime, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: mediaSession.scheduleHideControls)
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .opacity(showOverlay ? 1 : 0.0001)
-    .animation(.easeInOut(duration: 0.35), value: showOverlay)
+    .opacity(mediaSession.isControlsVisible ? 1 : 0.0001)
+    .animation(.easeInOut(duration: 0.35), value: mediaSession.isControlsVisible)
     .overlay(
       ZStack(alignment: .center) {
-        if observable.isBuffering {
+        if isBuffering {
             CustomLoading(color: UIColor.white)
         } else {
           Button(action: {
@@ -63,41 +61,52 @@ struct OverlayManager : View {
                 .frame(width: 80, height: 80)
                 .opacity(playPauseTransparency)
               
-              
-              // Ícone de pausa
               Image(systemName: "pause.fill")
                 .font(.system(size: 55))
                 .foregroundColor(.white)
-                .scaleEffect(observable.isPlaying ? 1 : 0)
-                .opacity(observable.isPlaying ? 1 : 0)
-                .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: observable.isPlaying)
+                .scaleEffect(mediaSession.isPlaying ? 1 : 0)
+                .opacity(mediaSession.isPlaying ? 1 : 0)
+                .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: mediaSession.isPlaying)
               
-              // Ícone de play
               Image(systemName: "play.fill")
                 .font(.system(size: 55))
                 .foregroundColor(.white)
-                .scaleEffect(!observable.isPlaying ? 1 : 0)
-                .opacity(!observable.isPlaying ? 1 : 0)
-                .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: observable.isPlaying)
+                .scaleEffect(mediaSession.isPlaying == false ? 1 : 0)
+                .opacity(mediaSession.isPlaying == false ? 1 : 0)
+                .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: mediaSession.isPlaying)
               
             }
           }
-          .opacity(showOverlay ? 1 : 0.0001)
-          .animation(.easeInOut(duration: 0.35), value: showOverlay)
+          .onAppear {
+            mediaSession.scheduleHideControls()
+          }
+          .opacity(mediaSession.isControlsVisible ? 1 : 0.0001)
+          .animation(.easeInOut(duration: 0.35), value: mediaSession.isControlsVisible)
         }
         
         VStack {
-          HStack {
-            RoutePickerView()
-              .frame(width: 35, height: 35)
+          HStack(alignment: .top) {
+            Group {
+              if let title = mediaSession.currentItemtitle {
+                if #available(iOS 15.0, *) {
+                  Text(title)
+                    .font(.system(size: 14))
+                    .foregroundStyle(.white)
+                } else {
+                  Text(title)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white)
+                }
+              }
+            }
             Spacer()
-            VolumeView()
+            RoutePickerView()
               .frame(width: 35, height: 35)
             
           }
-          .offset(y: showOverlay ? 0 : -5)
-          .opacity(showOverlay ? 1 : 0)
-          .animation(.easeInOut(duration: 0.2), value: showOverlay)
+          .offset(y: mediaSession.isControlsVisible ? 0 : -5)
+          .opacity(mediaSession.isControlsVisible ? 1 : 0)
+          .animation(.easeInOut(duration: 0.2), value: mediaSession.isControlsVisible)
           Spacer()
           VStack {
             HStack {
@@ -142,56 +151,55 @@ struct OverlayManager : View {
                   Image(systemName: "ellipsis.circle")
                       .frame(width: 20, height: 20)
                       .padding(8)
-//                      .background(Color.black.opacity(0.4))
                       .foregroundColor(.white)
                       .font(.system(size: 20))
-//                      .clipShape(Circle())
+
               }
               Button(action: {
                 onTapFullscreen?()
               }, label: {
-                Image(systemName: observable.isFullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
-                  .rotationEffect(.degrees(90))
-                  .frame(width: 20, height: 20)
-                  .padding(8)
-                  .foregroundColor(.white)
-                  .font(.system(size: 20))
+                ZStack {
+                  Circle()
+                    .fill(Color(uiColor: .systemFill))
+                    .frame(width: 30, height: 30)
+                    .opacity(playPauseTransparency)
+                  
+                  Image(systemName: "arrow.down.right.and.arrow.up.left")
+                    .rotationEffect(.degrees(90))
+                    .padding(8)
+                    .foregroundColor(.white)
+                    .font(.system(size: 20))
+                    .scaleEffect(mediaSession.isFullscreen ? 1 : 0)
+                    .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: mediaSession.isFullscreen)
+                  
+                  Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    .rotationEffect(.degrees(90))
+                    .frame(width: 20, height: 20)
+                    .padding(8)
+                    .foregroundColor(.white)
+                    .font(.system(size: 20))
+                    .scaleEffect(mediaSession.isFullscreen ? 0 : 1)
+                    .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: mediaSession.isFullscreen)
+                }
               })
             }
-            CustomSeekSlider(player: player, observable: observable, UIControlsProps: .constant(.none), cancelTimeoutWorkItem: {}, scheduleHideControls: {}, canPlaying: {})
+            CustomSeekSlider(mediaSession: mediaSession, UIControlsProps: .constant(.none))
           }
-          .offset(y: showOverlay ? 0 : 5)
-          .opacity(showOverlay ? 1 : 0)
-          .animation(.easeInOut(duration: 0.2), value: showOverlay)
+          .offset(y: mediaSession.isControlsVisible ? 0 : 5)
+          .opacity(mediaSession.isControlsVisible ? 1 : 0)
+          .animation(.easeInOut(duration: 0.2), value: mediaSession.isControlsVisible)
         }
         .padding(16)
       }
         .background(Color.clear) // Unsure player layer interactable
     )
-
     .onTapGesture {
-      showOverlay.toggle()
-      if showOverlay {
-          scheduleHideControls()
+      mediaSession.toggleControls()
+      if mediaSession.isControlsVisible {
+          mediaSession.scheduleHideControls()
       }
     }
-    .onReceive(NotificationCenter.default.publisher(for: AVPlayerItem.didPlayToEndTimeNotification), perform: { output in
-      print("Player chegou ao fim do vídeo.")
-    })
-    .onReceive(NotificationCenter.default.publisher(for: .AVPlayerUrlChanged), perform: { output in
-      guard let newUrl = output.object as? String else { return }
-      replacePlayerWithNewUrl(url: newUrl)
-    })
-    .onReceive(NotificationCenter.default.publisher(for: .AVPlayerRateDidChange), perform: { output in
-      guard let newRate = output.object as? Float else { return }
-      DispatchQueue.main.async(execute: { [self] in
-        if (self.player?.timeControlStatus == .playing) {
-          self.player?.rate = newRate
-        }
-      })
-    })
     .onAppear {
-      scheduleHideControls()
       setupPlayerObservation()
     }
     .onDisappear {
@@ -204,35 +212,41 @@ struct OverlayManager : View {
 }
 
 @available(iOS 14.0, *)
-extension OverlayManager {
+extension PlayBackControlsManager {
   private func setupPlayerObservation() {
-    guard let player else { return }
+    guard let player = mediaSession.player else { return }
     
     player.publisher(for: \.timeControlStatus)
         .sink { [self] status in
-            observable.isPlaying = (status == .playing)
-            observable.isBuffering = (status == .waitingToPlayAtSpecifiedRate)
+            mediaSession.isPlaying = (status == .playing)
+          self.isBuffering = (status == .waitingToPlayAtSpecifiedRate)
         }
         .store(in: &cancellables)
   }
   
   private func togglePlayback() {
+    guard let player = mediaSession.player else { return }
     DispatchQueue.main.async { [self] in
-      guard let player else { return }
+      if mediaSession.isFinished {
+        player.seek(to: .zero)
+        player.play()
+      }
+      
       if player.timeControlStatus == .playing {
         player.pause()
+        mediaSession.cancelTimeoutWorkItem()
       } else {
         player.play()
-        player.rate = observable.newRate
-//        self.scheduleHideControls()
+        mediaSession.scheduleHideControls()
+        player.rate = mediaSession.newRate
       }
     }
   }
   
   private func onBackwardTime(_ timeToChange: Int) {
-    guard let player else { return }
+    guard let player = mediaSession.player else { return }
     guard let currentItem = player.currentItem else { return }
-    
+    mediaSession.cancelTimeoutWorkItem()
     let currentTime = CMTimeGetSeconds(player.currentTime())
     let newTime = max(currentTime - Double(timeToChange), 0)
     player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
@@ -242,10 +256,11 @@ extension OverlayManager {
   }
   
   private func onForwardTime(_ timeToChange: Int) {
-    guard let player else { return }
+    guard let player = mediaSession.player else { return }
     guard let currentItem = player.currentItem else { return }
-    let currentTime = CMTimeGetSeconds(player.currentTime())
+    mediaSession.cancelTimeoutWorkItem()
     
+    let currentTime = CMTimeGetSeconds(player.currentTime())
     let newTime = max(currentTime + Double(timeToChange), 0)
     player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
                 toleranceBefore: .zero,
@@ -259,32 +274,5 @@ extension OverlayManager {
       guard let key = key as? String, let values = value as? NSDictionary else { return nil }
       return (key: key, values: values)
     }
-  }
-  
-  private func replacePlayerWithNewUrl(url: String) {
-    guard let player = player else { return }
-    let newUrl = URL(string: url)
-    
-    if (newUrl == observable.urlOfCurrentPlayerItem(to: player)) {
-      return
-    }
-    
-    let currentTime = player.currentItem?.currentTime() ?? CMTime.zero
-    let asset = AVURLAsset(url: newUrl!)
-    let newPlayerItem = AVPlayerItem(asset: asset)
-    
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
-      player.replaceCurrentItem(with: newPlayerItem)
-      player.seek(to: currentTime)
-    
-      var playerItemStatusObservation: NSKeyValueObservation?
-      playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { (item, _) in
-        NotificationCenter.default.post(name: .AVPlayerErrors, object: extractPlayerItemError(item))
-        guard item.status == .readyToPlay else {
-          return
-        }
-        playerItemStatusObservation?.invalidate()
-      }
-    })
   }
 }

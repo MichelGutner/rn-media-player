@@ -56,29 +56,29 @@ class PlayPauseButton: UIButton {
         return layer
     }
     
-    func updateLayersVisibility(observable: ObservableObjectManager) {
-        playLeftLayer.isHidden = observable.isPlaying
-        playRightLayer.isHidden = observable.isPlaying
-        pauseLeftLayer.isHidden = !observable.isPlaying
-        pauseRightLayer.isHidden = !observable.isPlaying
+    func updateLayersVisibility(observable: MediaSessionManager) {
+//        playLeftLayer.isHidden = observable.isPlaying
+//        playRightLayer.isHidden = observable.isPlaying
+//        pauseLeftLayer.isHidden = !observable.isPlaying
+//        pauseRightLayer.isHidden = !observable.isPlaying
     }
     
     @objc private func buttonTapped() {
         action()
     }
     
-    public func animateLayerTransition(observable: ObservableObjectManager) {
+    public func animateLayerTransition(observable: MediaSessionManager) {
         let animation = CABasicAnimation(keyPath: "path")
         animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
         animation.duration = 0.5
 
-      if observable.isPlaying {
-            applyAnimation(animation, from: playLeftLayer, to: pauseLeftLayer)
-            applyAnimation(animation, from: playRightLayer, to: pauseRightLayer)
-        } else {
-            applyAnimation(animation, from: pauseLeftLayer, to: playLeftLayer)
-            applyAnimation(animation, from: pauseRightLayer, to: playRightLayer)
-        }
+//      if observable.isPlaying {
+//            applyAnimation(animation, from: playLeftLayer, to: pauseLeftLayer)
+//            applyAnimation(animation, from: playRightLayer, to: pauseRightLayer)
+//        } else {
+//            applyAnimation(animation, from: pauseLeftLayer, to: playLeftLayer)
+//            applyAnimation(animation, from: pauseRightLayer, to: playRightLayer)
+//        }
     }
     
     private func applyAnimation(_ animation: CABasicAnimation, from fromLayer: CAShapeLayer, to toLayer: CAShapeLayer) {

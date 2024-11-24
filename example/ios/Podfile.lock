@@ -1166,7 +1166,7 @@ PODS:
     - React-logger (= 0.74.2)
     - React-perflogger (= 0.74.2)
     - React-utils (= 0.74.2)
-  - rn-media-player (0.2.3):
+  - rn-media-player (0.4.1):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1449,11 +1449,11 @@ SPEC CHECKSUMS:
   React-runtimescheduler: 56b642bf605ba5afa500d35790928fc1d51565ad
   React-utils: 4476b7fcbbd95cfd002f3e778616155241d86e31
   ReactCommon: ecad995f26e0d1e24061f60f4e5d74782f003f12
-  rn-media-player: 10101c5f29db498f35a1e56304175b8048ec002a
+  rn-media-player: 6cf436b598525110289c440590c74ecf400094a2
   RNScreens: aa943ad421c3ced3ef5a47ede02b0cbfc43a012e
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   Yoga: ae3c32c514802d30f687a04a6a35b348506d411f
 
 PODFILE CHECKSUM: a7dd32bb8c0cb3e1fe5198c154e5f65fd032f322
 
-COCOAPODS: 1.15.2
+COCOAPODS: 1.16.2

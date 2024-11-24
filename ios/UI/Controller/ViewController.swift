@@ -69,11 +69,10 @@ struct ViewController: UIViewControllerRepresentable {
     playerViewController.view.addGestureRecognizer(tapGesture)
     
     
-    let overlay = UIHostingController(rootView: OverlayManager(
+    let overlay = UIHostingController(rootView: PlayBackControlsManager(
 //      onTapBackward: context.coordinator.onBackwardTime,
 //      onTapForward: context.coordinator.onForwardTime,
-      observable: ObservableObjectManager(),
-      scheduleHideControls: context.coordinator.scheduleHideControls,
+      mediaSession: MediaSessionManager(),
       advanceValue: tapToSeek?["value"] as? Int ?? 15,
       suffixAdvanceValue: tapToSeek?["suffixLabel"] as? String ?? "seconds",
       menus: .constant([:])
@@ -107,12 +106,10 @@ struct ViewController: UIViewControllerRepresentable {
     
     let seekSlider = UIHostingController(
       rootView: CustomSeekSlider(
-        player: player,
-        observable: ObservableObjectManager(),
+//        player: player,
+        mediaSession: MediaSessionManager(),
 
         UIControlsProps: .constant(UIControls),
-        cancelTimeoutWorkItem: context.coordinator.cancelTimeoutWorkItem,
-        scheduleHideControls: context.coordinator.scheduleHideControls,
         canPlaying: {
           DispatchQueue.main.async { [self] in
             replayButton.isHidden = true

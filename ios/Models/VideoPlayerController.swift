@@ -8,17 +8,24 @@
 
 import SwiftUI
 import AVKit
-
+import AVFoundation
 import Foundation
 import Combine
+import MediaPlayer
 
-class ObservableObjectManager: ObservableObject {
+class MediaSessionManager: ObservableObject {
+  @Published var player: AVPlayer? = nil
+  @Published var isControlsVisible: Bool = true
+  @Published var timeoutWorkItem: DispatchWorkItem?
+  
   @Published var isFullscreen: Bool = false
   @Published var thumbnailsDictionary: NSDictionary? = nil
   @Published var newRate: Float = 1.0
-  @Published var isPlaying: Bool = true
-  @Published var isBuffering: Bool = true
+  @Published var isPlaying: Bool = false
+
   @Published var isSeeking: Bool = false
+  @Published var isFinished: Bool = false
+  @Published var currentItemtitle: String? = nil
   
   init() {
     NotificationCenter.default.addObserver(
@@ -33,6 +40,18 @@ class ObservableObjectManager: ObservableObject {
       name: .AVPlayerRateDidChange,
       object: nil
     )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleFinishAVPlayerItem),
+      name: AVPlayerItem.didPlayToEndTimeNotification,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(replacePlayerWithNewUrl(_:)),
+      name: .AVPlayerUrlChanged,
+      object: nil
+    )
   }
   
   @objc private func handleThumbnailsNotification(_ notification: Notification) {
@@ -44,18 +63,147 @@ class ObservableObjectManager: ObservableObject {
   }
   
   @objc private func handlePlaybackRate(_ notification: Notification) {
-    self.newRate = notification.object as! Float
+    guard let newRate = notification.object as? Float else { return }
+    self.newRate = newRate
+    DispatchQueue.main.async(execute: { [self] in
+      if (self.player?.timeControlStatus == .playing) {
+        self.player?.rate = newRate
+      }
+    })
   }
   
-  func urlOfCurrentPlayerItem(to player : AVPlayer?) -> URL? {
+  @objc private func handleFinishAVPlayerItem(_ notification: Notification) {
+    guard let _ = notification.object as? AVPlayerItem else { return }
+    MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] = 0
+    self.isFinished = true
+  }
+  
+  func urlOfCurrentPlayerItem() -> URL? {
     return ((player?.currentItem?.asset) as? AVURLAsset)?.url
   }
   
-  public func clear() {
-    thumbnailsDictionary = [:]
-    NotificationCenter.default.removeObserver(self, name: .AVPlayerThumbnails, object: nil)
-    NotificationCenter.default.removeObserver(self, name: .AVPlayerUrlChanged, object: nil)
+  @objc private func replacePlayerWithNewUrl(_ notification: Notification) {
+    guard let player else { return }
+    guard let url = notification.object as? String else { return }
+    
+    let newUrl = URL(string: url)
+    
+    if (newUrl == urlOfCurrentPlayerItem()) {
+      return
+    }
+    
+    let currentTime = player.currentItem?.currentTime() ?? CMTime.zero
+    let asset = AVURLAsset(url: newUrl!)
+    let newPlayerItem = AVPlayerItem(asset: asset)
+    
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+      player.replaceCurrentItem(with: newPlayerItem)
+      player.seek(to: currentTime)
+    
+      var playerItemStatusObservation: NSKeyValueObservation?
+      playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { (item, _) in
+        NotificationCenter.default.post(name: .AVPlayerErrors, object: extractPlayerItemError(item))
+        guard item.status == .readyToPlay else {
+          return
+        }
+        playerItemStatusObservation?.invalidate()
+      }
+    })
   }
+  
+  func makeNowPlayingInfo() {
+    guard let player else { return }
+    guard let currentItem = player.currentItem else { return }
+    let metadata = currentItem.externalMetadata
+    
+    currentItemtitle = metadata.first { $0.identifier == .commonIdentifierTitle }?.stringValue ?? nil
+    let artist = metadata.first { $0.identifier == .commonIdentifierArtist }?.stringValue ?? "Desconhecido"
+    
+    let nowPlayingInfo: [String: Any] = [
+      MPMediaItemPropertyTitle: currentItemtitle ?? "Sem Título",
+        MPMediaItemPropertyArtist: artist,
+        MPMediaItemPropertyPlaybackDuration: currentItem.duration.seconds,
+        MPNowPlayingInfoPropertyElapsedPlaybackTime: player.currentTime().seconds,
+        MPNowPlayingInfoPropertyPlaybackRate: player.rate
+    ]
+    
+    MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+  }
+  
+  func updateNowPlayingInfo(time: Double) {
+    guard let player = player else { return }
+    guard let currentItem = player.currentItem else { return }
+    
+    let duration = CMTimeGetSeconds(currentItem.duration)
+    
+    var nowPlayingInfo = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
+    nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = time
+    nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = duration
+    nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = player.rate
+    MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+  }
+  
+  func setupRemoteCommandCenter() {
+    guard let player else { return }
+    let commandCenter = MPRemoteCommandCenter.shared()
+    
+    
+    commandCenter.playCommand.addTarget { _ in
+      player.play()
+      MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] = 1
+      return .success
+    }
+    
+    commandCenter.pauseCommand.addTarget { _ in
+      player.pause()
+      MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] = 0
+      
+      return .success
+    }
+  }
+  
+  func toggleControls() {
+    withAnimation(.easeInOut(duration: 0.4), {
+      isControlsVisible.toggle()
+    })
+  }
+  
+  func scheduleHideControls() {
+    DispatchQueue.main.async { [self] in
+      if let timeoutWorkItem {
+        timeoutWorkItem.cancel()
+      }
+    
+      if (isPlaying) {
+        self.timeoutWorkItem = .init(block: { [self] in
+          withAnimation(.easeInOut(duration: 0.4), {
+            isControlsVisible = false
+          })
+        })
+        
+        
+        if let timeoutWorkItem {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: timeoutWorkItem)
+        }
+      }
+    }
+  }
+  
+  func cancelTimeoutWorkItem() {
+    DispatchQueue.main.async { [self] in
+      if let timeoutWorkItem {
+        timeoutWorkItem.cancel()
+      }
+    }
+  }
+  
+  func clear() {
+  thumbnailsDictionary = [:]
+  NotificationCenter.default.removeObserver(self, name: .AVPlayerThumbnails, object: nil)
+  NotificationCenter.default.removeObserver(self, name: .AVPlayerUrlChanged, object: nil)
+}
+  
+  
 }
 
 struct PlaybackControlsInterface {
@@ -67,7 +215,7 @@ class VideoPlayerController : UIViewController {
   public weak var player: AVPlayer?
   public var menus: NSDictionary?
   private var playerLayer : AVPlayerLayer!
-  @ObservedObject private var observable = ObservableObjectManager()
+  @ObservedObject private var mediaSession = MediaSessionManager()
   
   private var currentLayerScale: CGFloat = 1.0
   private var initialized: Bool = false
@@ -75,7 +223,7 @@ class VideoPlayerController : UIViewController {
   private var fullscreenVC = UIViewController()
   private let rootVC = UIApplication.shared.windows.first?.rootViewController
   
-  private var playbackControls: UIHostingController<OverlayManager>? = nil
+  private var playbackControls: UIHostingController<PlayBackControlsManager>? = nil
   private var isTransitioning: Bool = false
 
   
@@ -84,6 +232,8 @@ class VideoPlayerController : UIViewController {
     self.menus = menus
     
     super.init(nibName: nil, bundle: nil)
+    
+    mediaSession.player = player
     self.playerLayer.frame = view.bounds
     restoreToMainController(to: self)
   }
@@ -100,10 +250,8 @@ class VideoPlayerController : UIViewController {
     view.layer.addSublayer(playerLayer)
     playbackControls = UIHostingController(
       rootView:
-        OverlayManager(
-          observable: observable,
-          player: playerLayer.player,
-          scheduleHideControls: {},
+        PlayBackControlsManager(
+          mediaSession: mediaSession,
           advanceValue: 10,
           suffixAdvanceValue: "seconds",
           onTapFullscreen: {
@@ -111,11 +259,11 @@ class VideoPlayerController : UIViewController {
           },
           menus: .constant(menus)
         ))
+    
     initializeAudioSession()
-  }
-  
-  override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
+    
+    mediaSession.makeNowPlayingInfo()
+    mediaSession.setupRemoteCommandCenter()
   }
   
   override func viewDidDisappear(_ animated: Bool) {
@@ -129,7 +277,7 @@ class VideoPlayerController : UIViewController {
     playbackControls?.removeFromParent()
     self.view.removeFromSuperview()
     self.removeFromParent()
-    observable.clear()
+    mediaSession.clear()
   }
   
   @objc private func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
@@ -150,7 +298,6 @@ class VideoPlayerController : UIViewController {
         do {
             try audioSession.setCategory(.playback, mode: .default, options: [])
             try audioSession.setActive(true)
-            print("Audio session activated")
         } catch {
             print("Failed to activate audio session: \(error.localizedDescription)")
         }
@@ -177,22 +324,22 @@ class VideoPlayerController : UIViewController {
   }
 
   @objc func toggleFullScreen() {
-    if (!observable.isFullscreen) {
+    if (!mediaSession.isFullscreen) {
       presentFullscreenController()
     } else {
       dismissFullscreenController()
     }
     
-    observable.isFullscreen.toggle()
+    mediaSession.isFullscreen.toggle()
   }
   
   override func viewWillLayoutSubviews() {
     guard let mainBounds = view.window?.windowScene?.screen.bounds else { return }
-    if observable.isFullscreen && !isTransitioning {
+    if mediaSession.isFullscreen && !isTransitioning {
       playerLayer.frame = mainBounds
       
     }
-    if !isTransitioning && !observable.isFullscreen {
+    if !isTransitioning && !mediaSession.isFullscreen {
       addPlayerLayerFrameWithSafeArea(view.bounds)
     }
   }
