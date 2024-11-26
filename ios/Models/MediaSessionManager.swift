@@ -102,6 +102,53 @@ class MediaSessionManager: ObservableObject {
       
       return .success
     }
+    
+    commandCenter.changePlaybackPositionCommand.addTarget { [weak self] event in
+      guard let self = self, let currentItem = player.currentItem else {
+        return .commandFailed
+      }
+      
+      let event = event as! MPChangePlaybackPositionCommandEvent
+      let timestamp = event.positionTime
+      let duration = currentItem.duration.seconds
+      
+      guard duration.isFinite, duration > 0 else { return .commandFailed }
+      
+      let playbackProgress = max(min(timestamp / duration, 1), 0)
+      print(playbackProgress)
+      
+      MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackProgress] = playbackProgress
+      
+      let targetTime = CMTime(seconds: timestamp, preferredTimescale: 600)
+      
+      player.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero)
+      
+      return .success
+    }
+    
+//    // Seek Forward Command
+//    commandCenter.seekForwardCommand.addTarget { [weak self] _ in
+//        guard let self = self else { return .commandFailed }
+//        self.onForwardTime(10) // TODO: must be implemented from bridge
+//        return .success
+//    }
+//    
+//    // Seek Backward Command
+//    commandCenter.seekBackwardCommand.addTarget { [weak self] event in
+//      event.command.isEnabled = true
+//        guard let self = self else { return .commandFailed }
+//        self.onBackwardTime(10) // TODO: must be implemented from bridge
+//        return .success
+//    }
+//    
+//    // Enable/Disable Commands
+//    commandCenter.seekForwardCommand.isEnabled = true
+//    commandCenter.seekBackwardCommand.isEnabled = true
+    
+    commandCenter.nextTrackCommand.isEnabled = false
+
+    commandCenter.skipForwardCommand.isEnabled = false
+    commandCenter.skipBackwardCommand.isEnabled = false
   }
   
   func toggleControls() {

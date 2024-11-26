@@ -30,6 +30,8 @@ struct InteractiveMediaSeekSlider : View {
   @State private var missingDuration: Double = 0.0
   @State private var currentTime: Double = 0.0
   
+  @State private var timeObservers: [String: Any] = [:]
+  
   var body: some View {
     ZStack {
       
@@ -121,47 +123,55 @@ struct InteractiveMediaSeekSlider : View {
       generatingThumbnailsFrames(url)
     })
     .onAppear {
-      setupPeriodicTimeObserver()
+      setupPeriodicTimeObserver(id: "periodTimeObserveId")
     }
     .onDisappear {
       thumbnailsUIImageFrames.removeAll()
       draggingImage = nil
     }
   }
-  
-  private func setupPeriodicTimeObserver() {
-    guard let player = mediaSession.player else { return }
-    guard let _ = player.currentItem else {return}
-    
-    player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: .main) { [self] time in
-      guard let currentItem = player.currentItem else {
-        return
+
+  private func setupPeriodicTimeObserver(id: String) {
+      guard let player = mediaSession.player else { return }
+      guard let _ = player.currentItem else { return }
+
+      // Verifica se já existe um observer com o ID fornecido
+      if timeObservers[id] != nil {
+          return
       }
-      
-      if time.seconds.isNaN || currentItem.duration.seconds.isNaN {
-        return
+
+      let observer = player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: .main) { [self] time in
+          guard let currentItem = player.currentItem else {
+              return
+          }
+
+          if time.seconds.isNaN || currentItem.duration.seconds.isNaN {
+              return
+          }
+
+          guard let duration = player.currentItem?.duration.seconds else { return }
+          self.duration = duration
+          self.missingDuration = duration - time.seconds
+          self.currentTime = time.seconds
+          mediaSession.updateNowPlayingInfo(time: time.seconds)
+
+          let loadedTimeRanges = currentItem.loadedTimeRanges
+          if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
+              let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
+              let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
+              let totalBuffering = (bufferedStart + bufferedDuration) / duration
+              self.updateBufferProgress(totalBuffering)
+          }
+
+          DispatchQueue.main.async {
+              if !mediaSession.isSeeking, time.seconds <= currentItem.duration.seconds {
+                  self.sliderProgress = CGFloat(time.seconds / duration)
+              }
+          }
       }
-      
-      guard let duration = player.currentItem?.duration.seconds else { return }
-      self.duration = duration
-      self.missingDuration = duration - time.seconds
-      self.currentTime = time.seconds
-      mediaSession.updateNowPlayingInfo(time: time.seconds)
-      
-      let loadedTimeRanges = currentItem.loadedTimeRanges
-      if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
-        let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
-        let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
-        let totalBuffering = (bufferedStart + bufferedDuration) / duration
-        self.updateBufferProgress(totalBuffering)
-      }
-      
-      DispatchQueue.main.async {
-        if !mediaSession.isSeeking, time.seconds <= currentItem.duration.seconds {
-          self.sliderProgress = CGFloat(time.seconds / duration)
-        }
-      }
-    }
+
+      // Salva o observador no dicionário
+      timeObservers[id] = observer
   }
   
   private func updateBufferProgress(_ progress: CGFloat) {

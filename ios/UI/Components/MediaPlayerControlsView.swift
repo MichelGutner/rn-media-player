@@ -29,8 +29,6 @@ struct MediaPlayerControlsView : View {
   
   @State private var sliderProgress: CGFloat = 0.0
   @State private var bufferingProgress: CGFloat = 0.0
-  
-  @State private var timeObserver: Any? = nil
 
   var body: some View {
     ZStack {
