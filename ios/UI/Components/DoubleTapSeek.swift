@@ -7,11 +7,11 @@ struct DoubleTapSeek: View {
   @State private var resetTimer: Timer?
   
   @Binding var isTapped: Bool
+  @ObservedObject var mediaSession: MediaSessionManager
   var isForward: Bool = false
-  var onTap: (Int) -> Void
+  
   var advanceValue: Int = 10
   var suffixAdvanceValue: String
-  var isFinished: () -> Void
   
   
   var body: some View {
@@ -43,10 +43,14 @@ struct DoubleTapSeek: View {
       .opacity(isTapped ? 1 : 0)
       .contentShape(Rectangle())
       .onTapGesture(count: isTapped ? 1 : 2) {
-        NotificationCenter.default.post(name: .DoubleTapNotification, object: true)
         self.isTapped = true
+        mediaSession.isSeeking = true
         tappedQuantity += 1
-        onTap(advanceValue)
+        if isForward {
+          mediaSession.onForwardTime(advanceValue)
+        } else {
+          mediaSession.onBackwardTime(advanceValue)
+        }
 
         resetTimer?.invalidate()
         
@@ -71,8 +75,8 @@ struct DoubleTapSeek: View {
         resetTimer = Timer.scheduledTimer(withTimeInterval: resetDuration, repeats: false) { _ in
           self.isTapped = false
           tappedQuantity = 0
-          isFinished()
-          NotificationCenter.default.post(name: .DoubleTapNotification, object: false)
+          mediaSession.scheduleHideControls()
+          mediaSession.isSeeking = false
         }
       }
   }

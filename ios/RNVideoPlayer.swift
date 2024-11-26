@@ -18,11 +18,11 @@ class RNVideoPlayer: RCTViewManager {
 
 @available(iOS 14.0, *)
 class RNVideoPlayerView : UIView {
-  private var videoPlayerView: VideoPlayerController? = .none
+  @ObservedObject private var mediaSession = MediaSessionManager()
+  private var videoPlayerView: VideoPlayerViewController? = .none
   private var player: AVPlayer? = nil
   
   @State private var thumbnailsUIImageFrames: [UIImage] = []
-//  private var playerLayer : AVPlayerLayer? = nil
   
   private var session = AVAudioSession.sharedInstance()
   private var mainView = UIView()
@@ -62,7 +62,7 @@ class RNVideoPlayerView : UIView {
   
   @objc var rate: Float = 0.0 {
     didSet {
-      NotificationCenter.default.post(name: .AVPlayerRateDidChange, object: rate)
+      adjustPlaybackRate(to: rate)
     }
   }
   
@@ -76,12 +76,13 @@ class RNVideoPlayerView : UIView {
     didSet {
       let url = changeQualityUrl
       if (url.isEmpty) { return }
-      NotificationCenter.default.post(name: .AVPlayerUrlChanged, object: url)
+      updatePlayerWithNewURL(url)
     }
   }
   
   override init(frame: CGRect) {
     super.init(frame: frame)
+    
     NotificationCenter.default.addObserver(forName: .MenuSelectedOption, object: nil, queue: .main, using: { notification in
       let tupleValues = notification.object as? (String, Any)
       let name = tupleValues?.0
@@ -117,9 +118,9 @@ class RNVideoPlayerView : UIView {
       print("URL not found.")
       return
     }
+    let startTime = source?["startTime"] as? Double ?? 0
     
     DispatchQueue.main.async { [self] in
-      let startTime = source?["startTime"] as? Double ?? 0
       self.player = AVPlayer(url: videoURL)
       self.player?.seek(to: CMTime(seconds: startTime, preferredTimescale: 1))
       
@@ -132,14 +133,15 @@ class RNVideoPlayerView : UIView {
       }
       
       if let player {
-        videoPlayerView = VideoPlayerController(player: player, menus: menus)
+        videoPlayerView = VideoPlayerViewController(player: player, mediaSession: mediaSession, menus: menus)
         if let wrapper = videoPlayerView?.view {
           addSubview(wrapper)
         }
       }
-    }
-    if let thumbnails = source?["thumbnails"] as? NSDictionary {
-      NotificationCenter.default.post(name: .AVPlayerThumbnails, object: thumbnails)
+      
+      mediaSession.makeNowPlayingInfo()
+      mediaSession.setupRemoteCommandCenter()
+      mediaSession.thumbnailsDictionary = source?["thumbnails"] as? NSDictionary
     }
   }
   
@@ -180,91 +182,116 @@ class RNVideoPlayerView : UIView {
       }
   }
   
-  private func initializePlayer() {
-    let thumbnailsProps = source?["thumbnails"] as? NSDictionary
-    let startTime = source?["startTime"] as? Double ?? 0.0
-    player?.seek(to: CMTime(seconds: startTime, preferredTimescale: 1))
-    
-    if let controllersProps = controlsStyles {
-      let playbackProps = PlaybackControlsStyle(dictionary: controllersProps["playback"] as? NSDictionary)
-      let seekSliderProps = SeekSliderStyle(dictionary: controllersProps["seekSlider"] as? NSDictionary)
-      let timeCodesProps = TimeCodesStyle(dictionary: controllersProps["timeCodes"] as? NSDictionary)
-      let menusUiConfig = MenusStyle(dictionary: controllersProps["menus"] as? NSDictionary)
-      let fullScreenProps = FullScreenButtonStyle(dictionary: controllersProps["fullScreen"] as? NSDictionary)
-      let downloadProps = DownloadControlHashableProps(dictionary: controllersProps["download"] as? NSDictionary)
-      let toastProps = ToastStyle(dictionary: controllersProps["toast"] as? NSDictionary)
-      let headerProps = HeaderStyle(dictionary: controllersProps["header"] as? NSDictionary)
-      let loadingProps = LoadingStyle(dictionary: controllersProps["loading"] as? NSDictionary)
-      
-      UIControlsProps = Styles(
-        playbackControl: playbackProps,
-        seekSliderControl: seekSliderProps,
-        timeCodesControl: timeCodesProps,
-        menusControl: menusUiConfig,
-        fullScreenControl: fullScreenProps,
-        downloadControl: downloadProps,
-        toastControl: toastProps,
-        headerControl: headerProps,
-        loadingControl: loadingProps
-      )
-    }
-    
-    let mode = Resize(rawValue: resizeMode as String)
-    let videoGravity = self.videoGravity(mode!)
-    
-    if let autoEnterFullscreen = screenBehavior["autoEnterFullscreenOnLandscape"] as? Bool {
-      self.autoEnterFullscreenOnLandscape = autoEnterFullscreen
-    }
-    if let autoOrientationOnFullscreen = screenBehavior["autoOrientationOnFullscreen"] as? Bool {
-      self.autoOrientationOnFullscreen = autoOrientationOnFullscreen
-    }
-    
-    let viewController = UIHostingController(
-      rootView: ViewController(
-        player: player,
-        autoPlay: autoPlay,
-        menus: menus,
-        bridgeControls: PlayerControls (
-          togglePlayback: {_ in },
-          optionSelected: { [weak self] name, value in
-            self?.onMenuItemSelected?(["name": name, "value": value])
-          }
-        ),
-        autoOrientationOnFullscreen: autoOrientationOnFullscreen,
-        autoEnterFullscreenOnLandscape: autoEnterFullscreenOnLandscape,
-        thumbnails: thumbnailsProps,
-        tapToSeek: tapToSeek,
-        UIControls: UIControlsProps,
-        videoGravity: videoGravity
-      )
-    )
-    
-    mainView = viewController.view
-    mainView.clipsToBounds = true
-    addSubview(mainView)
-    setNeedsLayout()
-  }
+//  private func initializePlayer() {
+//    let thumbnailsProps = source?["thumbnails"] as? NSDictionary
+//    let startTime = source?["startTime"] as? Double ?? 0.0
+//    player?.seek(to: CMTime(seconds: startTime, preferredTimescale: 1))
+//    
+//    if let controllersProps = controlsStyles {
+//      let playbackProps = PlaybackControlsStyle(dictionary: controllersProps["playback"] as? NSDictionary)
+//      let seekSliderProps = SeekSliderStyle(dictionary: controllersProps["seekSlider"] as? NSDictionary)
+//      let timeCodesProps = TimeCodesStyle(dictionary: controllersProps["timeCodes"] as? NSDictionary)
+//      let menusUiConfig = MenusStyle(dictionary: controllersProps["menus"] as? NSDictionary)
+//      let fullScreenProps = FullScreenButtonStyle(dictionary: controllersProps["fullScreen"] as? NSDictionary)
+//      let downloadProps = DownloadControlHashableProps(dictionary: controllersProps["download"] as? NSDictionary)
+//      let toastProps = ToastStyle(dictionary: controllersProps["toast"] as? NSDictionary)
+//      let headerProps = HeaderStyle(dictionary: controllersProps["header"] as? NSDictionary)
+//      let loadingProps = LoadingStyle(dictionary: controllersProps["loading"] as? NSDictionary)
+//      
+//      UIControlsProps = Styles(
+//        playbackControl: playbackProps,
+//        seekSliderControl: seekSliderProps,
+//        timeCodesControl: timeCodesProps,
+//        menusControl: menusUiConfig,
+//        fullScreenControl: fullScreenProps,
+//        downloadControl: downloadProps,
+//        toastControl: toastProps,
+//        headerControl: headerProps,
+//        loadingControl: loadingProps
+//      )
+//    }
+//    
+//    let mode = Resize(rawValue: resizeMode as String)
+//    let videoGravity = self.videoGravity(mode!)
+//    
+//    if let autoEnterFullscreen = screenBehavior["autoEnterFullscreenOnLandscape"] as? Bool {
+//      self.autoEnterFullscreenOnLandscape = autoEnterFullscreen
+//    }
+//    if let autoOrientationOnFullscreen = screenBehavior["autoOrientationOnFullscreen"] as? Bool {
+//      self.autoOrientationOnFullscreen = autoOrientationOnFullscreen
+//    }
+//    
+//    let viewController = UIHostingController(
+//      rootView: ViewController(
+//        player: player,
+//        autoPlay: autoPlay,
+//        menus: menus,
+//        bridgeControls: PlayerControls (
+//          togglePlayback: {_ in },
+//          optionSelected: { [weak self] name, value in
+//            self?.onMenuItemSelected?(["name": name, "value": value])
+//          }
+//        ),
+//        autoOrientationOnFullscreen: autoOrientationOnFullscreen,
+//        autoEnterFullscreenOnLandscape: autoEnterFullscreenOnLandscape,
+//        thumbnails: thumbnailsProps,
+//        tapToSeek: tapToSeek,
+//        UIControls: UIControlsProps,
+//        videoGravity: videoGravity
+//      )
+//    )
+//    
+//    mainView = viewController.view
+//    mainView.clipsToBounds = true
+//    addSubview(mainView)
+//    setNeedsLayout()
+//  }
   
   override func layoutSubviews() {
     videoPlayerView?.view.frame = bounds
     super.layoutSubviews()
   }
-
-  private func releaseResources() {
-    player?.replaceCurrentItem(with: nil)
-    player?.pause()
-    player = nil
-    NotificationCenter.default.removeObserver(self, name: .AVPlayerErrors, object: nil)
-    NotificationCenter.default.removeObserver(self, name: .AVPlayerSource, object: nil)
-    NotificationCenter.default.removeObserver(self, name: .AVPlayerRateDidChange, object: nil)
-    NotificationCenter.default.removeObserver(self, name: .AVPlayerUrlChanged, object: nil)
-    setNeedsLayout()
+  
+  override func removeFromSuperview() {
+    videoPlayerView?.releaseResources()
   }
-}
-
-struct PlayerControls {
-  var togglePlayback: (_ status: Bool) -> Void
-  var optionSelected: (_ label: String, _ value: Any) -> Void
+  
+  @objc private func updatePlayerWithNewURL(_ url: String) {
+    guard let player else { return }
+    
+    let newUrl = URL(string: url)
+    
+    if (newUrl == mediaSession.urlOfCurrentPlayerItem()) {
+      return
+    }
+    
+    let currentTime = player.currentItem?.currentTime() ?? CMTime.zero
+    let asset = AVURLAsset(url: newUrl!)
+    let newPlayerItem = AVPlayerItem(asset: asset)
+    
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+      player.replaceCurrentItem(with: newPlayerItem)
+      player.seek(to: currentTime)
+    
+      var playerItemStatusObservation: NSKeyValueObservation?
+      playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { (item, _) in
+        NotificationCenter.default.post(name: .AVPlayerErrors, object: extractPlayerItemError(item))
+        guard item.status == .readyToPlay else {
+          return
+        }
+        playerItemStatusObservation?.invalidate()
+      }
+    })
+  }
+  
+  @objc private func adjustPlaybackRate(to rate: Float) {
+    mediaSession.newRate = rate
+    DispatchQueue.main.async(execute: { [self] in
+      if (self.player?.timeControlStatus == .playing) {
+        self.player?.rate = rate
+      }
+    })
+  }
 }
 
 @available(iOS 14.0, *)

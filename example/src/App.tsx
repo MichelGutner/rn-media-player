@@ -40,15 +40,9 @@ function App(): JSX.Element {
       <Video
         source={{
           url,
-          metadata: {
-            title: 'Sintel',
-            artist: 'Google',
-          },
+          metadata: { title: 'Sintel', artist: 'Google' },
           startTime: 94,
-          thumbnails: {
-            enabled: true,
-            url: url,
-          },
+          thumbnails: { enabled: true, url },
         }}
         style={{
           height: 375,

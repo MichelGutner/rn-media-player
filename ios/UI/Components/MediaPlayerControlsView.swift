@@ -10,7 +10,7 @@ import AVKit
 import Combine
 
 @available(iOS 14.0, *)
-struct PlayBackControlsManager : View {
+struct MediaPlayerControlsView : View {
   @ObservedObject var mediaSession: MediaSessionManager
   var advanceValue: Int
   var suffixAdvanceValue: String
@@ -20,13 +20,17 @@ struct PlayBackControlsManager : View {
   @State private var isTapped: Bool = false
   @State private var isTappedLeft: Bool = false
   @State private var isBuffering: Bool = true
-//  @State private var observable.isControlsVisible = true // TODO: must be initial false
   
   @State private var playPauseTransparency = 0.0
 
   @State private var cancellables = Set<AnyCancellable>()
   
   @State private var selectedOptionItem: [String: String] = [:]
+  
+  @State private var sliderProgress: CGFloat = 0.0
+  @State private var bufferingProgress: CGFloat = 0.0
+  
+  @State private var timeObserver: Any? = nil
 
   var body: some View {
     ZStack {
@@ -34,8 +38,19 @@ struct PlayBackControlsManager : View {
              .frame(maxWidth: .infinity, maxHeight: .infinity)
              .ignoresSafeArea()
       HStack(spacing: StandardSizes.large55) {
-        DoubleTapSeek(isTapped: $isTappedLeft, onTap:  onBackwardTime, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: mediaSession.scheduleHideControls)
-        DoubleTapSeek(isTapped: $isTapped, isForward: true, onTap:  onForwardTime, advanceValue: advanceValue, suffixAdvanceValue: suffixAdvanceValue, isFinished: mediaSession.scheduleHideControls)
+        DoubleTapSeek(
+          isTapped: $isTappedLeft,
+          mediaSession: mediaSession,
+          advanceValue: advanceValue,
+          suffixAdvanceValue: suffixAdvanceValue
+        )
+        DoubleTapSeek(
+          isTapped: $isTapped,
+          mediaSession: mediaSession,
+          isForward: true,
+          advanceValue: advanceValue,
+          suffixAdvanceValue: suffixAdvanceValue
+        )
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -77,11 +92,11 @@ struct PlayBackControlsManager : View {
               
             }
           }
+          .opacity(mediaSession.isControlsVisible && !mediaSession.isSeeking ? 1 : 0)
+          .animation(.easeInOut(duration: 0.2), value: mediaSession.isControlsVisible || mediaSession.isSeeking)
           .onAppear {
             mediaSession.scheduleHideControls()
           }
-          .opacity(mediaSession.isControlsVisible ? 1 : 0.0001)
-          .animation(.easeInOut(duration: 0.35), value: mediaSession.isControlsVisible)
         }
         
         VStack {
@@ -105,55 +120,58 @@ struct PlayBackControlsManager : View {
             
           }
           .offset(y: mediaSession.isControlsVisible ? 0 : -5)
-          .opacity(mediaSession.isControlsVisible ? 1 : 0)
-          .animation(.easeInOut(duration: 0.2), value: mediaSession.isControlsVisible)
+          .opacity(mediaSession.isControlsVisible && !mediaSession.isSeeking ? 1 : 0)
+          .animation(.easeInOut(duration: 0.2), value: mediaSession.isControlsVisible || mediaSession.isSeeking)
+          
           Spacer()
+          
           VStack {
+            Spacer()
             HStack {
               Spacer()
               Menu {
-                  ForEach(menuOptions, id: \.key) { option in
-                      let values = option.values["data"] as? [NSDictionary] ?? []
-                      let initialSelected = option.values["initialItemSelected"] as? String
-                      let currentSelection = selectedOptionItem[option.key]
-                      
-                      Menu(option.key) {
-                          ForEach(values, id: \.self) { item in
-                              if let name = item["name"] as? String {
-                                  let isSelected = currentSelection == name || (currentSelection == nil && name == initialSelected)
-                                  
-                                  Button(action: {
-                                      if let value = item["value"] {
-                                          selectedOptionItem[option.key] = name
-                                        NotificationCenter.default.post(name: .MenuSelectedOption, object: (option.key, value))
-                                      }
-                                  }) {
-                                    if #available(iOS 14.5, *) {
-                                      if isSelected {
-                                        Label(name, systemImage: "checkmark")
-                                          .labelStyle(.titleAndIcon)
-                                      } else {
-                                        Text(name)
-                                      }
-                                    } else {
-                                      if isSelected {
-                                        Label(name, systemImage: "checkmark")
-                                      } else {
-                                        Text(name)
-                                      }
-                                    }
-                                  }
-                              }
+                ForEach(menuOptions, id: \.key) { option in
+                  let values = option.values["data"] as? [NSDictionary] ?? []
+                  let initialSelected = option.values["initialItemSelected"] as? String
+                  let currentSelection = selectedOptionItem[option.key]
+                  
+                  Menu(option.key) {
+                    ForEach(values, id: \.self) { item in
+                      if let name = item["name"] as? String {
+                        let isSelected = currentSelection == name || (currentSelection == nil && name == initialSelected)
+                        
+                        Button(action: {
+                          if let value = item["value"] {
+                            selectedOptionItem[option.key] = name
+                            NotificationCenter.default.post(name: .MenuSelectedOption, object: (option.key, value))
                           }
+                        }) {
+                          if #available(iOS 14.5, *) {
+                            if isSelected {
+                              Label(name, systemImage: "checkmark")
+                                .labelStyle(.titleAndIcon)
+                            } else {
+                              Text(name)
+                            }
+                          } else {
+                            if isSelected {
+                              Label(name, systemImage: "checkmark")
+                            } else {
+                              Text(name)
+                            }
+                          }
+                        }
                       }
+                    }
                   }
+                }
               } label: {
-                  Image(systemName: "ellipsis.circle")
-                      .frame(width: 20, height: 20)
-                      .padding(8)
-                      .foregroundColor(.white)
-                      .font(.system(size: 20))
-
+                Image(systemName: "ellipsis.circle")
+                  .frame(width: 20, height: 20)
+                  .padding(.horizontal, 8)
+                  .foregroundColor(.white)
+                  .font(.system(size: 20))
+                
               }
               Button(action: {
                 onTapFullscreen?()
@@ -166,7 +184,7 @@ struct PlayBackControlsManager : View {
                   
                   Image(systemName: "arrow.down.right.and.arrow.up.left")
                     .rotationEffect(.degrees(90))
-                    .padding(8)
+                    .padding(.horizontal, 8)
                     .foregroundColor(.white)
                     .font(.system(size: 20))
                     .scaleEffect(mediaSession.isFullscreen ? 1 : 0)
@@ -175,7 +193,7 @@ struct PlayBackControlsManager : View {
                   Image(systemName: "arrow.up.left.and.arrow.down.right")
                     .rotationEffect(.degrees(90))
                     .frame(width: 20, height: 20)
-                    .padding(8)
+                    .padding(.horizontal, 8)
                     .foregroundColor(.white)
                     .font(.system(size: 20))
                     .scaleEffect(mediaSession.isFullscreen ? 0 : 1)
@@ -183,7 +201,10 @@ struct PlayBackControlsManager : View {
                 }
               })
             }
-            CustomSeekSlider(mediaSession: mediaSession, UIControlsProps: .constant(.none))
+            .opacity(mediaSession.isSeeking ? 0 : 1)
+            .animation(.easeInOut(duration: 0.2), value: mediaSession.isSeeking)
+            
+            InteractiveMediaSeekSlider(mediaSession: mediaSession, UIControlsProps: .constant(.none))
           }
           .offset(y: mediaSession.isControlsVisible ? 0 : 5)
           .opacity(mediaSession.isControlsVisible ? 1 : 0)
@@ -212,7 +233,7 @@ struct PlayBackControlsManager : View {
 }
 
 @available(iOS 14.0, *)
-extension PlayBackControlsManager {
+extension MediaPlayerControlsView {
   private func setupPlayerObservation() {
     guard let player = mediaSession.player else { return }
     
@@ -241,31 +262,6 @@ extension PlayBackControlsManager {
         player.rate = mediaSession.newRate
       }
     }
-  }
-  
-  private func onBackwardTime(_ timeToChange: Int) {
-    guard let player = mediaSession.player else { return }
-    guard let currentItem = player.currentItem else { return }
-    mediaSession.cancelTimeoutWorkItem()
-    let currentTime = CMTimeGetSeconds(player.currentTime())
-    let newTime = max(currentTime - Double(timeToChange), 0)
-    player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
-                toleranceBefore: .zero,
-                toleranceAfter: .zero,
-                completionHandler: { _ in })
-  }
-  
-  private func onForwardTime(_ timeToChange: Int) {
-    guard let player = mediaSession.player else { return }
-    guard let currentItem = player.currentItem else { return }
-    mediaSession.cancelTimeoutWorkItem()
-    
-    let currentTime = CMTimeGetSeconds(player.currentTime())
-    let newTime = max(currentTime + Double(timeToChange), 0)
-    player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
-                toleranceBefore: .zero,
-                toleranceAfter: .zero,
-                completionHandler: { _ in })
   }
   
   private var menuOptions: [(key: String, values: NSDictionary)] {
