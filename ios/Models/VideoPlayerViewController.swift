@@ -52,8 +52,6 @@ class VideoPlayerViewController : UIViewController {
       rootView:
         MediaPlayerControlsView(
           mediaSession: mediaSessionManager,
-          advanceValue: 10,
-          suffixAdvanceValue: "seconds",
           onTapFullscreen: {
             self.toggleFullScreen()
           },
@@ -82,15 +80,36 @@ class VideoPlayerViewController : UIViewController {
   }
   
   @objc private func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
+    let touch1 = gesture.location(ofTouch: 0, in: view)
+    let touch2 = gesture.location(ofTouch: 1, in: view)
+    let minZoom = 1.0
+    let maxZoom = 2.0
+
+    let isHorizontal = abs(touch1.x - touch2.x) > abs(touch1.y - touch2.y)
+
     if gesture.state == .changed || gesture.state == .began {
       let scale = gesture.scale
-      let newScale = currentZoomScale * scale
+      var newScale = currentZoomScale * scale
       
-      if newScale > 1.0 {
-        playerLayer.videoGravity = .resizeAspectFill
+      newScale = max(minZoom, min(newScale, maxZoom))
+      
+      if isHorizontal {
+        if (newScale > 1) {
+          playerLayer.videoGravity = .resize
+          NotificationCenter.default.post(name: .EventPinchZoom, object: nil, userInfo: ["currentZoom": "resize"])
+          return;
+        }
       } else {
-        playerLayer.videoGravity = .resizeAspect
+        if (newScale > 1) {
+          playerLayer.videoGravity = .resizeAspectFill
+          NotificationCenter.default.post(name: .EventPinchZoom, object: nil, userInfo: ["currentZoom": "resizeAspectFill"])
+          return;
+        }
       }
+      playerLayer.videoGravity = .resizeAspect
+      
+      NotificationCenter.default.post(name: .EventPinchZoom, object: nil, userInfo: ["currentZoom": "resizeAspect"])
+      
     }
   }
   
@@ -149,7 +168,7 @@ class VideoPlayerViewController : UIViewController {
     return currentHeight.rounded() - currentHeight / 4
   }
   
-  private func enterFullscreenMode() {
+  func enterFullscreenMode() {
     guard !isFullscreenTransitionActive else { return }
     guard let mainBounds = view.window?.windowScene?.screen.bounds else { return }
     mediaSessionManager.isControlsVisible = false
@@ -178,6 +197,7 @@ class VideoPlayerViewController : UIViewController {
       UIView.animate(withDuration: 0.5, animations: {
         self.playerLayer.position = CGPoint(x: UIScreen.main.bounds.midX, y: self.fullscreenVC.view.bounds.midY)
       }, completion: { [self] _ in
+        NotificationCenter.default.post(name: .EventFullscreen, object: true)
         isFullscreenTransitionActive = false
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
@@ -204,21 +224,22 @@ class VideoPlayerViewController : UIViewController {
     }
   }
   
-  private func exitFullscreenMode() {
-      isFullscreenTransitionActive = true
+  func exitFullscreenMode() {
+    isFullscreenTransitionActive = true
 
-      self.playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
+    self.playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
 
-      UIView.animate(withDuration: 0.5, animations: {
-          self.fullscreenVC.view.backgroundColor = .clear
-      })
-        
-    self.fullscreenVC.dismiss(animated: false) {
-      self.playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
-      self.addPlayerLayerFrameWithSafeArea(self.view.bounds)
-      self.view.layer.addSublayer(self.playerLayer)
-      self.attachControlsToParent(to: self)
-      self.isFullscreenTransitionActive = false
-    }
+    UIView.animate(withDuration: 0.5, animations: {
+        self.fullscreenVC.view.backgroundColor = .clear
+    })
+      
+  self.fullscreenVC.dismiss(animated: false) {
+    self.playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
+    self.addPlayerLayerFrameWithSafeArea(self.view.bounds)
+    self.view.layer.addSublayer(self.playerLayer)
+    self.attachControlsToParent(to: self)
+    self.isFullscreenTransitionActive = false
+    NotificationCenter.default.post(name: .EventFullscreen, object: false)
   }
+}
 }

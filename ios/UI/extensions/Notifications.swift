@@ -20,4 +20,13 @@ extension Notification.Name {
   static let AVPlayerInitialLoading = Notification.Name("AVPlayerLoading")
   static let AVPlayerSource = Notification.Name("AVPlayerSource")
   static let MenuSelectedOption = Notification.Name("MenuSelectedOption")
+  // Events
+  static let EventSeekBar = Notification.Name("EventSeekBar")
+  static let EventVideoProgress = Notification.Name("EventVideoProgress")
+  static let EventFullscreen = Notification.Name("EventFullscreen")
+  static let EventPlayPause = Notification.Name("EventPlayPause")
+  static let EventError = Notification.Name("EventError")
+  static let EventReady = Notification.Name("EventReady")
+  static let EventPinchZoom = Notification.Name("EventPinchZoom")
+  static let EventBuffer = Notification.Name("EventBuffer")
 }

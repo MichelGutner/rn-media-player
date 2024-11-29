@@ -23,6 +23,7 @@ struct RoutePickerView: UIViewRepresentable {
         routePickerView.activeTintColor = .white
         routePickerView.tintColor = .white
         routePickerView.prioritizesVideoDevices = true
+      
         return routePickerView
     }
     

@@ -24,6 +24,7 @@ class MediaSessionManager: ObservableObject {
   @Published var thumbnailsDictionary: NSDictionary? = nil
   @Published var newRate: Float = 1.0
   @Published var isPlaying: Bool = false
+  @Published var isBuffering: Bool = true
   
   @Published var isSeeking: Bool = false
   @Published var isFinished: Bool = false
@@ -31,6 +32,10 @@ class MediaSessionManager: ObservableObject {
   
   @Published var missingDuration: Double = 0.0
   @Published var currentTime: Double = 0.0
+  
+  @Published var tapToSeek: (seekValue: Int, suffixSeekValue: String)? = nil
+  
+  private var cancellables: Set<AnyCancellable> = []
   
   init() {
     NotificationCenter.default.addObserver(
@@ -103,8 +108,8 @@ class MediaSessionManager: ObservableObject {
       return .success
     }
     
-    commandCenter.changePlaybackPositionCommand.addTarget { [weak self] event in
-      guard let self = self, let currentItem = player.currentItem else {
+    commandCenter.changePlaybackPositionCommand.addTarget { event in
+      guard let currentItem = player.currentItem else {
         return .commandFailed
       }
       
@@ -192,6 +197,11 @@ class MediaSessionManager: ObservableObject {
     cancelTimeoutWorkItem()
     let currentTime = CMTimeGetSeconds(player.currentTime())
     let newTime = max(currentTime - Double(timeToChange), 0)
+    
+    if (newTime < currentItem.duration.seconds) {
+      isFinished = false
+    }
+    
     player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
                 toleranceBefore: .zero,
                 toleranceAfter: .zero,
@@ -205,14 +215,71 @@ class MediaSessionManager: ObservableObject {
     
     let currentTime = CMTimeGetSeconds(player.currentTime())
     let newTime = max(currentTime + Double(timeToChange), 0)
+    
+    if (newTime < currentItem.duration.seconds) {
+      isFinished = false
+    }
+    
     player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
                 toleranceBefore: .zero,
                 toleranceAfter: .zero,
                 completionHandler: { _ in })
   }
   
+  func setupPlayerObservation() {
+    guard let player else { return }
+    guard let currentItem = player.currentItem else { return }
+    player.publisher(for: \.timeControlStatus)
+      .sink { [self] status in
+        isPlaying = (status == .playing)
+        isBuffering = (status == .waitingToPlayAtSpecifiedRate)
+      }
+      .store(in: &cancellables)
+    
+    player.currentItem?.publisher(for: \.status)
+        .sink { status in
+          switch status {
+          case .readyToPlay:
+            NotificationCenter.default.post(
+              name: .EventReady,
+              object: nil,
+              userInfo: [
+                "ready": true,
+                "duration": currentItem.duration.seconds
+              ]
+            )
+          case .failed:
+            NotificationCenter.default.post(name: .EventError, object: currentItem.error)
+          case .unknown:
+            break
+          @unknown default:
+            break
+          }
+        }
+        .store(in: &cancellables)
+    
+    currentItem.publisher(for: \.isPlaybackBufferFull)
+      .sink { isFull in
+        NotificationCenter.default.post(name: .EventBuffer, object: nil, userInfo: ["completed": isFull])
+      }
+      .store(in: &cancellables)
+    
+    currentItem.publisher(for: \.isPlaybackLikelyToKeepUp)
+      .sink { isBuffering in
+        NotificationCenter.default.post(name: .EventBuffer, object: nil, userInfo: ["buffering": !isBuffering])
+      }
+      .store(in: &cancellables)
+    
+    currentItem.publisher(for: \.isPlaybackBufferEmpty)
+      .sink { isEmpty in
+        NotificationCenter.default.post(name: .EventBuffer, object: nil, userInfo: ["empty": isEmpty])
+      }
+      .store(in: &cancellables)
+  }
+  
   func clear() {
     thumbnailsDictionary = [:]
+    cancellables.removeAll()
   }
   
   

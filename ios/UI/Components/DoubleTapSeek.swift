@@ -5,13 +5,12 @@ struct DoubleTapSeek: View {
   @State private var showArrows: [Bool] = [false, false, false]
   @State private var resetDuration: TimeInterval = 0.7
   @State private var resetTimer: Timer?
-  
   @Binding var isTapped: Bool
   @ObservedObject var mediaSession: MediaSessionManager
   var isForward: Bool = false
   
-  var advanceValue: Int = 10
-  var suffixAdvanceValue: String
+  var seekValue: Int? = 10
+  var suffixSeekValue: String? = "seconds"
   
   
   var body: some View {
@@ -32,7 +31,7 @@ struct DoubleTapSeek: View {
             .font(.title)
             .rotationEffect(.init(degrees: isForward ? 180 : 0))
             
-            Text("\(!isForward ? "- " : "")\(tappedQuantity * advanceValue) ".appending(suffixAdvanceValue))
+            Text("\(!isForward ? "- " : "")\(tappedQuantity * seekValue!) ".appending(suffixSeekValue!))
               .font(.caption)
               .fontWeight(.bold)
               .foregroundColor(.white)
@@ -47,9 +46,9 @@ struct DoubleTapSeek: View {
         mediaSession.isSeeking = true
         tappedQuantity += 1
         if isForward {
-          mediaSession.onForwardTime(advanceValue)
+          mediaSession.onForwardTime(seekValue!)
         } else {
-          mediaSession.onBackwardTime(advanceValue)
+          mediaSession.onBackwardTime(seekValue!)
         }
 
         resetTimer?.invalidate()

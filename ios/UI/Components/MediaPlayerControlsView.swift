@@ -12,19 +12,12 @@ import Combine
 @available(iOS 14.0, *)
 struct MediaPlayerControlsView : View {
   @ObservedObject var mediaSession: MediaSessionManager
-  var advanceValue: Int
-  var suffixAdvanceValue: String
   var onTapFullscreen: (() -> Void)?
   @Binding var menus: NSDictionary?
-  
   @State private var isTapped: Bool = false
   @State private var isTappedLeft: Bool = false
-  @State private var isBuffering: Bool = true
   
   @State private var playPauseTransparency = 0.0
-
-  @State private var cancellables = Set<AnyCancellable>()
-  
   @State private var selectedOptionItem: [String: String] = [:]
   
   @State private var sliderProgress: CGFloat = 0.0
@@ -32,22 +25,35 @@ struct MediaPlayerControlsView : View {
 
   var body: some View {
     ZStack {
-      LinearGradient(gradient: Gradient(colors: [Color.black.opacity(0.5), Color.black.opacity(0.2), Color.black.opacity(0.5)]), startPoint: .top, endPoint: .bottom)
-             .frame(maxWidth: .infinity, maxHeight: .infinity)
-             .ignoresSafeArea()
+      // Gradient Background ---
+      LinearGradient(
+        gradient: Gradient(
+          colors: [
+            Color.black.opacity(0.5),
+            Color.black.opacity(0.2),
+            Color.black.opacity(0.5)
+          ]
+        ),
+        startPoint: .top,
+        endPoint: .bottom
+      )
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .ignoresSafeArea()
+      
+      // DoubleTap Seek ---
       HStack(spacing: StandardSizes.large55) {
         DoubleTapSeek(
           isTapped: $isTappedLeft,
           mediaSession: mediaSession,
-          advanceValue: advanceValue,
-          suffixAdvanceValue: suffixAdvanceValue
+          seekValue: mediaSession.tapToSeek?.seekValue,
+          suffixSeekValue: mediaSession.tapToSeek?.suffixSeekValue
         )
         DoubleTapSeek(
           isTapped: $isTapped,
           mediaSession: mediaSession,
           isForward: true,
-          advanceValue: advanceValue,
-          suffixAdvanceValue: suffixAdvanceValue
+          seekValue: mediaSession.tapToSeek?.seekValue,
+          suffixSeekValue: mediaSession.tapToSeek?.suffixSeekValue
         )
       }
     }
@@ -56,9 +62,10 @@ struct MediaPlayerControlsView : View {
     .animation(.easeInOut(duration: 0.35), value: mediaSession.isControlsVisible)
     .overlay(
       ZStack(alignment: .center) {
-        if isBuffering {
+        if mediaSession.isBuffering {
             CustomLoading(color: UIColor.white)
         } else {
+          // PlayPause Control ---
           Button(action: {
             togglePlayback()
             playPauseTransparency = 0.6
@@ -100,6 +107,7 @@ struct MediaPlayerControlsView : View {
         VStack {
           HStack(alignment: .top) {
             Group {
+              // Header title
               if let title = mediaSession.currentItemtitle {
                 if #available(iOS 15.0, *) {
                   Text(title)
@@ -113,9 +121,10 @@ struct MediaPlayerControlsView : View {
               }
             }
             Spacer()
+            
+            // Router Picker -- AirPlay
             RoutePickerView()
               .frame(width: 35, height: 35)
-            
           }
           .offset(y: mediaSession.isControlsVisible ? 0 : -5)
           .opacity(mediaSession.isControlsVisible && !mediaSession.isSeeking ? 1 : 0)
@@ -127,6 +136,7 @@ struct MediaPlayerControlsView : View {
             Spacer()
             HStack {
               Spacer()
+              // Menu Control
               Menu {
                 ForEach(menuOptions, id: \.key) { option in
                   let values = option.values["data"] as? [NSDictionary] ?? []
@@ -171,15 +181,12 @@ struct MediaPlayerControlsView : View {
                   .font(.system(size: 20))
                 
               }
+              
+              // Fullscreen Control
               Button(action: {
                 onTapFullscreen?()
               }, label: {
                 ZStack {
-                  Circle()
-                    .fill(Color(uiColor: .systemFill))
-                    .frame(width: 30, height: 30)
-                    .opacity(playPauseTransparency)
-                  
                   Image(systemName: "arrow.down.right.and.arrow.up.left")
                     .rotationEffect(.degrees(90))
                     .padding(.horizontal, 8)
@@ -202,6 +209,7 @@ struct MediaPlayerControlsView : View {
             .opacity(mediaSession.isSeeking ? 0 : 1)
             .animation(.easeInOut(duration: 0.2), value: mediaSession.isSeeking)
             
+            // SeekSlider Control
             InteractiveMediaSeekSlider(mediaSession: mediaSession, UIControlsProps: .constant(.none))
           }
           .offset(y: mediaSession.isControlsVisible ? 0 : 5)
@@ -218,9 +226,6 @@ struct MediaPlayerControlsView : View {
           mediaSession.scheduleHideControls()
       }
     }
-    .onAppear {
-      setupPlayerObservation()
-    }
     .onDisappear {
       menus = [:]
     }
@@ -232,32 +237,24 @@ struct MediaPlayerControlsView : View {
 
 @available(iOS 14.0, *)
 extension MediaPlayerControlsView {
-  private func setupPlayerObservation() {
-    guard let player = mediaSession.player else { return }
-    
-    player.publisher(for: \.timeControlStatus)
-        .sink { [self] status in
-            mediaSession.isPlaying = (status == .playing)
-          self.isBuffering = (status == .waitingToPlayAtSpecifiedRate)
-        }
-        .store(in: &cancellables)
-  }
-  
   private func togglePlayback() {
     guard let player = mediaSession.player else { return }
     DispatchQueue.main.async { [self] in
       if mediaSession.isFinished {
         player.seek(to: .zero)
         player.play()
+        mediaSession.isFinished = false
       }
       
       if player.timeControlStatus == .playing {
         player.pause()
         mediaSession.cancelTimeoutWorkItem()
+        NotificationCenter.default.post(name: .EventPlayPause, object: false)
       } else {
         player.play()
         mediaSession.scheduleHideControls()
         player.rate = mediaSession.newRate
+        NotificationCenter.default.post(name: .EventPlayPause, object: true)
       }
     }
   }

@@ -50,19 +50,37 @@ type TOnError = TGenericEventHandler<{
     fixSuggestion: string;
   };
 }>;
+
 type TOnVideoProgress = TGenericEventHandler<{
   buffering: Float;
   progress: Float;
 }>;
-type TOnVideoDownloaded = TGenericEventHandler<{
-  downloaded: boolean;
-  status: string;
-  error: any;
+
+type TOnFullscreen = TGenericEventHandler<{
+  isFullscreen: boolean;
 }>;
-type TOnVideoBuffer = TGenericEventHandler<{ buffering: boolean }>;
+
+type TOnVideoBuffer = TGenericEventHandler<{
+  buffering: boolean;
+  completed: boolean;
+  empty: boolean;
+}>;
+
 type TOnVideoCompleted = TGenericEventHandler<{ completed: boolean }>;
 type TOnVideoPlayPause = TGenericEventHandler<{ isPlaying: boolean }>;
-type TOnVideoLoaded = TGenericEventHandler<{
+type TOnMediaRouter = TGenericEventHandler<{ isActive: boolean }>;
+type TonPinchZoom = TGenericEventHandler<{ currentZoom: string }>;
+type TOnSeekBar = TGenericEventHandler<{
+  start: {
+    percent: Float;
+    seconds: Float;
+  };
+  ended: {
+    percent: Float;
+    seconds: Float;
+  };
+}>;
+type TOnReady = TGenericEventHandler<{
   duration: Float;
   loaded: boolean;
 }>;
@@ -107,12 +125,15 @@ export type TVideoPlayer = Omit<ViewProps, 'style'> & {
    * iOS only
    */
   onBufferCompleted?: TOnVideoBufferCompleted;
-  onVideoDownloaded?: TOnVideoDownloaded;
+  onFullscreen?: TOnFullscreen;
   onBuffer?: TOnVideoBuffer;
-  onLoaded?: TOnVideoLoaded;
+  onReady?: TOnReady;
   onVideoProgress?: TOnVideoProgress;
   onPlayPause?: TOnVideoPlayPause;
   onCompleted?: TOnVideoCompleted;
+  onMediaRouter?: TOnMediaRouter;
+  onSeekBar?: TOnSeekBar;
+  onPinchZoom?: TonPinchZoom;
   onError?: TOnError;
   menus?: {
     [key: string]: {

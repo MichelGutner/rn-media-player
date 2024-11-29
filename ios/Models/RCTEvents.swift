@@ -46,11 +46,9 @@ class RCTEvents {
     self.onSeekBar = onSeekBar
     self.onReady = onReady
     self.onPinchZoom = onReady
-    
-    self.setupNotifications()
   }
   
-  private func setupNotifications() {
+  public func setupNotifications() {
     notificationObserver(forName: AVAudioSession.routeChangeNotification) { notification in
       self.checkActiveMediaRoute()
       DispatchQueue.main.async { [self] in
@@ -59,6 +57,10 @@ class RCTEvents {
         ]
         self.onMediaRouter?(event)
       }
+    }
+
+    notificationObserver(forName: AVPlayerItem.didPlayToEndTimeNotification) { [self] notification in
+      sendCompleted()
     }
     
     notificationObserver(forName: .EventVideoProgress) { [self] notification in
@@ -74,38 +76,34 @@ class RCTEvents {
 
       sendSeekbar(start: start, ended: ended)
     }
-
-    notificationObserver(forName: AVPlayerItem.didPlayToEndTimeNotification) { [self] notification in
-      sendCompleted()
-    }
     
-    notificationObserver(forName: .EventFullscreen){ [self] notification in
+    notificationObserver(forName: .EventFullscreen) { [self] notification in
       let event = notification.object as! Bool
       sendFullscreen(event)
     }
 
-    notificationObserver(forName: .EventPlayPause){ [self] notification in
+    notificationObserver(forName: .EventPlayPause) { [self] notification in
       let event = notification.object as! Bool
       sendPlayPause(event)
     }
     
-    notificationObserver(forName: .EventError){ [self] notification in
+    notificationObserver(forName: .EventError) { [self] notification in
       let event = notification.object as! NSError
       sendError(event)
     }
     
-    notificationObserver(forName: .EventReady){ [self] notification in
+    notificationObserver(forName: .EventReady) { [self] notification in
       let duration = notification.userInfo?["duration"] as! Double
       let ready = notification.userInfo?["ready"] as! Bool
       sendReady(duration, ready)
     }
     
-    notificationObserver(forName: .EventPinchZoom){ [self] notification in
+    notificationObserver(forName: .EventPinchZoom) { [self] notification in
       let event = notification.userInfo?["currentZoom"] as! String
       sendPinchZoom(event)
     }
     
-    notificationObserver(forName: .EventBuffer){ [self] notification in
+    notificationObserver(forName: .EventBuffer) { [self] notification in
       let buffering = notification.userInfo?["buffering"] as? Bool ?? false
       let completed = notification.userInfo?["completed"] as? Bool ?? false
       let empty = notification.userInfo?["empty"] as? Bool ?? false

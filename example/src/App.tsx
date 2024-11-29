@@ -62,6 +62,9 @@ function App(): JSX.Element {
             initialItemSelected: qualitiesValues[0]?.name as string,
           },
         }}
+        // onFullscreen={({ nativeEvent }) => {
+        //   console.log('fullscreen', nativeEvent);
+        // }}
         onMenuItemSelected={({ nativeEvent }) => {
           if (nativeEvent.name === SpeedsKey) {
             setRate(nativeEvent.value);
@@ -70,15 +73,19 @@ function App(): JSX.Element {
             setPlaybackQuality(nativeEvent.value);
           }
         }}
-        // onLoaded={({ nativeEvent }) => console.log(nativeEvent.duration)}
-        // onVideoProgress={(data) => {
-        //   console.log('video progress', data.nativeEvent);
+        // onVideoProgress={({ nativeEvent }) => {
+        //   console.log('video progress', nativeEvent);
         // }}
         // onPlayPause={(event) => console.log(event.nativeEvent.isPlaying)}
+        // onMediaRouter={(event) => console.log(event.nativeEvent.isActive)}
+        // onSeekBar={(event) => {
+        //   console.log(event.nativeEvent);
+        // }}
+        //-------
+
         // onCompleted={({ nativeEvent: { completed } }) => console.log(completed)}
-        // onBufferCompleted={(e) =>
-        //   console.log(`BUFFER COMPLETED ${JSON.stringify(e.nativeEvent)}`)
-        // }
+        // onReady={({ nativeEvent }) => console.log(nativeEvent)}
+        // onPinchZoom={({ nativeEvent }) => console.log(nativeEvent.currentZoom)}
         // onBuffer={(e) =>
         //   console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)
         // }
