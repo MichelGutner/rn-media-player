@@ -15,7 +15,7 @@ import MediaPlayer
 
 class MediaSessionManager: ObservableObject {
   @Published var player: AVPlayer? = nil
-  @Published var isControlsVisible: Bool = true
+  @Published var isControlsVisible: Bool = false
   @Published var timeoutWorkItem: DispatchWorkItem?
   
   @Published var timeObserver: Any? = nil
@@ -25,6 +25,7 @@ class MediaSessionManager: ObservableObject {
   @Published var newRate: Float = 1.0
   @Published var isPlaying: Bool = false
   @Published var isBuffering: Bool = true
+  @Published var isReady: Bool = false
   
   @Published var isSeeking: Bool = false
   @Published var isFinished: Bool = false
@@ -46,7 +47,7 @@ class MediaSessionManager: ObservableObject {
     )
   }
   
-  
+  deinit {}
   
   @objc private func handleFinishAVPlayerItem(_ notification: Notification) {
     guard let _ = notification.object as? AVPlayerItem else { return }
@@ -120,7 +121,6 @@ class MediaSessionManager: ObservableObject {
       guard duration.isFinite, duration > 0 else { return .commandFailed }
       
       let playbackProgress = max(min(timestamp / duration, 1), 0)
-      print(playbackProgress)
       
       MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackProgress] = playbackProgress
       
@@ -240,6 +240,7 @@ class MediaSessionManager: ObservableObject {
         .sink { status in
           switch status {
           case .readyToPlay:
+            self.isReady = true
             NotificationCenter.default.post(
               name: .EventReady,
               object: nil,

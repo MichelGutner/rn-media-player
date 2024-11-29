@@ -114,13 +114,21 @@ class VideoPlayerViewController : UIViewController {
   }
   
   private func configureAudioSession() {
-        let audioSession = AVAudioSession.sharedInstance()
-        do {
-            try audioSession.setCategory(.playback, mode: .default, options: [])
-            try audioSession.setActive(true)
-        } catch {
-            print("Failed to activate audio session: \(error.localizedDescription)")
-        }
+      let audioSession = AVAudioSession.sharedInstance()
+      do {
+          try audioSession.setCategory(.playback, mode: .default, options: [])
+          try audioSession.setActive(true)
+      } catch let error as NSError {
+          let errorInfo: [String: Any] = [
+              NSLocalizedDescriptionKey: "Failed to configure the audio session.",
+              NSLocalizedFailureReasonErrorKey: "An error occurred while setting up the audio session.",
+              NSLocalizedRecoverySuggestionErrorKey: "Check the audio session configuration or ensure no conflicts exist.",
+              NSUnderlyingErrorKey: error
+          ]
+          let detailedError = NSError(domain: "com.rnmediaplayer.audio", code: error.code, userInfo: errorInfo)
+          
+          NotificationCenter.default.post(name: .EventError, object: detailedError)
+      }
   }
   
   private func attachControlsToParent(to controller: UIViewController) {

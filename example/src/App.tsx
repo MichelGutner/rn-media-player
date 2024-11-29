@@ -66,6 +66,7 @@ function App(): JSX.Element {
         //   console.log('fullscreen', nativeEvent);
         // }}
         onMenuItemSelected={({ nativeEvent }) => {
+          console.log('🚀 ~ App ~ nativeEvent:', nativeEvent);
           if (nativeEvent.name === SpeedsKey) {
             setRate(nativeEvent.value);
           }
@@ -89,7 +90,7 @@ function App(): JSX.Element {
         // onBuffer={(e) =>
         //   console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)
         // }
-        // onError={(e) => console.log('native Error', e.nativeEvent)}
+        onError={(e) => console.log('native Error', e.nativeEvent)}
         // resizeMode={EResizeMode.Contain}
         // screenBehavior={{
         //   autoEnterFullscreenOnLandscape: false,

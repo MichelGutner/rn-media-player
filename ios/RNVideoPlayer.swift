@@ -18,7 +18,8 @@ class RNVideoPlayer: RCTViewManager {
 
 @available(iOS 14.0, *)
 class RNVideoPlayerView : UIView {
-  private var mediaSession = MediaSessionManager()
+  private var mediaSession: MediaSessionManager? = nil
+  private var eventsManager: RCTEvents? = nil
   private var videoPlayerView: VideoPlayerViewController? = .none
   private var player: AVPlayer? = nil
   
@@ -82,13 +83,6 @@ class RNVideoPlayerView : UIView {
   
   override init(frame: CGRect) {
     super.init(frame: frame)
-    
-    NotificationCenter.default.addObserver(forName: .MenuSelectedOption, object: nil, queue: .main, using: { notification in
-      let tupleValues = notification.object as? (String, Any)
-      let name = tupleValues?.0
-      let value = tupleValues?.1
-      self.onMenuItemSelected?(["name": name ?? "", "value": value as Any])
-    })
   }
   
   required init?(coder: NSCoder) {
@@ -98,10 +92,11 @@ class RNVideoPlayerView : UIView {
   @objc var resizeMode: NSString = "contain"
   
   private func setupPlayer() {
+    mediaSession = MediaSessionManager()
+    guard let mediaSession else { return }
     videoPlayerView?.releaseResources()
     guard let urlString = source?["url"] as? String,
           let videoURL = URL(string: urlString) else {
-      print("URL not found.")
       return
     }
     let startTime = source?["startTime"] as? Double ?? 0
@@ -125,7 +120,7 @@ class RNVideoPlayerView : UIView {
       }
       
       if let player {
-        let mEvents =  RCTEvents(
+        eventsManager =  RCTEvents(
           onVideoProgress: onVideoProgress,
           onError: onError,
           onBuffer: onBuffer,
@@ -135,9 +130,10 @@ class RNVideoPlayerView : UIView {
           onMediaRouter: onMediaRouter,
           onSeekBar: onSeekBar,
           onReady: onReady,
-          onPinchZoom: onPinchZoom
+          onPinchZoom: onPinchZoom,
+          onMenuItemSelected: onMenuItemSelected
         )
-        mEvents.setupNotifications()
+        eventsManager?.setupNotifications()
         
         videoPlayerView = VideoPlayerViewController(player: player, mediaSession: mediaSession, menus: menus)
         if let wrapper = videoPlayerView?.view {
@@ -199,24 +195,26 @@ class RNVideoPlayerView : UIView {
   }
   
   @objc private func updatePlayerWithNewURL(_ url: String) {
-    guard let player else { return }
-    
     let newUrl = URL(string: url)
     
-    if (newUrl == mediaSession.urlOfCurrentPlayerItem()) {
+
+    
+    if (newUrl == mediaSession?.urlOfCurrentPlayerItem()) {
       return
     }
     
-    let currentTime = player.currentItem?.currentTime() ?? CMTime.zero
+    let currentTime = mediaSession?.player?.currentItem?.currentTime() ?? CMTime.zero
     let asset = AVURLAsset(url: newUrl!)
     let newPlayerItem = AVPlayerItem(asset: asset)
     
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
-      player.replaceCurrentItem(with: newPlayerItem)
-      player.seek(to: currentTime)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: { [self] in
+      eventsManager?.setupNotifications()
+      
+      player?.replaceCurrentItem(with: newPlayerItem)
+      player?.seek(to: currentTime)
     
       var playerItemStatusObservation: NSKeyValueObservation?
-      playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { (item, _) in
+      playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { [self] (item, _) in
         NotificationCenter.default.post(name: .AVPlayerErrors, object: extractPlayerItemError(item))
         guard item.status == .readyToPlay else {
           return
@@ -227,7 +225,7 @@ class RNVideoPlayerView : UIView {
   }
   
   @objc private func adjustPlaybackRate(to rate: Float) {
-    mediaSession.newRate = rate
+    mediaSession?.newRate = rate
     DispatchQueue.main.async(execute: { [self] in
       if (self.player?.timeControlStatus == .playing) {
         self.player?.rate = rate

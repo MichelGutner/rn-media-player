@@ -34,7 +34,8 @@ class RCTEvents {
     onMediaRouter: RCTDirectEventBlock? = nil,
     onSeekBar: RCTDirectEventBlock? = nil,
     onReady: RCTDirectEventBlock? = nil,
-    onPinchZoom: RCTDirectEventBlock? = nil
+    onPinchZoom: RCTDirectEventBlock? = nil,
+    onMenuItemSelected: RCTDirectEventBlock? = nil
   ) {
     self.onVideoProgress = onVideoProgress
     self.onError = onError
@@ -46,6 +47,7 @@ class RCTEvents {
     self.onSeekBar = onSeekBar
     self.onReady = onReady
     self.onPinchZoom = onReady
+    self.onMenuItemSelected = onMenuItemSelected
   }
   
   public func setupNotifications() {
@@ -110,6 +112,13 @@ class RCTEvents {
 
       sendBufferEvent(buffering, completed, empty)
     }
+    
+    notificationObserver(forName: .EventMenuSelectOption) { [self] notification in
+      let values = notification.object as? (String, Any)
+      let name = values?.0
+      let value = values?.1
+      sendMenuSelectOption(name, value)
+    }
   }
   
   private func notificationObserver(
@@ -145,6 +154,16 @@ class RCTEvents {
       ]
       
       self.onFullscreen?(event)
+    }
+  }
+  
+  private func sendMenuSelectOption(_ name: String?, _ value: Any) {
+    DispatchQueue.main.async { [self] in
+      let event: [String: Any] = [
+        "name": name ?? "",
+        "value": value as Any
+      ]
+      onMenuItemSelected?(event)
     }
   }
   
