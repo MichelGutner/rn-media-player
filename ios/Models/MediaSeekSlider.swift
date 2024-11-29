@@ -22,6 +22,7 @@ class MediaSeekSlider: UIView {
     didSet { updateProgressBar() }
   }
   
+  var onProgressBegan: ((CGFloat) -> Void)?
   var onProgressChanged: ((CGFloat) -> Void)?
   var onProgressEnded: ((CGFloat) -> Void)?
   
@@ -78,6 +79,8 @@ class MediaSeekSlider: UIView {
     let progress = max(0, min(location.x / bounds.width, 1))
     
     switch gesture.state {
+    case .began:
+      onProgressBegan?(progress)
     case .changed:
       sliderProgress = progress
       onProgressChanged?(sliderProgress)

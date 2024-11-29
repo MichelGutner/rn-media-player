@@ -13,6 +13,7 @@ struct MediaSeekSliderView: UIViewRepresentable {
     @Binding var mediaSession: MediaSessionManager
     @Binding var sliderProgress: CGFloat
     @Binding var bufferingProgress: CGFloat
+    var onProgressBegan: ((CGFloat) -> Void)?
     var onProgressChanged: ((CGFloat) -> Void)?
     var onProgressEnded: ((CGFloat) -> Void)?
   
@@ -27,6 +28,11 @@ struct MediaSeekSliderView: UIViewRepresentable {
         slider.sliderProgress = sliderProgress
         
         // Configura callbacks
+      slider.onProgressBegan = { progress in
+        DispatchQueue.main.async {
+          onProgressBegan?(progress)
+        }
+      }
         slider.onProgressChanged = { progress in
             DispatchQueue.main.async {
                 sliderProgress = progress

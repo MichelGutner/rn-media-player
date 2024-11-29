@@ -29,8 +29,10 @@ struct InteractiveMediaSeekSlider : View {
   @State private var duration: Double = 0.0
   @State private var missingDuration: Double = 0.0
   @State private var currentTime: Double = 0.0
+  @State private var showThumbnails: Bool = false
   
   @State private var timeObservers: [String: Any] = [:]
+  @State private var lastProgress: Double = 0.0
   
   var body: some View {
     ZStack {
@@ -40,6 +42,20 @@ struct InteractiveMediaSeekSlider : View {
           mediaSession: .constant(mediaSession),
           sliderProgress: $sliderProgress,
           bufferingProgress: $bufferingProgress,
+          
+          onProgressBegan: { _ in
+            guard let player = mediaSession.player,
+                  let currentItem = player.currentItem else {
+              return
+            }
+            
+            lastProgress = currentItem.currentTime().seconds / duration
+            
+            mediaSession.isSeeking = true
+            showThumbnails = true
+            mediaSession.cancelTimeoutWorkItem()
+          },
+          
           onProgressChanged: { progress in
             guard let player = mediaSession.player,
                   let currentItem = player.currentItem else {
@@ -51,28 +67,35 @@ struct InteractiveMediaSeekSlider : View {
             guard durationInSeconds.isFinite else {
               return
             }
+            
             let draggIndex = Int(sliderProgress / 0.01)
             
             if thumbnailsUIImageFrames.indices.contains(draggIndex) {
               draggingImage = thumbnailsUIImageFrames[draggIndex]
             }
-            
-            mediaSession.isSeeking = true
-            mediaSession.cancelTimeoutWorkItem()
           },
           onProgressEnded: { progress in
+            showThumbnails = false
             guard let player = mediaSession.player,
                   let currentItem = player.currentItem else {
               return
             }
             
-            // Obtém a duração do item atual
             let durationInSeconds = currentItem.duration.seconds
             guard durationInSeconds.isFinite else {
               return
             }
             
-            let targetTime = CMTime(seconds: durationInSeconds * progress, preferredTimescale: 600)
+            let progressInSeconds = durationInSeconds * progress
+            let lastProgressInSeconds = durationInSeconds * lastProgress
+            
+            let targetTime = CMTime(seconds: progressInSeconds, preferredTimescale: 600)
+            
+            NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
+            
+            if progress < 1 {
+              mediaSession.isFinished = false
+            }
             
             player.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
               if completed {
@@ -85,9 +108,6 @@ struct InteractiveMediaSeekSlider : View {
         .frame(height: 24)
         .scaleEffect(x: mediaSession.isSeeking ? 1.03 : 1, y: mediaSession.isSeeking ? 1.5 : 1, anchor: .bottom)
         .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: mediaSession.isSeeking)
-        .onTapGesture {
-          mediaSession.isSeeking = true
-        }
         
         HStack {
           TimeCodes(time: $currentTime, UIControlsProps: .constant(.none))
@@ -103,7 +123,7 @@ struct InteractiveMediaSeekSlider : View {
               geometry: geometry,
               UIControlsProps: .constant(.none),
               sliderProgress: $sliderProgress,
-              isSeeking: .constant(mediaSession.isSeeking),
+              isSeeking: $showThumbnails,
               draggingImage: $draggingImage
             )
             Spacer()
@@ -166,6 +186,8 @@ struct InteractiveMediaSeekSlider : View {
           DispatchQueue.main.async {
               if !mediaSession.isSeeking, time.seconds <= currentItem.duration.seconds {
                   self.sliderProgress = CGFloat(time.seconds / duration)
+                let progressInfo = ["progress": sliderProgress, "buffering": bufferingProgress]
+                NotificationCenter.default.post(name: .EventVideoProgress, object: nil, userInfo: progressInfo)
               }
           }
       }
