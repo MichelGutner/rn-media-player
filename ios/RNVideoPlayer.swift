@@ -49,6 +49,8 @@ class RNVideoPlayerView : UIView {
   @objc var onSeekBar: RCTDirectEventBlock?
   @objc var onPinchZoom: RCTDirectEventBlock?
   
+  @objc var entersFullScreenWhenPlaybackBegins: Bool = false
+  
   @objc var thumbnailFramesSeconds: Float = 1.0
   @objc var screenBehavior: NSDictionary = [:]
   
@@ -93,6 +95,7 @@ class RNVideoPlayerView : UIView {
   
   private func setupPlayer() {
     mediaSession = MediaSessionManager()
+    mediaSession?.entersFullScreenWhenPlaybackBegins = entersFullScreenWhenPlaybackBegins
     guard let mediaSession else { return }
     videoPlayerView?.releaseResources()
     guard let urlString = source?["url"] as? String,
@@ -196,9 +199,7 @@ class RNVideoPlayerView : UIView {
   
   @objc private func updatePlayerWithNewURL(_ url: String) {
     let newUrl = URL(string: url)
-    
 
-    
     if (newUrl == mediaSession?.urlOfCurrentPlayerItem()) {
       return
     }
@@ -214,7 +215,7 @@ class RNVideoPlayerView : UIView {
       player?.seek(to: currentTime)
     
       var playerItemStatusObservation: NSKeyValueObservation?
-      playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { [self] (item, _) in
+      playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { (item, _) in
         NotificationCenter.default.post(name: .AVPlayerErrors, object: extractPlayerItemError(item))
         guard item.status == .readyToPlay else {
           return

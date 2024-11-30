@@ -19,6 +19,10 @@ extension Notification.Name {
   static let SeekingNotification = Notification.Name("SeekingNotification")
   static let AVPlayerInitialLoading = Notification.Name("AVPlayerLoading")
   static let AVPlayerSource = Notification.Name("AVPlayerSource")
+  
+  
+  static let FullscreenState = Notification.Name("FullscreenState")
+  static let PlayerLayerReadyForDisplay = Notification.Name("PlayerLayerReadyForDisplay")
   // Events
   static let EventMenuSelectOption = Notification.Name("EventMenuSelectOption")
   static let EventSeekBar = Notification.Name("EventSeekBar")

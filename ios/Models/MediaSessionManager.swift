@@ -15,7 +15,10 @@ import MediaPlayer
 
 class MediaSessionManager: ObservableObject {
   @Published var player: AVPlayer? = nil
+  @Published var playerLayer: AVPlayerLayer? = nil
+  
   @Published var isControlsVisible: Bool = false
+  @Published var entersFullScreenWhenPlaybackBegins: Bool = false
   @Published var timeoutWorkItem: DispatchWorkItem?
   
   @Published var timeObserver: Any? = nil
@@ -237,10 +240,10 @@ class MediaSessionManager: ObservableObject {
       .store(in: &cancellables)
     
     player.currentItem?.publisher(for: \.status)
-        .sink { status in
+      .sink { [self] status in
           switch status {
           case .readyToPlay:
-            self.isReady = true
+//            self.isReady = true
             NotificationCenter.default.post(
               name: .EventReady,
               object: nil,
@@ -276,6 +279,19 @@ class MediaSessionManager: ObservableObject {
         NotificationCenter.default.post(name: .EventBuffer, object: nil, userInfo: ["empty": isEmpty])
       }
       .store(in: &cancellables)
+    
+    playerLayer?.publisher(for: \.isReadyForDisplay)
+                .receive(on: DispatchQueue.main)
+                .sink { [self] isReady in
+                  self.isReady = isReady
+//                  self.isFullscreen = true
+                    if isReady {
+                      if entersFullScreenWhenPlaybackBegins {
+                        NotificationCenter.default.post(name: .FullscreenState, object: true)
+                      }
+                    }
+                }
+                .store(in: &cancellables)
   }
   
   func clear() {

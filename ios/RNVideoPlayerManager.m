@@ -15,7 +15,7 @@ RCT_EXPORT_VIEW_PROPERTY(screenBehavior, NSDictionary)
 
 RCT_EXPORT_VIEW_PROPERTY(paused, BOOL);
 RCT_EXPORT_VIEW_PROPERTY(autoPlay, BOOL)
-
+RCT_EXPORT_VIEW_PROPERTY(entersFullScreenWhenPlaybackBegins, BOOL)
 
 RCT_EXPORT_VIEW_PROPERTY(rate, float)
 //RCT_EXPORT_VIEW_PROPERTY(thumbnailFramesSeconds, float)

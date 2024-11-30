@@ -29,6 +29,7 @@ class VideoPlayerViewController : UIViewController {
   init(player: AVPlayer, mediaSession: MediaSessionManager, menus: NSDictionary?) {
     self.mediaSessionManager = mediaSession
     self.playerLayer = AVPlayerLayer(player: player)
+    self.mediaSessionManager.playerLayer = playerLayer
     self.menus = menus
     
     super.init(nibName: nil, bundle: nil)
@@ -44,6 +45,8 @@ class VideoPlayerViewController : UIViewController {
   
   override func viewDidLoad() {
     super.viewDidLoad()
+    mediaSessionManager.isFullscreen = false
+    mediaSessionManager.isReady = false
     
     let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
     view.addGestureRecognizer(pinchGesture)
@@ -59,6 +62,18 @@ class VideoPlayerViewController : UIViewController {
         ))
     
     configureAudioSession()
+    
+    
+    NotificationCenter.default.addObserver(forName: .FullscreenState, object: nil, queue: .main) { [self] Notification in
+      let fullscreenState = Notification.object as! Bool
+      
+      if fullscreenState, !mediaSessionManager.isFullscreen {
+        DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
+          enterFullscreenMode()
+          mediaSessionManager.isFullscreen = true
+        }
+      }
+    }
   }
   
   override func viewDidDisappear(_ animated: Bool) {

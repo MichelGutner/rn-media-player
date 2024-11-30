@@ -45,12 +45,13 @@ function App(): JSX.Element {
           thumbnails: { enabled: true, url },
         }}
         style={{
-          height: 375,
+          height: 350,
           backgroundColor: 'black',
         }}
         rate={rate}
         autoPlay={true}
         changeQualityUrl={playbackQuality}
+        entersFullScreenWhenPlaybackBegins
         tapToSeek={{
           value: 8,
           suffixLabel: 'segundos',

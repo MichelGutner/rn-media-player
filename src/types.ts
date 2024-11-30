@@ -106,6 +106,7 @@ export type TVideoPlayer = Omit<ViewProps, 'style'> & {
     autoEnterFullscreenOnLandscape?: boolean;
     autoOrientationOnFullscreen?: boolean;
   };
+  entersFullScreenWhenPlaybackBegins?: boolean;
   autoPlay?: boolean;
   style?: ViewStyle;
   rate?: number;

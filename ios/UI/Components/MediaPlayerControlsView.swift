@@ -56,7 +56,7 @@ struct MediaPlayerControlsView : View {
           )
         }
       }
-      .opacity(mediaSession.isControlsVisible ? 1 : 0.0001)
+      .opacity(mediaSession.isControlsVisible && mediaSession.isReady ? 1 : 0.0001)
       .animation(.easeInOut(duration: 0.35), value: mediaSession.isControlsVisible)
       .overlay(
         ZStack(alignment: .center) {
