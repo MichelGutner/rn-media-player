@@ -3,6 +3,9 @@ package com.rnvideoplayer.ui.components
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
+import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -15,6 +18,7 @@ import com.rnvideoplayer.fadeOut
 import com.rnvideoplayer.helpers.RNVideoHelpers
 import com.rnvideoplayer.interfaces.IThumbnailPreview
 import com.rnvideoplayer.utilities.ColorUtils
+import java.io.File
 import kotlin.concurrent.thread
 
 class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
@@ -103,11 +107,19 @@ class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
 
 
   override fun generatingThumbnailFrames(url: String) {
-    timestamp = 0
     bitmaps.clear()
+    timestamp = 0
+
+    val handler = Handler(Looper.getMainLooper())
     thread {
       val retriever = MediaMetadataRetriever()
-      retriever.setDataSource(url)
+      try {
+        retriever.setDataSource(url)
+      } catch (e: IllegalArgumentException) {
+        // Lidar com erro de URL inválido
+        e.printStackTrace()
+        return@thread
+      }
 
       val durationString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
       val duration = durationString?.toLong() ?: 0
@@ -121,6 +133,11 @@ class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
         }
       }
       retriever.release()
+
+      // Atualizar UI após a thread concluir
+      handler.post {
+        // Atualize sua UI com os thumbnails gerados aqui
+      }
     }
   }
 

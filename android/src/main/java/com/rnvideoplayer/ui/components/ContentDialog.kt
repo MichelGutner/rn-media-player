@@ -44,7 +44,7 @@ class CustomContentDialog(
 
     for (option in optionItems) {
       val optionView = LayoutInflater.from(context).inflate(R.layout.option_item, null)
-      val optionNameTextView: TextView = optionView.findViewById(R.id.qualityNameTextView)
+      val optionNameTextView: TextView = optionView.findViewById(R.id.optionItemText)
       val optionCheckImageView: ImageView = optionView.findViewById(R.id.checkImage)
 
       optionNameTextView.text = option.name

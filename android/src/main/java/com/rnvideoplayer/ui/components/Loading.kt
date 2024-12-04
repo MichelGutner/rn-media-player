@@ -37,7 +37,7 @@ class Loading(context: ThemedReactContext): FrameLayout(context) {
       layoutParams = layoutParamsCenter(sizeInPx, sizeInPx)
       isIndeterminate = true
       interpolator = AccelerateDecelerateInterpolator()
-      indeterminateDrawable.setColorFilter(Color.BLUE, android.graphics.PorterDuff.Mode.SRC_IN)
+      indeterminateDrawable.setColorFilter(Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN)
     }
   }
 }

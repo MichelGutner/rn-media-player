@@ -21,30 +21,21 @@ class CustomTimeBar(context: Context) : LinearLayout(context), ICustomSeekBar {
   var timeBarWidth: Int = 0
     private set
 
-  private val timeCodesDurationView = createTimeCodesDurationView(context)
-  private val timeCodesDuration = createTimeCodesDuration(context)
-
-  private val barWithTimeCodesDuration = LinearLayout(context).apply {
-    orientation = HORIZONTAL
-  }
+//  private val timeCodesDuration = createTimeCodesDuration(context)
 
   private val timeBar = createTimeBar(context)
 
   init {
-    barWithTimeCodesDuration.addView(timeBar)
-    barWithTimeCodesDuration.addView(timeCodesDurationView)
-    timeCodesDurationView.addView(timeCodesDuration)
-
     timeBar.viewTreeObserver.addOnGlobalLayoutListener {
       timeBarWidth = timeBar.width
     }
     visibility = INVISIBLE
-    addView(barWithTimeCodesDuration)
+    addView(timeBar)
   }
 
   override fun build(duration: Long) {
     timeBar.setDuration(duration)
-    timeCodesDuration.text = helper.createTimeCodesFormatted(duration)
+//    timeCodesDuration.text = helper.createTimeCodesFormatted(duration)
   }
 
   override fun update(position: Long, bufferProgress: Long) {
@@ -63,7 +54,7 @@ class CustomTimeBar(context: Context) : LinearLayout(context), ICustomSeekBar {
 
   private fun createTimeBar(context: Context): DefaultTimeBar {
     return DefaultTimeBar(context).apply {
-      layoutParams = LinearLayout.LayoutParams(
+      layoutParams = LayoutParams(
         0,
         ViewGroup.LayoutParams.WRAP_CONTENT
       ).apply {

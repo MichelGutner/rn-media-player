@@ -2,8 +2,10 @@ package com.rnvideoplayer.ui.controls
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageButton
@@ -11,6 +13,7 @@ import android.widget.LinearLayout
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.rnvideoplayer.R
+import com.rnvideoplayer.models.TimesCodes
 import com.rnvideoplayer.ui.components.CustomTimeBar
 import com.rnvideoplayer.ui.components.Thumbnails
 import com.rnvideoplayer.utilities.layoutParamsCenter
@@ -23,25 +26,30 @@ class BottomControls(context: Context) : FrameLayout(context) {
     }
   }
   private val buttonsLayout = createButtonsLayout(context)
-
-
-
   val menuControlLayout = createMenuControlLayout(context)
   val fullscreenControlLayout = fullscreenControlLayout(context)
   val fullscreenButton = createFullscreenButtonAnimated(context)
 
   val timeBar = CustomTimeBar(context)
+
+  val timesCodeDuration = TimesCodes(context)
+  val timeCodesPosition = TimesCodes(context)
+  private val timeCodesView = timesCodesView(context)
+
   val thumbnails by lazy { Thumbnails(context) }
 
+  val frameLayout = frameLayout(context)
 
   init {
     fullscreenControlLayout.addView(fullscreenButton)
-
     buttonsLayout.addView(menuControlLayout)
     buttonsLayout.addView(fullscreenControlLayout)
-    mainLayout.addView(thumbnails)
+    frameLayout.addView(buttonsLayout)
+    frameLayout.addView(thumbnails)
+    mainLayout.addView(frameLayout)
     mainLayout.addView(timeBar)
-    mainLayout.addView(buttonsLayout)
+
+    mainLayout.addView(timeCodesView)
 
     addView(mainLayout)
   }
@@ -49,7 +57,58 @@ class BottomControls(context: Context) : FrameLayout(context) {
   private fun createButtonsLayout(context: Context): LinearLayout {
     return LinearLayout(context).apply {
       orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.END
+      gravity = Gravity.END or Gravity.BOTTOM
+
+      layoutParams = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.MATCH_PARENT
+      )
+    }
+  }
+
+  private fun timesCodesView(context: Context): LinearLayout {
+    return LinearLayout(context).apply {
+      orientation = LinearLayout.HORIZONTAL
+      layoutParams = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+      setPadding(dpToPx(8), dpToPx(0), dpToPx(8), dpToPx(0))
+
+      addView(timeCodesPosition.apply {
+        layoutParams = LinearLayout.LayoutParams(
+          LinearLayout.LayoutParams.WRAP_CONTENT,
+          LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+          gravity = Gravity.START
+        }
+      })
+
+      addView(View(context).apply {
+        layoutParams = LinearLayout.LayoutParams(0, 0).apply {
+          weight = 1f
+        }
+      })
+
+      addView(timesCodeDuration.apply {
+        layoutParams = LinearLayout.LayoutParams(
+          LinearLayout.LayoutParams.WRAP_CONTENT,
+          LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+          gravity = Gravity.END
+        }
+      })
+    }
+  }
+
+  private fun frameLayout(context: Context): FrameLayout {
+    return FrameLayout(context).apply {
+      layoutParams = LayoutParams(
+        LayoutParams.MATCH_PARENT,
+        LayoutParams.WRAP_CONTENT
+      ).apply {
+        gravity = Gravity.END
+      }
     }
   }
 
@@ -64,7 +123,7 @@ class BottomControls(context: Context) : FrameLayout(context) {
   private fun createMenuControlLayout(context: Context): LinearLayout {
     val menuControlLayout = LinearLayout(context).apply {
       layoutParams = LinearLayout.LayoutParams(dpToPx(40), dpToPx(40)).apply {
-        setMargins(dpToPx(4),dpToPx(4),dpToPx(4),dpToPx(8))
+        setMargins(dpToPx(4),dpToPx(4),dpToPx(4),dpToPx(4))
       }
       setBackgroundResource(R.drawable.rounded_background)
       isClickable = true
@@ -81,7 +140,7 @@ class BottomControls(context: Context) : FrameLayout(context) {
         true
       )
       setBackgroundResource(typedValue.resourceId)
-      setImageResource(R.drawable.baseline_more_horiz_24)
+      setImageResource(R.drawable.outline_pending_24)
       isClickable = false
       isFocusable = false
     }
@@ -94,7 +153,7 @@ class BottomControls(context: Context) : FrameLayout(context) {
   private fun fullscreenControlLayout(context: Context): LinearLayout {
     return LinearLayout(context).apply {
       layoutParams = LinearLayout.LayoutParams(dpToPx(40), dpToPx(40)).apply {
-        setMargins(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(8))
+        setMargins(dpToPx(4), dpToPx(4), dpToPx(4), dpToPx(4))
       }
       setBackgroundResource(R.drawable.rounded_background)
       visibility = INVISIBLE

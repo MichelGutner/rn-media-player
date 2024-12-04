@@ -54,7 +54,13 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   @OptIn(UnstableApi::class)
   @ReactProp(name = "source")
   fun setSource(rnVideoPlayerView: RNVideoPlayerView, source: ReadableMap?) {
-      rnVideoPlayerView.build(source)
+      rnVideoPlayerView.buildMediaItem(source)
+  }
+
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "thumbnails")
+  fun setThumbnails(rnVideoPlayerView: RNVideoPlayerView, thumbnails: ReadableMap?) {
+    rnVideoPlayerView.buildThumbnails(thumbnails)
   }
 
   @OptIn(UnstableApi::class)
@@ -74,9 +80,9 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   fun setMenus(rnVideoPlayerView: RNVideoPlayerView, menus: ReadableMap) {
     val menusData = mutableSetOf<String>()
     rnVideoPlayerView.getMenus(menus.toHashMap().keys)
-    menus.entryIterator.forEach { i ->
-      menusData.add(i.key)
-      ReadableMapManager.getInstance().setReadableMapProps(i.value, i.key)
+    menus.entryIterator.forEach { entry ->
+      menusData.add(entry.key)
+      ReadableMapManager.getInstance().setReadableMapProps(entry.value, entry.key)
     }
     rnVideoPlayerView.getMenus(menusData)
   }
@@ -105,12 +111,13 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 object EventNames {
   const val menuItemSelected = "onMenuItemSelected"
   const val videoProgress = "onVideoProgress"
-  const val videoLoaded = "onLoaded"
+  const val videoReady = "onReady"
   const val videoCompleted = "onCompleted"
   const val videoBuffering = "onBuffer"
   const val videoPlayPauseStatus = "onPlayPause"
   const val videoErrorStatus = "onError"
   const val videoBufferCompleted = "onBufferCompleted"
+  const val videoSeekBar = "onSeekBar"
 }
 
 fun View.fadeIn(duration: Long = 500) {

@@ -10,7 +10,7 @@ import com.rnvideoplayer.helpers.SharedStore
 
 class PopUpMenu(
   data: MutableSet<String>,
-  private val context: ThemedReactContext,
+  context: ThemedReactContext,
   view: View,
   callback: (String, Any) -> Unit
 ) {
