@@ -2362,6 +2362,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@kesha-antonov/react-native-background-downloader@npm:^3.2.2":
+  version: 3.2.2
+  resolution: "@kesha-antonov/react-native-background-downloader@npm:3.2.2"
+  peerDependencies:
+    react-native: ">=0.57.0"
+  checksum: 5fa93ebc20f832623422cb97aa09a3f0e63c9e6357fae87dc6b98dcd4cd410c763e9f3901f9621ff794ae72550e9003d83a14f9332f30508d469d3c88d7f3572
+  languageName: node
+  linkType: hard
+
 "@nicolo-ribaudo/eslint-scope-5-internals@npm:5.1.1-v1":
   version: 5.1.1-v1
   resolution: "@nicolo-ribaudo/eslint-scope-5-internals@npm:5.1.1-v1"
@@ -12017,6 +12026,7 @@ __metadata:
     "@babel/core": ^7.20.0
     "@babel/preset-env": ^7.20.0
     "@babel/runtime": ^7.20.0
+    "@kesha-antonov/react-native-background-downloader": ^3.2.2
     "@react-native/babel-preset": 0.74.81
     "@react-native/metro-config": 0.74.81
     "@react-native/typescript-config": 0.74.81

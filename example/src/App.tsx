@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
-import { SafeAreaView, Text, TouchableOpacity } from 'react-native';
+import { Platform, SafeAreaView, Text, TouchableOpacity } from 'react-native';
 import { Video } from 'rn-media-player';
+import { downloadFile } from './downloadFile';
+import {
+  directories,
+  checkForExistingDownloads,
+} from '@kesha-antonov/react-native-background-downloader';
 
 const SpeedsKey = 'Velocidades';
 const Qualities = 'Qualidades';
@@ -35,17 +40,22 @@ function App(): JSX.Element {
   const [rate, setRate] = useState(1);
   const [playbackQuality, setPlaybackQuality] = useState('');
 
+  let downloadedUrl =
+    Platform.OS === 'android'
+      ? `file://${directories.documents}/file.mp4`
+      : url;
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <Video
         source={{
-          url,
+          url: downloadedUrl,
           metadata: { title: 'Sintel', artist: 'Google' },
-          startTime: 94,
-          thumbnails: { enabled: true, url },
+          startTime: 30,
         }}
+        thumbnails={{ isEnabled: true, sourceUrl: downloadedUrl }}
         style={{
-          height: 350,
+          height: 375,
           backgroundColor: 'black',
         }}
         rate={rate}
@@ -53,7 +63,7 @@ function App(): JSX.Element {
         changeQualityUrl={playbackQuality}
         entersFullScreenWhenPlaybackBegins
         tapToSeek={{
-          value: 8,
+          value: 15,
           suffixLabel: 'segundos',
         }}
         menus={{
@@ -67,7 +77,6 @@ function App(): JSX.Element {
         //   console.log('fullscreen', nativeEvent);
         // }}
         onMenuItemSelected={({ nativeEvent }) => {
-          console.log('🚀 ~ App ~ nativeEvent:', nativeEvent);
           if (nativeEvent.name === SpeedsKey) {
             setRate(nativeEvent.value);
           }
@@ -80,9 +89,9 @@ function App(): JSX.Element {
         // }}
         // onPlayPause={(event) => console.log(event.nativeEvent.isPlaying)}
         // onMediaRouter={(event) => console.log(event.nativeEvent.isActive)}
-        // onSeekBar={(event) => {
-        //   console.log(event.nativeEvent);
-        // }}
+        onSeekBar={(event) => {
+          console.log(event.nativeEvent);
+        }}
         //-------
 
         // onCompleted={({ nativeEvent: { completed } }) => console.log(completed)}
@@ -145,16 +154,14 @@ function App(): JSX.Element {
           // },
         }}
       />
-      <TouchableOpacity
-        style={{ height: 50, backgroundColor: 'red' }}
-        onPress={() =>
-          setUrl(
-            'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4'
-          )
-        }
-      >
-        <Text style={{}}>Olá Mundo</Text>
-      </TouchableOpacity>
+      {Platform.OS === 'android' && (
+        <TouchableOpacity
+          style={{ height: 50, backgroundColor: 'red' }}
+          onPress={() => downloadFile(url)}
+        >
+          <Text style={{}}>Baixar Arquivo</Text>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }

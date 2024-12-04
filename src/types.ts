@@ -96,12 +96,12 @@ export type TVideoPlayer = Omit<ViewProps, 'style'> & {
       title?: string;
       artist?: string;
     };
-    thumbnails?: {
-      url: string;
-      enabled?: boolean;
-    };
   };
-  thumbnailFramesSeconds?: number;
+  thumbnails?: {
+    sourceUrl: string;
+    isEnabled?: boolean;
+    framesPerSecond?: number;
+  };
   screenBehavior?: {
     autoEnterFullscreenOnLandscape?: boolean;
     autoOrientationOnFullscreen?: boolean;
