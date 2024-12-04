@@ -6,6 +6,7 @@ import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.Point
 import android.os.Build
+import android.view.Gravity
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
@@ -19,6 +20,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.helpers.SharedStore
+import com.rnvideoplayer.models.FullscreenPlayerDialog
 import com.rnvideoplayer.utilities.layoutParamsCenter
 import java.lang.ref.WeakReference
 
@@ -32,9 +34,10 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
   var isFullscreen = false
   private var currentIndexInParent: Int = -1
 
-  private var aspectRatio: Float = 1.5f
+  private var aspectRatio: Float = 2f
 
   private var autoEnterFullscreenOnLandscape = false
+  private var fullscreenDialog: FullscreenPlayerDialog? = null
 
   val viewControls = VideoPlayerControls(context)
 
@@ -64,31 +67,28 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
     }
   }
 
-  fun setReplayOnClickListener(listener: OnClickListener) {
-    viewControls.replayButton.setOnClickListener(listener)
-  }
-
   fun playbackViewClickListener(listener: OnClickListener) {
     viewControls.setOnClickListener(listener)
   }
 
-  fun hideLoading() {
+  fun isReadyToDisplayControls() {
     viewControls.loading.hide()
     viewControls.playPauseButton.visibility = VISIBLE
     viewControls.fullscreenLayout.visibility = VISIBLE
     viewControls.menuControlLayout.visibility = VISIBLE
     viewControls.timeBar.visibility = VISIBLE
+    viewControls.timeCodesPosition.visibility = VISIBLE
+    viewControls.timeCodesDuration.visibility = VISIBLE
+    viewControls.title.visibility = VISIBLE
   }
 
-  fun showLoading() {
-    viewControls.loading.show()
+  fun unReadyToDisplayControls() {
     viewControls.playPauseButton.visibility = INVISIBLE
     viewControls.fullscreenLayout.visibility = INVISIBLE
     viewControls.menuControlLayout.visibility = INVISIBLE
-    viewControls.timeBar.visibility = INVISIBLE
   }
 
-  fun hideButtons() {
+  fun hideControlsWithoutTimebar() {
     viewControls.playPauseRoundedBackground.visibility = INVISIBLE
     viewControls.fullscreenLayout.visibility = INVISIBLE
     viewControls.menuControlLayout.visibility = INVISIBLE
@@ -128,10 +128,8 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
   }
 
   private fun setupLayout() {
-    viewControls.updatePlayPauseIcon(player?.isPlaying ?: true)
     setAspectRatio(calculateModeFitAspectRatio(context))
     setBackgroundColor(ContextCompat.getColor(context, android.R.color.black))
-
     aspectRatioFrameLayout.addView(surfaceView, 0)
     addView(aspectRatioFrameLayout, -1)
     addView(viewControls, 1)
@@ -179,6 +177,7 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
   }
 
   fun enterInFullScreen() {
+    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
     currentIndexInParent = indexOfChild(aspectRatioFrameLayout)
     removeView(aspectRatioFrameLayout)
     removeView(viewControls)
@@ -209,14 +208,19 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
   }
 
   fun exitFromFullScreen() {
-    (aspectRatioFrameLayout.parent as? ViewGroup)?.removeView(aspectRatioFrameLayout)
-    (viewControls.parent as? ViewGroup)?.removeView(viewControls)
+    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
-    addView(aspectRatioFrameLayout, currentIndexInParent)
+    val parentAspect = aspectRatioFrameLayout.parent as? ViewGroup
+    val parentControls = viewControls.parent as? ViewGroup
+   parentAspect?.removeView(aspectRatioFrameLayout)
+    parentControls?.removeView(viewControls)
+
+    addView(aspectRatioFrameLayout, 0)
     addView(viewControls, 1)
 
-    val layoutParams = layoutParamsCenter(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
-    aspectRatioFrameLayout.layoutParams = layoutParams
+    aspectRatioFrameLayout.layoutParams =
+      layoutParamsCenter(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
     aspectRatioFrameLayout.setAspectRatio(aspectRatio)
 
     activity?.window?.apply {
@@ -224,11 +228,12 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
       clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
     }
 
-    ActivityInfo.SCREEN_ORIENTATION_FULL_USER.also { activity?.requestedOrientation = it }
-
     isFullscreen = false
     viewControls.updateFullscreenIcon(false)
     aspectRatioFrameLayout.requestLayout()
     aspectRatioFrameLayout.postInvalidate()
+    fullscreenDialog?.dismiss()
+    fullscreenDialog = null
+
   }
 }
