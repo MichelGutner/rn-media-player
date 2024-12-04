@@ -4,55 +4,64 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.view.Gravity
 import android.widget.FrameLayout
+import androidx.core.content.ContextCompat
 import androidx.media3.cast.CastPlayer
 import androidx.media3.cast.SessionAvailabilityListener
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.mediarouter.app.MediaRouteButton
+import com.google.android.gms.cast.CastStatusCodes
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.CastSession
+import com.google.android.gms.cast.framework.CastState
+import com.rnvideoplayer.R
 
 @SuppressLint("ViewConstructor")
 @UnstableApi
-class CastPlayerView(context: Context, private val exoPlayer: ExoPlayer): FrameLayout(context) {
-  private val castContext = CastContext.getSharedInstance(context)
-  private val mediaRouteButton = MediaRouteButton(context)
-  private val castPlayer = CastPlayer(castContext)
+class CastPlayerView(applicationContext: Context, private val exoPlayer: ExoPlayer) : FrameLayout(applicationContext) {
+  private val mCastContext = CastContext.getSharedInstance(applicationContext)
+  private val mMediaRouteButton = MediaRouteButton(applicationContext)
+  private val castPlayer = CastPlayer(mCastContext)
 
   init {
-    // Set up Cast Button
-    CastButtonFactory.setUpMediaRouteButton(context, mediaRouteButton)
+    if (mCastContext.castState == CastState.CONNECTED) {
+      // Apenas executa se o CastContext estiver inicializado
+      val reasonCode = mCastContext.getCastReasonCodeForCastStatusCode(CastStatusCodes.ERROR_NO_CAST_CONFIGURATION)
+      println("TEST cast reason code: $reasonCode")
+    } else {
+      println("CastContext not initialized yet")
+    }
 
-    // Set up session availability listener to handle casting
+    // Configura o botão para o Google Cast
+    CastButtonFactory.setUpMediaRouteButton(applicationContext, mMediaRouteButton)
+    mMediaRouteButton.setRemoteIndicatorDrawable(ContextCompat.getDrawable(applicationContext, R.drawable.baseline_cast_24))
+
     castPlayer.setSessionAvailabilityListener(object : SessionAvailabilityListener {
       override fun onCastSessionAvailable() {
-        // Transfer media from ExoPlayer to CastPlayer
         exoPlayer.currentMediaItem?.let { mediaItem ->
           castPlayer.setMediaItem(mediaItem)
           castPlayer.seekTo(exoPlayer.currentPosition)
           castPlayer.play()
-          exoPlayer.pause() // Pause local playback
+          exoPlayer.pause()
         }
       }
 
       override fun onCastSessionUnavailable() {
-        // Resume local playback when casting session is disconnected
         castPlayer.pause()
         exoPlayer.seekTo(castPlayer.currentPosition)
         exoPlayer.play()
       }
     })
 
-    // Add the cast button to the view
-    layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+    // Define a posição do botão na tela
+    val layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
       gravity = Gravity.TOP or Gravity.END
     }
-    addView(mediaRouteButton)
+    addView(mMediaRouteButton, layoutParams)
   }
 
-  // Optional: Clean up when this view is destroyed
   fun onDestroy() {
-    // Release CastPlayer and other resources if needed
     castPlayer.release()
   }
 }
