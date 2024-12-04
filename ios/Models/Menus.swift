@@ -19,10 +19,10 @@ struct CustomMenus: View {
             }
         } label: {
             Image(systemName: "ellipsis.circle")
-                .frame(width: 20, height: 20)
-                .padding(.horizontal, 8)
+                .padding(EdgeInsets.init(top: 12, leading: 12, bottom: 4, trailing: 12))
+                .padding(.bottom, 0)
                 .foregroundColor(.white)
-                .font(.system(size: 20))
+                .font(.system(size: 22))
         }
     }
     
@@ -64,12 +64,12 @@ struct CustomMenus: View {
                 }
               }
             }
-            .eraseToAnyView() // Resolve problemas de tipo misto
+            .eraseToAnyView()
         }
         return EmptyView().eraseToAnyView()
     }
     
-    // MARK: - Computed Properties
+
     private var menuOptions: [(key: String, values: NSDictionary)] {
         guard let menus = menus else { return [] }
         return menus.compactMap { (key, value) in
@@ -79,7 +79,7 @@ struct CustomMenus: View {
     }
 }
 
-// MARK: - Extensions
+
 extension View {
     func eraseToAnyView() -> AnyView {
         AnyView(self)

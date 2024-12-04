@@ -133,6 +133,9 @@ struct MediaPlayerControlsView : View {
                 Spacer()
                 // Menu Control
                 CustomMenus(menus: $menus)
+//                  .padding(.all, 12)
+                  .background(Color.clear)
+                  .clipShape(Circle())
                 
                 // Fullscreen Control
                 Button(action: {
@@ -141,7 +144,7 @@ struct MediaPlayerControlsView : View {
                   ZStack {
                     Image(systemName: "arrow.down.right.and.arrow.up.left")
                       .rotationEffect(.degrees(90))
-                      .padding(.horizontal, 8)
+                      .padding(EdgeInsets.init(top: 12, leading: 12, bottom: 4, trailing: 12))
                       .foregroundColor(.white)
                       .font(.system(size: 20))
                       .scaleEffect(mediaSession.isFullscreen ? 1 : 0)
@@ -149,14 +152,15 @@ struct MediaPlayerControlsView : View {
                     
                     Image(systemName: "arrow.up.left.and.arrow.down.right")
                       .rotationEffect(.degrees(90))
-                      .frame(width: 20, height: 20)
-                      .padding(.horizontal, 8)
+                      .padding(EdgeInsets.init(top: 12, leading: 12, bottom: 4, trailing: 12))
                       .foregroundColor(.white)
-                      .font(.system(size: 20))
+                      .font(.system(size: 22))
                       .scaleEffect(mediaSession.isFullscreen ? 0 : 1)
                       .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: mediaSession.isFullscreen)
                   }
                 })
+                .background(Color.clear)
+                .clipShape(Circle())
               }
               .opacity(mediaSession.isSeeking ? 0 : 1)
               .animation(.easeInOut(duration: 0.2), value: mediaSession.isSeeking)
