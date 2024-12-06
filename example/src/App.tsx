@@ -2,10 +2,7 @@ import React, { useState } from 'react';
 import { Platform, SafeAreaView, Text, TouchableOpacity } from 'react-native';
 import { Video } from 'rn-media-player';
 import { downloadFile } from './downloadFile';
-import {
-  directories,
-  checkForExistingDownloads,
-} from '@kesha-antonov/react-native-background-downloader';
+import { directories } from '@kesha-antonov/react-native-background-downloader';
 
 const SpeedsKey = 'Velocidades';
 const Qualities = 'Qualidades';
@@ -76,22 +73,22 @@ function App(): JSX.Element {
         // onFullscreen={({ nativeEvent }) => {
         //   console.log('fullscreen', nativeEvent);
         // }}
-        onMenuItemSelected={({ nativeEvent }) => {
-          if (nativeEvent.name === SpeedsKey) {
-            setRate(nativeEvent.value);
-          }
-          if (nativeEvent.name === Qualities) {
-            setPlaybackQuality(nativeEvent.value);
-          }
-        }}
+        // onMenuItemSelected={({ nativeEvent }) => {
+        //   if (nativeEvent.name === SpeedsKey) {
+        //     setRate(nativeEvent.value);
+        //   }
+        //   if (nativeEvent.name === Qualities) {
+        //     setPlaybackQuality(nativeEvent.value);
+        //   }
+        // }}
         // onVideoProgress={({ nativeEvent }) => {
         //   console.log('video progress', nativeEvent);
         // }}
         // onPlayPause={(event) => console.log(event.nativeEvent.isPlaying)}
         // onMediaRouter={(event) => console.log(event.nativeEvent.isActive)}
-        onSeekBar={(event) => {
-          console.log(event.nativeEvent);
-        }}
+        // onSeekBar={(event) => {
+        //   console.log(event.nativeEvent);
+        // }}
         //-------
 
         // onCompleted={({ nativeEvent: { completed } }) => console.log(completed)}
@@ -100,59 +97,61 @@ function App(): JSX.Element {
         // onBuffer={(e) =>
         //   console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)
         // }
-        onError={(e) => console.log('native Error', e.nativeEvent)}
+        // onError={(e) => console.log('native Error', e.nativeEvent)}
         // resizeMode={EResizeMode.Contain}
         // screenBehavior={{
         //   autoEnterFullscreenOnLandscape: false,
         //   autoOrientationOnFullscreen: false,
         // }}
         // lockControls={true}
-        controlsStyles={{
-          loading: {
-            color: '#cab9d1',
-          },
-          // playback: {
-          //   color: '#a90ee6',
-          // },
-          // seekSlider: {
-          //   maximumTrackColor: '#f2f2f2',
-          //   minimumTrackColor: '#890cba',
-          //   seekableTintColor: '#df3030',
-          //   thumbImageColor: '#a90ee6',
-          // thumbnailBorderColor: '#a90ee6',
-          // thumbnailTimeCodeColor: '#a90ee6',
-          // },
-          // timeCodes: {
-          //   currentTimeColor: '#f3e9f7',
-          //   durationColor: '#1a161c',
-          //   slashColor: '#a90ee6',
-          // },
-          // menus: {
-          //   color: '#a90ee6',
-          // },
-          // fullScreen: {
-          //   color: '#a90ee6',
-          // },
-          // download: {
-          //   color: '#696969',
-          //   progressBarColor: '#908c91',
-          //   progressBarFillColor: '#0df85f',
-          //   messageDelete: 'Delete',
-          //   messageDownload: 'Download',
-          //   labelDelete: 'Delete',
-          //   labelCancel: 'Cancel',
-          //   labelDownload: 'Download',
-          // },
-          // toast: {
-          //   // label: 'Video baixado com sucesso',
-          //   // backgroundColor: '#0df85f',
-          //   // labelColor: '#ffff',
-          // },
-          // header: {
-          //   leftButtonColor: 'rgba(255,255,255,1)',
-          //   titleColor: '#d71e1e',
-          // },
-        }}
+        controlsStyles={
+          {
+            // loading: {
+            //   color: '#cab9d1',
+            // },
+            // playback: {
+            //   color: '#a90ee6',
+            // },
+            // seekSlider: {
+            //   maximumTrackColor: '#f2f2f2',
+            //   minimumTrackColor: '#890cba',
+            //   seekableTintColor: '#df3030',
+            //   thumbImageColor: '#a90ee6',
+            // thumbnailBorderColor: '#a90ee6',
+            // thumbnailTimeCodeColor: '#a90ee6',
+            // },
+            // timeCodes: {
+            //   currentTimeColor: '#f3e9f7',
+            //   durationColor: '#1a161c',
+            //   slashColor: '#a90ee6',
+            // },
+            // menus: {
+            //   color: '#a90ee6',
+            // },
+            // fullScreen: {
+            //   color: '#a90ee6',
+            // },
+            // download: {
+            //   color: '#696969',
+            //   progressBarColor: '#908c91',
+            //   progressBarFillColor: '#0df85f',
+            //   messageDelete: 'Delete',
+            //   messageDownload: 'Download',
+            //   labelDelete: 'Delete',
+            //   labelCancel: 'Cancel',
+            //   labelDownload: 'Download',
+            // },
+            // toast: {
+            //   // label: 'Video baixado com sucesso',
+            //   // backgroundColor: '#0df85f',
+            //   // labelColor: '#ffff',
+            // },
+            // header: {
+            //   leftButtonColor: 'rgba(255,255,255,1)',
+            //   titleColor: '#d71e1e',
+            // },
+          }
+        }
       />
       {Platform.OS === 'android' && (
         <TouchableOpacity

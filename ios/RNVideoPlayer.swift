@@ -22,19 +22,14 @@ class RNVideoPlayerView : UIView {
   private var eventsManager: RCTEvents? = nil
   private var videoPlayerView: VideoPlayerViewController? = .none
   private var player: AVPlayer? = nil
-  
-  private var session = AVAudioSession.sharedInstance()
-  private var mainView = UIView()
 
   private var isInitialized = false
-  private var UIControlsProps: Styles? = .none
-  private var autoEnterFullscreenOnLandscape = false
-  private var autoOrientationOnFullscreen = false
   
   @objc var autoPlay: Bool = false
   @objc var menus: NSDictionary? = [:]
-  @objc var onMenuItemSelected: RCTBubblingEventBlock?
+  @objc var thumbnails: NSDictionary? = [:]
   
+  @objc var onMenuItemSelected: RCTBubblingEventBlock?
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onReady: RCTBubblingEventBlock?
   @objc var onCompleted: RCTBubblingEventBlock?
@@ -48,12 +43,9 @@ class RNVideoPlayerView : UIView {
   @objc var onMediaRouter: RCTDirectEventBlock?
   @objc var onSeekBar: RCTDirectEventBlock?
   @objc var onPinchZoom: RCTDirectEventBlock?
-  
+
   @objc var entersFullScreenWhenPlaybackBegins: Bool = false
-  
-  @objc var thumbnailFramesSeconds: Float = 1.0
   @objc var screenBehavior: NSDictionary = [:]
-  
   @objc var controlsStyles: NSDictionary? = [:]
   @objc var tapToSeek: NSDictionary? = [:]
   
@@ -147,7 +139,10 @@ class RNVideoPlayerView : UIView {
       mediaSession.makeNowPlayingInfo()
       mediaSession.setupRemoteCommandCenter()
       mediaSession.setupPlayerObservation()
-      mediaSession.thumbnailsDictionary = source?["thumbnails"] as? NSDictionary
+      if let thumbnails {
+        print("thumbnaislX", thumbnails)
+        mediaSession.thumbnailsDictionary = thumbnails
+      }
     }
   }
   

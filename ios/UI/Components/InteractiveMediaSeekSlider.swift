@@ -135,11 +135,10 @@ struct InteractiveMediaSeekSlider : View {
     .frame(maxWidth: .infinity)
     .onReceive(mediaSession.$thumbnailsDictionary, perform: { thumbnails in
       guard let thumbnails,
-            let enabled = thumbnails["enabled"] as? Bool,
+            let enabled = thumbnails["isEnabled"] as? Bool,
             enabled,
-            let url = thumbnails["url"] as? String
+            let url = thumbnails["sourceUrl"] as? String
       else { return }
-      
       generatingThumbnailsFrames(url)
     })
     .onAppear {

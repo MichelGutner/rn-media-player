@@ -88,7 +88,7 @@ type TOnVideoBufferCompleted = TGenericEventHandler<{
   completed: boolean;
 }>;
 
-export type TVideoPlayer = Omit<ViewProps, 'style'> & {
+export type VideoPlayer = Omit<ViewProps, 'style'> & {
   source: {
     url: string;
     startTime?: number;
@@ -100,17 +100,19 @@ export type TVideoPlayer = Omit<ViewProps, 'style'> & {
   thumbnails?: {
     sourceUrl: string;
     isEnabled?: boolean;
-    framesPerSecond?: number;
+    // framesPerSecond?: number;
   };
   screenBehavior?: {
     autoEnterFullscreenOnLandscape?: boolean;
     autoOrientationOnFullscreen?: boolean;
   };
+  /**
+   * iOS only
+   */
   entersFullScreenWhenPlaybackBegins?: boolean;
   autoPlay?: boolean;
   style?: ViewStyle;
   rate?: number;
-  startTime?: number;
   resizeMode?: ResizeMode;
   // lockControls?: boolean;
   tapToSeek?: {
@@ -122,9 +124,6 @@ export type TVideoPlayer = Omit<ViewProps, 'style'> & {
    */
   changeQualityUrl?: string;
   controlsStyles?: TVideoPlayerControlConfig;
-  /**
-   * iOS only
-   */
   onBufferCompleted?: TOnVideoBufferCompleted;
   onFullscreen?: TOnFullscreen;
   onBuffer?: TOnVideoBuffer;
@@ -132,8 +131,14 @@ export type TVideoPlayer = Omit<ViewProps, 'style'> & {
   onVideoProgress?: TOnVideoProgress;
   onPlayPause?: TOnVideoPlayPause;
   onCompleted?: TOnVideoCompleted;
+  /**
+   * iOS only
+   */
   onMediaRouter?: TOnMediaRouter;
   onSeekBar?: TOnSeekBar;
+  /**
+   * iOS only
+   */
   onPinchZoom?: TonPinchZoom;
   onError?: TOnError;
   menus?: {
