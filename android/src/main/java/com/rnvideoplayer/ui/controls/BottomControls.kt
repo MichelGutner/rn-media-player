@@ -2,7 +2,6 @@ package com.rnvideoplayer.ui.controls
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Color
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -14,7 +13,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.rnvideoplayer.R
 import com.rnvideoplayer.models.TimesCodes
-import com.rnvideoplayer.ui.components.CustomTimeBar
+import com.rnvideoplayer.mediaplayer.viewModels.components.SeekBar
 import com.rnvideoplayer.ui.components.Thumbnails
 import com.rnvideoplayer.utilities.layoutParamsCenter
 
@@ -30,7 +29,7 @@ class BottomControls(context: Context) : FrameLayout(context) {
   val fullscreenControlLayout = fullscreenControlLayout(context)
   val fullscreenButton = createFullscreenButtonAnimated(context)
 
-  val timeBar = CustomTimeBar(context)
+  val timeBar = SeekBar(context)
 
   val timesCodeDuration = TimesCodes(context)
   val timeCodesPosition = TimesCodes(context)

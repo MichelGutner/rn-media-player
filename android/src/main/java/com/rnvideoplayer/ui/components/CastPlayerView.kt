@@ -13,29 +13,26 @@ import androidx.mediarouter.app.MediaRouteButton
 import com.google.android.gms.cast.CastStatusCodes
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
-import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.CastState
 import com.rnvideoplayer.R
 
 @SuppressLint("ViewConstructor")
 @UnstableApi
-class CastPlayerView(applicationContext: Context, private val exoPlayer: ExoPlayer) : FrameLayout(applicationContext) {
-  private val mCastContext = CastContext.getSharedInstance(applicationContext)
-  private val mMediaRouteButton = MediaRouteButton(applicationContext)
+class CastPlayerView(context: Context, private val exoPlayer: ExoPlayer) : FrameLayout(context) {
+  private val mCastContext = CastContext.getSharedInstance(context)
+  private val mMediaRouteButton = MediaRouteButton(context)
   private val castPlayer = CastPlayer(mCastContext)
 
   init {
     if (mCastContext.castState == CastState.CONNECTED) {
-      // Apenas executa se o CastContext estiver inicializado
       val reasonCode = mCastContext.getCastReasonCodeForCastStatusCode(CastStatusCodes.ERROR_NO_CAST_CONFIGURATION)
       println("TEST cast reason code: $reasonCode")
     } else {
       println("CastContext not initialized yet")
     }
 
-    // Configura o botão para o Google Cast
-    CastButtonFactory.setUpMediaRouteButton(applicationContext, mMediaRouteButton)
-    mMediaRouteButton.setRemoteIndicatorDrawable(ContextCompat.getDrawable(applicationContext, R.drawable.baseline_cast_24))
+    CastButtonFactory.setUpMediaRouteButton(context, mMediaRouteButton)
+    mMediaRouteButton.setRemoteIndicatorDrawable(ContextCompat.getDrawable(context, R.drawable.baseline_cast_24))
 
     castPlayer.setSessionAvailabilityListener(object : SessionAvailabilityListener {
       override fun onCastSessionAvailable() {
@@ -54,7 +51,6 @@ class CastPlayerView(applicationContext: Context, private val exoPlayer: ExoPlay
       }
     })
 
-    // Define a posição do botão na tela
     val layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
       gravity = Gravity.TOP or Gravity.END
     }

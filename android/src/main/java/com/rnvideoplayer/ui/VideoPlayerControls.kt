@@ -12,7 +12,7 @@ import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.R
 import com.rnvideoplayer.fadeIn
 import com.rnvideoplayer.fadeOut
-import com.rnvideoplayer.models.CustomTitle
+import com.rnvideoplayer.mediaplayer.viewModels.components.Title
 import com.rnvideoplayer.ui.components.DoubleTapSeek
 import com.rnvideoplayer.ui.components.Loading
 import com.rnvideoplayer.ui.controls.BottomControls
@@ -31,7 +31,7 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
 
   private val drawables = AnimatedDrawables(context)
   private val bottomControls = BottomControls(context)
-  val title = CustomTitle(context)
+  val title = Title(context)
   val leftDoubleTap by lazy { DoubleTapSeek(context, false) }
   val rightDoubleTap by lazy { DoubleTapSeek(context, true) }
 
@@ -58,11 +58,11 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
 
   fun updatePlayPauseIcon(isPlaying: Boolean) {
     if (isPlaying) {
-      playPauseButton.setImageDrawable(drawables.playToPause)
-      drawables.playToPause.start()
+      playPauseButton.setImageDrawable(drawables.toPause)
+      drawables.toPause.start()
     } else {
-      playPauseButton.setImageDrawable(drawables.pauseToPlay)
-      drawables.pauseToPlay.start()
+      playPauseButton.setImageDrawable(drawables.toPlay)
+      drawables.toPlay.start()
     }
   }
 

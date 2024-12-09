@@ -6,7 +6,6 @@ import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.Point
 import android.os.Build
-import android.view.Gravity
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
@@ -20,7 +19,6 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.helpers.SharedStore
-import com.rnvideoplayer.models.FullscreenPlayerDialog
 import com.rnvideoplayer.utilities.layoutParamsCenter
 import java.lang.ref.WeakReference
 
@@ -37,7 +35,6 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
   private var aspectRatio: Float = 2f
 
   private var autoEnterFullscreenOnLandscape = false
-  private var fullscreenDialog: FullscreenPlayerDialog? = null
 
   val viewControls = VideoPlayerControls(context)
 
@@ -232,8 +229,5 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
     viewControls.updateFullscreenIcon(false)
     aspectRatioFrameLayout.requestLayout()
     aspectRatioFrameLayout.postInvalidate()
-    fullscreenDialog?.dismiss()
-    fullscreenDialog = null
-
   }
 }

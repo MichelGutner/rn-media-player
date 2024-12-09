@@ -1,4 +1,4 @@
-package com.rnvideoplayer.models
+package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.content.Context
 import android.view.Gravity
@@ -7,11 +7,10 @@ import android.widget.TextView
 import com.rnvideoplayer.utilities.ColorUtils
 import com.rnvideoplayer.utilities.layoutParamsCenter
 
-class CustomTitle(context: Context) : RelativeLayout(context) {
+class Title(context: Context) : RelativeLayout(context) {
   private val title = createTextView(context)
 
   init {
-    visibility = INVISIBLE
     addView(title)
   }
 

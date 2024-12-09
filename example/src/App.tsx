@@ -48,11 +48,11 @@ function App(): JSX.Element {
         source={{
           url: downloadedUrl,
           metadata: { title: 'Sintel', artist: 'Google' },
-          startTime: 30,
+          startTime: 150,
         }}
         thumbnails={{ isEnabled: true, sourceUrl: downloadedUrl }}
         style={{
-          height: 375,
+          height: '80%',
           backgroundColor: 'black',
         }}
         rate={rate}
