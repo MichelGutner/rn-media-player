@@ -58,11 +58,11 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
 
   fun updatePlayPauseIcon(isPlaying: Boolean) {
     if (isPlaying) {
-      playPauseButton.setImageDrawable(drawables.toPause)
-      drawables.toPause.start()
+      playPauseButton.setImageDrawable(drawables.fromPlayToPause)
+      drawables.fromPlayToPause.start()
     } else {
-      playPauseButton.setImageDrawable(drawables.toPlay)
-      drawables.toPlay.start()
+      playPauseButton.setImageDrawable(drawables.fromPauseToPlay)
+      drawables.fromPauseToPlay.start()
     }
   }
 

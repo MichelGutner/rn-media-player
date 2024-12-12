@@ -25,7 +25,7 @@ open class MediaPlayerAdapter(context: Context) {
     fun onMediaLoaded(duration: Long)
     fun onPlaybackStateChanged(isPlaying: Boolean)
     var shouldShowPlayPause: Boolean
-    fun onMediaError(error: PlaybackException?)
+    fun onMediaError(error: PlaybackException?, mediaItem: MediaItem?)
     fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long)
     fun getMediaMetadata(mediaMetadata: MediaMetadata)
   }
@@ -48,7 +48,7 @@ open class MediaPlayerAdapter(context: Context) {
           onMediaLoaded(player.duration)
         }
         if (events.contains(Player.EVENT_PLAYER_ERROR)) {
-          onMediaError(player.playerError)
+          onMediaError(player.playerError, player.currentMediaItem)
         }
         if (events.contains(Player.EVENT_IS_LOADING_CHANGED)) {
           startMediaProgress()
@@ -77,8 +77,8 @@ open class MediaPlayerAdapter(context: Context) {
     callback?.onMediaLoaded(duration)
   }
 
-  protected fun onMediaError(e: PlaybackException?) {
-    callback?.onMediaError(e)
+  protected fun onMediaError(e: PlaybackException?, mediaItem: MediaItem?) {
+    callback?.onMediaError(e, mediaItem)
   }
 
   protected fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long) {

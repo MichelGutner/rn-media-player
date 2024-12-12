@@ -6,8 +6,8 @@ import android.graphics.drawable.AnimatedVectorDrawable
 import com.rnvideoplayer.R
 
 open class AnimatedDrawables(val context: Context) {
-  val toPause = createAnimatedDrawable(R.drawable.animated_play_to_pause)
-  val toPlay = createAnimatedDrawable(R.drawable.animated_pause_to_play)
+  val fromPlayToPause = createAnimatedDrawable(R.drawable.animated_play_to_pause)
+  val fromPauseToPlay = createAnimatedDrawable(R.drawable.animated_pause_to_play)
 
   val fullscreenToExit = createAnimatedDrawable(R.drawable.animated_full_to_exit)
   val exitToFullscreen = createAnimatedDrawable(R.drawable.animated_exit_to_full)
