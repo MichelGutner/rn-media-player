@@ -45,7 +45,7 @@ class PlayPauseButton(context: Context) : FrameLayout(context) {
         true
       )
       setBackgroundResource(typedValue.resourceId)
-      setImageDrawable(drawables.toPause)
+      setImageDrawable(drawables.fromPauseToPlay)
     }
   }
 
@@ -56,21 +56,13 @@ class PlayPauseButton(context: Context) : FrameLayout(context) {
     }
   }
 
-  fun showButton() {
-    playPauseButton.visibility = VISIBLE
-  }
-
-  fun hideButton() {
-    playPauseButton.visibility = INVISIBLE
-  }
-
   fun updatePlayPauseIcon(isPlaying: Boolean) {
-    if (isPlaying && playPauseButton.drawable == drawables.toPlay) {
-      playPauseButton.setImageDrawable(drawables.toPause)
-      drawables.toPause.start()
-    } else if (!isPlaying && playPauseButton.drawable == drawables.toPause) {
-      playPauseButton.setImageDrawable(drawables.toPlay)
-      drawables.toPlay.start()
+    if (isPlaying && playPauseButton.drawable == drawables.fromPauseToPlay) {
+      playPauseButton.setImageDrawable(drawables.fromPlayToPause)
+      drawables.fromPlayToPause.start()
+    } else if (!isPlaying && playPauseButton.drawable == drawables.fromPlayToPause) {
+      playPauseButton.setImageDrawable(drawables.fromPauseToPlay)
+      drawables.fromPauseToPlay.start()
     }
   }
 }

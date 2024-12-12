@@ -9,12 +9,12 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import com.rnvideoplayer.mediaplayer.utils.Utils
 
 @UnstableApi
-class AspectRatio(context: Context) : FrameLayout(context) {
+open class AspectRatio(context: Context) : FrameLayout(context) {
   lateinit var pinchGesture: ScaleGestureDetector
   val frameLayout: AspectRatioFrameLayout = AspectRatioFrameLayout(context)
 
   init {
-      createAspectRatio()
+    createAspectRatio()
   }
 
   private fun createAspectRatio() {
@@ -42,13 +42,13 @@ class AspectRatio(context: Context) : FrameLayout(context) {
             frameLayout.scaleX = newScaleX
             frameLayout.scaleY = newScaleY
           }
-
           return true
         }
 
         override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
           return true
         }
+
         override fun onScaleEnd(detector: ScaleGestureDetector) {}
       })
   }

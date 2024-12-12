@@ -2,6 +2,7 @@ package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.util.TypedValue
 import android.view.Gravity
 import android.widget.ImageButton
@@ -9,11 +10,13 @@ import android.widget.LinearLayout
 import com.rnvideoplayer.R
 
 class FullscreenButton(context: Context) : LinearLayout(context) {
-  private var size: Int = 40
+  private var size: Int = 100
   private val button = setupButton(context)
 
   init {
     setupLayout()
+      setPadding(16,16,16,16)
+      setBackgroundColor(Color.YELLOW)
     addView(button)
   }
 
@@ -22,8 +25,8 @@ class FullscreenButton(context: Context) : LinearLayout(context) {
   }
 
   private fun setupLayout() {
-    layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
-      gravity = Gravity.END
+    layoutParams = LayoutParams(size, size).apply {
+      gravity = Gravity.END or Gravity.BOTTOM
     }
     setBackgroundResource(R.drawable.rounded_background)
   }
@@ -40,15 +43,13 @@ class FullscreenButton(context: Context) : LinearLayout(context) {
       )
       setBackgroundResource(typedValue.resourceId)
       setImageResource(R.drawable.animated_full_to_exit)
+      gravity = Gravity.CENTER
     }
   }
 
   fun setSize(value: Int) {
     size = value
-    button.layoutParams.apply {
-      width = size
-      height = size
-    }
+    setupLayout()
     requestLayout()
   }
 
