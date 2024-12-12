@@ -1,8 +1,8 @@
 package com.rnvideoplayer.interfaces
 
 interface IThumbnailPreview {
-  fun setCurrentImageBitmapByIndex(index: Int)
+  fun setCurrentThumbnailImage(index: Int)
   fun show()
   fun hide()
-  fun generatingThumbnailFrames(url: String)
+  fun downloadFrames(url: String)
 }

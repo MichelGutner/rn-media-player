@@ -3,11 +3,10 @@ package com.rnvideoplayer.ui.components
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.view.Gravity
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -18,95 +17,81 @@ import com.rnvideoplayer.fadeOut
 import com.rnvideoplayer.helpers.RNVideoHelpers
 import com.rnvideoplayer.interfaces.IThumbnailPreview
 import com.rnvideoplayer.utilities.ColorUtils
-import java.io.File
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
+class Thumbnails(context: Context) : LinearLayout(context), IThumbnailPreview {
   private val helper = RNVideoHelpers()
   private var timestamp = 0L
   val thumbWidth = dpToPx(240)
   private val thumbHeight = dpToPx(140)
-
-  val interval = 5000L
+  val interval = TimeUnit.MILLISECONDS.toSeconds(5000L)
   val bitmaps = ArrayList<Bitmap>()
-  private val imageView = LinearLayout(context).apply {
-    layoutParams = ViewGroup.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-      orientation = LinearLayout.VERTICAL
-    }
-  }
-  private val thumbnailView = createThumbnailView(context)
+
+  private val thumbnailView = thumbnailImage(context)
   private val thumbnailTimeCodes = createThumbnailTimeCodes(context)
-  private var translateXTimesCodePreview: Int = 0
+  private var translateXTimeCodes: Int = 0
 
   var translationXThumbnailView = 0f
 
   init {
-    imageView.addView(thumbnailView)
-    imageView.addView(thumbnailTimeCodes)
-    addView(imageView)
-    translateXTimesCodePreview = thumbWidth / 2 - thumbnailTimeCodes.width / 2
+    layoutParams = LayoutParams(
+      0,
+      LayoutParams.WRAP_CONTENT
+    ).apply {
+      weight = 1f
+      orientation = VERTICAL
+      gravity = Gravity.BOTTOM
+    }
+    visibility = INVISIBLE
+    addView(thumbnailView)
+    addView(thumbnailTimeCodes)
   }
 
-  override fun setCurrentImageBitmapByIndex(index: Int) {
+  override fun setCurrentThumbnailImage(index: Int) {
     val bitmap = bitmaps[index]
     val roundedDrawable = RoundedBitmapDrawableFactory.create(thumbnailView.context.resources, bitmap)
+
     roundedDrawable.cornerRadius = thumbnailView.context.resources.getDimension(R.dimen.corner_radius)
     roundedDrawable.isFilterBitmap = true
     thumbnailView.setImageDrawable(roundedDrawable)
+  }
 
-    translateXTimesCodePreview = ((translationXThumbnailView + thumbWidth / 2 - thumbnailTimeCodes.width / 2).toInt())
-    thumbnailView.translationX = translationXThumbnailView
-    thumbnailTimeCodes.translationX = translateXTimesCodePreview.toFloat()
+  fun onTranslate(seconds: Double, duration: Double, customWidth: Int? = null) {
+    val parent = (this.parent as ViewGroup)
+    val widthTarget = (customWidth ?: parent.width)
+    val currentIndex = (seconds / interval).toInt()
+    val currentSeekPoint =
+      ((((seconds * 100) / duration) * widthTarget) / 100)
+
+    var translateX = 16.0F
+    if ((currentSeekPoint.toFloat() + thumbWidth / 2) + parent.width * 0.05F >= widthTarget) {
+      translateX = (widthTarget - thumbWidth) - parent.width * 0.05F
+    } else if (currentSeekPoint.toFloat() >= thumbWidth / 2 && currentSeekPoint.toFloat() + thumbWidth / 2 < widthTarget) {
+      translateX = currentSeekPoint.toFloat() - thumbWidth / 2
+    }
+
+    if (currentIndex < bitmaps.size) {
+      this.setCurrentThumbnailImage(currentIndex)
+      translateXTimeCodes = ((translateX + thumbWidth / 2 - thumbnailTimeCodes.width / 2).toInt())
+      thumbnailView.translationX = translateX
+      thumbnailTimeCodes.translationX = translateXTimeCodes.toFloat()
+    }
   }
 
   override fun show() {
     if (bitmaps.size > 1) {
-      thumbnailView.fadeIn()
-      thumbnailTimeCodes.fadeIn()
-      //@@TODO: need fix into appear animation
-//      thumbnailView.layoutParams = thumbnailView.layoutParams.apply {
-//        width = 400
-//        height = 0
-//      }
-//      viewTreeObserver.addOnGlobalLayoutListener(object :
-//        ViewTreeObserver.OnGlobalLayoutListener {
-//        override fun onGlobalLayout() {
-//          viewTreeObserver.removeOnGlobalLayoutListener(this)
-//
-//          val widthAnimator = ValueAnimator.ofInt(thumbnailView.width, thumbWidth)
-//          widthAnimator.addUpdateListener { animator ->
-//            val animatedValue = animator.animatedValue as Int
-//            val layoutParams = thumbnailView.layoutParams
-//            layoutParams.width = animatedValue
-//            thumbnailView.layoutParams = layoutParams
-//          }
-//
-//          val heightAnimator = ValueAnimator.ofInt(thumbnailView.height, thumbHeight)
-//          heightAnimator.addUpdateListener { animator ->
-//            val animatedValue = animator.animatedValue as Int
-//            val layoutParams = thumbnailView.layoutParams
-//            layoutParams.height = animatedValue
-//            thumbnailView.layoutParams = layoutParams
-//          }
-//
-//          AnimatorSet().apply {
-//            playTogether(widthAnimator, heightAnimator)
-//            duration = 500
-//            start()
-//          }
-//        }
-//      })
+      fadeIn()
     }
   }
 
 
   override fun hide() {
-    thumbnailView.fadeOut()
-    thumbnailTimeCodes.fadeOut()
+    fadeOut()
   }
 
 
-  override fun generatingThumbnailFrames(url: String) {
+  override fun downloadFrames(url: String) {
     bitmaps.clear()
     timestamp = 0
 
@@ -116,7 +101,6 @@ class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
       try {
         retriever.setDataSource(url)
       } catch (e: IllegalArgumentException) {
-        // Lidar com erro de URL inválido
         e.printStackTrace()
         return@thread
       }
@@ -125,33 +109,28 @@ class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
       val duration = durationString?.toLong() ?: 0
 
       while (timestamp < duration) {
-        val bitmap =
-          retriever.getFrameAtTime(timestamp * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+        val bitmap =  retriever.getFrameAtTime(timestamp * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+
         if (bitmap != null) {
           bitmaps.add(bitmap)
-          timestamp += interval
+          timestamp += 5000L
         }
       }
       retriever.release()
-
-      // Atualizar UI após a thread concluir
-      handler.post {
-        // Atualize sua UI com os thumbnails gerados aqui
-      }
+      handler.post {}
     }
   }
 
-  fun getCurrentPlayerPosition(position: Long) {
+  fun updatePosition(position: Long) {
     thumbnailTimeCodes.text = helper.createTimeCodesFormatted(position)
   }
 
-  private fun createThumbnailView(context: Context): ImageView {
+  private fun thumbnailImage(context: Context): ImageView {
     val imageView = ImageView(context).apply {
       layoutParams = ViewGroup.LayoutParams(thumbWidth, thumbHeight).apply {
         setBackgroundResource(R.drawable.rounded_corner_background)
         isClickable = false
         isFocusable = false
-        visibility = INVISIBLE
         scaleType = ImageView.ScaleType.FIT_XY
       }
     }
@@ -164,7 +143,7 @@ class Thumbnails(context: Context) : FrameLayout(context), IThumbnailPreview {
         text = context.getString(R.string.time_codes_start_value)
         textSize = 12f
         setTextColor(ColorUtils.white)
-        visibility = INVISIBLE
+        translationX = ((thumbWidth / 2) - (ViewGroup.LayoutParams.WRAP_CONTENT / 2)).toFloat()
       }
     }
     return timeCodes
