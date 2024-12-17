@@ -36,14 +36,6 @@ open class MediaPlayerAdapter(context: Context) {
     exoPlayer.addListener(object : Player.Listener {
       override fun onEvents(player: Player, events: Player.Events) {
         super.onEvents(player, events)
-        if (events.containsAny(
-            Player.EVENT_PLAY_WHEN_READY_CHANGED,
-            Player.EVENT_PLAYBACK_STATE_CHANGED,
-            Player.EVENT_PLAYBACK_SUPPRESSION_REASON_CHANGED
-          )
-        ) {
-          onPlaybackStateChanged(player.isPlaying)
-        }
         if (events.contains(Player.EVENT_RENDERED_FIRST_FRAME)) {
           onMediaLoaded(player.duration)
         }
@@ -54,12 +46,13 @@ open class MediaPlayerAdapter(context: Context) {
           startMediaProgress()
         }
       }
+      override fun onIsPlayingChanged(isPlaying: Boolean) {
+        onPlaybackStateChanged(isPlaying)
+      }
     })
   }
 
   private var callback: Callback? = null
-
-  val shouldShowThumbnail: Boolean = false
 
   fun addCallback(callback: Callback) {
     this.callback = callback

@@ -5,11 +5,13 @@ import androidx.annotation.OptIn
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.ReadableType
 import com.facebook.react.common.MapBuilder
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
-import com.rnvideoplayer.events.events
+import com.rnvideoplayer.mediaplayer.models.ReactConfig
+import com.rnvideoplayer.mediaplayer.models.ReactEventsName
 import com.rnvideoplayer.mediaplayer.views.MediaPlayerView
 
 class RNVideoPlayer : SimpleViewManager<View>() {
@@ -22,7 +24,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> {
     val mapBuilder = MapBuilder.builder<String, Any>()
-    events.forEach { event ->
+    ReactEventsName.list.forEach { event ->
       mapBuilder.put(event, MapBuilder.of("registrationName", event))
     }
 
@@ -50,7 +52,6 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   @OptIn(UnstableApi::class)
   @ReactProp(name = "source")
   fun setSource(view: MediaPlayerView, source: ReadableMap?) {
-    var localPath: String? = null
     val url = source?.getString("url") as String
     val startTime = source.getDouble("startTime")
     val metadata = source.getMap("metadata")
@@ -102,18 +103,21 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 //    rnVideoPlayerView.getMenus(menusData)
 //  }
 ////
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "tapToSeek")
-//  fun setSuffixLabelTapToSeek(player: RNVideoPlayerView, tapToSeek: ReadableMap?) {
-//    val suffixLabel = tapToSeek?.getString("suffixLabel")
-//    val value = tapToSeek?.getDouble("value")
-//    if (suffixLabel != null) {
-//      SharedStore.getInstance().putString(SharedStoreKey.SUFFIX_LABEL, suffixLabel)
-//    }
-//    if (value != null) {
-//      SharedStore.getInstance().putLong(SharedStoreKey.DOUBLE_TAP_VALUE, value.toLong())
-//    }
-//  }
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "doubleTapToSeek")
+  fun setSuffixLabelTapToSeek(view: MediaPlayerView, doubleTapToSeek: ReadableMap?) {
+    if (doubleTapToSeek == null) return
+    val reactConfig = ReactConfig.getInstance()
+  if (doubleTapToSeek.hasKey("suffixLabel") && doubleTapToSeek.getType("suffixLabel") == ReadableType.String) {
+    val suffixLabel = doubleTapToSeek.getString("suffixLabel") as String
+    reactConfig.set(ReactConfig.Keys.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL, suffixLabel)
+  }
+  if (doubleTapToSeek.hasKey("value") && doubleTapToSeek.getType("value") == ReadableType.Number) {
+    val value = doubleTapToSeek.getDouble("value")
+    reactConfig.set(ReactConfig.Keys.DOUBLE_TAP_TO_SEEK_VALUE, value.toInt())
+  }
+    view.addReactConfigs(reactConfig)
+  }
 //  @OptIn(UnstableApi::class)
 //  @ReactProp(name = "changeQualityUrl")
 //  fun setChangeQualityUrl(player: RNVideoPlayerView, changeQualityUrl: String) {
@@ -121,19 +125,6 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 //      player.changeVideoQuality(changeQualityUrl)
 //    }
 //  }
-}
-
-object EventNames {
-  const val menuItemSelected = "onMenuItemSelected"
-  const val mediaProgress = "onMediaProgress"
-  const val mediaReady = "onMediaReady"
-  const val mediaCompleted = "onMediaCompleted"
-  const val mediaBuffering = "onMediaBuffer"
-  const val mediaPlayPause = "onMediaPlayPause"
-  const val mediaError = "onMediaError"
-  const val mediaBufferCompleted = "onMediaBufferCompleted"
-  const val mediaSeekBar = "onMediaSeekBar"
-  const val mediaPinchZoom = "onMediaPinchZoom"
 }
 
 fun View.fadeIn(duration: Long = 300, completion: () -> Unit = {}) {

@@ -24,7 +24,7 @@ class DoubleTapSeek(
   private val text: TextView = text()
   private var tappedQuantity: Int = 1
   private val contentView = contentView()
-  private var isVisible: Boolean = false
+  var isVisible: Boolean = false
 
   var suffixLabel: String = "seconds"
   var tapValue: Int = 15
@@ -33,7 +33,7 @@ class DoubleTapSeek(
     setupLayout()
   }
 
-  fun onClickListener(onSingleTap: () -> Unit) {
+  fun clickListener(onSingleTap: () -> Unit) {
     this.setOnClickListener {
       onSingleTap()
 
@@ -46,8 +46,8 @@ class DoubleTapSeek(
   }
 
   fun hide() {
-    timeoutWork.createTask {
-      fadeOut(400) {
+    timeoutWork.createTask(700){
+      fadeOut(100) {
         tappedQuantity = 0
       }
     }

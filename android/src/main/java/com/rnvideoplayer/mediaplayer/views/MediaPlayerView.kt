@@ -9,25 +9,20 @@ import android.widget.FrameLayout
 import androidx.media3.common.util.UnstableApi
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.uimanager.ThemedReactContext
-import com.rnvideoplayer.EventNames
-import com.rnvideoplayer.events.Events
+import com.rnvideoplayer.mediaplayer.models.ReactEventsName
+import com.rnvideoplayer.mediaplayer.models.ReactEvents
 import com.rnvideoplayer.mediaplayer.viewModels.MediaPlayerControls
 import com.rnvideoplayer.mediaplayer.viewModels.components.AspectRatio
-import com.rnvideoplayer.mediaplayer.viewModels.components.DoubleTapCallback
 import com.rnvideoplayer.mediaplayer.viewModels.components.FullscreenDialog
-import com.rnvideoplayer.mediaplayer.viewModels.components.DoubleTapSeek
 import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
 @UnstableApi
 open class MediaPlayerView(private val context: ThemedReactContext) :
   MediaPlayerControls(context) {
-  private val reactApplicationEventEmitter = Events(context)
+  private val reactApplicationEventEmitter = ReactEvents(context)
   private var fullscreenDialog = FullscreenDialog(context)
   private val aspectRatio = AspectRatio(context)
-  private val leftDoubleTap by lazy { DoubleTapSeek(context, false) }
-  private val rightDoubleTap by lazy { DoubleTapSeek(context, true) }
-
   private var clickCount = 0
   private var lastClickTime = 0L
   private var isPinchGesture: Boolean = false
@@ -41,21 +36,13 @@ open class MediaPlayerView(private val context: ThemedReactContext) :
 
   init {
     setupLayout()
-    leftDoubleTap.onClickListener {
-      this.seekToWithLastPosition(15000 * -1)
-    }
-    rightDoubleTap.onClickListener {
-      this.seekToWithLastPosition(15000)
-    }
   }
 
   private fun setupLayout() {
     aspectRatio.frameLayout.addView(surfaceView)
     container.addView(aspectRatio.frameLayout)
-    container.addView(leftDoubleTap)
-    container.addView(rightDoubleTap)
 
-    container.addView(mediaOverlayView)
+    container.addView(mediaPlayerControlsView)
     addView(container)
   }
 
@@ -96,7 +83,7 @@ open class MediaPlayerView(private val context: ThemedReactContext) :
           val roundedScaleX = (aspectRatio.frameLayout.scaleX * 100).roundToInt() / 100f
           val currentZoom = if (roundedScaleX > 1) "resizeAspectFill" else "resizeAspect"
           reactApplicationEventEmitter.send(
-            EventNames.mediaPinchZoom,
+            ReactEventsName.MEDIA_PINCH_ZOOM,
             this@MediaPlayerView,
             Arguments.createMap().apply {
               putString("currentZoom", currentZoom)
@@ -106,11 +93,11 @@ open class MediaPlayerView(private val context: ThemedReactContext) :
 
         if (clickCount >= 2) {
           if (event.x < width / 2) {
-            leftDoubleTap.show()
-            leftDoubleTap.hide()
+            leftDoubleTapSeek.show()
+            leftDoubleTapSeek.hide()
           } else {
-            rightDoubleTap.show()
-            rightDoubleTap.hide()
+            rightDoubleTapSeek.show()
+            rightDoubleTapSeek.hide()
           }
         }
       }

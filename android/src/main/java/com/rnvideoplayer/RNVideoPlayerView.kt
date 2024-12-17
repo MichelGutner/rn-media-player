@@ -22,10 +22,11 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.ui.components.PopUpMenu
-import com.rnvideoplayer.events.Events
+import com.rnvideoplayer.mediaplayer.models.ReactEvents
 import com.rnvideoplayer.helpers.SharedStore
 import com.rnvideoplayer.helpers.TimeUnitManager
 import com.rnvideoplayer.helpers.TimeoutWork
+import com.rnvideoplayer.mediaplayer.models.ReactEventsName
 import com.rnvideoplayer.ui.VideoPlayerView
 import com.rnvideoplayer.ui.components.CastPlayerView
 import java.io.File
@@ -39,7 +40,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
   private val castPlayer = CastPlayerView(context, exoPlayer)
 
   private var menusData: MutableSet<String> = mutableSetOf()
-  private val event = Events(context)
+  private val event = ReactEvents(context)
   private val timeUnitHandler = TimeUnitManager()
   private var started: Boolean = false
   private var isSeeking: Boolean = false
@@ -130,7 +131,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
               viewControls.timeBar.build(exoPlayer.duration)
               viewControls.timeCodesDuration.updatePosition(exoPlayer.duration)
               event.send(
-                EventNames.mediaReady,
+                ReactEventsName.MEDIA_READY,
                 this@RNVideoPlayerView,
                 Arguments.createMap().apply {
                   putDouble("duration", timeUnitHandler.toSecondsDouble(exoPlayer.duration))
@@ -145,7 +146,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
             castPlayer.visibility = INVISIBLE
 
             event.send(
-              EventNames.mediaBuffering,
+              ReactEventsName.MEDIA_BUFFERING,
               this@RNVideoPlayerView,
               Arguments.createMap().apply {
                 putBoolean("buffering", true)
@@ -159,7 +160,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
               viewControls.updatePlayPauseIcon(false)
             }
             event.send(
-              EventNames.mediaCompleted,
+              ReactEventsName.MEDIA_COMPLETED,
               this@RNVideoPlayerView,
               Arguments.createMap().apply {
                 putBoolean("completed", true)
@@ -176,7 +177,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
         val uri = mediaItem?.localConfiguration?.uri
 
         event.send(
-          EventNames.mediaError,
+          ReactEventsName.MEDIA_ERROR,
           this@RNVideoPlayerView,
           Arguments.createMap().apply {
             putString("domain", uri.toString())
@@ -236,7 +237,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
           showButtons()
 
           event.send(
-            EventNames.mediaSeekBar,
+            ReactEventsName.MEDIA_SEEK_BAR,
             this@RNVideoPlayerView,
             Arguments.createMap().apply {
               putString("start", mapOf(
@@ -382,12 +383,12 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
     viewControls.timeBar.update(position, buffered)
     viewControls.timeCodesPosition.updatePosition(position)
 
-    event.send(EventNames.mediaProgress, this, Arguments.createMap().apply {
+    event.send(ReactEventsName.MEDIA_PROGRESS, this, Arguments.createMap().apply {
       putDouble("progress", TimeUnit.MILLISECONDS.toSeconds(position).toDouble())
       putDouble("buffering", TimeUnit.MILLISECONDS.toSeconds(buffered).toDouble())
     })
     if (buffered == exoPlayer.duration) {
-      event.send(EventNames.mediaBufferCompleted, this, Arguments.createMap().apply {
+      event.send(ReactEventsName.MEDIA_BUFFER_COMPLETED, this, Arguments.createMap().apply {
         putBoolean("completed", true)
       })
     }
@@ -410,7 +411,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
   private fun showPopUp(view: View) {
     val popupMenu by lazy {
       PopUpMenu(menusData, context, view) { title, value ->
-        event.send(EventNames.menuItemSelected, this, Arguments.createMap().apply {
+        event.send(ReactEventsName.MENU_ITEM_SELECTED, this, Arguments.createMap().apply {
           putString("name", title)
           putString("value", value.toString())
         })
@@ -452,7 +453,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
         }
       }
     }
-    event.send(EventNames.mediaPlayPause, this, Arguments.createMap().apply {
+    event.send(ReactEventsName.MEDIA_PLAY_PAUSE, this, Arguments.createMap().apply {
       putBoolean("isPlaying", exoPlayer.isPlaying)
     })
     viewControls.updatePlayPauseIcon(player?.isPlaying ?: false)

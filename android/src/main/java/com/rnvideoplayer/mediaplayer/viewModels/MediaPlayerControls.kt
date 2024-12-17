@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.ViewTreeObserver
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.core.view.isVisible
@@ -13,31 +14,37 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.TimeBar
 import com.facebook.react.bridge.Arguments
-import com.rnvideoplayer.EventNames
-import com.rnvideoplayer.events.Events
+import com.rnvideoplayer.mediaplayer.models.ReactEvents
 import com.rnvideoplayer.fadeIn
 import com.rnvideoplayer.fadeOut
 import com.rnvideoplayer.helpers.TimeUnitManager
-import com.rnvideoplayer.helpers.TimeoutWork
 import com.rnvideoplayer.mediaplayer.models.MediaPlayerAdapter
 import com.rnvideoplayer.mediaplayer.interfaces.IMediaPlayerControls
+import com.rnvideoplayer.mediaplayer.models.ReactConfig
+import com.rnvideoplayer.mediaplayer.models.ReactEventsName
 import com.rnvideoplayer.mediaplayer.viewModels.components.FullscreenButton
 import com.rnvideoplayer.mediaplayer.viewModels.components.PlayPauseButton
 import com.rnvideoplayer.mediaplayer.viewModels.components.SeekBar
 import com.rnvideoplayer.mediaplayer.viewModels.components.Title
 import com.rnvideoplayer.mediaplayer.utils.Utils
+import com.rnvideoplayer.mediaplayer.viewModels.components.DoubleTapSeek
 import com.rnvideoplayer.mediaplayer.viewModels.components.TimeCodes
 import com.rnvideoplayer.ui.components.Thumbnails
 import com.rnvideoplayer.withTranslationAnimation
 import java.util.concurrent.TimeUnit
 
+
+
 @UnstableApi
 abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMediaPlayerControls {
-  val timeoutWork = TimeoutWork()
-  protected var reactApplicationEvent : Events? = null
+  val mediaPlayerControlsView = FrameLayout(context).apply {
+    layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+  }
+  protected var reactApplicationEvent : ReactEvents? = null
+  protected var reactConfig: ReactConfig? = null
   private var timeUnitHandler = TimeUnitManager()
 
-  val mediaOverlayView = createOverlayView()
+  private val mediaOverlayView = overlayView()
 
   private val mediaPlayer = MediaPlayerAdapter(context)
   private val playPauseButton by lazy { PlayPauseButton(context) }
@@ -58,15 +65,23 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
   private var isFinished = false
 
   val surfaceView = mediaPlayer.surfaceView
+  val leftDoubleTapSeek by lazy { DoubleTapSeek(context, false) }
+  val rightDoubleTapSeek by lazy { DoubleTapSeek(context, true) }
 
   init {
+    setupReactConfigs()
+
     setupMediaPlayerCallbacks()
     setupOverlayComponents()
     seekBarListener()
   }
 
-  open fun addEvents(events: Events?) {
-    reactApplicationEvent = events
+  open fun addEvents(reactEvents: ReactEvents?) {
+    reactApplicationEvent = reactEvents
+  }
+
+  open fun addReactConfigs(config: ReactConfig) {
+    this.reactConfig = config
   }
 
   private fun setupOverlayComponents() {
@@ -75,6 +90,12 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     }
     fullscreenButton.setOnClickListener {
       toggleFullscreen()
+    }
+    leftDoubleTapSeek.clickListener {
+      mediaPlayer.seekToWithLastPosition(15000 * -1)
+    }
+    rightDoubleTapSeek.clickListener {
+      mediaPlayer.seekToWithLastPosition(15000)
     }
 
     playPauseButton.setSize(dpToPx(70f))
@@ -93,6 +114,10 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     mediaOverlayView.addView(title)
     mediaOverlayView.addView(playPauseButton)
     mediaOverlayView.addView(mediaBottomControls)
+
+    mediaPlayerControlsView.addView(leftDoubleTapSeek)
+    mediaPlayerControlsView.addView(rightDoubleTapSeek)
+    mediaPlayerControlsView.addView(mediaOverlayView)
   }
 
   private fun setupMediaPlayerCallbacks() {
@@ -100,15 +125,16 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
       override fun onMediaLoaded(duration: Long) {
         seekBar.build(duration)
         timeCodes.updateDuration(duration)
-        reactApplicationEvent?.send(EventNames.mediaReady,this@MediaPlayerControls, Arguments.createMap().apply {
+        reactApplicationEvent?.send(ReactEventsName.MEDIA_READY,this@MediaPlayerControls, Arguments.createMap().apply {
           putDouble("duration", timeUnitHandler.toSecondsDouble(duration))
           putBoolean("loaded", true)
         })
       }
 
       override fun onPlaybackStateChanged(isPlaying: Boolean) {
+        if (leftDoubleTapSeek.isVisible || rightDoubleTapSeek.isVisible) return
         playPauseButton.updatePlayPauseIcon(isPlaying)
-        reactApplicationEvent?.send(EventNames.mediaPlayPause, this@MediaPlayerControls, Arguments.createMap().apply {
+        reactApplicationEvent?.send(ReactEventsName.MEDIA_PLAY_PAUSE, this@MediaPlayerControls, Arguments.createMap().apply {
           putBoolean("isPlaying", isPlaying)
         })
       }
@@ -120,7 +146,7 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
       override fun onMediaError(error: PlaybackException?, mediaItem: MediaItem?) {
         val uri = mediaItem?.localConfiguration?.uri
         reactApplicationEvent?.send(
-          EventNames.mediaError,
+          ReactEventsName.MEDIA_ERROR,
           this@MediaPlayerControls,
           Arguments.createMap().apply {
             putString("domain", uri.toString())
@@ -137,7 +163,7 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
       override fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long) {
         seekBar.update(currentProgress, bufferedProgress)
         timeCodes.updatePosition(currentProgress)
-        reactApplicationEvent?.send(EventNames.mediaProgress, this@MediaPlayerControls, Arguments.createMap().apply {
+        reactApplicationEvent?.send(ReactEventsName.MEDIA_PROGRESS, this@MediaPlayerControls, Arguments.createMap().apply {
           putDouble("progress", TimeUnit.MILLISECONDS.toSeconds(currentProgress).toDouble())
           putDouble("buffering", TimeUnit.MILLISECONDS.toSeconds(bufferedProgress).toDouble())
         })
@@ -194,7 +220,7 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
           putDouble("seconds", endScrubberPositionSeconds.toDouble())
         }
 
-        reactApplicationEvent?.send(EventNames.mediaSeekBar, this@MediaPlayerControls, Arguments.createMap().apply {
+        reactApplicationEvent?.send(ReactEventsName.MEDIA_SEEK_BAR, this@MediaPlayerControls, Arguments.createMap().apply {
           putMap("start", startMap)
           putMap("end", endMap)
         })
@@ -218,13 +244,31 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     })
   }
 
+  private fun setupReactConfigs() {
+    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+      override fun onGlobalLayout() {
+
+        val doubleTapSeekValue =
+          ReactConfig.getInstance().get(ReactConfig.Keys.DOUBLE_TAP_TO_SEEK_VALUE) as Int
+        val doubleTapSuffix = reactConfig?.get(ReactConfig.Keys.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL)
+        leftDoubleTapSeek.tapValue = doubleTapSeekValue
+        leftDoubleTapSeek.suffixLabel = doubleTapSuffix.toString()
+
+        rightDoubleTapSeek.tapValue = doubleTapSeekValue
+        rightDoubleTapSeek.suffixLabel = doubleTapSuffix.toString()
+
+        viewTreeObserver.removeOnGlobalLayoutListener(this)
+      }
+    })
+  }
+
   private fun toggleFullscreen() {
     onFullscreenMode(!isFullscreen)
     fullscreenButton.updateFullscreenIcon(!isFullscreen)
     isFullscreen = !isFullscreen
   }
 
-  private fun createOverlayView(): FrameLayout {
+  private fun overlayView(): FrameLayout {
     val padding = dpToPx(16f)
 
     val gradientDrawable = GradientDrawable(
