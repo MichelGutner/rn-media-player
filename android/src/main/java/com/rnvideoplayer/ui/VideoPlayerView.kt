@@ -101,14 +101,14 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
     onSingleTap: (doubleTapValue: Long) -> Unit,
     onDoubleTap: (doubleTapValue: Long) -> Unit
   ) {
-    viewControls.leftDoubleTap.tap(onSingleTap, onDoubleTap)
+//    viewControls.leftDoubleTap.tap(onSingleTap, onDoubleTap)
   }
 
   fun setRightDoubleTapListener(
     onSingleTap: (doubleTapValue: Long) -> Unit,
     onDoubleTap: (doubleTapValue: Long) -> Unit
   ) {
-    viewControls.rightDoubleTap.tap(onSingleTap, onDoubleTap)
+//    viewControls.rightDoubleTap.tap(onSingleTap, onDoubleTap)
   }
 
 

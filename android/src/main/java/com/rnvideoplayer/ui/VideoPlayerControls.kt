@@ -13,7 +13,7 @@ import com.rnvideoplayer.R
 import com.rnvideoplayer.fadeIn
 import com.rnvideoplayer.fadeOut
 import com.rnvideoplayer.mediaplayer.viewModels.components.Title
-import com.rnvideoplayer.ui.components.DoubleTapSeek
+import com.rnvideoplayer.mediaplayer.viewModels.components.DoubleTapSeek
 import com.rnvideoplayer.ui.components.Loading
 import com.rnvideoplayer.ui.controls.BottomControls
 import com.rnvideoplayer.utilities.ColorUtils

@@ -85,7 +85,7 @@ open class MediaPlayerAdapter(context: Context) {
     callback?.onMediaBuffering(currentProgress, bufferedProgress)
   }
 
-  protected fun getMediaItemMetadata(metadata: MediaMetadata) {
+  private fun getMediaItemMetadata(metadata: MediaMetadata) {
     callback?.getMediaMetadata(metadata)
   }
 
@@ -159,6 +159,10 @@ open class MediaPlayerAdapter(context: Context) {
 
   fun seekTo(position: Long) {
     exoPlayer.seekTo(position)
+  }
+
+  fun seekToWithLastPosition(position: Long) {
+    exoPlayer.seekTo(exoPlayer.contentPosition + position)
   }
 
   private val progressTask = object : Runnable {

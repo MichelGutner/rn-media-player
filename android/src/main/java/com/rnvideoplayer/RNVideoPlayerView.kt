@@ -26,10 +26,8 @@ import com.rnvideoplayer.events.Events
 import com.rnvideoplayer.helpers.SharedStore
 import com.rnvideoplayer.helpers.TimeUnitManager
 import com.rnvideoplayer.helpers.TimeoutWork
-import com.rnvideoplayer.providers.CastOptionsProvider
 import com.rnvideoplayer.ui.VideoPlayerView
 import com.rnvideoplayer.ui.components.CastPlayerView
-import com.rnvideoplayer.ui.components.Thumbnails
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -83,28 +81,28 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
       toggleOverlay()
     }
 
-    this.setLeftDoubleTapListener({
-      if (viewControls.leftDoubleTap.doubleTapBackground.visibility == VISIBLE) {
-        exoPlayer.seekTo(exoPlayer.contentPosition - it)
-      } else {
-        toggleOverlay()
-      }
-    }, {
-      exoPlayer.seekTo(exoPlayer.contentPosition - it)
-      viewControls.hideControls()
-
-    })
-
-    this.setRightDoubleTapListener({
-      if (viewControls.rightDoubleTap.doubleTapBackground.visibility == VISIBLE) {
-        exoPlayer.seekTo(exoPlayer.contentPosition + it)
-      } else {
-        toggleOverlay()
-      }
-    }, {
-      exoPlayer.seekTo(exoPlayer.contentPosition + it)
-      viewControls.hideControls()
-    })
+//    this.setLeftDoubleTapListener({
+//      if (viewControls.leftDoubleTap.doubleTapBackground.visibility == VISIBLE) {
+//        exoPlayer.seekTo(exoPlayer.contentPosition - it)
+//      } else {
+//        toggleOverlay()
+//      }
+//    }, {
+//      exoPlayer.seekTo(exoPlayer.contentPosition - it)
+//      viewControls.hideControls()
+//
+//    })
+//
+//    this.setRightDoubleTapListener({
+//      if (viewControls.rightDoubleTap.doubleTapBackground.visibility == VISIBLE) {
+//        exoPlayer.seekTo(exoPlayer.contentPosition + it)
+//      } else {
+//        toggleOverlay()
+//      }
+//    }, {
+//      exoPlayer.seekTo(exoPlayer.contentPosition + it)
+//      viewControls.hideControls()
+//    })
 
     exoPlayer.addListener(object : Player.Listener {
       override fun onRenderedFirstFrame() {
@@ -130,9 +128,9 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
                 }
               }
               viewControls.timeBar.build(exoPlayer.duration)
-              viewControls.timeCodesDuration.createWithFormattedTime(exoPlayer.duration)
+              viewControls.timeCodesDuration.updatePosition(exoPlayer.duration)
               event.send(
-                EventNames.videoReady,
+                EventNames.mediaReady,
                 this@RNVideoPlayerView,
                 Arguments.createMap().apply {
                   putDouble("duration", timeUnitHandler.toSecondsDouble(exoPlayer.duration))
@@ -147,7 +145,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
             castPlayer.visibility = INVISIBLE
 
             event.send(
-              EventNames.videoBuffering,
+              EventNames.mediaBuffering,
               this@RNVideoPlayerView,
               Arguments.createMap().apply {
                 putBoolean("buffering", true)
@@ -161,7 +159,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
               viewControls.updatePlayPauseIcon(false)
             }
             event.send(
-              EventNames.videoCompleted,
+              EventNames.mediaCompleted,
               this@RNVideoPlayerView,
               Arguments.createMap().apply {
                 putBoolean("completed", true)
@@ -178,7 +176,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
         val uri = mediaItem?.localConfiguration?.uri
 
         event.send(
-          EventNames.videoErrorStatus,
+          EventNames.mediaError,
           this@RNVideoPlayerView,
           Arguments.createMap().apply {
             putString("domain", uri.toString())
@@ -212,10 +210,10 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
         val index = (seconds / intervalInSeconds).toInt()
         val currentSeekPoint =
           ((((seconds * 100) / duration) * viewControls.timeBar.timeBarWidth) / 100)
-        viewControls.thumbnails.getCurrentPlayerPosition(position)
+        viewControls.thumbnails.updatePosition(position)
 
         if (index < viewControls.thumbnails.bitmaps.size) {
-          viewControls.thumbnails.setCurrentImageBitmapByIndex(index)
+          viewControls.thumbnails.setCurrentThumbnailImage(index)
           viewControls.thumbnails.translationXThumbnailView =
             onTranslateXThumbnail(currentSeekPoint)
         }
@@ -238,7 +236,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
           showButtons()
 
           event.send(
-            EventNames.videoSeekBar,
+            EventNames.mediaSeekBar,
             this@RNVideoPlayerView,
             Arguments.createMap().apply {
               putString("start", mapOf(
@@ -302,7 +300,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
       val enabled = thumbnails.getBoolean("isEnabled")
       if (enabled) {
         if (thumbnailUrl.isNotEmpty()) {
-          viewControls.thumbnails.generatingThumbnailFrames(thumbnailUrl)
+          viewControls.thumbnails.downloadFrames(thumbnailUrl)
         }
       }
     }
@@ -382,14 +380,14 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
     val buffered = exoPlayer.contentBufferedPosition
 
     viewControls.timeBar.update(position, buffered)
-    viewControls.timeCodesPosition.createWithFormattedTime(position)
+    viewControls.timeCodesPosition.updatePosition(position)
 
-    event.send(EventNames.videoProgress, this, Arguments.createMap().apply {
+    event.send(EventNames.mediaProgress, this, Arguments.createMap().apply {
       putDouble("progress", TimeUnit.MILLISECONDS.toSeconds(position).toDouble())
       putDouble("buffering", TimeUnit.MILLISECONDS.toSeconds(buffered).toDouble())
     })
     if (buffered == exoPlayer.duration) {
-      event.send(EventNames.videoBufferCompleted, this, Arguments.createMap().apply {
+      event.send(EventNames.mediaBufferCompleted, this, Arguments.createMap().apply {
         putBoolean("completed", true)
       })
     }
@@ -454,7 +452,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
         }
       }
     }
-    event.send(EventNames.videoPlayPauseStatus, this, Arguments.createMap().apply {
+    event.send(EventNames.mediaPlayPause, this, Arguments.createMap().apply {
       putBoolean("isPlaying", exoPlayer.isPlaying)
     })
     viewControls.updatePlayPauseIcon(player?.isPlaying ?: false)

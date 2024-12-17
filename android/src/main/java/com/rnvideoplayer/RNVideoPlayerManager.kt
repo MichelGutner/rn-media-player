@@ -64,11 +64,19 @@ class RNVideoPlayer : SimpleViewManager<View>() {
     view.setupMediaPlayer(url, longStartTime, mediaMetadata)
   }
 
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "thumbnails")
-//  fun setThumbnails(rnVideoPlayerView: RNVideoPlayerView, thumbnails: ReadableMap?) {
-//    rnVideoPlayerView.buildThumbnails(thumbnails)
-//  }
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "thumbnails")
+  fun setThumbnails(view: MediaPlayerView, thumbnails: ReadableMap?) {
+    if (thumbnails != null) {
+      val sourceUrl = thumbnails.getString("sourceUrl") as String
+      val enabled = thumbnails.getBoolean("isEnabled")
+      if (enabled) {
+        if (sourceUrl.isNotEmpty()) {
+          view.setupThumbnails(sourceUrl)
+        }
+      }
+    }
+  }
 //
 //  @OptIn(UnstableApi::class)
 //  @ReactProp(name = "rate")
@@ -117,28 +125,30 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
 object EventNames {
   const val menuItemSelected = "onMenuItemSelected"
-  const val videoProgress = "onVideoProgress"
-  const val videoReady = "onReady"
-  const val videoCompleted = "onCompleted"
-  const val videoBuffering = "onBuffer"
-  const val videoPlayPauseStatus = "onPlayPause"
-  const val videoErrorStatus = "onError"
-  const val videoBufferCompleted = "onBufferCompleted"
-  const val videoSeekBar = "onSeekBar"
+  const val mediaProgress = "onMediaProgress"
+  const val mediaReady = "onMediaReady"
+  const val mediaCompleted = "onMediaCompleted"
+  const val mediaBuffering = "onMediaBuffer"
+  const val mediaPlayPause = "onMediaPlayPause"
+  const val mediaError = "onMediaError"
+  const val mediaBufferCompleted = "onMediaBufferCompleted"
+  const val mediaSeekBar = "onMediaSeekBar"
+  const val mediaPinchZoom = "onMediaPinchZoom"
 }
 
-fun View.fadeIn(duration: Long = 500) {
+fun View.fadeIn(duration: Long = 300, completion: () -> Unit = {}) {
   this.post {
     this.visibility = View.VISIBLE
     this.alpha = 0f
     this.animate()
       .alpha(1f)
+      .withEndAction { completion.invoke() }
       .setDuration(duration)
       .setListener(null)
   }
 }
 
-fun View.fadeOut(duration: Long = 500, completion: (() -> Unit)? = null) {
+fun View.fadeOut(duration: Long = 300, completion: (() -> Unit)? = null) {
   post {
     animate()
       .alpha(0f)
@@ -147,5 +157,24 @@ fun View.fadeOut(duration: Long = 500, completion: (() -> Unit)? = null) {
         visibility = View.INVISIBLE
         completion?.invoke()
       }
+  }
+}
+
+fun View.withTranslationAnimation(translationY: Float? = 0f, duration: Long? = 300) {
+  this.post {
+    animate()
+      .translationY(translationY!!)
+      .setDuration(duration!!)
+      .start()
+  }
+
+  fun View.show() {
+    this.visibility = View.VISIBLE
+  }
+
+  fun View.hide() {
+    post {
+    this.visibility = View.GONE
+    }
   }
 }

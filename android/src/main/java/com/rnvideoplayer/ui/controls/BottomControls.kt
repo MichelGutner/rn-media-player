@@ -12,7 +12,7 @@ import android.widget.LinearLayout
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.rnvideoplayer.R
-import com.rnvideoplayer.models.TimesCodes
+import com.rnvideoplayer.mediaplayer.viewModels.components.TimeCodes
 import com.rnvideoplayer.mediaplayer.viewModels.components.SeekBar
 import com.rnvideoplayer.ui.components.Thumbnails
 import com.rnvideoplayer.utilities.layoutParamsCenter
@@ -31,8 +31,8 @@ class BottomControls(context: Context) : FrameLayout(context) {
 
   val timeBar = SeekBar(context)
 
-  val timesCodeDuration = TimesCodes(context)
-  val timeCodesPosition = TimesCodes(context)
+  val timesCodeDuration = TimeCodes(context)
+  val timeCodesPosition = TimeCodes(context)
   private val timeCodesView = timesCodesView(context)
 
   val thumbnails by lazy { Thumbnails(context) }
