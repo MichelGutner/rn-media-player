@@ -69,7 +69,7 @@ open class VideoPlayerView(private val context: ThemedReactContext) : FrameLayou
   }
 
   fun isReadyToDisplayControls() {
-    viewControls.loading.hide()
+//    viewControls.loading.hide()
     viewControls.playPauseButton.visibility = VISIBLE
     viewControls.fullscreenLayout.visibility = VISIBLE
     viewControls.menuControlLayout.visibility = VISIBLE

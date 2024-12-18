@@ -42,7 +42,7 @@ open class MediaPlayerView(private val context: ThemedReactContext) :
     aspectRatio.frameLayout.addView(surfaceView)
     container.addView(aspectRatio.frameLayout)
 
-    container.addView(mediaPlayerControlsView)
+    container.addView(controlsView)
     addView(container)
   }
 

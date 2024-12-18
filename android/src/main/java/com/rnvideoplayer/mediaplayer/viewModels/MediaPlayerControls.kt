@@ -29,6 +29,7 @@ import com.rnvideoplayer.mediaplayer.viewModels.components.Title
 import com.rnvideoplayer.mediaplayer.utils.Utils
 import com.rnvideoplayer.mediaplayer.viewModels.components.DoubleTapSeek
 import com.rnvideoplayer.mediaplayer.viewModels.components.TimeCodes
+import com.rnvideoplayer.ui.components.Loading
 import com.rnvideoplayer.ui.components.Thumbnails
 import com.rnvideoplayer.withTranslationAnimation
 import java.util.concurrent.TimeUnit
@@ -37,16 +38,17 @@ import java.util.concurrent.TimeUnit
 
 @UnstableApi
 abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMediaPlayerControls {
-  val mediaPlayerControlsView = FrameLayout(context).apply {
+  val controlsView = FrameLayout(context).apply {
     layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
   }
+
   protected var reactApplicationEvent : ReactEvents? = null
   protected var reactConfig: ReactConfig? = null
   private var timeUnitHandler = TimeUnitManager()
-
-  private val mediaOverlayView = overlayView()
-
   private val mediaPlayer = MediaPlayerAdapter(context)
+
+  private val overlayView = overlayView()
+  private val loading by lazy { Loading(context) }
   private val playPauseButton by lazy { PlayPauseButton(context) }
   private val fullscreenButton by lazy { FullscreenButton(context) }
   private val seekBar by lazy { SeekBar(context) }
@@ -72,7 +74,7 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     setupReactConfigs()
 
     setupMediaPlayerCallbacks()
-    setupOverlayComponents()
+    setupComponents()
     seekBarListener()
   }
 
@@ -84,18 +86,19 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     this.reactConfig = config
   }
 
-  private fun setupOverlayComponents() {
+  private fun setupComponents() {
     playPauseButton.setOnClickListener {
       mediaPlayer.togglePlayPause()
     }
     fullscreenButton.setOnClickListener {
       toggleFullscreen()
     }
-    leftDoubleTapSeek.clickListener {
-      mediaPlayer.seekToWithLastPosition(15000 * -1)
+
+    leftDoubleTapSeek.onTapListener { value ->
+      mediaPlayer.seekToWithLastPosition(-((value * 1000).toLong()))
     }
-    rightDoubleTapSeek.clickListener {
-      mediaPlayer.seekToWithLastPosition(15000)
+    rightDoubleTapSeek.onTapListener { value ->
+      mediaPlayer.seekToWithLastPosition(((value * 1000).toLong()))
     }
 
     playPauseButton.setSize(dpToPx(70f))
@@ -111,13 +114,15 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     mediaBottomControls.addView(bottomVerticalControlsLayout)
 
 
-    mediaOverlayView.addView(title)
-    mediaOverlayView.addView(playPauseButton)
-    mediaOverlayView.addView(mediaBottomControls)
+    overlayView.addView(title)
+    overlayView.addView(playPauseButton)
+    overlayView.addView(mediaBottomControls)
 
-    mediaPlayerControlsView.addView(leftDoubleTapSeek)
-    mediaPlayerControlsView.addView(rightDoubleTapSeek)
-    mediaPlayerControlsView.addView(mediaOverlayView)
+    controlsView.addView(leftDoubleTapSeek)
+    controlsView.addView(rightDoubleTapSeek)
+
+    controlsView.addView(overlayView)
+    controlsView.addView(loading)
   }
 
   private fun setupMediaPlayerCallbacks() {
@@ -129,10 +134,15 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
           putDouble("duration", timeUnitHandler.toSecondsDouble(duration))
           putBoolean("loaded", true)
         })
+        postDelayed({
+          loading.fadeOut {
+            controlsView.removeView(loading)
+            controlsView.requestLayout()
+          }
+        }, 400)
       }
 
       override fun onPlaybackStateChanged(isPlaying: Boolean) {
-        if (leftDoubleTapSeek.isVisible || rightDoubleTapSeek.isVisible) return
         playPauseButton.updatePlayPauseIcon(isPlaying)
         reactApplicationEvent?.send(ReactEventsName.MEDIA_PLAY_PAUSE, this@MediaPlayerControls, Arguments.createMap().apply {
           putBoolean("isPlaying", isPlaying)
@@ -172,6 +182,10 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
       override fun getMediaMetadata(mediaMetadata: MediaMetadata) {
         title.setTitle(mediaMetadata.title.toString())
       }
+
+      override fun onPlaybackStateEndedInvoked() {
+        thumbnails.translationXThumbnailView = 0f
+      }
     })
   }
 
@@ -189,8 +203,7 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
 
        this@MediaPlayerControls.seekBar.animate().scaleX(1f).scaleY(1.5f).setDuration(500).start()
         thumbnails.show()
-        fullscreenButton.fadeOut()
-        playPauseButton.fadeOut()
+        hideControls()
       }
 
       override fun onScrubMove(seekBar: TimeBar, position: Long) {
@@ -226,8 +239,7 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
         })
 
         thumbnails.hide()
-        fullscreenButton.fadeIn()
-        playPauseButton.fadeIn()
+        showControls()
 
         this@MediaPlayerControls.seekBar.animate().scaleX(1.0f).scaleY(1.0f).setDuration(500).start()
         val duration = TimeUnit.MILLISECONDS.toSeconds(mediaPlayer.duration)
@@ -330,13 +342,23 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     }
   }
 
+  private fun hideControls() {
+    fullscreenButton.fadeOut()
+    playPauseButton.fadeOut()
+  }
+
+  private fun showControls() {
+    fullscreenButton.fadeIn()
+    playPauseButton.fadeIn()
+  }
+
   fun toggleOverlayVisibility() {
-    if (mediaOverlayView.isVisible) {
-      mediaOverlayView.fadeOut()
+    if (overlayView.isVisible) {
+      overlayView.fadeOut()
       bottomVerticalControlsLayout.withTranslationAnimation( 20f)
       title.withTranslationAnimation(-20f)
     } else {
-      mediaOverlayView.fadeIn()
+      overlayView.fadeIn()
       bottomVerticalControlsLayout.withTranslationAnimation()
       title.withTranslationAnimation()
     }
@@ -356,10 +378,6 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
 
   fun setupThumbnails(url: String) {
     thumbnails.downloadFrames(url)
-  }
-
-  fun seekToWithLastPosition(position: Long) {
-    mediaPlayer.seekToWithLastPosition(position)
   }
 }
 

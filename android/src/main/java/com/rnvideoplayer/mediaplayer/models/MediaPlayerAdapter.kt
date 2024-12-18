@@ -1,5 +1,6 @@
 package com.rnvideoplayer.mediaplayer.models
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Handler
@@ -16,9 +17,11 @@ import java.io.File
 
 open class MediaPlayerAdapter(context: Context) {
   private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build()
-  val surfaceView: SurfaceView = SurfaceView(context)
   private val progressInterval: Long = 1000L
   private val handler = Handler(Looper.getMainLooper())
+  private var playbackStateEnded: Boolean = false
+
+  val surfaceView: SurfaceView = SurfaceView(context)
   val duration: Long get() = exoPlayer.duration
 
   interface Callback {
@@ -28,6 +31,7 @@ open class MediaPlayerAdapter(context: Context) {
     fun onMediaError(error: PlaybackException?, mediaItem: MediaItem?)
     fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long)
     fun getMediaMetadata(mediaMetadata: MediaMetadata)
+    fun onPlaybackStateEndedInvoked()
   }
 
   init {
@@ -36,6 +40,14 @@ open class MediaPlayerAdapter(context: Context) {
     exoPlayer.addListener(object : Player.Listener {
       override fun onEvents(player: Player, events: Player.Events) {
         super.onEvents(player, events)
+        if (events.containsAny(
+            Player.EVENT_PLAY_WHEN_READY_CHANGED,
+            Player.EVENT_PLAYBACK_STATE_CHANGED,
+            Player.EVENT_PLAYBACK_SUPPRESSION_REASON_CHANGED
+          )
+        ) {
+          onPlaybackStateChanged(player.isPlaying)
+        }
         if (events.contains(Player.EVENT_RENDERED_FIRST_FRAME)) {
           onMediaLoaded(player.duration)
         }
@@ -44,10 +56,18 @@ open class MediaPlayerAdapter(context: Context) {
         }
         if (events.contains(Player.EVENT_IS_LOADING_CHANGED)) {
           startMediaProgress()
+          playbackStateEnded = false
         }
       }
-      override fun onIsPlayingChanged(isPlaying: Boolean) {
-        onPlaybackStateChanged(isPlaying)
+
+      @SuppressLint("SwitchIntDef")
+      override fun onPlaybackStateChanged(playbackState: Int) {
+        super.onPlaybackStateChanged(playbackState)
+        when (playbackState) {
+          ExoPlayer.STATE_ENDED -> {
+            playbackStateEnded = true
+          }
+        }
       }
     })
   }
@@ -137,6 +157,13 @@ open class MediaPlayerAdapter(context: Context) {
   }
 
   fun togglePlayPause() {
+    if (playbackStateEnded) {
+      playbackStateEnded = false
+      exoPlayer.seekTo(0)
+      this.callback?.onPlaybackStateEndedInvoked()
+      return
+    }
+
     if (exoPlayer.isPlaying) {
       exoPlayer.pause()
     } else {
@@ -151,11 +178,18 @@ open class MediaPlayerAdapter(context: Context) {
   }
 
   fun seekTo(position: Long) {
-    exoPlayer.seekTo(position)
+    val duration = exoPlayer.duration
+    val newPosition = (position).coerceIn(0, duration)
+
+    exoPlayer.seekTo(newPosition)
   }
 
   fun seekToWithLastPosition(position: Long) {
-    exoPlayer.seekTo(exoPlayer.contentPosition + position)
+    val currentPosition = exoPlayer.currentPosition
+    val duration = exoPlayer.duration
+    val newPosition = (currentPosition + position).coerceIn(0, duration)
+    println("newPosition: $newPosition ${exoPlayer.currentPosition} ${position}")
+    exoPlayer.seekTo(newPosition)
   }
 
   private val progressTask = object : Runnable {

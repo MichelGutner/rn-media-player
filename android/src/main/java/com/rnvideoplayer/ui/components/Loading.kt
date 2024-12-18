@@ -8,29 +8,21 @@ import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ProgressBar
-import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.utilities.layoutParamsCenter
 
 @SuppressLint("ViewConstructor")
-class Loading(context: ThemedReactContext): FrameLayout(context) {
-  private val loading = createLoading(context)
-
-  fun show() {
-    visibility = View.VISIBLE
-  }
-
-  fun hide() {
-    visibility = View.INVISIBLE
-  }
+class Loading(context: Context): FrameLayout(context) {
+  private val loading = progressBar(context)
 
   init {
+    setBackgroundColor(Color.BLACK)
     addView(loading)
   }
 
-  private fun createLoading(context: Context): ProgressBar {
+  private fun progressBar(context: Context): ProgressBar {
     val sizeInPx = TypedValue.applyDimension(
       TypedValue.COMPLEX_UNIT_DIP,
-      50f,
+      60f,
       context.resources.displayMetrics
     ).toInt()
     return ProgressBar(context).apply {
