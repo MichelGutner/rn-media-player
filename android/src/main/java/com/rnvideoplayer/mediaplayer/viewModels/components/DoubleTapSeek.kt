@@ -11,8 +11,7 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import com.rnvideoplayer.R
 import com.rnvideoplayer.fadeIn
-import com.rnvideoplayer.fadeOut
-import com.rnvideoplayer.helpers.TimeoutWork
+import com.rnvideoplayer.mediaplayer.utils.TaskScheduler
 import com.rnvideoplayer.utils.scaleView
 
 @SuppressLint("SetTextI18n", "ViewConstructor")
@@ -20,48 +19,59 @@ class DoubleTapSeek(
   private val context: Context,
   private val isForward: Boolean
 ) : LinearLayout(context) {
-  private val timeoutWork = TimeoutWork()
+  private val taskScheduler = TaskScheduler()
   private val text: TextView = text()
   private var tappedQuantity: Int = 1
   private val contentView = contentView()
-  var isVisible: Boolean = false
+  private var isVisible: Boolean = false
+  private var onTap: (value: Int) -> Unit = {}
 
   var suffixLabel: String = "seconds"
   var tapValue: Int = 15
 
   init {
     setupLayout()
-  }
-
-  fun clickListener(onSingleTap: () -> Unit) {
-    this.setOnClickListener {
-      onSingleTap()
-
-      timeoutWork.cancelTimer()
+    setOnClickListener {
+      taskScheduler.cancelTask()
       tappedQuantity++
 
-      updateDoubleTapText(tappedQuantity)
+      if (tappedQuantity > 1) {
+        onUpdateValues(tappedQuantity)
+      }
       hide()
     }
   }
 
   fun hide() {
-    timeoutWork.createTask(700){
-      fadeOut(100) {
+    taskScheduler.createTask(850){
+      post {
         tappedQuantity = 0
+        isVisible = false
+        visibility = INVISIBLE
       }
     }
   }
 
   fun show() {
-    fadeIn {
-      isVisible = true
+    if (visibility == INVISIBLE) {
+      onUpdateValues(1)
     }
-    updateDoubleTapText(1)
+    post {
+      fadeIn {
+        isVisible = true
+      }
+    }
   }
 
-  private fun updateDoubleTapText(quantity: Int) {
-    text.text = "${tapValue * quantity} $suffixLabel"
+  fun onTapListener(listener: (value: Int) -> Unit) {
+    this.onTap = listener
+  }
+
+  private fun onUpdateValues(quantity: Int) {
+    post {
+      text.text = "${tapValue * quantity} $suffixLabel"
+      onTap(tapValue)
+    }
   }
 
   private fun setupLayout() {

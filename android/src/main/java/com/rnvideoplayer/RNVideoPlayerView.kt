@@ -25,7 +25,7 @@ import com.rnvideoplayer.ui.components.PopUpMenu
 import com.rnvideoplayer.mediaplayer.models.ReactEvents
 import com.rnvideoplayer.helpers.SharedStore
 import com.rnvideoplayer.helpers.TimeUnitManager
-import com.rnvideoplayer.helpers.TimeoutWork
+import com.rnvideoplayer.mediaplayer.utils.TaskScheduler
 import com.rnvideoplayer.mediaplayer.models.ReactEventsName
 import com.rnvideoplayer.ui.VideoPlayerView
 import com.rnvideoplayer.ui.components.CastPlayerView
@@ -50,7 +50,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
   private var startScrubPositionPercent: Double = 0.0
   private var startScrubPositionSeconds: Double = 0.0
 
-  private val timeoutWork = TimeoutWork()
+  private val taskScheduler = TaskScheduler()
 
   init {
 //    viewControls.mainLayout.addView(castPlayer)
@@ -197,7 +197,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
         isSeeking = true
         hideControlsWithoutTimebar()
         viewControls.thumbnails.show()
-        timeoutWork.cancelTimer()
+        taskScheduler.cancelTask()
         unReadyToDisplayControls()
         startScrubPositionPercent = timeUnitHandler.toSecondsDouble(position) / timeUnitHandler.toSecondsDouble(exoPlayer.duration)
         startScrubPositionSeconds = timeUnitHandler.toSecondsDouble(position)
@@ -444,7 +444,7 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
       when {
         exoPlayer.isPlaying -> {
           exoPlayer.pause()
-          timeoutWork.cancelTimer()
+          taskScheduler.cancelTask()
         }
 
         else -> {
@@ -460,9 +460,9 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
   }
 
   private fun timeoutControls() {
-    timeoutWork.cancelTimer()
+    taskScheduler.cancelTask()
 
-    timeoutWork.createTask(4000) {
+    taskScheduler.createTask(4000) {
       viewControls.hideControls()
     }
 
