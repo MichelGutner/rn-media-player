@@ -24,7 +24,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> {
     val mapBuilder = MapBuilder.builder<String, Any>()
-    ReactEventsName.list.forEach { event ->
+    ReactEventsName.registeredEvents.forEach { event ->
       mapBuilder.put(event, MapBuilder.of("registrationName", event))
     }
 

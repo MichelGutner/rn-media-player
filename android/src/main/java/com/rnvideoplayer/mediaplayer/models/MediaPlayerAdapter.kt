@@ -13,6 +13,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
+import com.facebook.react.bridge.Arguments
 import java.io.File
 
 open class MediaPlayerAdapter(context: Context) {
@@ -32,8 +33,10 @@ open class MediaPlayerAdapter(context: Context) {
     var shouldShowPlayPause: Boolean
     fun onMediaError(error: PlaybackException?, mediaItem: MediaItem?)
     fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long)
+    fun onMediaBufferCompleted()
     fun getMediaMetadata(mediaMetadata: MediaMetadata)
     fun onPlaybackStateEndedInvoked()
+    fun onMediaEnded()
   }
 
   init {
@@ -68,6 +71,7 @@ open class MediaPlayerAdapter(context: Context) {
         when (playbackState) {
           ExoPlayer.STATE_ENDED -> {
             playbackStateEnded = true
+            onMediaEnded()
           }
         }
       }
@@ -84,6 +88,10 @@ open class MediaPlayerAdapter(context: Context) {
     this.callback = null
   }
 
+  protected fun onMediaEnded() {
+    callback?.onMediaEnded()
+  }
+
   protected fun onPlaybackStateChanged(isPlaying: Boolean) {
     callback?.onPlaybackStateChanged(isPlaying)
   }
@@ -98,6 +106,10 @@ open class MediaPlayerAdapter(context: Context) {
 
   protected fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long) {
     callback?.onMediaBuffering(currentProgress, bufferedProgress)
+  }
+
+  protected fun onMediaBufferCompleted() {
+    callback?.onMediaBufferCompleted()
   }
 
   private fun getMediaItemMetadata(metadata: MediaMetadata) {
@@ -160,6 +172,10 @@ open class MediaPlayerAdapter(context: Context) {
         val position = exoPlayer.contentPosition
         val buffered = exoPlayer.contentBufferedPosition
         onMediaBuffering(position, buffered)
+
+        if (buffered == duration) {
+          onMediaBufferCompleted()
+        }
       }
       handler.postDelayed(this, progressInterval)
     }

@@ -66,7 +66,10 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
   private val thumbnail by lazy { Thumbnail(context) }
   private val thumbnailContainer = customLinearHorizontalLayout()
 
-  private val bottomControlBar = customLinearHorizontalLayout().apply { gravity = Gravity.BOTTOM or Gravity.END }
+  private val bottomControlBar = customLinearHorizontalLayout().apply {
+    gravity = Gravity.BOTTOM or Gravity.END
+    setPadding(0,0,12,12)
+  }
 
   private val thumbnailAndControlsContainer = FrameLayout(context).apply {
     layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT)
@@ -86,9 +89,8 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
 
   init {
     setupReactConfigs()
-
-    setupMediaPlayerCallbacks()
-    setupComponents()
+    initializerPlayerCallbacks()
+    initializerPlayerComponents()
     seekBarListener()
   }
 
@@ -100,7 +102,7 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     this.reactConfig = config
   }
 
-  private fun setupComponents() {
+  private fun initializerPlayerComponents() {
     playPauseButton.setOnClickListener {
       mediaPlayer.onMediaTogglePlayPause()
     }
@@ -144,7 +146,7 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     controlsContainer.addView(loading)
   }
 
-  private fun setupMediaPlayerCallbacks() {
+  private fun initializerPlayerCallbacks() {
     mediaPlayer.addCallback(object : MediaPlayerAdapter.Callback {
       override fun onMediaLoaded(duration: Long) {
         seekBar.build(duration)
@@ -198,12 +200,24 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
         })
       }
 
+      override fun onMediaBufferCompleted() {
+        reactApplicationEvent?.send(ReactEventsName.MEDIA_BUFFER_COMPLETED, this@MediaPlayerControls, Arguments.createMap().apply {
+          putBoolean("completed", true)
+        })
+      }
+
       override fun getMediaMetadata(mediaMetadata: MediaMetadata) {
         title.setTitle(mediaMetadata.title.toString())
       }
 
       override fun onPlaybackStateEndedInvoked() {
         thumbnail.translationXThumbnailView = 0f
+      }
+
+      override fun onMediaEnded() {
+        reactApplicationEvent?.send(ReactEventsName.MEDIA_COMPLETED, this@MediaPlayerControls, Arguments.createMap().apply {
+          putBoolean("completed", true)
+        })
       }
     })
   }
@@ -296,6 +310,12 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     onFullscreenMode(!isFullscreen)
     fullscreenButton.updateFullscreenIcon(!isFullscreen)
     isFullscreen = !isFullscreen
+    reactApplicationEvent?.send(
+      ReactEventsName.FULL_SCREEN_STATE_CHANGED,
+      this@MediaPlayerControls,
+      Arguments.createMap().apply {
+        putBoolean("isFullscreen", isFullscreen)
+      })
   }
 
   private fun overlayView(): FrameLayout {

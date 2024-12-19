@@ -18,8 +18,9 @@ object ReactEventsName {
   const val MEDIA_BUFFER_COMPLETED = "onMediaBufferCompleted"
   const val MEDIA_SEEK_BAR = "onMediaSeekBar"
   const val MEDIA_PINCH_ZOOM = "onMediaPinchZoom"
+  const val FULL_SCREEN_STATE_CHANGED = "onFullScreenStateChanged"
 
-  val list = listOf(
+  val registeredEvents = listOf(
     MENU_ITEM_SELECTED,
     MEDIA_PROGRESS,
     MEDIA_READY,
@@ -29,7 +30,8 @@ object ReactEventsName {
     MEDIA_PLAY_PAUSE,
     MEDIA_ERROR,
     MEDIA_SEEK_BAR,
-    MEDIA_PINCH_ZOOM
+    MEDIA_PINCH_ZOOM,
+    FULL_SCREEN_STATE_CHANGED
   )
 }
 

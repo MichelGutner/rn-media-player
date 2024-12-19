@@ -40,18 +40,17 @@ class TimeCodes(context: Context) : LinearLayout(context) {
   private fun timesCodesView(context: Context): LinearLayout {
     return LinearLayout(context).apply {
       orientation = HORIZONTAL
+      setPadding(12,0,12,0)
       layoutParams = LayoutParams(
         LayoutParams.MATCH_PARENT,
         LayoutParams.WRAP_CONTENT
       )
 
       addView(position.apply {
-        layoutParams = LinearLayout.LayoutParams(
+        layoutParams = LayoutParams(
           LayoutParams.WRAP_CONTENT,
           LayoutParams.WRAP_CONTENT
-        ).apply {
-          gravity = Gravity.START
-        }
+        )
       })
 
       addView(View(context).apply {
@@ -64,9 +63,7 @@ class TimeCodes(context: Context) : LinearLayout(context) {
         layoutParams = LayoutParams(
           LayoutParams.WRAP_CONTENT,
           LayoutParams.WRAP_CONTENT
-        ).apply {
-          gravity = Gravity.END
-        }
+        )
       })
     }
   }
