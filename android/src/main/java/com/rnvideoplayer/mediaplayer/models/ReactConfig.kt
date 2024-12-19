@@ -5,6 +5,7 @@ class ReactConfig {
     const val DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL = "suffixLabel"
     const val DOUBLE_TAP_TO_SEEK_VALUE = "doubleTapValue"
     const val MENU_ITEMS = "menuItems"
+    const val ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS = "enterFullScreenWhenPlaybackBegins"
   }
 
   private val config: MutableMap<String, Any> = mutableMapOf()

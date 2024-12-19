@@ -383,10 +383,10 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
     viewControls.timeBar.update(position, buffered)
     viewControls.timeCodesPosition.updatePosition(position)
 
-    event.send(ReactEventsName.MEDIA_PROGRESS, this, Arguments.createMap().apply {
-      putDouble("progress", TimeUnit.MILLISECONDS.toSeconds(position).toDouble())
-      putDouble("buffering", TimeUnit.MILLISECONDS.toSeconds(buffered).toDouble())
-    })
+//    event.send(ReactEventsName.MEDIA_PROGRESS, this, Arguments.createMap().apply {
+//      putDouble("progress", TimeUnit.MILLISECONDS.toSeconds(position).toDouble())
+//      putDouble("buffering", TimeUnit.MILLISECONDS.toSeconds(buffered).toDouble())
+//    })
     if (buffered == exoPlayer.duration) {
       event.send(ReactEventsName.MEDIA_BUFFER_COMPLETED, this, Arguments.createMap().apply {
         putBoolean("completed", true)

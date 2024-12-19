@@ -117,12 +117,20 @@ fun setMenus(view: MediaPlayerView, menus: ReadableMap) {
   }
     view.addReactConfigs(reactConfig)
   }
+
   @OptIn(UnstableApi::class)
   @ReactProp(name = "replaceMediaUrl")
   fun setReplaceMediaUrl(view: MediaPlayerView, replaceMediaUrl: String) {
     if (replaceMediaUrl.isNotEmpty()) {
       view.onReplaceMedia(replaceMediaUrl)
     }
+  }
+
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "entersFullScreenWhenPlaybackBegins")
+  fun setEntersFullScreenWhenPlaybackBegins(view: MediaPlayerView, entersFullScreenWhenPlaybackBegins: Boolean) {
+    val reactConfig = ReactConfig.getInstance()
+    reactConfig.set(ReactConfig.Key.ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS, entersFullScreenWhenPlaybackBegins)
   }
 }
 

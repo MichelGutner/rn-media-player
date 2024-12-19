@@ -9,10 +9,9 @@ import com.facebook.react.uimanager.events.Event
 
 object ReactEventsName {
   const val MENU_ITEM_SELECTED = "onMenuItemSelected"
-  const val MEDIA_PROGRESS = "onMediaProgress"
   const val MEDIA_READY = "onMediaReady"
   const val MEDIA_COMPLETED = "onMediaCompleted"
-  const val MEDIA_BUFFERING = "onMediaBuffer"
+  const val MEDIA_BUFFERING = "onMediaBuffering"
   const val MEDIA_PLAY_PAUSE = "onMediaPlayPause"
   const val MEDIA_ERROR = "onMediaError"
   const val MEDIA_BUFFER_COMPLETED = "onMediaBufferCompleted"
@@ -22,7 +21,6 @@ object ReactEventsName {
 
   val registeredEvents = listOf(
     MENU_ITEM_SELECTED,
-    MEDIA_PROGRESS,
     MEDIA_READY,
     MEDIA_COMPLETED,
     MEDIA_BUFFERING,
