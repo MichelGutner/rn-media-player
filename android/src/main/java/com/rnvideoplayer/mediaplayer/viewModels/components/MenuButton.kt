@@ -2,20 +2,20 @@ package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Color
 import android.util.TypedValue
 import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.ImageButton
-import android.widget.LinearLayout
 import com.rnvideoplayer.R
 
-class FullscreenButton(context: Context) : FrameLayout(context) {
+
+class MenuButton(context: Context) : FrameLayout(context) {
   private var size: Int = 60
   private val button = setupButton(context)
 
   init {
     addView(button)
+    setPadding(0,0,12,0)
   }
 
   override fun setOnClickListener(l: OnClickListener?) {
@@ -35,17 +35,7 @@ class FullscreenButton(context: Context) : FrameLayout(context) {
         true
       )
       setBackgroundResource(typedValue.resourceId)
-      setImageResource(R.drawable.animated_full_to_exit)
+      setImageResource(R.drawable.outline_pending_24)
     }
-  }
-
-  fun updateFullscreenIcon(isFullscreen: Boolean) {
-    if (isFullscreen) {
-      button.setImageResource(R.drawable.animated_exit_to_full)
-    } else {
-      button.setImageResource(R.drawable.animated_full_to_exit)
-    }
-    button.postInvalidate()
-    button.requestLayout()
   }
 }

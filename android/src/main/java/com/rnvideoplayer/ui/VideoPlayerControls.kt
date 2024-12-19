@@ -35,7 +35,7 @@ class VideoPlayerControls(val context: ThemedReactContext) : FrameLayout(context
   val leftDoubleTap by lazy { DoubleTapSeek(context, false) }
   val rightDoubleTap by lazy { DoubleTapSeek(context, true) }
 
-  val thumbnails = bottomControls.thumbnails
+  val thumbnails = bottomControls.thumbnail
   val timeBar = bottomControls.timeBar
   val timeCodesDuration = bottomControls.timesCodeDuration
   val timeCodesPosition = bottomControls.timeCodesPosition

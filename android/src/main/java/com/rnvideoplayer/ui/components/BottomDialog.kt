@@ -2,13 +2,14 @@ package com.rnvideoplayer.ui.components
 
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.Context
 import android.os.Bundle
 import android.view.Gravity
 import android.view.ViewGroup
 import com.facebook.react.uimanager.ThemedReactContext
 
 class CustomBottomDialog(
-  context: ThemedReactContext,
+  context: Context,
 ) : Dialog(context) {
   @SuppressLint("UseCompatLoadingForDrawables")
   override fun onCreate(savedInstanceState: Bundle?) {

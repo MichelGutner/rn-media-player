@@ -42,7 +42,7 @@ open class MediaPlayerView(private val context: ThemedReactContext) :
     aspectRatio.frameLayout.addView(surfaceView)
     container.addView(aspectRatio.frameLayout)
 
-    container.addView(controlsView)
+    container.addView(controlsContainer)
     addView(container)
   }
 
@@ -93,11 +93,11 @@ open class MediaPlayerView(private val context: ThemedReactContext) :
 
         if (clickCount >= 2) {
           if (event.x < width / 2) {
-            leftDoubleTapSeek.show()
-            leftDoubleTapSeek.hide()
+            leftSeekGestureView.show()
+            leftSeekGestureView.hide()
           } else {
-            rightDoubleTapSeek.show()
-            rightDoubleTapSeek.hide()
+            rightSeekGestureView.show()
+            rightSeekGestureView.hide()
           }
         }
       }

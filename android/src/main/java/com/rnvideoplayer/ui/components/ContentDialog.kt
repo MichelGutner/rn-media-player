@@ -1,6 +1,7 @@
 package com.rnvideoplayer.ui.components
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
@@ -13,7 +14,7 @@ import com.rnvideoplayer.R
 
 @SuppressLint("ResourceType")
 class CustomContentDialog(
-  private val context: ThemedReactContext,
+  private val context: Context,
   private val dialog: CustomBottomDialog
 ) {
 

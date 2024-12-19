@@ -73,36 +73,35 @@ class RNVideoPlayer : SimpleViewManager<View>() {
       val enabled = thumbnails.getBoolean("isEnabled")
       if (enabled) {
         if (sourceUrl.isNotEmpty()) {
-          view.setupThumbnails(sourceUrl)
+          view.startDownloadThumbnailFrames(sourceUrl)
         }
       }
     }
   }
 //
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "rate")
-//  fun setRate(rnVideoPlayerView: RNVideoPlayerView, rate: Double) {
-//    rnVideoPlayerView.changeRate(rate.toFloat())
-//  }
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "rate")
+  fun setRate(view: MediaPlayerView, rate: Double) {
+    view.onChangePlaybackSpeed(rate.toFloat())
+  }
 ////
   @OptIn(UnstableApi::class)
   @ReactProp(name = "autoPlay")
   fun setAutoPlay(view: MediaPlayerView, value: Boolean) {
     view.onAutoPlay(value)
   }
-////
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "menus")
-//  fun setMenus(rnVideoPlayerView: RNVideoPlayerView, menus: ReadableMap) {
-//    val menusData = mutableSetOf<String>()
-//    rnVideoPlayerView.getMenus(menus.toHashMap().keys)
-//    menus.entryIterator.forEach { entry ->
-//      menusData.add(entry.key)
-//      ReadableMapManager.getInstance().setReadableMapProps(entry.value, entry.key)
-//    }
-//    rnVideoPlayerView.getMenus(menusData)
-//  }
-////
+@OptIn(UnstableApi::class)
+@ReactProp(name = "menus")
+fun setMenus(view: MediaPlayerView, menus: ReadableMap) {
+  val reactConfig = ReactConfig.getInstance()
+
+  menus.entryIterator.forEach { entry ->
+    reactConfig.set(entry.key, entry.value)
+  }
+  reactConfig.set(ReactConfig.Key.MENU_ITEMS, menus.toHashMap().keys)
+
+}
+
   @OptIn(UnstableApi::class)
   @ReactProp(name = "doubleTapToSeek")
   fun setSuffixLabelTapToSeek(view: MediaPlayerView, doubleTapToSeek: ReadableMap?) {
@@ -110,21 +109,21 @@ class RNVideoPlayer : SimpleViewManager<View>() {
     val reactConfig = ReactConfig.getInstance()
   if (doubleTapToSeek.hasKey("suffixLabel") && doubleTapToSeek.getType("suffixLabel") == ReadableType.String) {
     val suffixLabel = doubleTapToSeek.getString("suffixLabel") as String
-    reactConfig.set(ReactConfig.Keys.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL, suffixLabel)
+    reactConfig.set(ReactConfig.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL, suffixLabel)
   }
   if (doubleTapToSeek.hasKey("value") && doubleTapToSeek.getType("value") == ReadableType.Number) {
     val value = doubleTapToSeek.getDouble("value")
-    reactConfig.set(ReactConfig.Keys.DOUBLE_TAP_TO_SEEK_VALUE, value.toInt())
+    reactConfig.set(ReactConfig.Key.DOUBLE_TAP_TO_SEEK_VALUE, value.toInt())
   }
     view.addReactConfigs(reactConfig)
   }
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "changeQualityUrl")
-//  fun setChangeQualityUrl(player: RNVideoPlayerView, changeQualityUrl: String) {
-//    if (changeQualityUrl.isNotEmpty()) {
-//      player.changeVideoQuality(changeQualityUrl)
-//    }
-//  }
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "replaceMediaUrl")
+  fun setReplaceMediaUrl(view: MediaPlayerView, replaceMediaUrl: String) {
+    if (replaceMediaUrl.isNotEmpty()) {
+      view.onReplaceMedia(replaceMediaUrl)
+    }
+  }
 }
 
 fun View.fadeIn(duration: Long = 300, completion: () -> Unit = {}) {
@@ -157,15 +156,5 @@ fun View.withTranslationAnimation(translationY: Float? = 0f, duration: Long? = 3
       .translationY(translationY!!)
       .setDuration(duration!!)
       .start()
-  }
-
-  fun View.show() {
-    this.visibility = View.VISIBLE
-  }
-
-  fun View.hide() {
-    post {
-    this.visibility = View.GONE
-    }
   }
 }

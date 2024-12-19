@@ -409,15 +409,15 @@ class RNVideoPlayerView(val context: ThemedReactContext) : VideoPlayerView(conte
   }
 
   private fun showPopUp(view: View) {
-    val popupMenu by lazy {
-      PopUpMenu(menusData, context, view) { title, value ->
-        event.send(ReactEventsName.MENU_ITEM_SELECTED, this, Arguments.createMap().apply {
-          putString("name", title)
-          putString("value", value.toString())
-        })
-      }
-    }
-    popupMenu.show()
+//    val popupMenu by lazy {
+//      PopUpMenu(menusData, context, view) { title, value ->
+//        event.send(ReactEventsName.MENU_ITEM_SELECTED, this, Arguments.createMap().apply {
+//          putString("name", title)
+//          putString("value", value.toString())
+//        })
+//      }
+//    }
+//    popupMenu.show()
   }
 
   private fun toggleFullScreen() {

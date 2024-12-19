@@ -14,7 +14,7 @@ import androidx.media3.common.util.UnstableApi
 import com.rnvideoplayer.R
 import com.rnvideoplayer.mediaplayer.viewModels.components.TimeCodes
 import com.rnvideoplayer.mediaplayer.viewModels.components.SeekBar
-import com.rnvideoplayer.ui.components.Thumbnails
+import com.rnvideoplayer.ui.components.Thumbnail
 import com.rnvideoplayer.utilities.layoutParamsCenter
 
 @OptIn(UnstableApi::class)
@@ -35,7 +35,7 @@ class BottomControls(context: Context) : FrameLayout(context) {
   val timeCodesPosition = TimeCodes(context)
   private val timeCodesView = timesCodesView(context)
 
-  val thumbnails by lazy { Thumbnails(context) }
+  val thumbnail by lazy { Thumbnail(context) }
 
   val frameLayout = frameLayout(context)
 
@@ -44,7 +44,7 @@ class BottomControls(context: Context) : FrameLayout(context) {
     buttonsLayout.addView(menuControlLayout)
     buttonsLayout.addView(fullscreenControlLayout)
     frameLayout.addView(buttonsLayout)
-    frameLayout.addView(thumbnails)
+    frameLayout.addView(thumbnail)
     mainLayout.addView(frameLayout)
     mainLayout.addView(timeBar)
 

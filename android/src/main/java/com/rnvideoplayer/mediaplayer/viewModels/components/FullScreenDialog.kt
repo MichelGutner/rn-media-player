@@ -9,7 +9,7 @@ import android.view.WindowInsetsController
 import com.facebook.react.uimanager.ThemedReactContext
 
 class FullscreenDialog(
-  private var context: ThemedReactContext,
+  context: ThemedReactContext,
 ) : Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen) {
 
   override fun onCreate(savedInstanceState: Bundle?) {

@@ -1,49 +1,65 @@
 package com.rnvideoplayer.ui.components
 
+import android.app.Activity
+import android.content.Context
+import android.os.Build
+import android.os.Bundle
+import android.view.Gravity
 import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.widget.PopupMenu
 import androidx.core.content.ContextCompat
-import com.facebook.react.uimanager.ThemedReactContext
+import com.facebook.react.bridge.ReadableMap
 import com.rnvideoplayer.R
-import com.rnvideoplayer.helpers.ReadableMapManager
-import com.rnvideoplayer.helpers.SharedStore
+import com.rnvideoplayer.mediaplayer.models.ReactConfig
+
+private var selectedItemMap = mutableMapOf<String, String>()
 
 class PopUpMenu(
-  data: MutableSet<String>,
-  context: ThemedReactContext,
+  private var context: Context,
   view: View,
   callback: (String, Any) -> Unit
 ) {
-  private val dialog = CustomBottomDialog(context)
-  private var contentDialog = CustomContentDialog(context, dialog)
+  private val reactConfig = ReactConfig.getInstance()
   private val popup = PopupMenu(context, view)
-  private var selectedItem: String? = null
-  private var companionStorage = SharedStore.getInstance()
 
   init {
-    data.forEach { menuItemTitle ->
-      val item = popup.menu.add(menuItemTitle)
-      item.setOnMenuItemClickListener { menuItem ->
-        val option = ReadableMapManager.getInstance().getReadableMapProps(menuItem.title.toString())
-        selectedItem = option.getString("initialItemSelected") ?: ""
-        if (companionStorage.getString(menuItemTitle) == null) {
-          companionStorage.putString(menuItemTitle, selectedItem!!)
-        }
 
-        contentDialog.showOptionsDialog(option.getArray("data"), companionStorage.getString(menuItemTitle)) { name, value ->
-          callback(menuItemTitle, value)
-          companionStorage.putString(menuItemTitle, name)
-          view.requestLayout()
-          view.invalidate()
+    val menuItems = reactConfig.get(ReactConfig.Key.MENU_ITEMS) as MutableSet<String>
+    menuItems.forEach { menuItemTitle ->
+      val optionReadableMap = reactConfig.get(menuItemTitle) as ReadableMap
+      val options = optionReadableMap.getArray("data")
+
+      if (selectedItemMap[menuItemTitle] == null) {
+        println("selected item: ${selectedItemMap[menuItemTitle]}")
+        selectedItemMap[menuItemTitle] = optionReadableMap.getString("initialItemSelected") ?: ""
+      }
+
+      val item = popup.menu.addSubMenu(menuItemTitle)
+
+      options?.toArrayList()?.forEach { it ->
+        val option = it as? Map<*, *>
+        val name = option?.get("name")
+        val value = option?.get("value");
+        val subItem = item.add(name.toString())
+        if (selectedItemMap[menuItemTitle] == subItem.title) {
+          subItem.setIcon(ContextCompat.getDrawable(context, R.drawable.baseline_check))
         }
-        true
+        subItem.setOnMenuItemClickListener { subMenuItem ->
+          if (value != null) {
+            callback(menuItemTitle, value)
+            selectedItemMap[menuItemTitle] = subMenuItem.title.toString()
+          }
+          true
+        }
       }
     }
   }
 
   fun show() {
     popup.inflate(R.menu.popup_menu)
-    popup.gravity = 5
+    popup.gravity = 1
     popup.show()
   }
 }

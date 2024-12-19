@@ -13,7 +13,7 @@ import com.rnvideoplayer.utilities.layoutParamsCenter
 
 class PlayPauseButton(context: Context) : FrameLayout(context) {
   private val drawables = AnimatedDrawables(context)
-  private var size: Int = 60
+  private var size: Int = 130
   private val playPauseButton = setupButton(context)
 
   init {
@@ -46,13 +46,6 @@ class PlayPauseButton(context: Context) : FrameLayout(context) {
       )
       setBackgroundResource(typedValue.resourceId)
       setImageDrawable(drawables.fromPauseToPlay)
-    }
-  }
-
-  fun setSize(value: Int) {
-    size = value
-    layoutParams = LayoutParams(size, size).apply {
-      gravity = Gravity.CENTER
     }
   }
 

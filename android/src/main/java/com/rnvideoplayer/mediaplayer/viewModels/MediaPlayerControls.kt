@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -28,9 +30,11 @@ import com.rnvideoplayer.mediaplayer.viewModels.components.SeekBar
 import com.rnvideoplayer.mediaplayer.viewModels.components.Title
 import com.rnvideoplayer.mediaplayer.utils.Utils
 import com.rnvideoplayer.mediaplayer.viewModels.components.DoubleTapSeek
+import com.rnvideoplayer.mediaplayer.viewModels.components.MenuButton
 import com.rnvideoplayer.mediaplayer.viewModels.components.TimeCodes
 import com.rnvideoplayer.ui.components.Loading
-import com.rnvideoplayer.ui.components.Thumbnails
+import com.rnvideoplayer.ui.components.PopUpMenu
+import com.rnvideoplayer.ui.components.Thumbnail
 import com.rnvideoplayer.withTranslationAnimation
 import java.util.concurrent.TimeUnit
 
@@ -38,7 +42,7 @@ import java.util.concurrent.TimeUnit
 
 @UnstableApi
 abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMediaPlayerControls {
-  val controlsView = FrameLayout(context).apply {
+  val controlsContainer = FrameLayout(context).apply {
     layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
   }
 
@@ -47,18 +51,28 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
   private var timeUnitHandler = TimeUnitManager()
   private val mediaPlayer = MediaPlayerAdapter(context)
 
-  private val overlayView = overlayView()
+  private val overlayContainer = overlayView()
   private val loading by lazy { Loading(context) }
   private val playPauseButton by lazy { PlayPauseButton(context) }
   private val fullscreenButton by lazy { FullscreenButton(context) }
-  private val seekBar by lazy { SeekBar(context) }
-  private val title by lazy { Title(context) }
-  private val timeCodes by lazy { TimeCodes(context) }
-  private val thumbnails by lazy { Thumbnails(context) }
+  private val optionsMenuButton by lazy { MenuButton(context) }
 
-  private val mediaBottomControls = customFrameLayout()
-  private val bottomVerticalControlsLayout = customLinearVerticalLayout()
-  private val bottomHorizontalControlsLayout = customLinearHorizontalLayout()
+  private val seekBar by lazy { SeekBar(context) }
+  private val seekBarTimeCodes by lazy { TimeCodes(context) }
+  private val seekBarContainer = customLinearVerticalLayout()
+
+  private val title by lazy { Title(context) }
+
+  private val thumbnail by lazy { Thumbnail(context) }
+  private val thumbnailContainer = customLinearHorizontalLayout()
+
+  private val bottomControlBar = customLinearHorizontalLayout().apply { gravity = Gravity.BOTTOM or Gravity.END }
+
+  private val thumbnailAndControlsContainer = FrameLayout(context).apply {
+    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT)
+  }
+
+  private val mediaControlsContainer = customFrameLayout()
 
   private var startScrubberPositionSeconds = 0
   private var startScrubberPositionPercent = 0
@@ -67,8 +81,8 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
   private var isFinished = false
 
   val surfaceView = mediaPlayer.surfaceView
-  val leftDoubleTapSeek by lazy { DoubleTapSeek(context, false) }
-  val rightDoubleTapSeek by lazy { DoubleTapSeek(context, true) }
+  val leftSeekGestureView by lazy { DoubleTapSeek(context, false) }
+  val rightSeekGestureView by lazy { DoubleTapSeek(context, true) }
 
   init {
     setupReactConfigs()
@@ -88,56 +102,61 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
 
   private fun setupComponents() {
     playPauseButton.setOnClickListener {
-      mediaPlayer.togglePlayPause()
+      mediaPlayer.onMediaTogglePlayPause()
     }
     fullscreenButton.setOnClickListener {
       toggleFullscreen()
     }
-
-    leftDoubleTapSeek.onTapListener { value ->
-      mediaPlayer.seekToWithLastPosition(-((value * 1000).toLong()))
-    }
-    rightDoubleTapSeek.onTapListener { value ->
-      mediaPlayer.seekToWithLastPosition(((value * 1000).toLong()))
+    optionsMenuButton.setOnClickListener { anchorView ->
+      showPopUp(anchorView)
     }
 
-    playPauseButton.setSize(dpToPx(70f))
-    fullscreenButton.setSize(dpToPx(40f))
+    leftSeekGestureView.onTapListener { value ->
+      mediaPlayer.seekToRelativePosition(-((value * 1000).toLong()))
+    }
 
-    bottomHorizontalControlsLayout.addView(thumbnails)
-    bottomHorizontalControlsLayout.addView(fullscreenButton)
+    rightSeekGestureView.onTapListener { value ->
+      mediaPlayer.seekToRelativePosition(((value * 1000).toLong()))
+    }
 
-    bottomVerticalControlsLayout.addView(seekBar)
-    bottomVerticalControlsLayout.addView(timeCodes)
+    bottomControlBar.addView(optionsMenuButton)
+    bottomControlBar.addView(fullscreenButton)
 
-    mediaBottomControls.addView(bottomHorizontalControlsLayout)
-    mediaBottomControls.addView(bottomVerticalControlsLayout)
+    thumbnailContainer.addView(thumbnail)
 
+    thumbnailAndControlsContainer.addView(bottomControlBar)
+    thumbnailAndControlsContainer.addView(thumbnailContainer)
 
-    overlayView.addView(title)
-    overlayView.addView(playPauseButton)
-    overlayView.addView(mediaBottomControls)
+    seekBarContainer.addView(seekBar)
+    seekBarContainer.addView(seekBarTimeCodes)
 
-    controlsView.addView(leftDoubleTapSeek)
-    controlsView.addView(rightDoubleTapSeek)
+    mediaControlsContainer.addView(thumbnailAndControlsContainer)
+    mediaControlsContainer.addView(seekBarContainer)
 
-    controlsView.addView(overlayView)
-    controlsView.addView(loading)
+    overlayContainer.addView(title)
+    overlayContainer.addView(playPauseButton)
+    overlayContainer.addView(mediaControlsContainer)
+
+    controlsContainer.addView(leftSeekGestureView)
+    controlsContainer.addView(rightSeekGestureView)
+
+    controlsContainer.addView(overlayContainer)
+    controlsContainer.addView(loading)
   }
 
   private fun setupMediaPlayerCallbacks() {
     mediaPlayer.addCallback(object : MediaPlayerAdapter.Callback {
       override fun onMediaLoaded(duration: Long) {
         seekBar.build(duration)
-        timeCodes.updateDuration(duration)
+        seekBarTimeCodes.updateDuration(duration)
         reactApplicationEvent?.send(ReactEventsName.MEDIA_READY,this@MediaPlayerControls, Arguments.createMap().apply {
           putDouble("duration", timeUnitHandler.toSecondsDouble(duration))
           putBoolean("loaded", true)
         })
         postDelayed({
           loading.fadeOut {
-            controlsView.removeView(loading)
-            controlsView.requestLayout()
+            controlsContainer.removeView(loading)
+            controlsContainer.requestLayout()
           }
         }, 400)
       }
@@ -172,7 +191,7 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
 
       override fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long) {
         seekBar.update(currentProgress, bufferedProgress)
-        timeCodes.updatePosition(currentProgress)
+        seekBarTimeCodes.updatePosition(currentProgress)
         reactApplicationEvent?.send(ReactEventsName.MEDIA_PROGRESS, this@MediaPlayerControls, Arguments.createMap().apply {
           putDouble("progress", TimeUnit.MILLISECONDS.toSeconds(currentProgress).toDouble())
           putDouble("buffering", TimeUnit.MILLISECONDS.toSeconds(bufferedProgress).toDouble())
@@ -184,7 +203,7 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
       }
 
       override fun onPlaybackStateEndedInvoked() {
-        thumbnails.translationXThumbnailView = 0f
+        thumbnail.translationXThumbnailView = 0f
       }
     })
   }
@@ -202,15 +221,15 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
         }
 
        this@MediaPlayerControls.seekBar.animate().scaleX(1f).scaleY(1.5f).setDuration(500).start()
-        thumbnails.show()
+        thumbnail.show()
         hideControls()
       }
 
       override fun onScrubMove(seekBar: TimeBar, position: Long) {
         val duration = TimeUnit.MILLISECONDS.toSeconds(mediaPlayer.duration)
         val seconds = TimeUnit.MILLISECONDS.toSeconds(position)
-        thumbnails.updatePosition(position)
-        thumbnails.onTranslate(seconds.toDouble(), duration.toDouble(), this@MediaPlayerControls.seekBar.width)
+        thumbnail.updatePosition(position)
+        thumbnail.onTranslate(seconds.toDouble(), duration.toDouble(), this@MediaPlayerControls.seekBar.width)
       }
 
       override fun onScrubStop(seekBar: TimeBar, position: Long, canceled: Boolean) {
@@ -238,7 +257,7 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
           putMap("end", endMap)
         })
 
-        thumbnails.hide()
+        thumbnail.hide()
         showControls()
 
         this@MediaPlayerControls.seekBar.animate().scaleX(1.0f).scaleY(1.0f).setDuration(500).start()
@@ -260,14 +279,13 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
       override fun onGlobalLayout() {
 
-        val doubleTapSeekValue =
-          ReactConfig.getInstance().get(ReactConfig.Keys.DOUBLE_TAP_TO_SEEK_VALUE) as Int
-        val doubleTapSuffix = reactConfig?.get(ReactConfig.Keys.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL)
-        leftDoubleTapSeek.tapValue = doubleTapSeekValue
-        leftDoubleTapSeek.suffixLabel = doubleTapSuffix.toString()
+        val doubleTapSeekValue = reactConfig?.get(ReactConfig.Key.DOUBLE_TAP_TO_SEEK_VALUE) as Int
+        val doubleTapSuffix = reactConfig?.get(ReactConfig.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL)
+        leftSeekGestureView.tapValue = doubleTapSeekValue
+        leftSeekGestureView.suffixLabel = doubleTapSuffix.toString()
 
-        rightDoubleTapSeek.tapValue = doubleTapSeekValue
-        rightDoubleTapSeek.suffixLabel = doubleTapSuffix.toString()
+        rightSeekGestureView.tapValue = doubleTapSeekValue
+        rightSeekGestureView.suffixLabel = doubleTapSuffix.toString()
 
         viewTreeObserver.removeOnGlobalLayoutListener(this)
       }
@@ -334,10 +352,10 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
     return LinearLayout(context).apply {
       layoutParams = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT,
+        LinearLayout.LayoutParams.MATCH_PARENT,
       ).apply {
         orientation = LinearLayout.HORIZONTAL
-        gravity = Gravity.BOTTOM
+        gravity = Gravity.CENTER
       }
     }
   }
@@ -345,39 +363,75 @@ abstract class MediaPlayerControls(context: Context) : FrameLayout(context), IMe
   private fun hideControls() {
     fullscreenButton.fadeOut()
     playPauseButton.fadeOut()
+    optionsMenuButton.fadeOut()
   }
 
   private fun showControls() {
     fullscreenButton.fadeIn()
     playPauseButton.fadeIn()
+    optionsMenuButton.fadeIn()
+  }
+
+  private fun showPopUp(view: View) {
+    val popupMenu by lazy {
+      PopUpMenu(context, view) { title, value ->
+        reactApplicationEvent?.send(ReactEventsName.MENU_ITEM_SELECTED, this, Arguments.createMap().apply {
+          putString("name", title)
+          putString("value", value.toString())
+        })
+      }
+    }
+    popupMenu.show()
   }
 
   fun toggleOverlayVisibility() {
-    if (overlayView.isVisible) {
-      overlayView.fadeOut()
-      bottomVerticalControlsLayout.withTranslationAnimation( 20f)
+    if (overlayContainer.isVisible) {
+      overlayContainer.fadeOut()
+      seekBarContainer.withTranslationAnimation( 20f)
       title.withTranslationAnimation(-20f)
     } else {
-      overlayView.fadeIn()
-      bottomVerticalControlsLayout.withTranslationAnimation()
+      overlayContainer.fadeIn()
+      seekBarContainer.withTranslationAnimation()
       title.withTranslationAnimation()
     }
   }
 
   fun mediaPlayerRelease() {
-    mediaPlayer.release()
+    mediaPlayer.onMediaRelease()
   }
 
   fun setupMediaPlayer(url: String, startTime: Long? = 0, metadata: MediaMetadata? = null) {
-    mediaPlayer.onBuild(url, startTime, metadata)
+    mediaPlayer.onMediaBuild(url, startTime, metadata)
   }
 
   fun onAutoPlay(autoPlayer: Boolean) {
-    mediaPlayer.onAutoPlay(autoPlayer)
+    mediaPlayer.onMediaAutoPlay(autoPlayer)
   }
 
-  fun setupThumbnails(url: String) {
-    thumbnails.downloadFrames(url)
+  fun startDownloadThumbnailFrames(url: String) {
+    thumbnail.downloadFrames(url)
+  }
+
+  fun onChangePlaybackSpeed(rate: Float) {
+    mediaPlayer.onMediaChangePlaybackSpeed(rate)
+  }
+
+  fun onReplaceMedia(url: String) {
+    val currentMediaItem = mediaPlayer.currentMediaItem
+    val currentPosition = mediaPlayer.currentProgress
+    val currentMetadata = currentMediaItem?.mediaMetadata
+
+    if (currentMediaItem?.localConfiguration?.uri.toString() == url) {
+      return
+    }
+    /*      val dataSourceFactory = DefaultDataSource.Factory(context)
+          val newMediaItem = MediaItem.fromUri(url)
+          val newMediaSource =
+            DefaultMediaSourceFactory(dataSourceFactory).createMediaSource(newMediaItem)
+
+          mediaPlayer.setMediaSource(newMediaSource, currentPosition)
+          mediaPlayer.prepare()*/
+    mediaPlayer.onMediaBuild(url, currentPosition, currentMetadata)
   }
 }
 

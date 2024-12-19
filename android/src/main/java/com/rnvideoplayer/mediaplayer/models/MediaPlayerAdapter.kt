@@ -23,6 +23,8 @@ open class MediaPlayerAdapter(context: Context) {
 
   val surfaceView: SurfaceView = SurfaceView(context)
   val duration: Long get() = exoPlayer.duration
+  val currentMediaItem: MediaItem? get() = exoPlayer.currentMediaItem
+  val currentProgress: Long get() = exoPlayer.currentPosition
 
   interface Callback {
     fun onMediaLoaded(duration: Long)
@@ -120,7 +122,11 @@ open class MediaPlayerAdapter(context: Context) {
       MediaItem.fromUri(Uri.parse(url))
     }
 
-    val mediaItemWithMetadata = if (metadata != null) { mediaItem.buildUpon().setMediaMetadata(metadata).build() } else { mediaItem }
+    val mediaItemWithMetadata = if (metadata != null) {
+      mediaItem.buildUpon().setMediaMetadata(metadata).build()
+    } else {
+      mediaItem
+    }
 
     getMediaItemMetadata(mediaItemWithMetadata.mediaMetadata)
     exoPlayer.setMediaItem(mediaItemWithMetadata, startTime)
@@ -148,50 +154,6 @@ open class MediaPlayerAdapter(context: Context) {
     })
   }
 
-  fun onBuild(url: String, startTime: Long? = 0, metadata: MediaMetadata?) {
-    initializeMediaPlayer(url, startTime!!, metadata!!)
-  }
-
-  fun onAutoPlay(autoPlay: Boolean) {
-    exoPlayer.playWhenReady = autoPlay
-  }
-
-  fun togglePlayPause() {
-    if (playbackStateEnded) {
-      playbackStateEnded = false
-      exoPlayer.seekTo(0)
-      this.callback?.onPlaybackStateEndedInvoked()
-      return
-    }
-
-    if (exoPlayer.isPlaying) {
-      exoPlayer.pause()
-    } else {
-      exoPlayer.play()
-    }
-  }
-
-  fun release() {
-    stopMediaProgress()
-    removeCallback()
-    exoPlayer.release()
-  }
-
-  fun seekTo(position: Long) {
-    val duration = exoPlayer.duration
-    val newPosition = (position).coerceIn(0, duration)
-
-    exoPlayer.seekTo(newPosition)
-  }
-
-  fun seekToWithLastPosition(position: Long) {
-    val currentPosition = exoPlayer.currentPosition
-    val duration = exoPlayer.duration
-    val newPosition = (currentPosition + position).coerceIn(0, duration)
-    println("newPosition: $newPosition ${exoPlayer.currentPosition} ${position}")
-    exoPlayer.seekTo(newPosition)
-  }
-
   private val progressTask = object : Runnable {
     override fun run() {
       if (exoPlayer.isPlaying) {
@@ -209,5 +171,52 @@ open class MediaPlayerAdapter(context: Context) {
 
   private fun stopMediaProgress() {
     handler.removeCallbacksAndMessages(null)
+  }
+
+  fun onMediaBuild(url: String, startTime: Long? = 0, metadata: MediaMetadata?) {
+    initializeMediaPlayer(url, startTime!!, metadata!!)
+  }
+
+  fun onMediaAutoPlay(autoPlay: Boolean) {
+    exoPlayer.playWhenReady = autoPlay
+  }
+
+  fun onMediaChangePlaybackSpeed(rate: Float) {
+    exoPlayer.setPlaybackSpeed(rate)
+  }
+
+  fun onMediaTogglePlayPause() {
+    if (playbackStateEnded) {
+      playbackStateEnded = false
+      exoPlayer.seekTo(0)
+      this.callback?.onPlaybackStateEndedInvoked()
+      return
+    }
+
+    if (exoPlayer.isPlaying) {
+      exoPlayer.pause()
+    } else {
+      exoPlayer.play()
+    }
+  }
+
+  fun onMediaRelease() {
+    stopMediaProgress()
+    removeCallback()
+    exoPlayer.release()
+  }
+
+  fun seekTo(position: Long) {
+    val duration = exoPlayer.duration
+    val newPosition = (position).coerceIn(0, duration)
+
+    exoPlayer.seekTo(newPosition)
+  }
+
+  fun seekToRelativePosition(position: Long) {
+    val currentPosition = exoPlayer.currentPosition
+    val duration = exoPlayer.duration
+    val newPosition = (currentPosition + position).coerceIn(0, duration)
+    exoPlayer.seekTo(newPosition)
   }
 }

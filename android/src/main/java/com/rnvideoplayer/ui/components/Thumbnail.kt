@@ -20,7 +20,7 @@ import com.rnvideoplayer.utilities.ColorUtils
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
-class Thumbnails(context: Context) : LinearLayout(context), IThumbnailPreview {
+class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
   private val helper = RNVideoHelpers()
   private var timestamp = 0L
   val thumbWidth = dpToPx(240)
@@ -65,8 +65,8 @@ class Thumbnails(context: Context) : LinearLayout(context), IThumbnailPreview {
       ((((seconds * 100) / duration) * widthTarget) / 100)
 
     var translateX = 16.0F
-    if ((currentSeekPoint.toFloat() + thumbWidth / 2) + parent.width * 0.05F >= widthTarget) {
-      translateX = (widthTarget - thumbWidth) - parent.width * 0.05F
+    if ((currentSeekPoint.toFloat() + thumbWidth / 2) + parent.width * 0.01F >= widthTarget) {
+      translateX = (widthTarget - thumbWidth) - parent.width * 0.01F
     } else if (currentSeekPoint.toFloat() >= thumbWidth / 2 && currentSeekPoint.toFloat() + thumbWidth / 2 < widthTarget) {
       translateX = currentSeekPoint.toFloat() - thumbWidth / 2
     }
