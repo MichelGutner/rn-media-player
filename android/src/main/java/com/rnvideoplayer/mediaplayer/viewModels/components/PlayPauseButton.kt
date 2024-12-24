@@ -8,8 +8,8 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import com.rnvideoplayer.R
-import com.rnvideoplayer.ui.AnimatedDrawables
 import com.rnvideoplayer.utilities.layoutParamsCenter
+import com.rnvideoplayer.utils.AnimatedDrawables
 
 class PlayPauseButton(context: Context) : FrameLayout(context) {
   private val drawables = AnimatedDrawables(context)

@@ -1,4 +1,4 @@
-package com.rnvideoplayer.ui.components
+package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -9,7 +9,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.facebook.react.bridge.ReadableArray
-import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.R
 
 @SuppressLint("ResourceType")

@@ -10,17 +10,16 @@ import androidx.media3.common.util.UnstableApi
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.mediaplayer.models.ReactEventsName
-import com.rnvideoplayer.mediaplayer.models.ReactEvents
+import com.rnvideoplayer.mediaplayer.models.ReactEventsAdapter
 import com.rnvideoplayer.mediaplayer.viewModels.MediaPlayerControls
 import com.rnvideoplayer.mediaplayer.viewModels.components.AspectRatio
-import com.rnvideoplayer.mediaplayer.viewModels.components.FullscreenDialog
 import kotlin.math.roundToInt
 
 @SuppressLint("ViewConstructor")
 @UnstableApi
 open class MediaPlayerView(private val context: ThemedReactContext) :
   MediaPlayerControls(context) {
-  private val reactApplicationEventEmitter = ReactEvents(context)
+  private val reactApplicationEventEmitter = ReactEventsAdapter(context)
   private var fullscreenDialog = FullscreenDialog(context)
   private val aspectRatio = AspectRatio(context)
   private var clickCount = 0
@@ -39,10 +38,12 @@ open class MediaPlayerView(private val context: ThemedReactContext) :
   }
 
   private fun setupLayout() {
+    addEvents(reactApplicationEventEmitter)
     aspectRatio.frameLayout.addView(surfaceView)
     container.addView(aspectRatio.frameLayout)
 
     container.addView(controlsContainer)
+    controlsContainer.bringToFront()
     addView(container)
   }
 
@@ -118,11 +119,7 @@ open class MediaPlayerView(private val context: ThemedReactContext) :
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
     mediaPlayerRelease()
-  }
-
-  override fun onAttachedToWindow() {
-    super.onAttachedToWindow()
-    addEvents(reactApplicationEventEmitter)
+    context.currentActivity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
   }
 
   override fun onConfigurationChanged(newConfig: Configuration?) {
@@ -142,6 +139,9 @@ open class MediaPlayerView(private val context: ThemedReactContext) :
 
     if (isFullscreen) {
       fullscreenDialog = FullscreenDialog(context).apply {
+        setOnDismissListener {
+          onFullscreenMode(false)
+        }
         container.setOnTouchListener { _, event ->
           this@MediaPlayerView.onTouchEvent(event)
           true
@@ -149,8 +149,8 @@ open class MediaPlayerView(private val context: ThemedReactContext) :
         setContentView(container)
         show()
       }
-      context.currentActivity?.requestedOrientation =
-        ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+
+      context.currentActivity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
 
     } else {
       context.currentActivity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT

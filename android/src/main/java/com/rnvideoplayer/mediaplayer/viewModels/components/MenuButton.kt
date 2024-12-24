@@ -6,16 +6,18 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import com.rnvideoplayer.R
 
 
-class MenuButton(context: Context) : FrameLayout(context) {
+class MenuButton(context: Context) : LinearLayout(context) {
   private var size: Int = 60
   private val button = setupButton(context)
 
   init {
     addView(button)
     setPadding(0,0,12,0)
+    requestLayout()
   }
 
   override fun setOnClickListener(l: OnClickListener?) {

@@ -1,17 +1,16 @@
 package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.content.Context
-import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.rnvideoplayer.R
-import com.rnvideoplayer.helpers.RNVideoHelpers
 import com.rnvideoplayer.utilities.ColorUtils
 import com.rnvideoplayer.utilities.layoutParamsCenter
+import com.rnvideoplayer.utils.TimeCodesFormat
 
 class TimeCodes(context: Context) : LinearLayout(context) {
-  private var helper = RNVideoHelpers()
+  private var helper = TimeCodesFormat()
   private val position = createTextView(context)
   private val duration = createTextView(context)
 
@@ -22,11 +21,11 @@ class TimeCodes(context: Context) : LinearLayout(context) {
   }
 
   fun updatePosition(time: Long) {
-    position.text = helper.createTimeCodesFormatted(time)
+    position.text = helper.format(time)
   }
 
   fun updateDuration(time: Long) {
-    duration.text = helper.createTimeCodesFormatted(time)
+    duration.text = helper.format(time)
   }
 
   private fun createTextView(context: Context): TextView {

@@ -11,8 +11,3 @@ val ReadableMap.value: String
   get() {
     return this.getString("value").toString()
   }
-
-val ReadableMap.enabled: Boolean
-  get() {
-    return this.getBoolean("enabled")
-  }

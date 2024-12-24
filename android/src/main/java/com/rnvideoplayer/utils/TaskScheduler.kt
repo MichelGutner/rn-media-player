@@ -1,4 +1,4 @@
-package com.rnvideoplayer.mediaplayer.utils
+package com.rnvideoplayer.utils
 
 import android.os.Handler
 import android.os.Looper

@@ -6,7 +6,7 @@ import android.view.ScaleGestureDetector
 import android.widget.FrameLayout
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
-import com.rnvideoplayer.mediaplayer.utils.Utils
+import com.rnvideoplayer.utils.Utils
 
 @UnstableApi
 open class AspectRatio(context: Context) : FrameLayout(context) {

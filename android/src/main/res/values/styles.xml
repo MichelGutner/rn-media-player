@@ -7,12 +7,8 @@
     <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
   </style>
 
-  <style name="TrackSelectionDialogThemeOverlay" parent="ThemeOverlay.AppCompat.Dialog.Alert">
-    <item name="windowNoTitle">false</item>
-  </style>
-
-  <style name="CustomMediaRouteButton" parent="Widget.MediaRouter.MediaRouteButton">
-    <item name="mediaRouteButtonTint">@android:color/white</item>
-  </style>
+<!--  <style name="CustomMediaRouteButton" parent="Widget.MediaRouter.MediaRouteButton">-->
+<!--    <item name="mediaRouteButtonTint">@android:color/white</item>-->
+<!--  </style>-->
 
 </resources>

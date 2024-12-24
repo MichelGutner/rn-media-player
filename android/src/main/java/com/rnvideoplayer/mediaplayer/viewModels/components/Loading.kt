@@ -1,10 +1,9 @@
-package com.rnvideoplayer.ui.components
+package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.util.TypedValue
-import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ProgressBar

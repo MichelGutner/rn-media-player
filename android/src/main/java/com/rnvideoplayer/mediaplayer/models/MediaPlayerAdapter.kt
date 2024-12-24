@@ -21,11 +21,14 @@ open class MediaPlayerAdapter(context: Context) {
   private val progressInterval: Long = 1000L
   private val handler = Handler(Looper.getMainLooper())
   private var playbackStateEnded: Boolean = false
+  private var callback: Callback? = null
 
   val surfaceView: SurfaceView = SurfaceView(context)
   val duration: Long get() = exoPlayer.duration
   val currentMediaItem: MediaItem? get() = exoPlayer.currentMediaItem
   val currentProgress: Long get() = exoPlayer.currentPosition
+  val isPlaying: Boolean get() = exoPlayer.isPlaying
+  val instanceExoPlayer: ExoPlayer get() = exoPlayer
 
   interface Callback {
     fun onMediaLoaded(duration: Long)
@@ -55,12 +58,12 @@ open class MediaPlayerAdapter(context: Context) {
         }
         if (events.contains(Player.EVENT_RENDERED_FIRST_FRAME)) {
           onMediaLoaded(player.duration)
+          startMediaProgress()
         }
         if (events.contains(Player.EVENT_PLAYER_ERROR)) {
           onMediaError(player.playerError, player.currentMediaItem)
         }
         if (events.contains(Player.EVENT_IS_LOADING_CHANGED)) {
-          startMediaProgress()
           playbackStateEnded = false
         }
       }
@@ -77,8 +80,6 @@ open class MediaPlayerAdapter(context: Context) {
       }
     })
   }
-
-  private var callback: Callback? = null
 
   fun addCallback(callback: Callback) {
     this.callback = callback

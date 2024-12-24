@@ -1,4 +1,4 @@
-package com.rnvideoplayer.ui.components
+package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -12,21 +12,21 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import com.rnvideoplayer.R
-import com.rnvideoplayer.fadeIn
-import com.rnvideoplayer.fadeOut
-import com.rnvideoplayer.helpers.RNVideoHelpers
+import com.rnvideoplayer.extensions.fadeIn
+import com.rnvideoplayer.extensions.fadeOut
 import com.rnvideoplayer.interfaces.IThumbnailPreview
 import com.rnvideoplayer.utilities.ColorUtils
+import com.rnvideoplayer.utils.TimeCodesFormat
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
 class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
-  private val helper = RNVideoHelpers()
+  private val helper = TimeCodesFormat()
   private var timestamp = 0L
-  val thumbWidth = dpToPx(240)
+  private val thumbWidth = dpToPx(240)
   private val thumbHeight = dpToPx(140)
-  val interval = TimeUnit.MILLISECONDS.toSeconds(5000L)
-  val bitmaps = ArrayList<Bitmap>()
+  private val interval = TimeUnit.MILLISECONDS.toSeconds(5000L)
+  private val bitmaps = ArrayList<Bitmap>()
 
   private val thumbnailView = thumbnailImage(context)
   private val thumbnailTimeCodes = createThumbnailTimeCodes(context)
@@ -50,9 +50,11 @@ class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
 
   override fun setCurrentThumbnailImage(index: Int) {
     val bitmap = bitmaps[index]
-    val roundedDrawable = RoundedBitmapDrawableFactory.create(thumbnailView.context.resources, bitmap)
+    val roundedDrawable =
+      RoundedBitmapDrawableFactory.create(thumbnailView.context.resources, bitmap)
 
-    roundedDrawable.cornerRadius = thumbnailView.context.resources.getDimension(R.dimen.corner_radius)
+    roundedDrawable.cornerRadius =
+      thumbnailView.context.resources.getDimension(R.dimen.corner_radius)
     roundedDrawable.isFilterBitmap = true
     thumbnailView.setImageDrawable(roundedDrawable)
   }
@@ -85,11 +87,9 @@ class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
     }
   }
 
-
   override fun hide() {
     fadeOut()
   }
-
 
   override fun downloadFrames(url: String) {
     bitmaps.clear()
@@ -109,7 +109,8 @@ class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
       val duration = durationString?.toLong() ?: 0
 
       while (timestamp < duration) {
-        val bitmap =  retriever.getFrameAtTime(timestamp * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+        val bitmap =
+          retriever.getFrameAtTime(timestamp * 1000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
 
         if (bitmap != null) {
           bitmaps.add(bitmap)
@@ -122,7 +123,7 @@ class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
   }
 
   fun updatePosition(position: Long) {
-    thumbnailTimeCodes.text = helper.createTimeCodesFormatted(position)
+    thumbnailTimeCodes.text = helper.format(position)
   }
 
   private fun thumbnailImage(context: Context): ImageView {
@@ -139,7 +140,10 @@ class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
 
   private fun createThumbnailTimeCodes(context: Context): TextView {
     val timeCodes = TextView(context).apply {
-      layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+      layoutParams = ViewGroup.LayoutParams(
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+      ).apply {
         text = context.getString(R.string.time_codes_start_value)
         textSize = 12f
         setTextColor(ColorUtils.white)
@@ -148,6 +152,7 @@ class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
     }
     return timeCodes
   }
+
   private fun dpToPx(dp: Int): Int {
     return (dp * context.resources.displayMetrics.density).toInt()
   }

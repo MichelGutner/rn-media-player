@@ -1,6 +1,6 @@
 package com.rnvideoplayer.mediaplayer.models
 
-class ReactConfig {
+class ReactConfigAdapter {
   object Key {
     const val DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL = "suffixLabel"
     const val DOUBLE_TAP_TO_SEEK_VALUE = "doubleTapValue"
@@ -20,12 +20,12 @@ class ReactConfig {
 
   companion object {
     @Volatile
-    private var instance: ReactConfig? = null
+    private var instance: ReactConfigAdapter? = null
 
-    fun getInstance(): ReactConfig {
+    fun getInstance(): ReactConfigAdapter {
       return instance ?: synchronized(this) {
         println("instance: $instance  ")
-        instance ?: ReactConfig().also { instance = it }
+        instance ?: ReactConfigAdapter().also { instance = it }
       }
     }
   }

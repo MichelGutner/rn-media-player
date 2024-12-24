@@ -10,7 +10,7 @@ import com.facebook.react.common.MapBuilder
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
-import com.rnvideoplayer.mediaplayer.models.ReactConfig
+import com.rnvideoplayer.mediaplayer.models.ReactConfigAdapter
 import com.rnvideoplayer.mediaplayer.models.ReactEventsName
 import com.rnvideoplayer.mediaplayer.views.MediaPlayerView
 
@@ -93,12 +93,12 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 @OptIn(UnstableApi::class)
 @ReactProp(name = "menus")
 fun setMenus(view: MediaPlayerView, menus: ReadableMap) {
-  val reactConfig = ReactConfig.getInstance()
+  val reactConfigAdapter = ReactConfigAdapter.getInstance()
 
   menus.entryIterator.forEach { entry ->
-    reactConfig.set(entry.key, entry.value)
+    reactConfigAdapter.set(entry.key, entry.value)
   }
-  reactConfig.set(ReactConfig.Key.MENU_ITEMS, menus.toHashMap().keys)
+  reactConfigAdapter.set(ReactConfigAdapter.Key.MENU_ITEMS, menus.toHashMap().keys)
 
 }
 
@@ -106,16 +106,16 @@ fun setMenus(view: MediaPlayerView, menus: ReadableMap) {
   @ReactProp(name = "doubleTapToSeek")
   fun setSuffixLabelTapToSeek(view: MediaPlayerView, doubleTapToSeek: ReadableMap?) {
     if (doubleTapToSeek == null) return
-    val reactConfig = ReactConfig.getInstance()
+    val reactConfigAdapter = ReactConfigAdapter.getInstance()
   if (doubleTapToSeek.hasKey("suffixLabel") && doubleTapToSeek.getType("suffixLabel") == ReadableType.String) {
     val suffixLabel = doubleTapToSeek.getString("suffixLabel") as String
-    reactConfig.set(ReactConfig.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL, suffixLabel)
+    reactConfigAdapter.set(ReactConfigAdapter.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL, suffixLabel)
   }
   if (doubleTapToSeek.hasKey("value") && doubleTapToSeek.getType("value") == ReadableType.Number) {
     val value = doubleTapToSeek.getDouble("value")
-    reactConfig.set(ReactConfig.Key.DOUBLE_TAP_TO_SEEK_VALUE, value.toInt())
+    reactConfigAdapter.set(ReactConfigAdapter.Key.DOUBLE_TAP_TO_SEEK_VALUE, value.toInt())
   }
-    view.addReactConfigs(reactConfig)
+    view.addReactConfigs(reactConfigAdapter)
   }
 
   @OptIn(UnstableApi::class)
@@ -129,40 +129,7 @@ fun setMenus(view: MediaPlayerView, menus: ReadableMap) {
   @OptIn(UnstableApi::class)
   @ReactProp(name = "entersFullScreenWhenPlaybackBegins")
   fun setEntersFullScreenWhenPlaybackBegins(view: MediaPlayerView, entersFullScreenWhenPlaybackBegins: Boolean) {
-    val reactConfig = ReactConfig.getInstance()
-    reactConfig.set(ReactConfig.Key.ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS, entersFullScreenWhenPlaybackBegins)
-  }
-}
-
-fun View.fadeIn(duration: Long = 300, completion: () -> Unit = {}) {
-  this.post {
-    this.visibility = View.VISIBLE
-    this.alpha = 0f
-    this.animate()
-      .alpha(1f)
-      .withEndAction { completion.invoke() }
-      .setDuration(duration)
-      .setListener(null)
-  }
-}
-
-fun View.fadeOut(duration: Long = 300, completion: (() -> Unit)? = null) {
-  post {
-    animate()
-      .alpha(0f)
-      .setDuration(duration)
-      .withEndAction {
-        visibility = View.INVISIBLE
-        completion?.invoke()
-      }
-  }
-}
-
-fun View.withTranslationAnimation(translationY: Float? = 0f, duration: Long? = 300) {
-  this.post {
-    animate()
-      .translationY(translationY!!)
-      .setDuration(duration!!)
-      .start()
+    val reactConfigAdapter = ReactConfigAdapter.getInstance()
+    reactConfigAdapter.set(ReactConfigAdapter.Key.ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS, entersFullScreenWhenPlaybackBegins)
   }
 }

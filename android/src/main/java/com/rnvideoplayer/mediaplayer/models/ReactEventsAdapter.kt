@@ -34,8 +34,8 @@ object ReactEventsName {
 }
 
 
-class ReactEvents(private val context: Context) {
-   fun send(eventName: String, view: View, writableMap: WritableMap) {
+open class ReactEventsAdapter(private val context: Context) {
+   open fun send(eventName: String, view: View, writableMap: WritableMap) {
      val dispatcher = UIManagerHelper.getEventDispatcher(context as ReactContext?, view.id)
      if (dispatcher != null) {
        val surfaceId = UIManagerHelper.getSurfaceId(context)

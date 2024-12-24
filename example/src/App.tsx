@@ -4,8 +4,8 @@ import { Video } from 'rn-media-player';
 import { downloadFile } from './downloadFile';
 import { directories } from '@kesha-antonov/react-native-background-downloader';
 
-const SpeedsKey = 'Velocidades';
-const Qualities = 'Qualidades';
+const SpeedsKey = 'Velocidades de reprodução';
+const Qualities = 'Qualidade';
 
 const speedsValues = [
   { name: '0.5x', value: 0.5 },
@@ -46,21 +46,21 @@ function App(): JSX.Element {
     <SafeAreaView style={{ flex: 1 }}>
       <Video
         source={{
-          url: downloadedUrl,
+          url: url,
           metadata: { title: 'Sintel', artist: 'Google' },
-          startTime: 150,
+          startTime: 0,
         }}
-        thumbnails={{ isEnabled: true, sourceUrl: downloadedUrl }}
+        thumbnails={{ isEnabled: false, sourceUrl: downloadedUrl }}
         style={{
-          height: '80%',
+          height: 325,
           backgroundColor: 'black',
         }}
         rate={rate}
         autoPlay={true}
-        changeQualityUrl={playbackQuality}
-        entersFullScreenWhenPlaybackBegins
-        tapToSeek={{
-          value: 15,
+        replaceMediaUrl={playbackQuality}
+        // entersFullScreenWhenPlaybackBegins
+        doubleTapToSeek={{
+          value: 12,
           suffixLabel: 'segundos',
         }}
         menus={{
@@ -70,18 +70,18 @@ function App(): JSX.Element {
             initialItemSelected: qualitiesValues[0]?.name as string,
           },
         }}
-        // onFullscreen={({ nativeEvent }) => {
-        //   console.log('fullscreen', nativeEvent);
-        // }}
-        // onMenuItemSelected={({ nativeEvent }) => {
-        //   if (nativeEvent.name === SpeedsKey) {
-        //     setRate(nativeEvent.value);
-        //   }
-        //   if (nativeEvent.name === Qualities) {
-        //     setPlaybackQuality(nativeEvent.value);
-        //   }
-        // }}
-        // onVideoProgress={({ nativeEvent }) => {
+        onFullScreenStateChanged={({ nativeEvent }) => {
+          console.log('fullscreen', nativeEvent);
+        }}
+        onMenuItemSelected={({ nativeEvent }) => {
+          if (nativeEvent.name === SpeedsKey) {
+            setRate(nativeEvent.value);
+          }
+          if (nativeEvent.name === Qualities) {
+            setPlaybackQuality(nativeEvent.value);
+          }
+        }}
+        // onMediaBuffering={({ nativeEvent }) => {
         //   console.log('video progress', nativeEvent);
         // }}
         // onPlayPause={(event) => console.log(event.nativeEvent.isPlaying)}
@@ -94,15 +94,7 @@ function App(): JSX.Element {
         // onCompleted={({ nativeEvent: { completed } }) => console.log(completed)}
         // onReady={({ nativeEvent }) => console.log(nativeEvent)}
         // onPinchZoom={({ nativeEvent }) => console.log(nativeEvent.currentZoom)}
-        // onBuffer={(e) =>
-        //   console.log(`BUFFER STARTED ${JSON.stringify(e.nativeEvent)}`)
-        // }
-        // onError={(e) => console.log('native Error', e.nativeEvent)}
-        // resizeMode={EResizeMode.Contain}
-        // screenBehavior={{
-        //   autoEnterFullscreenOnLandscape: false,
-        //   autoOrientationOnFullscreen: false,
-        // }}
+        onMediaError={(e) => console.log('native Error', e.nativeEvent)}
         // lockControls={true}
         controlsStyles={
           {

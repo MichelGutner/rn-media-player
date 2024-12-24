@@ -10,9 +10,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.isVisible
 import com.rnvideoplayer.R
-import com.rnvideoplayer.fadeIn
-import com.rnvideoplayer.mediaplayer.utils.TaskScheduler
-import com.rnvideoplayer.utils.scaleView
+import com.rnvideoplayer.extensions.fadeIn
+import com.rnvideoplayer.extensions.scaleView
+import com.rnvideoplayer.utils.TaskScheduler
 
 @SuppressLint("SetTextI18n", "ViewConstructor")
 class DoubleTapSeek(
@@ -93,7 +93,7 @@ class DoubleTapSeek(
     viewTreeObserver.addOnGlobalLayoutListener {
       post {
         contentView.layoutParams = setupLayoutParamsContentView()
-        scaleView(isForward, this)
+        this@DoubleTapSeek.scaleView(isForward)
         requestLayout()
       }
     }

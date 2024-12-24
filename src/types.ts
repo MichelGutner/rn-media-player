@@ -1,6 +1,5 @@
 import type { ViewProps, ViewStyle } from 'react-native';
 import type {
-  WithDefault,
   DirectEventHandler,
   Float,
 } from 'react-native/Libraries/Types/CodegenTypes';
@@ -11,10 +10,10 @@ export const enum EResizeMode {
   Stretch = 'stretch',
 }
 
-type ResizeMode = WithDefault<
-  EResizeMode | 'cover' | 'contain' | 'stretch',
-  'none'
->;
+// type ResizeMode = WithDefault<
+//   EResizeMode | 'cover' | 'contain' | 'stretch',
+//   'none'
+// >;
 
 type TVideoPlayerControlConfig = {
   loading?: {
@@ -51,19 +50,13 @@ type TOnError = TGenericEventHandler<{
   };
 }>;
 
-type TOnVideoProgress = TGenericEventHandler<{
-  buffering: Float;
+type TOnMediaBuffering = TGenericEventHandler<{
+  totalBuffered: Float;
   progress: Float;
 }>;
 
 type TOnFullscreen = TGenericEventHandler<{
   isFullscreen: boolean;
-}>;
-
-type TOnVideoBuffer = TGenericEventHandler<{
-  buffering: boolean;
-  completed: boolean;
-  empty: boolean;
 }>;
 
 type TOnVideoCompleted = TGenericEventHandler<{ completed: boolean }>;
@@ -102,45 +95,30 @@ export type VideoPlayer = Omit<ViewProps, 'style'> & {
     isEnabled?: boolean;
     // framesPerSecond?: number;
   };
-  screenBehavior?: {
-    autoEnterFullscreenOnLandscape?: boolean;
-    autoOrientationOnFullscreen?: boolean;
-  };
-  /**
-   * iOS only
-   */
   entersFullScreenWhenPlaybackBegins?: boolean;
   autoPlay?: boolean;
   style?: ViewStyle;
   rate?: number;
-  resizeMode?: ResizeMode;
   // lockControls?: boolean;
-  tapToSeek?: {
+  doubleTapToSeek?: {
     value: number;
     suffixLabel: string;
   };
   /**
    * Set this parameter to change the quality of the video
    */
-  changeQualityUrl?: string;
+  replaceMediaUrl?: string;
   controlsStyles?: TVideoPlayerControlConfig;
-  onBufferCompleted?: TOnVideoBufferCompleted;
-  onFullscreen?: TOnFullscreen;
-  onBuffer?: TOnVideoBuffer;
-  onReady?: TOnReady;
-  onVideoProgress?: TOnVideoProgress;
-  onPlayPause?: TOnVideoPlayPause;
-  onCompleted?: TOnVideoCompleted;
-  /**
-   * iOS only
-   */
-  onMediaRouter?: TOnMediaRouter;
-  onSeekBar?: TOnSeekBar;
-  /**
-   * iOS only
-   */
-  onPinchZoom?: TonPinchZoom;
-  onError?: TOnError;
+  onMediaBufferCompleted?: TOnVideoBufferCompleted;
+  onFullScreenStateChanged?: TOnFullscreen;
+  onMediaReady?: TOnReady;
+  onMediaBuffering?: TOnMediaBuffering;
+  onMediaPlayPause?: TOnVideoPlayPause;
+  onMediaCompleted?: TOnVideoCompleted;
+  onMediaSeekBar?: TOnSeekBar;
+  onMediaPinchZoom?: TonPinchZoom;
+  onMediaError?: TOnError;
+  onMenuItemSelected?: TGenericEventHandler<{ name: string; value: any }>;
   menus?: {
     [key: string]: {
       readonly data: { name: string; value: unknown }[];
@@ -148,9 +126,9 @@ export type VideoPlayer = Omit<ViewProps, 'style'> & {
     };
   };
   /**
-   * Get menu item selected on settings
+   * iOS only
    */
-  onMenuItemSelected?: TGenericEventHandler<{ name: string; value: any }>;
+  onMediaRouter?: TOnMediaRouter;
 };
 
 type TGenericEventHandler<T> = DirectEventHandler<Readonly<T>>;

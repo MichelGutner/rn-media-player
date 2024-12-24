@@ -1,4 +1,4 @@
-package com.rnvideoplayer.mediaplayer.interfaces
+package com.rnvideoplayer.interfaces
 
 interface IMediaPlayerControls {
   fun onFullscreenMode(isFullscreen: Boolean)

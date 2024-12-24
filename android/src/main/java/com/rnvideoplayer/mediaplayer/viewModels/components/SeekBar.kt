@@ -10,15 +10,17 @@ import android.widget.LinearLayout
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.DefaultTimeBar
+import androidx.media3.ui.TimeBar
 import androidx.media3.ui.TimeBar.OnScrubListener
 import com.rnvideoplayer.interfaces.ICustomSeekBar
 
 @UnstableApi
 class SeekBar(context: Context) : LinearLayout(context), ICustomSeekBar {
-  var timeBarWidth: Int = 0
+  private var timeBarWidth: Int = 0
     private set
 
   private val seekBar = seekBarWrapper(context)
+  var isSeeking = false
 
   init {
     seekBar.viewTreeObserver.addOnGlobalLayoutListener {
@@ -26,6 +28,18 @@ class SeekBar(context: Context) : LinearLayout(context), ICustomSeekBar {
     }
     addView(seekBar)
     gravity = Gravity.BOTTOM
+
+    seekBar.addListener(object : OnScrubListener {
+      override fun onScrubStart(timeBar: TimeBar, position: Long) {
+        isSeeking = true
+      }
+
+      override fun onScrubMove(timeBar: TimeBar, position: Long) {}
+
+      override fun onScrubStop(timeBar: TimeBar, position: Long, canceled: Boolean) {
+        isSeeking =  false
+      }
+    })
   }
 
   override fun build(duration: Long) {
@@ -65,7 +79,6 @@ class CustomDefaultTimeBar(context: Context, attrs: AttributeSet? = null) :
   DefaultTimeBar(context, attrs) {
 
   init {
-    // Use reflection to set private/protected properties
     val barHeightField = DefaultTimeBar::class.java.getDeclaredField("barHeight")
     barHeightField.isAccessible = true
     barHeightField.set(this, dpToPx(10))
