@@ -7,7 +7,7 @@ import android.util.TypedValue
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ProgressBar
-import com.rnvideoplayer.utilities.layoutParamsCenter
+import com.rnvideoplayer.utils.layoutParamsWithGravityCenter
 
 @SuppressLint("ViewConstructor")
 class Loading(context: Context): FrameLayout(context) {
@@ -25,7 +25,7 @@ class Loading(context: Context): FrameLayout(context) {
       context.resources.displayMetrics
     ).toInt()
     return ProgressBar(context).apply {
-      layoutParams = layoutParamsCenter(sizeInPx, sizeInPx)
+      layoutParams = layoutParamsWithGravityCenter(sizeInPx, sizeInPx)
       isIndeterminate = true
       interpolator = AccelerateDecelerateInterpolator()
       indeterminateDrawable.setColorFilter(Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN)

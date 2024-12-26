@@ -50,7 +50,7 @@ function App(): JSX.Element {
           metadata: { title: 'Sintel', artist: 'Google' },
           startTime: 0,
         }}
-        thumbnails={{ isEnabled: false, sourceUrl: downloadedUrl }}
+        thumbnails={{ isEnabled: true, sourceUrl: downloadedUrl }}
         style={{
           height: 325,
           backgroundColor: 'black',
@@ -58,7 +58,7 @@ function App(): JSX.Element {
         rate={rate}
         autoPlay={true}
         replaceMediaUrl={playbackQuality}
-        // entersFullScreenWhenPlaybackBegins
+        entersFullScreenWhenPlaybackBegins
         doubleTapToSeek={{
           value: 12,
           suffixLabel: 'segundos',

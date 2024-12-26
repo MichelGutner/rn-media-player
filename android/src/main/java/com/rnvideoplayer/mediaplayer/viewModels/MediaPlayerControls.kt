@@ -1,9 +1,6 @@
 package com.rnvideoplayer.mediaplayer.viewModels
 
-import android.content.Context
 import android.graphics.drawable.GradientDrawable
-import android.os.Handler
-import android.os.Looper
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -15,7 +12,6 @@ import androidx.core.view.isVisible
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
-import androidx.media3.common.util.Log
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.TimeBar
 import com.facebook.react.bridge.Arguments
@@ -55,7 +51,6 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
   protected var reactApplicationEvent: ReactEventsAdapter? = null
   protected var reactConfigAdapter: ReactConfigAdapter? = null
   private var timeUnitHandler = TimeUnitFormat()
-  private val handler = Handler(Looper.getMainLooper())
   private val mediaPlayer = MediaPlayerAdapter(context)
   private var castPlayerButton = CastPlayerButton(context, mediaPlayer.instanceExoPlayer)
 

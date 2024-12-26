@@ -1,12 +1,12 @@
 package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.content.Context
+import android.graphics.Color
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.rnvideoplayer.R
-import com.rnvideoplayer.utilities.ColorUtils
-import com.rnvideoplayer.utilities.layoutParamsCenter
+import com.rnvideoplayer.utils.layoutParamsWithGravityCenter
 import com.rnvideoplayer.utils.TimeCodesFormat
 
 class TimeCodes(context: Context) : LinearLayout(context) {
@@ -30,8 +30,8 @@ class TimeCodes(context: Context) : LinearLayout(context) {
 
   private fun createTextView(context: Context): TextView {
     return TextView(context).apply {
-      setTextColor(ColorUtils.white)
-      layoutParams = layoutParamsCenter(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
+      setTextColor(Color.WHITE)
+      layoutParams = layoutParamsWithGravityCenter(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
       text = context.getString(R.string.time_codes_start_value)
     }
   }

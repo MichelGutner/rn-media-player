@@ -2,6 +2,7 @@ package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.media.MediaMetadataRetriever
 import android.os.Handler
 import android.os.Looper
@@ -15,7 +16,6 @@ import com.rnvideoplayer.R
 import com.rnvideoplayer.extensions.fadeIn
 import com.rnvideoplayer.extensions.fadeOut
 import com.rnvideoplayer.interfaces.IThumbnailPreview
-import com.rnvideoplayer.utilities.ColorUtils
 import com.rnvideoplayer.utils.TimeCodesFormat
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
@@ -146,7 +146,7 @@ class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
       ).apply {
         text = context.getString(R.string.time_codes_start_value)
         textSize = 12f
-        setTextColor(ColorUtils.white)
+        setTextColor(Color.WHITE)
         translationX = ((thumbWidth / 2) - (ViewGroup.LayoutParams.WRAP_CONTENT / 2)).toFloat()
       }
     }

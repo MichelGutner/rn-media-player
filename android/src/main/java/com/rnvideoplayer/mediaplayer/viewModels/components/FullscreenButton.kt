@@ -15,6 +15,9 @@ class FullscreenButton(context: Context) : FrameLayout(context) {
   private val button = setupButton(context)
 
   init {
+    layoutParams = LayoutParams(size, size).apply {
+      gravity = Gravity.CENTER
+    }
     addView(button)
   }
 

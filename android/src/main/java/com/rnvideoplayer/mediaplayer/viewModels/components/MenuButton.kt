@@ -16,7 +16,7 @@ class MenuButton(context: Context) : LinearLayout(context) {
 
   init {
     addView(button)
-    setPadding(0,0,12,0)
+    setPadding(0,0,16,0)
     requestLayout()
   }
 

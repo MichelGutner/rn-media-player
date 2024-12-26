@@ -2,18 +2,19 @@ package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import com.rnvideoplayer.R
-import com.rnvideoplayer.utilities.layoutParamsCenter
+import com.rnvideoplayer.utils.layoutParamsWithGravityCenter
 import com.rnvideoplayer.utils.AnimatedDrawables
 
 class PlayPauseButton(context: Context) : FrameLayout(context) {
   private val drawables = AnimatedDrawables(context)
-  private var size: Int = 130
+  private var size: Int = 145
   private val playPauseButton = setupButton(context)
 
   init {
@@ -37,7 +38,7 @@ class PlayPauseButton(context: Context) : FrameLayout(context) {
   private fun setupButton(context: Context): ImageButton {
     return ImageButton(context).apply {
       layoutParams =
-        layoutParamsCenter(LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        layoutParamsWithGravityCenter(LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
       val typedValue = TypedValue()
       context.theme.resolveAttribute(
         android.R.attr.selectableItemBackgroundBorderless,
