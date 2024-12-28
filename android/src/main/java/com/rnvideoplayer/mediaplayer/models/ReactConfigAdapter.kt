@@ -24,7 +24,6 @@ class ReactConfigAdapter {
 
     fun getInstance(): ReactConfigAdapter {
       return instance ?: synchronized(this) {
-        println("instance: $instance  ")
         instance ?: ReactConfigAdapter().also { instance = it }
       }
     }

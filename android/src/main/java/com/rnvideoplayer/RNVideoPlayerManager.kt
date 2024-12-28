@@ -11,7 +11,7 @@ import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
 import com.rnvideoplayer.mediaplayer.models.ReactConfigAdapter
-import com.rnvideoplayer.mediaplayer.models.ReactEventsName
+import com.rnvideoplayer.mediaplayer.models.RCTEvents
 import com.rnvideoplayer.mediaplayer.views.MediaPlayerView
 
 class RNVideoPlayer : SimpleViewManager<View>() {
@@ -24,7 +24,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> {
     val mapBuilder = MapBuilder.builder<String, Any>()
-    ReactEventsName.registeredEvents.forEach { event ->
+    RCTEvents.rctRegisteredEvents.forEach { event ->
       mapBuilder.put(event, MapBuilder.of("registrationName", event))
     }
 

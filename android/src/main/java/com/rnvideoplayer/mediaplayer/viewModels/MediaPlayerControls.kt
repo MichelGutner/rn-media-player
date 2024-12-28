@@ -14,17 +14,15 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.TimeBar
-import com.facebook.react.bridge.Arguments
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.cast.CastPlayerButton
 import com.rnvideoplayer.extensions.fadeIn
 import com.rnvideoplayer.extensions.fadeOut
 import com.rnvideoplayer.extensions.withTranslationAnimation
-import com.rnvideoplayer.mediaplayer.models.ReactEventsAdapter
+import com.rnvideoplayer.mediaplayer.models.RCTDirectEvents
 import com.rnvideoplayer.mediaplayer.models.MediaPlayerAdapter
 import com.rnvideoplayer.interfaces.IMediaPlayerControls
 import com.rnvideoplayer.mediaplayer.models.ReactConfigAdapter
-import com.rnvideoplayer.mediaplayer.models.ReactEventsName
 import com.rnvideoplayer.mediaplayer.viewModels.components.FullscreenButton
 import com.rnvideoplayer.mediaplayer.viewModels.components.PlayPauseButton
 import com.rnvideoplayer.mediaplayer.viewModels.components.SeekBar
@@ -42,13 +40,14 @@ import java.util.concurrent.TimeUnit
 
 
 @UnstableApi
-abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(context), IMediaPlayerControls {
+abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(context),
+  IMediaPlayerControls {
   val controlsContainer = FrameLayout(context).apply {
     layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
   }
 
   private var taskScheduler = TaskScheduler()
-  protected var reactApplicationEvent: ReactEventsAdapter? = null
+  protected var event: RCTDirectEvents? = null
   protected var reactConfigAdapter: ReactConfigAdapter? = null
   private var timeUnitHandler = TimeUnitFormat()
   private val mediaPlayer = MediaPlayerAdapter(context)
@@ -64,11 +63,11 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
   private val seekBarContainer = customLinearVerticalLayout()
 
   private val title = Title(context)
-  private val castPlayerButton = CastPlayerButton(context, mediaPlayer.instanceExoPlayer)
+  private val castPlayerButton = CastPlayerButton(context, mediaPlayer.instance)
 
   private val topBarControls = customLinearHorizontalLayout().apply {
     gravity = Gravity.TOP
-    setPadding(12,0,12,0)
+    setPadding(12, 0, 12, 0)
   }
 
   private val thumbnail by lazy { Thumbnail(context) }
@@ -108,7 +107,9 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
-    val enterFullscreenWhenPlaybackBeginsConfig = reactConfigAdapter?.get(ReactConfigAdapter.Key.ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS) ?: false
+    val enterFullscreenWhenPlaybackBeginsConfig =
+      reactConfigAdapter?.get(ReactConfigAdapter.Key.ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS)
+        ?: false
     enterFullScreenWhenPlaybackBegins = enterFullscreenWhenPlaybackBeginsConfig as Boolean
 
     postDelayed({
@@ -119,8 +120,8 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
     }, 400)
   }
 
-  open fun addEvents(reactEventsAdapter: ReactEventsAdapter?) {
-    reactApplicationEvent = reactEventsAdapter
+  open fun addEvents(events: RCTDirectEvents?) {
+    event = events
   }
 
   open fun addReactConfigs(config: ReactConfigAdapter) {
@@ -189,13 +190,7 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
       override fun onMediaLoaded(duration: Long) {
         seekBar.build(duration)
         seekBarTimeCodes.updateDuration(duration)
-        reactApplicationEvent?.send(
-          ReactEventsName.MEDIA_READY,
-          this@MediaPlayerControls,
-          Arguments.createMap().apply {
-            putDouble("duration", timeUnitHandler.toSecondsDouble(duration))
-            putBoolean("loaded", true)
-          })
+        event?.onMediaReady(timeUnitHandler.toSecondsDouble(duration))
         postDelayed({
           loading.fadeOut {
             controlsContainer.removeView(loading)
@@ -206,52 +201,33 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
 
       override fun onPlaybackStateChanged(isPlaying: Boolean) {
         playPauseButton.updateIcon(isPlaying)
-        reactApplicationEvent?.send(
-          ReactEventsName.MEDIA_PLAY_PAUSE,
-          this@MediaPlayerControls,
-          Arguments.createMap().apply {
-            putBoolean("isPlaying", isPlaying)
-          })
+        event?.onMediaPlayPause(isPlaying)
       }
 
       override fun onMediaError(error: PlaybackException?, mediaItem: MediaItem?) {
         val uri = mediaItem?.localConfiguration?.uri
-        reactApplicationEvent?.send(
-          ReactEventsName.MEDIA_ERROR,
-          this@MediaPlayerControls,
-          Arguments.createMap().apply {
-            putString("domain", uri.toString())
-            putString("error", error?.cause.toString())
-            error?.errorCode?.let { putDouble("code", it.toDouble()) }
-            putString(
-              "userInfo", mapOf(
-                "NSLocalizedDescriptionKey" to error?.message,
-                "NSLocalizedFailureReasonErrorKey" to "Failed to play the video.",
-                "NSLocalizedRecoverySuggestionErrorKey" to "Please check the video source or try again later."
-              ).toString()
-            )
-          })
+        event?.onMediaError(
+          uri.toString(),
+          error,
+          mapOf(
+            "NSLocalizedDescriptionKey" to error?.message,
+            "NSLocalizedFailureReasonErrorKey" to "Failed to play the video.",
+            "NSLocalizedRecoverySuggestionErrorKey" to "Please check the video source or try again later."
+          ).toString()
+        )
       }
 
       override fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long) {
         seekBar.update(currentProgress, bufferedProgress)
         seekBarTimeCodes.updatePosition(currentProgress)
-        reactApplicationEvent?.send(
-          ReactEventsName.MEDIA_BUFFERING,
-          this@MediaPlayerControls,
-          Arguments.createMap().apply {
-            putDouble("progress", TimeUnit.MILLISECONDS.toSeconds(currentProgress).toDouble())
-            putDouble("totalBuffered", TimeUnit.MILLISECONDS.toSeconds(bufferedProgress).toDouble())
-          })
+        event?.onMediaBuffering(
+          TimeUnit.MILLISECONDS.toSeconds(currentProgress).toDouble(),
+          TimeUnit.MILLISECONDS.toSeconds(bufferedProgress).toDouble()
+        )
       }
 
       override fun onMediaBufferCompleted() {
-        reactApplicationEvent?.send(
-          ReactEventsName.MEDIA_BUFFER_COMPLETED,
-          this@MediaPlayerControls,
-          Arguments.createMap().apply {
-            putBoolean("completed", true)
-          })
+        event?.onMediaBufferCompleted()
       }
 
       override fun getMediaMetadata(mediaMetadata: MediaMetadata) {
@@ -263,12 +239,7 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
       }
 
       override fun onMediaEnded() {
-        reactApplicationEvent?.send(
-          ReactEventsName.MEDIA_COMPLETED,
-          this@MediaPlayerControls,
-          Arguments.createMap().apply {
-            putBoolean("completed", true)
-          })
+        event?.onMediaCompleted()
       }
     })
   }
@@ -311,23 +282,12 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
           0
         }
 
-        val startMap = Arguments.createMap().apply {
-          putDouble("percent", startScrubberPositionPercent.toDouble())
-          putDouble("seconds", startScrubberPositionSeconds.toDouble())
-        }
-
-        val endMap = Arguments.createMap().apply {
-          putDouble("percent", endScrubberPositionPercent.toDouble())
-          putDouble("seconds", endScrubberPositionSeconds.toDouble())
-        }
-
-        reactApplicationEvent?.send(
-          ReactEventsName.MEDIA_SEEK_BAR,
-          this@MediaPlayerControls,
-          Arguments.createMap().apply {
-            putMap("start", startMap)
-            putMap("end", endMap)
-          })
+        event?.onMediaSeekBar(
+          startScrubberPositionPercent.toDouble(),
+          startScrubberPositionSeconds.toDouble(),
+          endScrubberPositionPercent.toDouble(),
+          endScrubberPositionSeconds.toDouble()
+        )
 
         timeoutControls()
         thumbnail.hide()
@@ -352,8 +312,10 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
   private fun setupReactConfigs() {
     viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
       override fun onGlobalLayout() {
-        val doubleTapSeekValue = reactConfigAdapter?.get(ReactConfigAdapter.Key.DOUBLE_TAP_TO_SEEK_VALUE) as Int
-        val doubleTapSuffix = reactConfigAdapter?.get(ReactConfigAdapter.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL)
+        val doubleTapSeekValue =
+          reactConfigAdapter?.get(ReactConfigAdapter.Key.DOUBLE_TAP_TO_SEEK_VALUE) as Int
+        val doubleTapSuffix =
+          reactConfigAdapter?.get(ReactConfigAdapter.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL)
 
         leftSeekGestureView.tapValue = doubleTapSeekValue
         leftSeekGestureView.suffixLabel = doubleTapSuffix.toString()
@@ -370,7 +332,7 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
     overlay.visibility = INVISIBLE
     timeoutControls()
     mutateFullScreenState(!isFullscreen)
-    reactApplicationEvent?.onFullScreenStateChanged(isFullscreen)
+    event?.onFullScreenStateChanged(isFullscreen)
   }
 
   private fun mutateFullScreenState(state: Boolean) {
@@ -456,13 +418,7 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
   private fun showPopUp(view: View) {
     val popupMenu by lazy {
       PopUpMenu(context, view) { title, value ->
-        reactApplicationEvent?.send(
-          ReactEventsName.MENU_ITEM_SELECTED,
-          this,
-          Arguments.createMap().apply {
-            putString("name", title)
-            putString("value", value.toString())
-          })
+        event?.onMenuItemSelected(title, value.toString())
       }
     }
     popupMenu.show()
@@ -487,7 +443,7 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
     } else {
       overlay.fadeIn()
       seekBarContainer.withTranslationAnimation()
-    topBarControls.withTranslationAnimation()
+      topBarControls.withTranslationAnimation()
     }
   }
 

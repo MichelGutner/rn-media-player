@@ -5,15 +5,14 @@ import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
-import com.facebook.react.bridge.Arguments
 import java.io.File
 
 open class MediaPlayerAdapter(context: Context) {
@@ -28,7 +27,7 @@ open class MediaPlayerAdapter(context: Context) {
   val currentMediaItem: MediaItem? get() = exoPlayer.currentMediaItem
   val currentProgress: Long get() = exoPlayer.currentPosition
   val isPlaying: Boolean get() = exoPlayer.isPlaying
-  val instanceExoPlayer: ExoPlayer get() = exoPlayer
+  val instance: ExoPlayer get() = exoPlayer
 
   interface Callback {
     fun onMediaLoaded(duration: Long)
@@ -55,6 +54,7 @@ open class MediaPlayerAdapter(context: Context) {
           onPlaybackStateChanged(player.isPlaying)
         }
         if (events.contains(Player.EVENT_RENDERED_FIRST_FRAME)) {
+          Log.d(TAG, "Media Player has been rendered first frame")
           onMediaLoaded(player.duration)
           startMediaProgress()
         }
@@ -212,6 +212,7 @@ open class MediaPlayerAdapter(context: Context) {
   }
 
   fun onMediaRelease() {
+    Log.d(TAG, "Media player instance has been released. All associated resources have been cleaned up.")
     stopMediaProgress()
     removeCallback()
     exoPlayer.release()
@@ -229,5 +230,9 @@ open class MediaPlayerAdapter(context: Context) {
     val duration = exoPlayer.duration
     val newPosition = (currentPosition + position).coerceIn(0, duration)
     exoPlayer.seekTo(newPosition)
+  }
+
+  companion object {
+    private val TAG = MediaPlayerAdapter::class.java.simpleName
   }
 }
