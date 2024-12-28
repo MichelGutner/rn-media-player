@@ -3,11 +3,9 @@ package com.rnvideoplayer.cast
 import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
-import android.view.Gravity
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
-import androidx.media3.cast.CastPlayer
-import androidx.media3.common.util.Log
+import androidx.core.view.setPadding
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.mediarouter.app.MediaRouteButton
@@ -25,41 +23,58 @@ import java.util.concurrent.Executors
 
 @SuppressLint("ViewConstructor")
 @UnstableApi
-class CastPlayerButton(private val context: ThemedReactContext, private val exoPlayer: ExoPlayer) : FrameLayout(context) {
+class CastPlayerButton(private val context: ThemedReactContext, private val exoPlayer: ExoPlayer) :
+  FrameLayout(context) {
+  private var size: Int = 60
   private var mSessionManagerListener: SessionManagerListener<CastSession>? = null
   private var mCastSession: CastSession? = null
   private var mCastContext: CastContext? = null
   private var mCastStateListener: CastStateListener? = null
   private var mIntroductoryOverlay: IntroductoryOverlay? = null
-  private val  castExecutor: Executor = Executors.newSingleThreadExecutor();
-  private val mMediaRouteButton = MediaRouteButton(context)
+  private val castExecutor: Executor = Executors.newSingleThreadExecutor();
+  private val mMediaRouteButton = MediaRouteButton(context).apply {
+    layoutParams = LayoutParams(
+      LayoutParams.WRAP_CONTENT,
+      LayoutParams.WRAP_CONTENT
+    ).apply {
+      setPadding(12)
+    }
+  }
   private lateinit var mSessionManager: SessionManager
 
   init {
-    mMediaRouteButton.setRemoteIndicatorDrawable(ContextCompat.getDrawable(context, R.drawable.baseline_cast_24))
+    mMediaRouteButton.setRemoteIndicatorDrawable(
+      ContextCompat.getDrawable(
+        context,
+        R.drawable.baseline_cast_24
+      )
+    )
     CastButtonFactory.setUpMediaRouteButton(context, mMediaRouteButton)
-
-    val layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
-      gravity = Gravity.TOP or Gravity.END
-    }
+    setupLayout()
     addView(mMediaRouteButton, layoutParams)
+  }
+
+  private fun setupLayout() {
+    layoutParams = LayoutParams(
+      size,
+      size
+    )
   }
 
   private fun showIntroductoryOverlay() {
     if (mIntroductoryOverlay != null) {
       mIntroductoryOverlay!!.remove()
     }
-      Handler(Looper.getMainLooper()).post {
-        mIntroductoryOverlay = IntroductoryOverlay.Builder(
-          context.currentActivity!!, mMediaRouteButton
-        )
-          .setTitleText(R.string.introducing_cast)
-          .setOverlayColor(androidx.media3.cast.R.color.cast_intro_overlay_background_color)
-          .setSingleTime()
-          .setOnOverlayDismissedListener { mIntroductoryOverlay = null }
-          .build()
-        mIntroductoryOverlay!!.show()
-      }
+    Handler(Looper.getMainLooper()).post {
+      mIntroductoryOverlay = IntroductoryOverlay.Builder(
+        context.currentActivity!!, mMediaRouteButton
+      )
+        .setTitleText(R.string.introducing_cast)
+        .setSingleTime()
+        .setOnOverlayDismissedListener { mIntroductoryOverlay = null }
+        .build()
+      mIntroductoryOverlay!!.show()
+    }
   }
 
   companion object {

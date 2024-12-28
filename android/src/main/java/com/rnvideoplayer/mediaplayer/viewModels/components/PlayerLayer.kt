@@ -9,9 +9,9 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import com.rnvideoplayer.utils.Utils
 
 @UnstableApi
-open class AspectRatio(context: Context) : FrameLayout(context) {
+open class PlayerLayer(context: Context) : FrameLayout(context) {
   lateinit var pinchGesture: ScaleGestureDetector
-  val frameLayout: AspectRatioFrameLayout = AspectRatioFrameLayout(context)
+  val frame: AspectRatioFrameLayout = AspectRatioFrameLayout(context)
 
   init {
     createAspectRatio()
@@ -24,8 +24,8 @@ open class AspectRatio(context: Context) : FrameLayout(context) {
     ).apply {
       gravity = Gravity.CENTER
     }
-    frameLayout.layoutParams = layoutParams
-    frameLayout.setAspectRatio(Utils.DEFAULT_ASPECT_RATIO)
+    frame.layoutParams = layoutParams
+    frame.setAspectRatio(Utils.DEFAULT_ASPECT_RATIO)
     addPinchGesture()
   }
 
@@ -35,12 +35,12 @@ open class AspectRatio(context: Context) : FrameLayout(context) {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
           val currentScale = detector.scaleFactor
 
-          val newScaleX = frameLayout.scaleX * currentScale
-          val newScaleY = frameLayout.scaleY * currentScale
+          val newScaleX = frame.scaleX * currentScale
+          val newScaleY = frame.scaleY * currentScale
 
           if (newScaleX in 1.0..1.2 && newScaleY in 1.0..1.2) {
-            frameLayout.scaleX = newScaleX
-            frameLayout.scaleY = newScaleY
+            frame.scaleX = newScaleX
+            frame.scaleY = newScaleY
           }
           return true
         }

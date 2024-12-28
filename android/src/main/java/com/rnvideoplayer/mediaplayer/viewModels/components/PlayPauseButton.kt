@@ -2,20 +2,19 @@ package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Color
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import androidx.core.view.setPadding
 import com.rnvideoplayer.R
 import com.rnvideoplayer.utils.layoutParamsWithGravityCenter
 import com.rnvideoplayer.utils.AnimatedDrawables
 
 class PlayPauseButton(context: Context) : FrameLayout(context) {
   private val drawables = AnimatedDrawables(context)
-  private var size: Int = 145
-  private val playPauseButton = setupButton(context)
+  private val playPauseButton = imageButton(context)
 
   init {
     setupLayout()
@@ -28,14 +27,15 @@ class PlayPauseButton(context: Context) : FrameLayout(context) {
   }
 
   private fun setupLayout() {
-    layoutParams = LayoutParams(size, size).apply {
+    layoutParams = LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
       gravity = Gravity.CENTER
     }
+    setPadding(12)
     setBackgroundResource(R.drawable.rounded_background)
   }
 
   @SuppressLint("ResourceType")
-  private fun setupButton(context: Context): ImageButton {
+  private fun imageButton(context: Context): ImageButton {
     return ImageButton(context).apply {
       layoutParams =
         layoutParamsWithGravityCenter(LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
@@ -50,7 +50,7 @@ class PlayPauseButton(context: Context) : FrameLayout(context) {
     }
   }
 
-  fun updatePlayPauseIcon(isPlaying: Boolean) {
+  fun updateIcon(isPlaying: Boolean) {
     if (isPlaying && playPauseButton.drawable == drawables.fromPauseToPlay) {
       playPauseButton.setImageDrawable(drawables.fromPlayToPause)
       drawables.fromPlayToPause.start()

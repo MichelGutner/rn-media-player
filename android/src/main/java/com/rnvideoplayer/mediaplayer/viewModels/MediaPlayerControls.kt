@@ -52,7 +52,6 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
   protected var reactConfigAdapter: ReactConfigAdapter? = null
   private var timeUnitHandler = TimeUnitFormat()
   private val mediaPlayer = MediaPlayerAdapter(context)
-  private var castPlayerButton = CastPlayerButton(context, mediaPlayer.instanceExoPlayer)
 
   private val overlay = overlayView()
   private val loading by lazy { Loading(context) }
@@ -65,11 +64,17 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
   private val seekBarContainer = customLinearVerticalLayout()
 
   private val title = Title(context)
+  private val castPlayerButton = CastPlayerButton(context, mediaPlayer.instanceExoPlayer)
+
+  private val topBarControls = customLinearHorizontalLayout().apply {
+    gravity = Gravity.TOP
+    setPadding(12,0,12,0)
+  }
 
   private val thumbnail by lazy { Thumbnail(context) }
   private val thumbnailContainer = customLinearHorizontalLayout()
 
-  private val bottomControlBar = customLinearHorizontalLayout().apply {
+  private val bottomBarControls = customLinearHorizontalLayout().apply {
     gravity = Gravity.BOTTOM or Gravity.END
     setPadding(0, 0, 12, 8)
   }
@@ -141,12 +146,12 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
       mediaPlayer.seekToRelativePosition(((value * 1000).toLong()))
     }
 
-    bottomControlBar.addView(optionsMenuButton)
-    bottomControlBar.addView(fullscreenButton)
+    bottomBarControls.addView(optionsMenuButton)
+    bottomBarControls.addView(fullscreenButton)
 
     thumbnailContainer.addView(thumbnail)
 
-    thumbnailAndControlsContainer.addView(bottomControlBar)
+    thumbnailAndControlsContainer.addView(bottomBarControls)
     thumbnailAndControlsContainer.addView(thumbnailContainer)
 
     seekBarContainer.addView(seekBar)
@@ -155,8 +160,15 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
     mediaControlsContainer.addView(thumbnailAndControlsContainer)
     mediaControlsContainer.addView(seekBarContainer)
 
-    overlay.addView(title)
-//    overlay.addView(castPlayerButton)
+    topBarControls.addView(title)
+    topBarControls.addView(View(context).apply {
+      layoutParams = LinearLayout.LayoutParams(0, 0).apply {
+        weight = 1f
+      }
+    })
+    topBarControls.addView(castPlayerButton)
+
+    overlay.addView(topBarControls)
     overlay.addView(playPauseButton)
     overlay.addView(mediaControlsContainer)
 
@@ -193,7 +205,7 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
       }
 
       override fun onPlaybackStateChanged(isPlaying: Boolean) {
-        playPauseButton.updatePlayPauseIcon(isPlaying)
+        playPauseButton.updateIcon(isPlaying)
         reactApplicationEvent?.send(
           ReactEventsName.MEDIA_PLAY_PAUSE,
           this@MediaPlayerControls,
@@ -201,10 +213,6 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
             putBoolean("isPlaying", isPlaying)
           })
       }
-
-      override var shouldShowPlayPause: Boolean
-        get() = true
-        set(value) {}
 
       override fun onMediaError(error: PlaybackException?, mediaItem: MediaItem?) {
         val uri = mediaItem?.localConfiguration?.uri
@@ -362,13 +370,7 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
     overlay.visibility = INVISIBLE
     timeoutControls()
     mutateFullScreenState(!isFullscreen)
-    reactApplicationEvent?.send(
-      ReactEventsName.FULL_SCREEN_STATE_CHANGED,
-      this@MediaPlayerControls,
-      Arguments.createMap().apply {
-        putBoolean("isFullscreen", isFullscreen)
-      }
-    )
+    reactApplicationEvent?.onFullScreenStateChanged(isFullscreen)
   }
 
   private fun mutateFullScreenState(state: Boolean) {
@@ -481,11 +483,11 @@ abstract class MediaPlayerControls(context: ThemedReactContext) : FrameLayout(co
     if (overlay.isVisible) {
       overlay.fadeOut()
       seekBarContainer.withTranslationAnimation(20f)
-      title.withTranslationAnimation(-20f)
+      topBarControls.withTranslationAnimation(-20f)
     } else {
       overlay.fadeIn()
       seekBarContainer.withTranslationAnimation()
-      title.withTranslationAnimation()
+    topBarControls.withTranslationAnimation()
     }
   }
 

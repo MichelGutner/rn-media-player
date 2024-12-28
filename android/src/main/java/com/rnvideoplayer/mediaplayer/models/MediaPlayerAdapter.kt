@@ -33,7 +33,6 @@ open class MediaPlayerAdapter(context: Context) {
   interface Callback {
     fun onMediaLoaded(duration: Long)
     fun onPlaybackStateChanged(isPlaying: Boolean)
-    var shouldShowPlayPause: Boolean
     fun onMediaError(error: PlaybackException?, mediaItem: MediaItem?)
     fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long)
     fun onMediaBufferCompleted()
@@ -44,7 +43,6 @@ open class MediaPlayerAdapter(context: Context) {
 
   init {
     setVideoSurface()
-    shouldShowPlayPauseButton()
     exoPlayer.addListener(object : Player.Listener {
       override fun onEvents(player: Player, events: Player.Events) {
         super.onEvents(player, events)
@@ -115,10 +113,6 @@ open class MediaPlayerAdapter(context: Context) {
 
   private fun getMediaItemMetadata(metadata: MediaMetadata) {
     callback?.getMediaMetadata(metadata)
-  }
-
-  private fun shouldShowPlayPauseButton() {
-    callback?.shouldShowPlayPause = Util.shouldShowPlayButton(exoPlayer)
   }
 
   private fun initializeMediaPlayer(url: String, startTime: Long = 0, metadata: MediaMetadata?) {

@@ -3,15 +3,18 @@ package com.rnvideoplayer.mediaplayer.viewModels.components
 import android.content.Context
 import android.graphics.Color
 import android.view.Gravity
-import android.widget.RelativeLayout
+import android.widget.FrameLayout
 import android.widget.TextView
-import com.rnvideoplayer.utils.layoutParamsWithGravityCenter
 
-class Title(context: Context) : RelativeLayout(context) {
+class Title(context: Context) : FrameLayout(context) {
+  private var size: Int = 60
   private val title = createTextView(context)
 
   init {
-    addView(title)
+    val layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, size).apply {
+      gravity = Gravity.TOP or Gravity.START
+    }
+    addView(title, layoutParams)
   }
 
   fun setTitle(text: String) {
@@ -22,8 +25,6 @@ class Title(context: Context) : RelativeLayout(context) {
     return TextView(context).apply {
       setTextColor(Color.WHITE)
       textSize = 16f
-      gravity = Gravity.START
-      layoutParams = layoutParamsWithGravityCenter(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
     }
   }
 }

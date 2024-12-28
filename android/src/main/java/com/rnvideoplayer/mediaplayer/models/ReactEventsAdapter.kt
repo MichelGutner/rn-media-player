@@ -2,6 +2,7 @@ package com.rnvideoplayer.mediaplayer.models
 
 import android.content.Context
 import android.view.View
+import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.uimanager.UIManagerHelper
@@ -33,21 +34,30 @@ object ReactEventsName {
   )
 }
 
+open class ReactEventsAdapter(private val context: Context, private val view: View) {
+  open fun send(eventName: String, view: View, writableMap: WritableMap) {
+    val dispatcher = UIManagerHelper.getEventDispatcher(context as ReactContext?, view.id)
+    if (dispatcher != null) {
+      val surfaceId = UIManagerHelper.getSurfaceId(context)
+      dispatcher.dispatchEvent(object : Event<Event<*>>(surfaceId, view.id) {
+        override fun getEventName(): String {
+          return eventName
+        }
 
-open class ReactEventsAdapter(private val context: Context) {
-   open fun send(eventName: String, view: View, writableMap: WritableMap) {
-     val dispatcher = UIManagerHelper.getEventDispatcher(context as ReactContext?, view.id)
-     if (dispatcher != null) {
-       val surfaceId = UIManagerHelper.getSurfaceId(context)
-       dispatcher.dispatchEvent(object : Event<Event<*>>(surfaceId, view.id) {
-         override fun getEventName(): String {
-           return eventName
-         }
+        override fun getEventData(): WritableMap {
+          return writableMap
+        }
+      })
+    }
+  }
 
-         override fun getEventData(): WritableMap {
-           return writableMap
-         }
-       })
-     }
-   }
+  fun onFullScreenStateChanged(isFullscreen: Boolean) {
+    send(
+      ReactEventsName.FULL_SCREEN_STATE_CHANGED,
+      view,
+      Arguments.createMap().apply {
+        putBoolean("isFullscreen", isFullscreen)
+      }
+    )
+  }
 }

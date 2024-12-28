@@ -31,24 +31,6 @@ class RNVideoPlayer : SimpleViewManager<View>() {
     return mapBuilder.build()
   }
 
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "resizeMode")
-//  fun setResizeMode(rnVideoPlayerView: RNVideoPlayerView, resizeMode: String) {
-//    val resizeModeValue = when (resizeMode) {
-//      "contain" -> 1.5
-//      "cover" -> 0
-//      else -> 1.5
-//    }
-//    rnVideoPlayerView.changeResizeMode(resizeModeValue.toFloat())
-//  }
-//
-//  @OptIn(UnstableApi::class)
-//  @ReactProp(name = "screenBehavior")
-//  fun setScreenBehavior(rnVideoPlayerView: RNVideoPlayerView, screenBehavior: ReadableMap?) {
-//    SharedStore.getInstance().putBoolean("autoEnterFullscreenOnLandscape", screenBehavior?.getBoolean("autoEnterFullscreenOnLandscape") ?: false)
-//    SharedStore.getInstance().putBoolean("autoOrientationOnFullscreen", screenBehavior?.getBoolean("autoOrientationOnFullscreen") ?: false)
-//  }
-
   @OptIn(UnstableApi::class)
   @ReactProp(name = "source")
   fun setSource(view: MediaPlayerView, source: ReadableMap?) {
@@ -84,7 +66,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   fun setRate(view: MediaPlayerView, rate: Double) {
     view.onChangePlaybackSpeed(rate.toFloat())
   }
-////
+
   @OptIn(UnstableApi::class)
   @ReactProp(name = "autoPlay")
   fun setAutoPlay(view: MediaPlayerView, value: Boolean) {

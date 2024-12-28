@@ -4,14 +4,14 @@
     <aapt:attr name="android:drawable">
         <vector
             android:name="vector"
-            android:width="32dp"
-            android:height="32dp"
+            android:width="36dp"
+            android:height="36dp"
             android:viewportWidth="28"
             android:viewportHeight="28"
           >
             <path
                 android:name="path"
-                android:pathData="M 24.415 12.554 L 5.418 0.311 C 4.291 -0.296 3 -0.233 3 1.946 L 3 26.054 C 3 28.046 4.385 28.36 5.418 27.689 L 24.415 15.446 C 25.197 14.647 25.197 13.353 24.415 12.554"
+                android:pathData="M 26.415 12.554 L 7.418 0.311 C 6.291 -0.296 5 -0.233 5 1.946 L 5 26.054 C 5 28.046 6.385 28.36 7.418 27.689 L 26.415 15.446 C 27.197 14.647 27.197 13.353 26.415 12.554"
                 android:fillColor="#ffff"
                 android:strokeWidth="1"
                 android:fillType="evenOdd"/>
@@ -21,8 +21,8 @@
         <aapt:attr name="android:animation">
             <objectAnimator
                 android:propertyName="pathData"
-                android:duration="400"
-                android:valueFrom="M 5.418 0.311 C 4.291 -0.296 3 -0.233 3 1.946 L 3 26.054 C 3 28.046 4.385 28.36 5.418 27.689 C 11.75 23.608 18.083 19.527 24.415 15.446 C 25.197 14.647 25.197 13.353 24.415 12.554 C 18.083 8.473 11.75 4.392 5.418 0.311 M 21 14 L 21 14 C 21 14 21 14 21 14 C 21 14 21 14 21 14 L 21 14 C 21 14 21 14 21 14 C 21 14 21 14 21 14"
+                android:duration="200"
+                android:valueFrom="M 6.418 0.311 C 5.291 -0.296 4 -0.233 4 1.946 L 4 26.054 C 4 28.046 5.385 28.36 6.418 27.689 C 12.75 23.608 19.083 19.527 25.415 15.446 C 26.197 14.647 26.197 13.353 25.415 12.554 C 19.083 8.473 12.75 4.392 6.418 0.311 M 22 14 L 22 14 C 22 14 22 14 22 14 C 22 14 22 14 22 14 L 22 14 C 22 14 22 14 22 14 C 22 14 22 14 22 14"
                 android:valueTo="M 7 0 C 5.068 0 3.5 1.568 3.5 3.5 L 3.5 24.5 C 3.5 26.432 5.068 28 7 28 C 8.932 28 10.5 26.432 10.5 24.5 C 10.5 17.5 10.5 10.5 10.5 3.5 C 10.5 1.568 8.932 0 7 0 M 24.5 3.5 L 24.5 24.5 C 24.5 26.432 22.932 28 21 28 C 19.068 28 17.5 26.432 17.5 24.5 L 17.5 3.5 C 17.5 1.568 19.068 0 21 0 C 22.932 0 24.5 1.568 24.5 3.5"
                 android:valueType="pathType"
                 android:interpolator="@android:interpolator/fast_out_linear_in"/>
