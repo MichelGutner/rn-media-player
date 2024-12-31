@@ -7,7 +7,6 @@ import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.setPadding
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.mediarouter.app.MediaRouteButton
 import com.facebook.react.uimanager.ThemedReactContext
 import com.google.android.gms.cast.framework.CastButtonFactory
@@ -23,7 +22,7 @@ import java.util.concurrent.Executors
 
 @SuppressLint("ViewConstructor")
 @UnstableApi
-class CastPlayerButton(private val context: ThemedReactContext, private val exoPlayer: ExoPlayer) :
+class CastButton(private val context: ThemedReactContext) :
   FrameLayout(context) {
   private var size: Int = 60
   private var mSessionManagerListener: SessionManagerListener<CastSession>? = null

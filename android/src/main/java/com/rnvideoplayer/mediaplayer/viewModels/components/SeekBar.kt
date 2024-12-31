@@ -2,22 +2,26 @@ package com.rnvideoplayer.mediaplayer.viewModels.components
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.Gravity
-import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.DefaultTimeBar
 import androidx.media3.ui.TimeBar
 import androidx.media3.ui.TimeBar.OnScrubListener
-import com.rnvideoplayer.interfaces.ICustomSeekBar
+
+@OptIn(UnstableApi::class)
+private interface ICustomSeekBar {
+  fun setDuration(duration: Long)
+  fun setPosition(position: Long, bufferProgress: Long)
+  fun onScrubListener(listener: OnScrubListener)
+  fun removeOnScrubListener(listener: OnScrubListener)
+}
 
 @UnstableApi
 class SeekBar(context: Context) : LinearLayout(context), ICustomSeekBar {
   private var timeBarWidth: Int = 0
-    private set
 
   private val seekBar = seekBarWrapper(context)
   var isSeeking = false
@@ -42,11 +46,11 @@ class SeekBar(context: Context) : LinearLayout(context), ICustomSeekBar {
     })
   }
 
-  override fun build(duration: Long) {
+  override fun setDuration(duration: Long) {
     seekBar.setDuration(duration)
   }
 
-  override fun update(position: Long, bufferProgress: Long) {
+  override fun setPosition(position: Long, bufferProgress: Long) {
     seekBar.setPosition(position)
     seekBar.setBufferedPosition(bufferProgress)
     seekBar.requestLayout()

@@ -15,10 +15,16 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import com.rnvideoplayer.R
 import com.rnvideoplayer.extensions.fadeIn
 import com.rnvideoplayer.extensions.fadeOut
-import com.rnvideoplayer.interfaces.IThumbnailPreview
 import com.rnvideoplayer.utils.TimeCodesFormat
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
+
+private interface IThumbnailPreview {
+  fun setCurrentThumbnailImage(index: Int)
+  fun show()
+  fun hide()
+  fun downloadFrames(url: String)
+}
 
 class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
   private val helper = TimeCodesFormat()
@@ -32,7 +38,7 @@ class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
   private val thumbnailTimeCodes = createThumbnailTimeCodes(context)
   private var translateXTimeCodes: Int = 0
 
-  var translationXThumbnailView = 0f
+  var customTranslationX = 0f
 
   init {
     layoutParams = LayoutParams(
@@ -59,7 +65,7 @@ class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
     thumbnailView.setImageDrawable(roundedDrawable)
   }
 
-  fun onTranslate(seconds: Double, duration: Double, customWidth: Int? = null) {
+  fun onTranslateX(seconds: Double, duration: Double, customWidth: Int? = null) {
     val parent = (this.parent as ViewGroup)
     val widthTarget = (customWidth ?: parent.width)
     val currentIndex = (seconds / interval).toInt()

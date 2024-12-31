@@ -10,7 +10,7 @@ import com.facebook.react.common.MapBuilder
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
-import com.rnvideoplayer.mediaplayer.models.ReactConfigAdapter
+import com.rnvideoplayer.mediaplayer.models.RCTConfigs
 import com.rnvideoplayer.mediaplayer.models.RCTEvents
 import com.rnvideoplayer.mediaplayer.views.MediaPlayerView
 
@@ -55,12 +55,13 @@ class RNVideoPlayer : SimpleViewManager<View>() {
       val enabled = thumbnails.getBoolean("isEnabled")
       if (enabled) {
         if (sourceUrl.isNotEmpty()) {
-          view.startDownloadThumbnailFrames(sourceUrl)
+          view.shouldExecuteDownloadThumbnailFrames(sourceUrl)
         }
       }
     }
   }
-//
+
+  //
   @OptIn(UnstableApi::class)
   @ReactProp(name = "rate")
   fun setRate(view: MediaPlayerView, rate: Double) {
@@ -72,32 +73,32 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   fun setAutoPlay(view: MediaPlayerView, value: Boolean) {
     view.onAutoPlay(value)
   }
-@OptIn(UnstableApi::class)
-@ReactProp(name = "menus")
-fun setMenus(view: MediaPlayerView, menus: ReadableMap) {
-  val reactConfigAdapter = ReactConfigAdapter.getInstance()
 
-  menus.entryIterator.forEach { entry ->
-    reactConfigAdapter.set(entry.key, entry.value)
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "menus")
+  fun setMenus(view: MediaPlayerView, menus: ReadableMap) {
+    val reactConfigAdapter = RCTConfigs.getInstance()
+
+    menus.entryIterator.forEach { entry ->
+      reactConfigAdapter.set(entry.key, entry.value)
+    }
+    reactConfigAdapter.set(RCTConfigs.Key.MENU_ITEMS, menus.toHashMap().keys)
+
   }
-  reactConfigAdapter.set(ReactConfigAdapter.Key.MENU_ITEMS, menus.toHashMap().keys)
-
-}
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "doubleTapToSeek")
   fun setSuffixLabelTapToSeek(view: MediaPlayerView, doubleTapToSeek: ReadableMap?) {
     if (doubleTapToSeek == null) return
-    val reactConfigAdapter = ReactConfigAdapter.getInstance()
-  if (doubleTapToSeek.hasKey("suffixLabel") && doubleTapToSeek.getType("suffixLabel") == ReadableType.String) {
-    val suffixLabel = doubleTapToSeek.getString("suffixLabel") as String
-    reactConfigAdapter.set(ReactConfigAdapter.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL, suffixLabel)
-  }
-  if (doubleTapToSeek.hasKey("value") && doubleTapToSeek.getType("value") == ReadableType.Number) {
-    val value = doubleTapToSeek.getDouble("value")
-    reactConfigAdapter.set(ReactConfigAdapter.Key.DOUBLE_TAP_TO_SEEK_VALUE, value.toInt())
-  }
-    view.addReactConfigs(reactConfigAdapter)
+    val reactConfigAdapter = RCTConfigs.getInstance()
+    if (doubleTapToSeek.hasKey("suffixLabel") && doubleTapToSeek.getType("suffixLabel") == ReadableType.String) {
+      val suffixLabel = doubleTapToSeek.getString("suffixLabel") as String
+      reactConfigAdapter.set(RCTConfigs.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL, suffixLabel)
+    }
+    if (doubleTapToSeek.hasKey("value") && doubleTapToSeek.getType("value") == ReadableType.Number) {
+      val value = doubleTapToSeek.getDouble("value")
+      reactConfigAdapter.set(RCTConfigs.Key.DOUBLE_TAP_TO_SEEK_VALUE, value.toInt())
+    }
   }
 
   @OptIn(UnstableApi::class)
@@ -110,8 +111,14 @@ fun setMenus(view: MediaPlayerView, menus: ReadableMap) {
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "entersFullScreenWhenPlaybackBegins")
-  fun setEntersFullScreenWhenPlaybackBegins(view: MediaPlayerView, entersFullScreenWhenPlaybackBegins: Boolean) {
-    val reactConfigAdapter = ReactConfigAdapter.getInstance()
-    reactConfigAdapter.set(ReactConfigAdapter.Key.ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS, entersFullScreenWhenPlaybackBegins)
+  fun setEntersFullScreenWhenPlaybackBegins(
+    view: MediaPlayerView,
+    entersFullScreenWhenPlaybackBegins: Boolean
+  ) {
+    val reactConfigAdapter = RCTConfigs.getInstance()
+    reactConfigAdapter.set(
+      RCTConfigs.Key.ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS,
+      entersFullScreenWhenPlaybackBegins
+    )
   }
 }

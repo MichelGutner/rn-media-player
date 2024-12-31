@@ -2,7 +2,7 @@ package com.rnvideoplayer.extensions
 
 import android.view.View
 
-fun View.scaleView(isForward: Boolean) {
+fun View.animatedScale(isForward: Boolean) {
   if (isForward) {
     this.pivotX = 0f
     this.translationX = (this.width.toFloat() / 2f + 40)

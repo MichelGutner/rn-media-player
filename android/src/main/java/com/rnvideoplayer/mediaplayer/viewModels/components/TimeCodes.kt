@@ -20,11 +20,11 @@ class TimeCodes(context: Context) : LinearLayout(context) {
     addView(linearLayout)
   }
 
-  fun updatePosition(time: Long) {
+  fun setPosition(time: Long) {
     position.text = helper.format(time)
   }
 
-  fun updateDuration(time: Long) {
+  fun setDuration(time: Long) {
     duration.text = helper.format(time)
   }
 

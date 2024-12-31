@@ -10,7 +10,7 @@ import android.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.ReadableMap
 import com.rnvideoplayer.R
-import com.rnvideoplayer.mediaplayer.models.ReactConfigAdapter
+import com.rnvideoplayer.mediaplayer.models.RCTConfigs
 
 private var selectedItemMap = mutableMapOf<String, String>()
 
@@ -21,12 +21,12 @@ class PopUpMenu(
     callback: (String, Any) -> Unit
 ) {
   private val window = (view.context as? Activity)?.window
-  private val reactConfigAdapter = ReactConfigAdapter.getInstance()
+  private val reactConfigAdapter = RCTConfigs.getInstance()
   private val popup = PopupMenu(context, view)
 
   init {
 
-    val menuItems = reactConfigAdapter.get(ReactConfigAdapter.Key.MENU_ITEMS) as MutableSet<String>
+    val menuItems = reactConfigAdapter.get(RCTConfigs.Key.MENU_ITEMS) as MutableSet<String>
     menuItems.forEach { menuItemTitle ->
       val optionReadableMap = reactConfigAdapter.get(menuItemTitle) as ReadableMap
       val options = optionReadableMap.getArray("data")

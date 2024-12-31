@@ -6,12 +6,12 @@ import android.view.Gravity
 import android.widget.FrameLayout
 import android.widget.TextView
 
-class Title(context: Context) : FrameLayout(context) {
-  private var size: Int = 60
+class VideoTitle(context: Context) : FrameLayout(context) {
+  private var size: Int = 70
   private val title = createTextView(context)
 
   init {
-    val layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, size).apply {
+    val layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, size).apply {
       gravity = Gravity.TOP or Gravity.START
     }
     addView(title, layoutParams)
@@ -24,7 +24,7 @@ class Title(context: Context) : FrameLayout(context) {
   private fun createTextView(context: Context): TextView {
     return TextView(context).apply {
       setTextColor(Color.WHITE)
-      textSize = 16f
+      textSize = 14f
     }
   }
 }

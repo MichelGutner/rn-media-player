@@ -55,7 +55,6 @@ open class MediaPlayerAdapter(context: Context) {
         }
         if (events.contains(Player.EVENT_RENDERED_FIRST_FRAME)) {
           Log.d(TAG, "Media Player has been rendered first frame")
-          onMediaLoaded(player.duration)
           startMediaProgress()
         }
         if (events.contains(Player.EVENT_PLAYER_ERROR)) {
@@ -73,6 +72,9 @@ open class MediaPlayerAdapter(context: Context) {
           ExoPlayer.STATE_ENDED -> {
             playbackStateEnded = true
             onMediaEnded()
+          }
+          ExoPlayer.STATE_READY -> {
+            onMediaLoaded(instance.duration)
           }
         }
       }
@@ -196,6 +198,7 @@ open class MediaPlayerAdapter(context: Context) {
     exoPlayer.setPlaybackSpeed(rate)
   }
 
+  // TODO: need refactor
   fun onMediaTogglePlayPause() {
     if (playbackStateEnded) {
       playbackStateEnded = false
