@@ -1,32 +1,30 @@
 package com.rnvideoplayer
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.view.View
 import androidx.annotation.OptIn
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.ReadableType
 import com.facebook.react.common.MapBuilder
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
-import com.rnvideoplayer.events.events
-import com.rnvideoplayer.helpers.ReadableMapManager
-import com.rnvideoplayer.helpers.SharedStore
-import com.rnvideoplayer.helpers.SharedStoreKey
+import com.rnvideoplayer.mediaplayer.models.RCTConfigs
+import com.rnvideoplayer.mediaplayer.models.RCTEvents
+import com.rnvideoplayer.mediaplayer.views.MediaPlayerView
 
 class RNVideoPlayer : SimpleViewManager<View>() {
   override fun getName() = "RNVideoPlayer"
 
   @OptIn(UnstableApi::class)
-  override fun createViewInstance(reactContext: ThemedReactContext): RNVideoPlayerView {
-    val rnVideoPlayerView = RNVideoPlayerView(reactContext)
-    return rnVideoPlayerView
+  override fun createViewInstance(reactContext: ThemedReactContext): MediaPlayerView {
+    return MediaPlayerView(reactContext)
   }
 
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> {
     val mapBuilder = MapBuilder.builder<String, Any>()
-    events.forEach { event ->
+    RCTEvents.rctRegisteredEvents.forEach { event ->
       mapBuilder.put(event, MapBuilder.of("registrationName", event))
     }
 
@@ -34,115 +32,93 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   }
 
   @OptIn(UnstableApi::class)
-  @ReactProp(name = "resizeMode")
-  fun setResizeMode(rnVideoPlayerView: RNVideoPlayerView, resizeMode: String) {
-    val resizeModeValue = when (resizeMode) {
-      "contain" -> 1.5
-      "cover" -> 0
-      else -> 1.5
-    }
-    rnVideoPlayerView.changeResizeMode(resizeModeValue.toFloat())
-  }
-
-  @OptIn(UnstableApi::class)
-  @ReactProp(name = "screenBehavior")
-  fun setScreenBehavior(rnVideoPlayerView: RNVideoPlayerView, screenBehavior: ReadableMap?) {
-    SharedStore.getInstance().putBoolean("autoEnterFullscreenOnLandscape", screenBehavior?.getBoolean("autoEnterFullscreenOnLandscape") ?: false)
-    SharedStore.getInstance().putBoolean("autoOrientationOnFullscreen", screenBehavior?.getBoolean("autoOrientationOnFullscreen") ?: false)
-  }
-
-  @OptIn(UnstableApi::class)
   @ReactProp(name = "source")
-  fun setSource(rnVideoPlayerView: RNVideoPlayerView, source: ReadableMap?) {
-      rnVideoPlayerView.buildMediaItem(source)
+  fun setSource(view: MediaPlayerView, source: ReadableMap?) {
+    val url = source?.getString("url") as String
+    val startTime = source.getDouble("startTime")
+    val metadata = source.getMap("metadata")
+
+    val longStartTime = if (startTime == 0.0) 0 else (startTime * 1000).toLong()
+    val mediaMetadata = MediaMetadata.Builder()
+      .setTitle(metadata?.getString("title"))
+      .setArtist(metadata?.getString("artist"))
+      .build()
+
+    view.setupMediaPlayer(url, longStartTime, mediaMetadata)
   }
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "thumbnails")
-  fun setThumbnails(rnVideoPlayerView: RNVideoPlayerView, thumbnails: ReadableMap?) {
-    rnVideoPlayerView.buildThumbnails(thumbnails)
+  fun setThumbnails(view: MediaPlayerView, thumbnails: ReadableMap?) {
+    if (thumbnails != null) {
+      val sourceUrl = thumbnails.getString("sourceUrl") as String
+      val enabled = thumbnails.getBoolean("isEnabled")
+      if (enabled) {
+        if (sourceUrl.isNotEmpty()) {
+          view.shouldExecuteDownloadThumbnailFrames(sourceUrl)
+        }
+      }
+    }
   }
 
+  //
   @OptIn(UnstableApi::class)
   @ReactProp(name = "rate")
-  fun setRate(rnVideoPlayerView: RNVideoPlayerView, rate: Double) {
-    rnVideoPlayerView.changeRate(rate.toFloat())
+  fun setRate(view: MediaPlayerView, rate: Double) {
+    view.onChangePlaybackSpeed(rate.toFloat())
   }
-//
+
   @OptIn(UnstableApi::class)
   @ReactProp(name = "autoPlay")
-  fun setAutoPlay(rnVideoPlayerView: RNVideoPlayerView, autoPlay: Boolean) {
-    rnVideoPlayerView.autoPlay(autoPlay)
+  fun setAutoPlay(view: MediaPlayerView, value: Boolean) {
+    view.onAutoPlay(value)
   }
-//
+
   @OptIn(UnstableApi::class)
   @ReactProp(name = "menus")
-  fun setMenus(rnVideoPlayerView: RNVideoPlayerView, menus: ReadableMap) {
-    val menusData = mutableSetOf<String>()
-    rnVideoPlayerView.getMenus(menus.toHashMap().keys)
+  fun setMenus(view: MediaPlayerView, menus: ReadableMap) {
+    val reactConfigAdapter = RCTConfigs.getInstance()
+
     menus.entryIterator.forEach { entry ->
-      menusData.add(entry.key)
-      ReadableMapManager.getInstance().setReadableMapProps(entry.value, entry.key)
+      reactConfigAdapter.set(entry.key, entry.value)
     }
-    rnVideoPlayerView.getMenus(menusData)
+    reactConfigAdapter.set(RCTConfigs.Key.MENU_ITEMS, menus.toHashMap().keys)
+
   }
-//
+
   @OptIn(UnstableApi::class)
-  @ReactProp(name = "tapToSeek")
-  fun setSuffixLabelTapToSeek(player: RNVideoPlayerView, tapToSeek: ReadableMap?) {
-    val suffixLabel = tapToSeek?.getString("suffixLabel")
-    val value = tapToSeek?.getDouble("value")
-    if (suffixLabel != null) {
-      SharedStore.getInstance().putString(SharedStoreKey.SUFFIX_LABEL, suffixLabel)
+  @ReactProp(name = "doubleTapToSeek")
+  fun setSuffixLabelTapToSeek(view: MediaPlayerView, doubleTapToSeek: ReadableMap?) {
+    if (doubleTapToSeek == null) return
+    val reactConfigAdapter = RCTConfigs.getInstance()
+    if (doubleTapToSeek.hasKey("suffixLabel") && doubleTapToSeek.getType("suffixLabel") == ReadableType.String) {
+      val suffixLabel = doubleTapToSeek.getString("suffixLabel") as String
+      reactConfigAdapter.set(RCTConfigs.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL, suffixLabel)
     }
-    if (value != null) {
-      SharedStore.getInstance().putLong(SharedStoreKey.DOUBLE_TAP_VALUE, value.toLong())
+    if (doubleTapToSeek.hasKey("value") && doubleTapToSeek.getType("value") == ReadableType.Number) {
+      val value = doubleTapToSeek.getDouble("value")
+      reactConfigAdapter.set(RCTConfigs.Key.DOUBLE_TAP_TO_SEEK_VALUE, value.toInt())
     }
   }
+
   @OptIn(UnstableApi::class)
-  @ReactProp(name = "changeQualityUrl")
-  fun setChangeQualityUrl(player: RNVideoPlayerView, changeQualityUrl: String) {
-    if (changeQualityUrl.isNotEmpty()) {
-      player.changeVideoQuality(changeQualityUrl)
+  @ReactProp(name = "replaceMediaUrl")
+  fun setReplaceMediaUrl(view: MediaPlayerView, replaceMediaUrl: String) {
+    if (replaceMediaUrl.isNotEmpty()) {
+      view.onReplaceMedia(replaceMediaUrl)
     }
   }
-}
 
-object EventNames {
-  const val menuItemSelected = "onMenuItemSelected"
-  const val videoProgress = "onVideoProgress"
-  const val videoReady = "onReady"
-  const val videoCompleted = "onCompleted"
-  const val videoBuffering = "onBuffer"
-  const val videoPlayPauseStatus = "onPlayPause"
-  const val videoErrorStatus = "onError"
-  const val videoBufferCompleted = "onBufferCompleted"
-  const val videoSeekBar = "onSeekBar"
-}
-
-fun View.fadeIn(duration: Long = 500) {
-  this.post {
-    this.visibility = View.VISIBLE
-    this.alpha = 0f
-    this.animate()
-      .alpha(1f)
-      .setDuration(duration)
-      .setListener(null)
-  }
-}
-
-fun View.fadeOut(duration: Long = 500, completion: (() -> Unit)? = null) {
-  this.post {
-    this.animate()
-      .alpha(0f)
-      .setDuration(duration)
-      .setListener(object : AnimatorListenerAdapter() {
-        override fun onAnimationEnd(animation: Animator) {
-          this@fadeOut.visibility = View.INVISIBLE
-          completion.also {
-            it?.invoke()
-          }
-        }
-      })
+  @OptIn(UnstableApi::class)
+  @ReactProp(name = "entersFullScreenWhenPlaybackBegins")
+  fun setEntersFullScreenWhenPlaybackBegins(
+    view: MediaPlayerView,
+    entersFullScreenWhenPlaybackBegins: Boolean
+  ) {
+    val reactConfigAdapter = RCTConfigs.getInstance()
+    reactConfigAdapter.set(
+      RCTConfigs.Key.ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS,
+      entersFullScreenWhenPlaybackBegins
+    )
   }
 }
