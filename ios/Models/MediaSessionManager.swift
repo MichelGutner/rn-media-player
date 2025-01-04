@@ -17,7 +17,7 @@ class MediaSessionManager: ObservableObject {
   @Published var player: AVPlayer? = nil
   @Published var playerLayer: AVPlayerLayer? = nil
   
-  @Published var isControlsVisible: Bool = false
+  @Published var isControlsVisible: Bool = true
   @Published var entersFullScreenWhenPlaybackBegins: Bool = false
   @Published var timeoutWorkItem: DispatchWorkItem?
   
@@ -28,7 +28,7 @@ class MediaSessionManager: ObservableObject {
   @Published var newRate: Float = 1.0
   @Published var isPlaying: Bool = false
   @Published var isBuffering: Bool = true
-  @Published var isReady: Bool = false
+  @Published var isReady: Bool = true
   
   @Published var isSeeking: Bool = false
   @Published var isFinished: Bool = false

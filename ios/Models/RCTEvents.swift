@@ -13,7 +13,6 @@ class RCTEvents {
   @objc var onVideoProgress: RCTBubblingEventBlock?
   @objc var onPlayPause: RCTBubblingEventBlock?
   @objc var onError: RCTDirectEventBlock?
-  @objc var onBuffer: RCTDirectEventBlock?
   @objc var onCompleted: RCTDirectEventBlock?
   @objc var onFullscreen: RCTDirectEventBlock?
   @objc var onMenuItemSelected: RCTBubblingEventBlock?
@@ -27,7 +26,6 @@ class RCTEvents {
   init(
     onVideoProgress: RCTBubblingEventBlock? = nil,
     onError: RCTDirectEventBlock? = nil,
-    onBuffer: RCTDirectEventBlock? = nil,
     onCompleted: RCTDirectEventBlock? = nil,
     onFullscreen: RCTDirectEventBlock? = nil,
     onPlayPause: RCTDirectEventBlock? = nil,
@@ -39,7 +37,6 @@ class RCTEvents {
   ) {
     self.onVideoProgress = onVideoProgress
     self.onError = onError
-    self.onBuffer = onBuffer
     self.onCompleted = onCompleted
     self.onFullscreen = onFullscreen
     self.onPlayPause = onPlayPause
@@ -110,7 +107,7 @@ class RCTEvents {
       let completed = notification.userInfo?["completed"] as? Bool ?? false
       let empty = notification.userInfo?["empty"] as? Bool ?? false
 
-      sendBufferEvent(buffering, completed, empty)
+//      sendBufferEvent(buffering, completed, empty)x
     }
     
     notificationObserver(forName: .EventMenuSelectOption) { [self] notification in
@@ -200,17 +197,6 @@ class RCTEvents {
     ]
     DispatchQueue.main.async {
       self.onError?(errorDetails)
-    }
-  }
-  
-  func sendBufferEvent(_ buffering: Bool, _ completed: Bool, _ empty: Bool) {
-    DispatchQueue.main.async {
-      let event: [String: Any] = [
-        "buffering": buffering,
-        "completed": completed,
-        "empty": empty
-      ]
-      self.onBuffer?(event)
     }
   }
   

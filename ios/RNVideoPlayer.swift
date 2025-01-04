@@ -7,8 +7,8 @@ import AVFoundation
 @available(iOS 14.0, *)
 @objc(RNVideoPlayer)
 class RNVideoPlayer: RCTViewManager {
-  @objc override func view() -> (RNVideoPlayerView) {
-    return RNVideoPlayerView()
+  @objc override func view() -> (RNVideoPlayerViewX) {
+    return RNVideoPlayerViewX()
   }
   
   @objc override static func requiresMainQueueSetup() -> Bool {
@@ -17,41 +17,151 @@ class RNVideoPlayer: RCTViewManager {
 }
 
 @available(iOS 14.0, *)
+class RNVideoPlayerViewX : UIView, MediaPlayerLayerViewDelegate {
+  fileprivate var playerLayer: MediaPlayerLayerView?
+  
+  @objc var menus: NSDictionary? = [:]
+  @objc var thumbnails: NSDictionary? = [:]
+  
+  @objc var onMenuItemSelected: RCTBubblingEventBlock?
+  @objc var onMediaBuffering: RCTBubblingEventBlock?
+  @objc var onMediaReady: RCTBubblingEventBlock?
+  @objc var onMediaCompleted: RCTBubblingEventBlock?
+  @objc var onFullScreenStateChanged: RCTDirectEventBlock?
+  @objc var onMediaError: RCTDirectEventBlock?
+  @objc var onMediaBufferCompleted: RCTDirectEventBlock?
+  @objc var onMediaPlayPause: RCTDirectEventBlock?
+  @objc var onMediaRouter: RCTDirectEventBlock?
+  @objc var onMediaSeekBar: RCTDirectEventBlock?
+  @objc var onMediaPinchZoom: RCTDirectEventBlock?
+
+  @objc var entersFullScreenWhenPlaybackBegins: Bool = false
+  @objc var controlsStyles: NSDictionary? = [:]
+  @objc var tapToSeek: NSDictionary? = [:]
+
+  
+  @objc var rate: Float = 0.0 {
+    didSet {
+//      adjustPlaybackRate(to: rate)
+    }
+  }
+  
+  @objc var replaceMediaUrl: String = "" {
+    didSet {
+      let url = replaceMediaUrl
+      if (url.isEmpty) { return }
+//      updatePlayerWithNewURL(url)
+    }
+  }
+  
+  @objc var autoPlay: Bool = false {
+    didSet {
+      if autoPlay {
+        sharedConfig.shouldAutoPlay = true
+      }
+    }
+  }
+  
+  @objc var source: NSDictionary? = [:] {
+    didSet {
+      playerLayer?.setupPlayer(with: source)
+    }
+  }
+  
+  override init(frame: CGRect) {
+    super.init(frame: frame)
+    setup()
+  }
+  
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+  
+  override func layoutSubviews() {
+    playerLayer?.frame = bounds
+  }
+
+  override func removeFromSuperview() {
+    playerLayer?.release()
+    playerLayer = nil
+  }
+  
+  private func setup() {
+    sharedConfig.allowLogs.toggle()
+    playerLayer = MediaPlayerLayerView()
+    playerLayer?.delegate = self
+
+    playerLayer!.frame = bounds
+    insertSubview(playerLayer!, at: 0)
+  }
+}
+
+@available(iOS 14.0, *)
+extension RNVideoPlayerViewX: MediaPlayerLayerViewDelegate {
+    func mediaPlayer(_ player: MediaPlayerLayerView, didFinishPlayingWithError error: (any Error)?) {
+      //
+    }
+  
+    func mediaPlayer(_ player: MediaPlayerLayerView, didChangePlaybackState state: PlaybackState) {
+      //
+    }
+  
+  func mediaPlayer(_ player: MediaPlayerLayerView, didChangePlaybackTime currentTime: TimeInterval, loadedTimeRanges: TimeInterval) {
+      sharedConfig.log("currentTime: \(currentTime) loadedTimeRanges: \(loadedTimeRanges)")
+      //
+    }
+  func mediaPlayer(_ player: MediaPlayerLayerView, duration: TimeInterval) {
+      sharedConfig.log("duration: \(duration)")
+      //
+    }
+  
+    func mediaPlayer(_ plauer: MediaPlayerLayerView, mediaDidChangePlaybackRate rate: Float) {
+      //
+    }
+  
+    func mediaPlayer(_ plauer: MediaPlayerLayerView, mediaIsPlayingDidChange isPlaying: Bool) {
+      //
+    }
+  
+    func mediaPlayer(_ plauer: MediaPlayerLayerView, didFailWithError error: (any Error)?) {
+      //
+    }
+}
+
+@available(iOS 14.0, *)
 class RNVideoPlayerView : UIView {
+  private var mediaPlayerAdapter = MediaPlayerLayerView()
+  private var mediaPlayerVC: MediaPlayerLayerView? = nil
+  
   private var mediaSession: MediaSessionManager? = nil
   private var eventsManager: RCTEvents? = nil
   private var videoPlayerView: VideoPlayerViewController? = .none
   private var player: AVPlayer? = nil
 
   private var isInitialized = false
-  
-  @objc var autoPlay: Bool = false
   @objc var menus: NSDictionary? = [:]
   @objc var thumbnails: NSDictionary? = [:]
   
   @objc var onMenuItemSelected: RCTBubblingEventBlock?
-  @objc var onVideoProgress: RCTBubblingEventBlock?
-  @objc var onReady: RCTBubblingEventBlock?
-  @objc var onCompleted: RCTBubblingEventBlock?
-  @objc var onFullscreen: RCTDirectEventBlock?
-  @objc var onError: RCTDirectEventBlock?
-  @objc var onBuffer: RCTDirectEventBlock?
-  @objc var onBufferCompleted: RCTDirectEventBlock?
-//  @objc var onVideoDownloaded: RCTDirectEventBlock?
-//  @objc var onDownloadVideo: RCTDirectEventBlock?
-  @objc var onPlayPause: RCTDirectEventBlock?
+  @objc var onMediaBuffering: RCTBubblingEventBlock?
+  @objc var onMediaReady: RCTBubblingEventBlock?
+  @objc var onMediaCompleted: RCTBubblingEventBlock?
+  @objc var onFullScreenStateChanged: RCTDirectEventBlock?
+  @objc var onMediaError: RCTDirectEventBlock?
+  @objc var onMediaBufferCompleted: RCTDirectEventBlock?
+  @objc var onMediaPlayPause: RCTDirectEventBlock?
   @objc var onMediaRouter: RCTDirectEventBlock?
-  @objc var onSeekBar: RCTDirectEventBlock?
-  @objc var onPinchZoom: RCTDirectEventBlock?
+  @objc var onMediaSeekBar: RCTDirectEventBlock?
+  @objc var onMediaPinchZoom: RCTDirectEventBlock?
 
   @objc var entersFullScreenWhenPlaybackBegins: Bool = false
-  @objc var screenBehavior: NSDictionary = [:]
   @objc var controlsStyles: NSDictionary? = [:]
   @objc var tapToSeek: NSDictionary? = [:]
   
   @objc var source: NSDictionary? = [:] {
     didSet {
-      setupPlayer()
+//      setupPlayer()
+      setup()
     }
   }
   
@@ -61,17 +171,19 @@ class RNVideoPlayerView : UIView {
     }
   }
   
-  @objc var paused: Bool = false {
+  @objc var replaceMediaUrl: String = "" {
     didSet {
-      // ADD Notification
+      let url = replaceMediaUrl
+      if (url.isEmpty) { return }
+      updatePlayerWithNewURL(url)
     }
   }
   
-  @objc var changeQualityUrl: String = "" {
+  @objc var autoPlay: Bool = false {
     didSet {
-      let url = changeQualityUrl
-      if (url.isEmpty) { return }
-      updatePlayerWithNewURL(url)
+      if autoPlay {
+        sharedConfig.shouldAutoPlay = true
+      }
     }
   }
   
@@ -84,6 +196,18 @@ class RNVideoPlayerView : UIView {
   }
   
   @objc var resizeMode: NSString = "contain"
+  
+  
+  private func setup() {
+    sharedConfig.allowLogs.toggle()
+    mediaPlayerVC = MediaPlayerLayerView()
+    mediaPlayerVC?.setupPlayer(with: source)
+
+    if let wrapper = mediaPlayerVC {
+      wrapper.frame = bounds
+      addSubview(wrapper)
+    }
+  }
   
   private func setupPlayer() {
     mediaSession = MediaSessionManager()
@@ -116,16 +240,15 @@ class RNVideoPlayerView : UIView {
       
       if let player {
         eventsManager =  RCTEvents(
-          onVideoProgress: onVideoProgress,
-          onError: onError,
-          onBuffer: onBuffer,
-          onCompleted: onCompleted,
-          onFullscreen: onFullscreen,
-          onPlayPause: onPlayPause,
+          onVideoProgress: onMediaBuffering,
+          onError: onMediaError,
+          onCompleted: onMediaCompleted,
+          onFullscreen: onFullScreenStateChanged,
+          onPlayPause: onMediaPlayPause,
           onMediaRouter: onMediaRouter,
-          onSeekBar: onSeekBar,
-          onReady: onReady,
-          onPinchZoom: onPinchZoom,
+          onSeekBar: onMediaSeekBar,
+          onReady: onMediaReady,
+          onPinchZoom: onMediaPinchZoom,
           onMenuItemSelected: onMenuItemSelected
         )
         eventsManager?.setupNotifications()
@@ -140,7 +263,6 @@ class RNVideoPlayerView : UIView {
       mediaSession.setupRemoteCommandCenter()
       mediaSession.setupPlayerObservation()
       if let thumbnails {
-        print("thumbnaislX", thumbnails)
         mediaSession.thumbnailsDictionary = thumbnails
       }
     }
@@ -184,7 +306,8 @@ class RNVideoPlayerView : UIView {
   }
   
   override func layoutSubviews() {
-    videoPlayerView?.view.frame = bounds
+//    videoPlayerView?.view.frame = bounds
+    mediaPlayerVC?.frame = bounds
     super.layoutSubviews()
   }
   

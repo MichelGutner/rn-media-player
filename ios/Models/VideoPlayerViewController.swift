@@ -58,7 +58,7 @@ class VideoPlayerViewController : UIViewController {
           onTapFullscreen: {
             self.toggleFullScreen()
           },
-          menus: .constant(menus)
+          menus: .constant(menus), viewModel: MediaPlayerObservableObject()
         ))
     
     configureAudioSession()
@@ -175,8 +175,8 @@ class VideoPlayerViewController : UIViewController {
     guard let mainBounds = view.window?.windowScene?.screen.bounds else { return }
     if mediaSessionManager.isFullscreen && !isFullscreenTransitionActive {
       playerLayer.frame = mainBounds
-      
     }
+    
     if !isFullscreenTransitionActive && !mediaSessionManager.isFullscreen {
       addPlayerLayerFrameWithSafeArea(view.bounds)
     }

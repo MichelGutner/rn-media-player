@@ -14,18 +14,19 @@ struct MediaPlayerControlsView : View {
   @ObservedObject var mediaSession: MediaSessionManager
   var onTapFullscreen: (() -> Void)?
   @Binding var menus: NSDictionary?
+  @ObservedObject var viewModel: MediaPlayerObservableObject
+  
+  var onPlayPause: (() -> Void)?
   @State private var isTapped: Bool = false
   @State private var isTappedLeft: Bool = false
   
   @State private var playPauseTransparency = 0.0
-  
-  @State private var sliderProgress: CGFloat = 0.0
   @State private var bufferingProgress: CGFloat = 0.0
 
   var body: some View {
     ZStack{
-      CustomLoading(color: .white)
-        .opacity(mediaSession.isReady ? 0 : 1)
+//      CustomLoading(color: .white)
+//        .opacity(mediaSession.isReady ? 0 : 1)
       
       ZStack {
         // Gradient Background ---
@@ -56,13 +57,12 @@ struct MediaPlayerControlsView : View {
           )
         }
       }
-      .opacity(mediaSession.isControlsVisible && mediaSession.isReady ? 1 : 0.0001)
+      .opacity(mediaSession.isControlsVisible ? 1 : 0.0001)
       .animation(.easeInOut(duration: 0.35), value: mediaSession.isControlsVisible)
       .overlay(
         ZStack(alignment: .center) {
-          // PlayPause Control ---
           Button(action: {
-            togglePlayback()
+            onPlayPause?()
             playPauseTransparency = 0.6
             withAnimation(.easeIn(duration: 0.2), {
               DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
@@ -166,7 +166,7 @@ struct MediaPlayerControlsView : View {
               .animation(.easeInOut(duration: 0.2), value: mediaSession.isSeeking)
               
               // SeekSlider Control
-              InteractiveMediaSeekSlider(mediaSession: mediaSession, UIControlsProps: .constant(.none))
+              InteractiveMediaSeekSlider(viewModel: viewModel, UIControlsProps: .constant(.none))
             }
             .offset(y: mediaSession.isControlsVisible ? 0 : 5)
             .opacity(mediaSession.isControlsVisible ? 1 : 0)
