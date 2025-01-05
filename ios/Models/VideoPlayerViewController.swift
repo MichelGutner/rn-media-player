@@ -51,15 +51,15 @@ class VideoPlayerViewController : UIViewController {
     let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
     view.addGestureRecognizer(pinchGesture)
     view.layer.addSublayer(playerLayer)
-    mediaPlayerHC = UIHostingController(
-      rootView:
-        MediaPlayerControlsView(
-          mediaSession: mediaSessionManager,
-          onTapFullscreen: {
-            self.toggleFullScreen()
-          },
-          menus: .constant(menus), viewModel: MediaPlayerObservableObject()
-        ))
+//    mediaPlayerHC = UIHostingController(
+//      rootView:
+//        MediaPlayerControlsView(
+//          isPlaying: .constant(false), isFullscreen: .constant(false), mediaSession: mediaSessionManager,
+//          onTapFullscreen: {
+//            self.toggleFullScreen()
+//          },
+//          menus: .constant(menus), viewModel: MediaPlayerObservableObject()
+//        ))
     
     configureAudioSession()
     

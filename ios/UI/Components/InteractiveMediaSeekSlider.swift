@@ -11,7 +11,7 @@ import Combine
 
 @available(iOS 14.0, *)
 struct InteractiveMediaSeekSlider : View {
-  var viewModel: MediaPlayerObservableObject
+  var viewModel: MediaPlayerObservable
   @Binding var UIControlsProps: Styles?
   
   @State private var interval = CMTime(value: 1, timescale: 2)
@@ -188,9 +188,9 @@ struct InteractiveMediaSeekSlider : View {
 //      timeObservers[id] = observer
 //  }
   
-  private func updateBufferProgress(_ progress: CGFloat) {
-    self.bufferingProgress = progress
-  }
+//  private func updateBufferProgress(_ progress: CGFloat) {
+//    self.bufferingProgress = progress
+//  }
   
   private func generatingThumbnailsFrames(_ url: String) {
     Task.detached {

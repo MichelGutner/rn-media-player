@@ -9,12 +9,24 @@ import SwiftUI
 import AVKit
 import Combine
 
+public enum MediaPlayerControlsViewType {
+  case playPause
+  case fullscreen
+  case optionsMenu
+}
+
 @available(iOS 14.0, *)
-struct MediaPlayerControlsView : View {
+public protocol MediaPlayerControlsViewDelegate : AnyObject {
+  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlsViewType)
+}
+
+@available(iOS 14.0, *)
+public struct MediaPlayerControlsView : View {
+  @Binding var isPlaying: Bool
   @ObservedObject var mediaSession: MediaSessionManager
   var onTapFullscreen: (() -> Void)?
   @Binding var menus: NSDictionary?
-  @ObservedObject var viewModel: MediaPlayerObservableObject
+  @ObservedObject var viewModel: MediaPlayerObservable
   
   var onPlayPause: (() -> Void)?
   @State private var isTapped: Bool = false
@@ -22,8 +34,10 @@ struct MediaPlayerControlsView : View {
   
   @State private var playPauseTransparency = 0.0
   @State private var bufferingProgress: CGFloat = 0.0
+  
+  public weak var delegate: MediaPlayerControlsViewDelegate?
 
-  var body: some View {
+  public var body: some View {
     ZStack{
 //      CustomLoading(color: .white)
 //        .opacity(mediaSession.isReady ? 0 : 1)
@@ -62,7 +76,7 @@ struct MediaPlayerControlsView : View {
       .overlay(
         ZStack(alignment: .center) {
           Button(action: {
-            onPlayPause?()
+            delegate?.controlDidTap(self, controlType: .playPause)
             playPauseTransparency = 0.6
             withAnimation(.easeIn(duration: 0.2), {
               DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
@@ -79,16 +93,16 @@ struct MediaPlayerControlsView : View {
               Image(systemName: "pause.fill")
                 .font(.system(size: 55))
                 .foregroundColor(.white)
-                .scaleEffect(mediaSession.player?.timeControlStatus == .playing ? 1 : 0)
-                .opacity(mediaSession.player?.timeControlStatus == .playing ? 1 : 0)
-                .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: mediaSession.player?.timeControlStatus == .playing)
+                .scaleEffect(viewModel.isPlaying ? 1 : 0)
+                .opacity(viewModel.isPlaying ? 1 : 0)
+                .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: viewModel.isPlaying)
               
               Image(systemName: "play.fill")
                 .font(.system(size: 55))
                 .foregroundColor(.white)
-                .scaleEffect(mediaSession.player?.timeControlStatus != .playing ? 1 : 0)
-                .opacity(mediaSession.player?.timeControlStatus != .playing ? 1 : 0)
-                .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: mediaSession.player?.timeControlStatus == .playing)
+                .scaleEffect(!viewModel.isPlaying ? 1 : 0)
+                .opacity(!viewModel.isPlaying ? 1 : 0)
+                .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: viewModel.isPlaying)
               
             }
           }
@@ -131,33 +145,21 @@ struct MediaPlayerControlsView : View {
               Spacer()
               HStack {
                 Spacer()
-                // Menu Control
                 CustomMenus(menus: $menus)
-//                  .padding(.all, 12)
                   .background(Color.clear)
                   .clipShape(Circle())
                 
-                // Fullscreen Control
                 Button(action: {
-                  onTapFullscreen?()
+                  delegate?.controlDidTap(self, controlType: .fullscreen)
                 }, label: {
-                  ZStack {
-                    Image(systemName: "arrow.down.right.and.arrow.up.left")
+                  /// "arrow.up.left.and.arrow.down.right"
+                  Image(systemName: viewModel.isFullScreen ? "arrow.up.left.and.arrow.down.right" : "arrow.down.right.and.arrow.up.left")
                       .rotationEffect(.degrees(90))
                       .padding(EdgeInsets.init(top: 12, leading: 12, bottom: 4, trailing: 12))
                       .foregroundColor(.white)
                       .font(.system(size: 20))
-                      .scaleEffect(mediaSession.isFullscreen ? 1 : 0)
-                      .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: mediaSession.isFullscreen)
-                    
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                      .rotationEffect(.degrees(90))
-                      .padding(EdgeInsets.init(top: 12, leading: 12, bottom: 4, trailing: 12))
-                      .foregroundColor(.white)
-                      .font(.system(size: 22))
-                      .scaleEffect(mediaSession.isFullscreen ? 0 : 1)
-                      .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: mediaSession.isFullscreen)
-                  }
+//                      .scaleEffect(isFullscreen ? 1 : 0)
+//                      .animation(.interpolatingSpring(stiffness: 170, damping: 15), value: isFullscreen)
                 })
                 .background(Color.clear)
                 .clipShape(Circle())

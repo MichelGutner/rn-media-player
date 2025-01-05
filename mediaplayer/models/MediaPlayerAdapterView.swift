@@ -16,19 +16,18 @@ public enum PlaybackState {
   case error
 }
 
-public protocol MediaPlayerLayerViewDelegate : AnyObject {
-  func mediaPlayer(_ player: MediaPlayerLayerView, didFinishPlayingWithError error: Error?)
-  func mediaPlayer(_ player: MediaPlayerLayerView, didChangePlaybackState state: PlaybackState)
-  func mediaPlayer(_ player: MediaPlayerLayerView, duration: TimeInterval)
-  func mediaPlayer(_ player: MediaPlayerLayerView, didChangePlaybackTime currentTime: TimeInterval, loadedTimeRanges timeRanges: TimeInterval)
-  func mediaPlayer(_ plauer: MediaPlayerLayerView, mediaDidChangePlaybackRate rate: Float)
-  func mediaPlayer(_ plauer: MediaPlayerLayerView, mediaIsPlayingDidChange isPlaying: Bool)
-  func mediaPlayer(_ plauer: MediaPlayerLayerView, didFailWithError error: (any Error)?)
+public protocol MediaPlayerAdapterViewDelegate : AnyObject {
+  func mediaPlayer(_ player: MediaPlayerAdapterView, didFinishPlayingWithError error: Error?)
+  func mediaPlayer(_ player: MediaPlayerAdapterView, didChangePlaybackState state: PlaybackState)
+  func mediaPlayer(_ player: MediaPlayerAdapterView, duration: TimeInterval)
+  func mediaPlayer(_ player: MediaPlayerAdapterView, didChangePlaybackTime currentTime: TimeInterval, loadedTimeRanges timeRanges: TimeInterval, diChangePlaybackDuration duration: TimeInterval)
+  func mediaPlayer(_ player: MediaPlayerAdapterView, mediaDidChangePlaybackRate rate: Float)
+  func mediaPlayer(_ player: MediaPlayerAdapterView, mediaIsPlayingDidChange isPlaying: Bool)
+  func mediaPlayer(_ player: MediaPlayerAdapterView, didFailWithError error: (any Error)?)
 }
 
-open class MediaPlayerLayerView : UIView {
-  open weak var delegate: MediaPlayerLayerViewDelegate?
-  fileprivate var playerLayer: AVPlayerLayer?
+open class MediaPlayerAdapterView : UIView {
+  open weak var delegate: MediaPlayerAdapterViewDelegate?
   fileprivate var lastPlayerItem: AVPlayerItem?
   fileprivate var timeObserver: Any? = nil
   
@@ -37,6 +36,8 @@ open class MediaPlayerLayerView : UIView {
       onPlayerItemDidChange()
     }
   }
+  
+  open weak var playerLayer: AVPlayerLayer?
   
   open lazy var player: AVPlayer? = {
     if let item = playerItem {
@@ -59,7 +60,7 @@ open class MediaPlayerLayerView : UIView {
     return (player.currentItem?.asset as? AVURLAsset)?.url
   }
   
-  open func setupPlayer(with source: NSDictionary?) {
+  open func setup(with source: NSDictionary?) {
     guard let urlString = source?["url"] as? String,
           let videoURL = URL(string: urlString) else {
       return
@@ -74,7 +75,9 @@ open class MediaPlayerLayerView : UIView {
         
         if sharedConfig.shouldAutoPlay {
           self.player?.play()
+          playbackState = .playing
         } else {
+          playbackState = .paused
           self.player?.pause()
         }
         
@@ -97,15 +100,17 @@ open class MediaPlayerLayerView : UIView {
     guard let player else { return }
     player.play()
     isPlaying = true
+    playbackState = .playing
   }
   
   open func onPause() {
     guard let player else { return }
     player.pause()
     isPlaying = false
+    playbackState = .paused
   }
   
-  fileprivate var playbackState: PlaybackState = .stopped {
+  open var playbackState: PlaybackState = .stopped {
     didSet {
       if oldValue != playbackState {
         delegate?.mediaPlayer(self, didChangePlaybackState: playbackState)
@@ -166,13 +171,19 @@ open class MediaPlayerLayerView : UIView {
     timeObserver = player?.addPeriodicTimeObserver(
           forInterval: CMTimeMakeWithSeconds(1, preferredTimescale: 1),
           queue: .main
-      ) { time in
+      ) { [self] time in
+        guard let playerItem else { return }
           let seconds = time.seconds
           if seconds.isNaN || seconds.isInfinite {
               return
           }
         let availableTimeRanges = self.getAvailableTimeRanges()
-        self.delegate?.mediaPlayer(self, didChangePlaybackTime: TimeInterval(time.seconds), loadedTimeRanges: availableTimeRanges!)
+        self.delegate?.mediaPlayer(
+          self,
+          didChangePlaybackTime: TimeInterval(time.seconds),
+          loadedTimeRanges: availableTimeRanges!,
+          diChangePlaybackDuration: TimeInterval(playerItem.duration.seconds)
+        )
       }
   }
   
@@ -235,8 +246,9 @@ open class MediaPlayerLayerView : UIView {
       if let playerItem = playerItem {
         switch playerItem.status {
         case .readyToPlay:
-          self.playbackState = .playing
-          self.isPlaying = true
+//          self.playbackState = .playing
+//          self.isPlaying = true
+          break
         case .unknown:
           self.playbackState = .stopped
         case .failed:

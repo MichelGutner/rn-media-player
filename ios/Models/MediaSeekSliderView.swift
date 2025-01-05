@@ -10,7 +10,7 @@ import SwiftUI
 import AVFoundation
 
 struct MediaSeekSliderView: UIViewRepresentable {
-  var viewModel: MediaPlayerObservableObject
+  var viewModel: MediaPlayerObservable
   var onProgressBegan: ((CGFloat) -> Void)?
   var onProgressChanged: ((CGFloat) -> Void)?
   var onProgressEnded: ((CGFloat) -> Void)?
