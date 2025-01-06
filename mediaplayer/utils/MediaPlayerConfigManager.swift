@@ -8,17 +8,37 @@ import AVFoundation
 import Foundation
 import AVKit
 
-public let sharedConfig = MediaPlayerManager.shared
+public let rctConfigManager = MediaPlayerConfigManager.shared
 
-open class MediaPlayerManager {
-  public static let shared = MediaPlayerManager()
+fileprivate let playbackSpeeds: NSDictionary = [
+  "Speeds": [
+      "data": [
+          ["name": "0.5x", "value": "0.5"],
+          ["name": "Normal", "value": 1],
+          ["name": "1.5x", "value": "1.5"],
+          ["name": "2.0x", "value": 2]
+      ],
+      "initialItemSelected": "Normal"
+  ]
+]
+
+open class MediaPlayerConfigManager {
+  public static let shared = MediaPlayerConfigManager()
   
   open var shouldAutoPlay: Bool = false {
     didSet {
       if shouldAutoPlay {
-        sharedConfig.log("Auto play enabled")
+        rctConfigManager.log("Auto play enabled")
       } else {
-        sharedConfig.log("Auto play disabled")
+        rctConfigManager.log("Auto play disabled")
+      }
+    }
+  }
+  
+  open var menus: NSDictionary? = playbackSpeeds {
+    didSet {
+      if menus != oldValue {
+        rctConfigManager.log("New menu items has been set")
       }
     }
   }

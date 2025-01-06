@@ -9,7 +9,6 @@ import SwiftUI
 
 @available(iOS 14.0, *)
 struct CustomMenus: View {
-    @Binding var menus: NSDictionary?
     @State private var selectedOptionItem: [String: String] = [:]
     
     var body: some View {
@@ -64,14 +63,13 @@ struct CustomMenus: View {
                 }
               }
             }
-            .eraseToAnyView()
         }
-        return EmptyView().eraseToAnyView()
+        return EmptyView()
     }
     
 
     private var menuOptions: [(key: String, values: NSDictionary)] {
-        guard let menus = menus else { return [] }
+      guard let menus = rctConfigManager.menus else { return [] }
         return menus.compactMap { (key, value) in
             guard let key = key as? String, let values = value as? NSDictionary else { return nil }
             return (key: key, values: values)
@@ -80,8 +78,4 @@ struct CustomMenus: View {
 }
 
 
-extension View {
-    func eraseToAnyView() -> AnyView {
-        AnyView(self)
-    }
-}
+

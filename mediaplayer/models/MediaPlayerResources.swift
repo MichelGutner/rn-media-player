@@ -37,7 +37,7 @@ open class MediaPlayerResourceDefinition {
         return AVURLAsset(url: url)
       }
       
-      return MediaPlayerManager.asset(from: self)
+      return MediaPlayerConfigManager.asset(from: self)
     }
   }
   

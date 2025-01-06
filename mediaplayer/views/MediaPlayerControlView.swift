@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import AVFoundation
 
 public enum MediaPlayerControlButtonType {
   case playPause
@@ -23,6 +24,7 @@ public enum MediaPlayerControlActionState : Int {
 @available(iOS 14.0, *)
 public protocol MediaPlayerControlViewDelegate: AnyObject {
   func controlView(_ controlView: MediaPlayerControlView, didButtonPressed button: MediaPlayerControlButtonType, actionState: MediaPlayerControlActionState?)
+  func controlView(_ controlView: MediaPlayerControlView, didChangeFrom fromValue: Double, didChangeTo toValue: CMTime)
 }
 
 @available(iOS 14.0, *)
@@ -71,7 +73,7 @@ open class MediaPlayerControlView: UIViewController {
       isPlaying: .constant(mediaPlayerAdapter?.isPlaying ?? false),
       mediaSession: MediaSessionManager(),
       menus: .constant([:]),
-      viewModel: observable,
+      observable: observable,
       onPlayPause: { [weak self] in
         guard let self = self else { return }
         self.delegate?.controlView(self, didButtonPressed: .playPause, actionState: nil)
@@ -123,7 +125,6 @@ open class MediaPlayerControlView: UIViewController {
       UIView.animate(withDuration: 0.5, animations: {
         self.mediaPlayerAdapter?.playerLayer?.position = CGPoint(x: UIScreen.main.bounds.midX, y: self.fullscreenVC.view.bounds.midY)
       }, completion: { [self] _ in
-//        NotificationCenter.default.post(name: .EventFullscreen, object: true)
         self.isFullscreen = true
         isFullscreenTransition = false
 
@@ -167,7 +168,6 @@ open class MediaPlayerControlView: UIViewController {
     self.view.layer.addSublayer(playerLayer)
     self.didMoveControlsToParent(to: self)
     self.isFullscreenTransition = false
-//    NotificationCenter.default.post(name: .EventFullscreen, object: false)
     self.isFullscreen = false
   }
 }
@@ -205,6 +205,11 @@ open class MediaPlayerControlView: UIViewController {
 
 @available(iOS 14.0, *)
 extension MediaPlayerControlView : MediaPlayerControlsViewDelegate {
+  public func sliderDidChange(_ control: MediaPlayerControlsView, didChangeFrom fromValue: Double, didChangeTo toValue: CMTime) {
+    rctConfigManager.log("from \(fromValue) to \(toValue.seconds)")
+    delegate?.controlView(self, didChangeFrom: fromValue, didChangeTo: toValue)
+  }
+  
   public func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlsViewType) {
     switch controlType {
     case .fullscreen:
@@ -212,7 +217,6 @@ extension MediaPlayerControlView : MediaPlayerControlsViewDelegate {
     case .playPause:
       delegate?.controlView(self, didButtonPressed: .playPause, actionState: .none)
     case .optionsMenu: break
-      //
     }
   }
 }

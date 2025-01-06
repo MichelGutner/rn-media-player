@@ -9,6 +9,7 @@ import AVKit
 import SwiftUI
 import Combine
 
+
 @available(iOS 14.0, *)
 struct InteractiveMediaSeekSlider : View {
   var viewModel: MediaPlayerObservable
@@ -24,111 +25,105 @@ struct InteractiveMediaSeekSlider : View {
   @State private var seekerThumbImageSize: CGSize = .init(width: 12, height: 12)
   @State private var thumbnailsUIImageFrames: [UIImage] = []
   @State private var draggingImage: UIImage? = nil
-  
+  @State private var showThumbnails: Bool = false
   @State private var duration: Double = 0.0
   @State private var missingDuration: Double = 0.0
   @State private var currentTime: Double = 0.0
-  @State private var showThumbnails: Bool = false
+
   
   @State private var timeObservers: [String: Any] = [:]
   @State private var lastProgress: Double = 0.0
   
   var body: some View {
-    ZStack {
-      
-      VStack {
-        MediaSeekSliderView(
-          viewModel: viewModel,
-          onProgressBegan: { _ in
-//            guard let player = mediaSession.player,
-//                  let currentItem = player.currentItem else {
-//              return
-//            }
+    ZStack {}
+//    ZStack {
+//      
+//      VStack {
+//        MediaSeekSliderView(
+//          viewModel: viewModel,
+//          onProgressBegan: { _ in
+////            guard let player = mediaSession.player,
+////                  let currentItem = player.currentItem else {
+////              return
+////            }
+////            
+////            lastProgress = currentItem.currentTime().seconds / duration
+////            
+////            mediaSession.isSeeking = true
+////            showThumbnails = true
+////            mediaSession.cancelTimeoutWorkItem()
+//            delegate?.sliderDidChange(self, didChangeFrom: viewModel.currentTime, didChangeTo: nil, isSeeking: true)
+//          },
+//          
+//          onProgressChanged: { progress in
+////            guard let player = mediaSession.player,
+////                  let currentItem = player.currentItem else {
+////              return
+////            }
 //            
-//            lastProgress = currentItem.currentTime().seconds / duration
+//            // Obtém a duração do item atual
+////            let durationInSeconds = currentItem.duration.seconds
+////            guard durationInSeconds.isFinite else {
+////              return
+////            }
 //            
-//            mediaSession.isSeeking = true
-//            showThumbnails = true
-//            mediaSession.cancelTimeoutWorkItem()
-          },
-          
-          onProgressChanged: { progress in
-//            guard let player = mediaSession.player,
-//                  let currentItem = player.currentItem else {
-//              return
-//            }
-            
-            // Obtém a duração do item atual
-//            let durationInSeconds = currentItem.duration.seconds
-//            guard durationInSeconds.isFinite else {
-//              return
-//            }
-            
-            let draggIndex = Int(viewModel.sliderProgress / 0.01)
-            
-            if thumbnailsUIImageFrames.indices.contains(draggIndex) {
-              draggingImage = thumbnailsUIImageFrames[draggIndex]
-            }
-          },
-          onProgressEnded: { progress in
-            showThumbnails = false
-//            guard let player = mediaSession.player,
-//                  let currentItem = player.currentItem else {
-//              return
-//            }
-            
-//            let durationInSeconds = currentItem.duration.seconds
-//            guard durationInSeconds.isFinite else {
-//              return
-//            }
+//            let draggIndex = Int(viewModel.sliderProgress / 0.01)
 //            
-//            let progressInSeconds = durationInSeconds * progress
-//            let lastProgressInSeconds = durationInSeconds * lastProgress
+//            if thumbnailsUIImageFrames.indices.contains(draggIndex) {
+//              draggingImage = thumbnailsUIImageFrames[draggIndex]
+//            }
+//          },
+//          onProgressEnded: { progress in
+//            showThumbnails = false
 //            
+//            let progressInSeconds = viewModel.duration * progress
+//            let lastProgressInSeconds = viewModel.duration * lastProgress
+////
 //            let targetTime = CMTime(seconds: progressInSeconds, preferredTimescale: 600)
-//            
-//            NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
-//            
-//            if progress < 1 {
-////              mediaSession.isFinished = false
-//            }
-//            
-//            player.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
-//              if completed {
-////                mediaSession.isSeeking = false
-////                mediaSession.scheduleHideControls()
-//              }
-//            }
-          }
-        )
-        .frame(height: 24)
-//        .scaleEffect(x: mediaSession.isSeeking ? 1.03 : 1, y: mediaSession.isSeeking ? 1.5 : 1, anchor: .bottom)
-//        .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: mediaSession.isSeeking)
-        
-        HStack {
-          TimeCodes(time: $currentTime, UIControlsProps: .constant(.none))
-          Spacer()
-          TimeCodes(time: $missingDuration, UIControlsProps: .constant(.none), suffixValue: "-")
-        }
-      }
-      .overlay(
-        HStack {
-          GeometryReader { geometry in
-            Thumbnails(
-              duration: $duration,
-              geometry: geometry,
-              UIControlsProps: .constant(.none),
-              sliderProgress: .constant(viewModel.sliderProgress),
-              isSeeking: $showThumbnails,
-              draggingImage: $draggingImage
-            )
-            Spacer()
-          }
-        }
-      )
-    }
-    .background(Color.clear)
-    .frame(maxWidth: .infinity)
+////            
+////            NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
+////            
+////            if progress < 1 {
+//////              mediaSession.isFinished = false
+////            }
+////            
+////            player.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
+////              if completed {
+//////                mediaSession.isSeeking = false
+//////                mediaSession.scheduleHideControls()
+////              }
+////            }
+//            delegate?.sliderDidChange(self, didChangeTo: targetTime, isSeeking: false)
+//          }
+//        )
+//        .frame(height: 24)
+////        .scaleEffect(x: mediaSession.isSeeking ? 1.03 : 1, y: mediaSession.isSeeking ? 1.5 : 1, anchor: .bottom)
+////        .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: mediaSession.isSeeking)
+//        
+//        HStack {
+//          TimeCodes(time: .constant(viewModel.currentTime), UIControlsProps: .constant(.none))
+//          Spacer()
+//          TimeCodes(time: .constant(viewModel.duration - viewModel.currentTime), UIControlsProps: .constant(.none), suffixValue: "-")
+//        }
+//      }
+//      .overlay(
+//        HStack {
+//          GeometryReader { geometry in
+//            Thumbnails(
+//              duration: $duration,
+//              geometry: geometry,
+//              UIControlsProps: .constant(.none),
+//              sliderProgress: .constant(viewModel.sliderProgress),
+//              isSeeking: $showThumbnails,
+//              draggingImage: $draggingImage
+//            )
+//            Spacer()
+//          }
+//        }
+//      )
+//    }
+//    .background(Color.clear)
+//    .frame(maxWidth: .infinity)
 //    .onReceive(mediaSession.$thumbnailsDictionary, perform: { thumbnails in
 //      guard let thumbnails,
 //            let enabled = thumbnails["isEnabled"] as? Bool,

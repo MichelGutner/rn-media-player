@@ -23,6 +23,7 @@ public protocol MediaPlayerAdapterViewDelegate : AnyObject {
   func mediaPlayer(_ player: MediaPlayerAdapterView, didChangePlaybackTime currentTime: TimeInterval, loadedTimeRanges timeRanges: TimeInterval, diChangePlaybackDuration duration: TimeInterval)
   func mediaPlayer(_ player: MediaPlayerAdapterView, mediaDidChangePlaybackRate rate: Float)
   func mediaPlayer(_ player: MediaPlayerAdapterView, mediaIsPlayingDidChange isPlaying: Bool)
+  func mediaPlayer(_ player: MediaPlayerAdapterView, didChangeReadyToDisplay isReadyToDisplay: Bool)
   func mediaPlayer(_ player: MediaPlayerAdapterView, didFailWithError error: (any Error)?)
 }
 
@@ -68,12 +69,13 @@ open class MediaPlayerAdapterView : UIView {
     
     let startTime = source?["startTime"] as? Double ?? 0
     let metadata = source?["metadata"] as? NSDictionary
+    
     DispatchQueue.main.async {
-      MediaPlayerManager.buildPlayerItem(from: .init(url: videoURL, metadata: metadata), completionHandler: { [weak self] playerItem in
+      MediaPlayerConfigManager.buildPlayerItem(from: .init(url: videoURL, metadata: metadata), completionHandler: { [weak self] playerItem in
         guard let self = self else { return }
         self.playerItem = playerItem
         
-        if sharedConfig.shouldAutoPlay {
+        if rctConfigManager.shouldAutoPlay {
           self.player?.play()
           playbackState = .playing
         } else {
@@ -96,6 +98,10 @@ open class MediaPlayerAdapterView : UIView {
     NotificationCenter.default.addObserver(self, selector: #selector(disconnectPlayerLayer), name: UIApplication.didEnterBackgroundNotification, object: nil)
   }
   
+  open func seekTo(with time: CMTime, completionHandler: @escaping (Bool) -> Void) {
+    player?.seek(to: time, completionHandler: completionHandler)
+  }
+  
   open func onPlay() {
     guard let player else { return }
     player.play()
@@ -110,10 +116,26 @@ open class MediaPlayerAdapterView : UIView {
     playbackState = .paused
   }
   
+  open func onReplay() {
+    guard let player else { return }
+    player.seek(to: .zero)
+    player.play()
+    isPlaying = true
+    playbackState = .playing
+  }
+  
   open var playbackState: PlaybackState = .stopped {
     didSet {
       if oldValue != playbackState {
         delegate?.mediaPlayer(self, didChangePlaybackState: playbackState)
+      }
+    }
+  }
+  
+  open var isReadyToDisplay: Bool = false {
+    didSet {
+      if oldValue != isReadyToDisplay {
+        delegate?.mediaPlayer(self, didChangeReadyToDisplay: isReadyToDisplay)
       }
     }
   }
@@ -177,11 +199,14 @@ open class MediaPlayerAdapterView : UIView {
           if seconds.isNaN || seconds.isInfinite {
               return
           }
+        if playbackState == .ended {
+          return
+        }
         let availableTimeRanges = self.getAvailableTimeRanges()
         self.delegate?.mediaPlayer(
           self,
           didChangePlaybackTime: TimeInterval(time.seconds),
-          loadedTimeRanges: availableTimeRanges!,
+          loadedTimeRanges: availableTimeRanges,
           diChangePlaybackDuration: TimeInterval(playerItem.duration.seconds)
         )
       }
@@ -199,7 +224,7 @@ open class MediaPlayerAdapterView : UIView {
       
       self.playbackState = .ended
       self.isPlaying = false
-      sharedConfig.log("Media Player has finished playing.")
+      rctConfigManager.log("Media Player has finished playing.")
     }
   }
   
@@ -208,7 +233,7 @@ open class MediaPlayerAdapterView : UIView {
     do {
       try audioSession.setCategory(.playback, mode: .default, options: [])
       try audioSession.setActive(true)
-      sharedConfig.log("Audio session configured successfully.")
+      rctConfigManager.log("Audio session configured successfully.")
     } catch let error as NSError {
       let errorInfo: [String: Any] = [
         NSLocalizedDescriptionKey: "Failed to configure the audio session.",
@@ -218,10 +243,11 @@ open class MediaPlayerAdapterView : UIView {
       ]
       let detailedError = NSError(domain: "\(String(describing: assetURL))", code: error.code, userInfo: errorInfo)
       //        NotificationCenter.default.post(name: .EventError, object: detailedError)
+      self.delegate?.mediaPlayer(self, didFailWithError: detailedError)
     }
   }
   
-  fileprivate func getAvailableTimeRanges() -> TimeInterval? {
+  fileprivate func getAvailableTimeRanges() -> TimeInterval {
     if let loadTimeRanges = player?.currentItem?.loadedTimeRanges ,let firstRange = loadTimeRanges.first {
         let timeRange = firstRange.timeRangeValue
         let startTime = timeRange.start.seconds
@@ -229,7 +255,7 @@ open class MediaPlayerAdapterView : UIView {
         let endTime = startTime + durationTime
         return endTime
       }
-    return nil
+    return 0.0
   }
   
   open override func layoutSubviews() {
@@ -246,8 +272,7 @@ open class MediaPlayerAdapterView : UIView {
       if let playerItem = playerItem {
         switch playerItem.status {
         case .readyToPlay:
-//          self.playbackState = .playing
-//          self.isPlaying = true
+          isReadyToDisplay = true
           break
         case .unknown:
           self.playbackState = .stopped

@@ -10,27 +10,28 @@ import UIKit
 import AVFoundation
 import SwiftUI
 
-public protocol MediaPlayerObservableObjectProtocol: AnyObject {
-    var sliderProgress: CGFloat { get set }
-    var bufferingProgress: CGFloat { get set }
-    var isPlaying: Bool { get set }
-    var isFullScreen: Bool { get set }
-}
-
-public class MediaPlayerObservable: ObservableObject, MediaPlayerObservableObjectProtocol {
+public class MediaPlayerObservable: ObservableObject {
   @Published public var isPlaying: Bool = false
   @Published public var isFullScreen: Bool = false
   @Published public var bufferingProgress: CGFloat = 0.0
   @Published public var sliderProgress: CGFloat = 0.0
+  @Published public var currentTime: Double = 0.0
+  @Published public var duration: Double = 0.0
+  @Published public var isSeeking: Bool = false
+  @Published public var isReadyToDisplay: Bool = false
   
   func updateSeekBar(sliderProgressValue sValue: CGFloat, bufferingProgressValue bValue: CGFloat) {
-    sliderProgress = sValue
-    bufferingProgress = bValue
+    if !isSeeking, sValue < duration, bValue > 0 {
+      sliderProgress = sValue
+      bufferingProgress = bValue
+    }
   }
   
-  // TODO: need remove
-  func updateBufferingProgress(to value: CGFloat) {
-    bufferingProgress = value
+  func updateMediaTimeValues(currentTimeValue cValue: CGFloat, duration dValue: CGFloat) {
+    if !isSeeking {
+      currentTime = cValue
+      duration = dValue
+    }
   }
   
   func updateIsPlaying(to value: Bool) {
@@ -39,5 +40,13 @@ public class MediaPlayerObservable: ObservableObject, MediaPlayerObservableObjec
   
   func updateIsFullScreen(to value: Bool) {
     isFullScreen = value
+  }
+  
+  func updateIsSeeking(to value: Bool) {
+    isSeeking = value
+  }
+  
+  func updateIsReadyToDisplay(to value: Bool) {
+    isReadyToDisplay = value
   }
 }
