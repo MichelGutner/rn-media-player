@@ -9,6 +9,7 @@ import SwiftUI
 
 @available(iOS 14.0, *)
 struct CustomMenus: View {
+  public var onSelect: ((String, Any)) -> Void
     @State private var selectedOptionItem: [String: String] = [:]
     
     var body: some View {
@@ -46,6 +47,7 @@ struct CustomMenus: View {
                 if let value = item["value"] {
                     selectedOptionItem[option.key] = name
                   NotificationCenter.default.post(name: .EventMenuSelectOption, object: (option.key, value))
+                  onSelect((option.key, value))
                 }
             }) {
               if #available(iOS 14.5, *) {
@@ -63,13 +65,14 @@ struct CustomMenus: View {
                 }
               }
             }
+            .eraseToAnyView()
         }
-        return EmptyView()
+        return EmptyView().eraseToAnyView()
     }
     
 
     private var menuOptions: [(key: String, values: NSDictionary)] {
-      guard let menus = rctConfigManager.menus else { return [] }
+      guard let menus = appConfig.playbackMenu else { return [] }
         return menus.compactMap { (key, value) in
             guard let key = key as? String, let values = value as? NSDictionary else { return nil }
             return (key: key, values: values)
@@ -78,4 +81,8 @@ struct CustomMenus: View {
 }
 
 
-
+extension View {
+    func eraseToAnyView() -> AnyView {
+        AnyView(self)
+    }
+}

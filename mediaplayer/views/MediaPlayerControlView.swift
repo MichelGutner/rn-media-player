@@ -23,7 +23,7 @@ public enum MediaPlayerControlActionState : Int {
 
 @available(iOS 14.0, *)
 public protocol MediaPlayerControlViewDelegate: AnyObject {
-  func controlView(_ controlView: MediaPlayerControlView, didButtonPressed button: MediaPlayerControlButtonType, actionState: MediaPlayerControlActionState?)
+  func controlView(_ controlView: MediaPlayerControlView, didButtonPressed button: MediaPlayerControlButtonType, actionState: MediaPlayerControlActionState?, actionValues: Any?)
   func controlView(_ controlView: MediaPlayerControlView, didChangeFrom fromValue: Double, didChangeTo toValue: CMTime)
 }
 
@@ -32,7 +32,7 @@ open class MediaPlayerControlView: UIViewController {
   fileprivate var uiViewController: UIHostingController<MediaPlayerControlsView>!
   @ObservedObject var observable: MediaPlayerObservable
   open weak var delegate: MediaPlayerControlViewDelegate?
-  open weak var mediaPlayerAdapter: MediaPlayerAdapterView?
+  var mediaPlayerAdapter: MediaPlayerAdapterView?
   fileprivate var fullscreenVC = UIViewController()
   fileprivate var rootVC = UIApplication.shared.windows.first?.rootViewController
   
@@ -70,13 +70,12 @@ open class MediaPlayerControlView: UIViewController {
   
   fileprivate func setupUI() {
     var rootControlsView = MediaPlayerControlsView(
-      isPlaying: .constant(mediaPlayerAdapter?.isPlaying ?? false),
-      mediaSession: MediaSessionManager(),
+      player: mediaPlayerAdapter?.player,
       menus: .constant([:]),
       observable: observable,
       onPlayPause: { [weak self] in
         guard let self = self else { return }
-        self.delegate?.controlView(self, didButtonPressed: .playPause, actionState: nil)
+        self.delegate?.controlView(self, didButtonPressed: .playPause, actionState: nil, actionValues: nil)
       }
     )
     rootControlsView.delegate = self
@@ -88,10 +87,10 @@ open class MediaPlayerControlView: UIViewController {
   fileprivate func toggleFullscreenMode() {
     if isFullscreen {
       didDismissFullscreenMode()
-      delegate?.controlView(self, didButtonPressed: .fullscreen, actionState: .fullscreenInactive)
+      delegate?.controlView(self, didButtonPressed: .fullscreen, actionState: .fullscreenInactive, actionValues: nil)
     } else {
       didPresentFullscreenMode()
-      delegate?.controlView(self, didButtonPressed: .fullscreen, actionState: .fullscreenActive)
+      delegate?.controlView(self, didButtonPressed: .fullscreen, actionState: .fullscreenActive, actionValues: nil)
     }
   }
   
@@ -205,8 +204,13 @@ open class MediaPlayerControlView: UIViewController {
 
 @available(iOS 14.0, *)
 extension MediaPlayerControlView : MediaPlayerControlsViewDelegate {
+  public func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlsViewType, optionMenuSelected option: ((String, Any))) {
+    appConfig.log("option \(option)")
+    delegate?.controlView(self, didButtonPressed: .optionsMenu, actionState: .none, actionValues: option)
+  }
+  
   public func sliderDidChange(_ control: MediaPlayerControlsView, didChangeFrom fromValue: Double, didChangeTo toValue: CMTime) {
-    rctConfigManager.log("from \(fromValue) to \(toValue.seconds)")
+    appConfig.log("from \(fromValue) to \(toValue.seconds)")
     delegate?.controlView(self, didChangeFrom: fromValue, didChangeTo: toValue)
   }
   
@@ -215,7 +219,7 @@ extension MediaPlayerControlView : MediaPlayerControlsViewDelegate {
     case .fullscreen:
       toggleFullscreenMode()
     case .playPause:
-      delegate?.controlView(self, didButtonPressed: .playPause, actionState: .none)
+      delegate?.controlView(self, didButtonPressed: .playPause, actionState: .none, actionValues: nil)
     case .optionsMenu: break
     }
   }

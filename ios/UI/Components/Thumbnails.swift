@@ -14,7 +14,7 @@ struct Thumbnails : View {
   var geometry: GeometryProxy
   @Binding var UIControlsProps: Styles?
   
-  @Binding var sliderProgress: CGFloat
+  @Binding var sliderProgress: Double
   @Binding var isSeeking: Bool
   @Binding var draggingImage: UIImage?
   

@@ -18,13 +18,14 @@ public enum MediaPlayerControlsViewType {
 @available(iOS 14.0, *)
 public protocol MediaPlayerControlsViewDelegate : AnyObject {
   func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlsViewType)
+  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlsViewType, optionMenuSelected option: ((String, Any)))
   func sliderDidChange(_ control: MediaPlayerControlsView, didChangeFrom fromValue: Double, didChangeTo toValue: CMTime)
 }
 
 @available(iOS 14.0, *)
 public struct MediaPlayerControlsView : View {
-  @Binding var isPlaying: Bool
-  @ObservedObject var mediaSession: MediaSessionManager
+  var player: AVPlayer?
+  @ObservedObject var mediaSession = MediaSessionManager()
   var onTapFullscreen: (() -> Void)?
   @Binding var menus: NSDictionary?
   @ObservedObject var observable: MediaPlayerObservable
@@ -33,6 +34,8 @@ public struct MediaPlayerControlsView : View {
   @State private var isTapped: Bool = false
   @State private var isTappedLeft: Bool = false
   
+  @State private var currentTime: Double = 0.0
+  @State private var duration: Double = 0.0
   @State private var playPauseTransparency = 0.0
   @State private var bufferingProgress: CGFloat = 0.0
   @State private var lastProgress: Double = 0.0
@@ -153,7 +156,9 @@ public struct MediaPlayerControlsView : View {
               Spacer()
               HStack {
                 Spacer()
-                CustomMenus()
+                CustomMenus(onSelect: { key, value in
+                  delegate?.controlDidTap(self, controlType: .optionsMenu, optionMenuSelected: (key, value))
+                })
                   .background(Color.clear)
                   .clipShape(Circle())
                 
@@ -173,7 +178,8 @@ public struct MediaPlayerControlsView : View {
               .animation(.easeInOut(duration: 0.2), value: mediaSession.isSeeking)
               
               // SeekSlider Control
-              MediaPlayerSeekSlider()
+//              MediaPlayerSeekSlider()
+              InteractiveMediaSeekSlider(player: player)
             }
             .offset(y: mediaSession.isControlsVisible ? 0 : 5)
             .opacity(mediaSession.isControlsVisible ? 1 : 0)
@@ -200,69 +206,69 @@ public struct MediaPlayerControlsView : View {
   }
   
   
-  @ViewBuilder
-  @available(iOS 14.0, *)
-  private func MediaPlayerSeekSlider() -> some View {
-    ZStack {
-      VStack {
-        MediaSeekSliderView(
-          viewModel: observable,
-          onProgressBegan: { _ in
-            lastProgress = observable.currentTime / observable.duration
-            startSliderProgressFrom = observable.currentTime
-
-            showThumbnails = true
-            observable.updateIsSeeking(to: true)
-            //            mediaSession.cancelTimeoutWorkItem()
-          },
-          
-          onProgressChanged: { progress in
-            let draggIndex = Int(observable.sliderProgress / 0.01)
-            
-            if thumbnailsUIImageFrames.indices.contains(draggIndex) {
-              draggingImage = thumbnailsUIImageFrames[draggIndex]
-            }
-          },
-          onProgressEnded: { progress in
-            showThumbnails = false
-            let progressInSeconds = observable.duration * progress
-            let lastProgressInSeconds = observable.duration * lastProgress
+//  @ViewBuilder
+//  @available(iOS 14.0, *)
+//  private func MediaPlayerSeekSlider() -> some View {
+//    ZStack {
+//      VStack {
+//        MediaSeekSliderView(
+//          viewModel: observable,
+//          onProgressBegan: { _ in
+//            lastProgress = observable.currentTime / observable.duration
+//            startSliderProgressFrom = observable.currentTime
 //
-            let targetTime = CMTime(seconds: progressInSeconds, preferredTimescale: 600)
-//
-//            NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
-            delegate?.sliderDidChange(self, didChangeFrom: startSliderProgressFrom, didChangeTo: targetTime)
-          }
-        )
-        .frame(height: 24)
-        .scaleEffect(x: observable.isSeeking ? 1.03 : 1, y: observable.isSeeking ? 1.5 : 1, anchor: .bottom)
-        .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: observable.isSeeking)
-        
-        HStack {
-          TimeCodes(time: .constant(observable.currentTime), UIControlsProps: .constant(.none))
-          Spacer()
-          TimeCodes(time: .constant(observable.duration - observable.currentTime), UIControlsProps: .constant(.none), suffixValue: "-")
-        }
-      }
-      .overlay(
-        HStack {
-          GeometryReader { geometry in
-            Thumbnails(
-              duration: .constant(observable.duration),
-              geometry: geometry,
-              UIControlsProps: .constant(.none),
-              sliderProgress: .constant(observable.sliderProgress),
-              isSeeking: $showThumbnails,
-              draggingImage: $draggingImage
-            )
-            Spacer()
-          }
-        }
-      )
-    }
-    .background(Color.clear)
-    .frame(maxWidth: .infinity)
-  }
+//            showThumbnails = true
+//            observable.updateIsSeeking(to: true)
+//            //            mediaSession.cancelTimeoutWorkItem()
+//          },
+//          
+//          onProgressChanged: { progress in
+//            let draggIndex = Int(observable.sliderProgress / 0.01)
+//            
+//            if thumbnailsUIImageFrames.indices.contains(draggIndex) {
+//              draggingImage = thumbnailsUIImageFrames[draggIndex]
+//            }
+//          },
+//          onProgressEnded: { progress in
+//            showThumbnails = false
+//            let progressInSeconds = observable.duration * progress
+//            let lastProgressInSeconds = observable.duration * lastProgress
+////
+//            let targetTime = CMTime(seconds: progressInSeconds, preferredTimescale: 600)
+////
+////            NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
+//            delegate?.sliderDidChange(self, didChangeFrom: startSliderProgressFrom, didChangeTo: targetTime)
+//          }
+//        )
+//        .frame(height: 24)
+//        .scaleEffect(x: observable.isSeeking ? 1.03 : 1, y: observable.isSeeking ? 1.5 : 1, anchor: .bottom)
+//        .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: observable.isSeeking)
+//        
+//        HStack {
+//          TimeCodes(time: .constant(observable.currentTime), UIControlsProps: .constant(.none))
+//          Spacer()
+//          TimeCodes(time: .constant(observable.duration - observable.currentTime), UIControlsProps: .constant(.none), suffixValue: "-")
+//        }
+//      }
+//      .overlay(
+//        HStack {
+//          GeometryReader { geometry in
+//            Thumbnails(
+//              duration: .constant(observable.duration),
+//              geometry: geometry,
+//              UIControlsProps: .constant(.none),
+//              sliderProgress: .constant(observable.sliderProgress),
+//              isSeeking: $showThumbnails,
+//              draggingImage: $draggingImage
+//            )
+//            Spacer()
+//          }
+//        }
+//      )
+//    }
+//    .background(Color.clear)
+//    .frame(maxWidth: .infinity)
+//  }
 
   
 }

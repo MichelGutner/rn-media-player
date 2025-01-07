@@ -70,30 +70,6 @@ open class MediaPlayerAdapterView : UIView {
     let startTime = source?["startTime"] as? Double ?? 0
     let metadata = source?["metadata"] as? NSDictionary
     
-    DispatchQueue.main.async {
-      MediaPlayerConfigManager.buildPlayerItem(from: .init(url: videoURL, metadata: metadata), completionHandler: { [weak self] playerItem in
-        guard let self = self else { return }
-        self.playerItem = playerItem
-        
-        if rctConfigManager.shouldAutoPlay {
-          self.player?.play()
-          playbackState = .playing
-        } else {
-          playbackState = .paused
-          self.player?.pause()
-        }
-        
-        if startTime != .zero {
-          self.player?.seek(to: CMTime(seconds: startTime, preferredTimescale: 1))
-        }
-
-        connectPlayerLayer()
-        addPeriodicTimeObserver()
-        setNeedsLayout()
-        layoutIfNeeded()
-      })
-    }
-    
     NotificationCenter.default.addObserver(self, selector: #selector(connectPlayerLayer), name: UIApplication.willEnterForegroundNotification, object: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(disconnectPlayerLayer), name: UIApplication.didEnterBackgroundNotification, object: nil)
   }
@@ -142,10 +118,6 @@ open class MediaPlayerAdapterView : UIView {
   
   open func release() {
     DispatchQueue.main.async {
-      if let timeObserver = self.timeObserver {
-        self.player?.removeTimeObserver(timeObserver)
-      }
-      self.timeObserver = nil
       self.disconnectPlayerLayer()
       self.player?.replaceCurrentItem(with: nil)
       self.delegate = nil
@@ -189,33 +161,6 @@ open class MediaPlayerAdapterView : UIView {
       item.removeObserver(self, forKeyPath: "status")
   }
   
-  fileprivate func addPeriodicTimeObserver() {
-    timeObserver = player?.addPeriodicTimeObserver(
-          forInterval: CMTimeMakeWithSeconds(1, preferredTimescale: 1),
-          queue: .main
-      ) { [self] time in
-        guard let playerItem else { return }
-          let seconds = time.seconds
-          if seconds.isNaN || seconds.isInfinite {
-              return
-          }
-        if playbackState == .ended {
-          return
-        }
-        let availableTimeRanges = self.getAvailableTimeRanges()
-        self.delegate?.mediaPlayer(
-          self,
-          didChangePlaybackTime: TimeInterval(time.seconds),
-          loadedTimeRanges: availableTimeRanges,
-          diChangePlaybackDuration: TimeInterval(playerItem.duration.seconds)
-        )
-      }
-  }
-  
-  open func removePeriodicTimeObserver() {
-    player?.removeTimeObserver(timeObserver!)
-  }
-  
   @objc fileprivate func mediaDidFinishPlaying() {
     if playbackState != .ended {
       if let playerItem = playerItem {
@@ -224,7 +169,7 @@ open class MediaPlayerAdapterView : UIView {
       
       self.playbackState = .ended
       self.isPlaying = false
-      rctConfigManager.log("Media Player has finished playing.")
+      appConfig.log("Media Player has finished playing.")
     }
   }
   
@@ -233,7 +178,7 @@ open class MediaPlayerAdapterView : UIView {
     do {
       try audioSession.setCategory(.playback, mode: .default, options: [])
       try audioSession.setActive(true)
-      rctConfigManager.log("Audio session configured successfully.")
+      appConfig.log("Audio session configured successfully.")
     } catch let error as NSError {
       let errorInfo: [String: Any] = [
         NSLocalizedDescriptionKey: "Failed to configure the audio session.",

@@ -10,7 +10,8 @@ import SwiftUI
 import AVFoundation
 
 struct MediaSeekSliderView: UIViewRepresentable {
-  var viewModel: MediaPlayerObservable
+  @Binding var bufferingProgress: Double
+  @Binding var sliderProgress: Double
   var onProgressBegan: ((CGFloat) -> Void)?
   var onProgressChanged: ((CGFloat) -> Void)?
   var onProgressEnded: ((CGFloat) -> Void)?
@@ -18,8 +19,8 @@ struct MediaSeekSliderView: UIViewRepresentable {
   
   func makeUIView(context: Context) -> MediaSeekSlider {
     let slider = MediaSeekSlider()
-    slider.bufferingProgress = viewModel.bufferingProgress
-    slider.sliderProgress = viewModel.sliderProgress
+    slider.bufferingProgress = bufferingProgress
+    slider.sliderProgress = sliderProgress
     
     // Configura callbacks
     slider.onProgressBegan = { progress in
@@ -29,14 +30,14 @@ struct MediaSeekSliderView: UIViewRepresentable {
     }
     slider.onProgressChanged = { progress in
       DispatchQueue.main.async {
-        viewModel.sliderProgress = progress
+        sliderProgress = progress
         onProgressChanged?(progress)
       }
     }
     
     slider.onProgressEnded = { progress in
       DispatchQueue.main.async {
-        viewModel.sliderProgress = progress
+        sliderProgress = progress
         onProgressEnded?(progress)
       }
     }
@@ -45,7 +46,7 @@ struct MediaSeekSliderView: UIViewRepresentable {
   }
   
   func updateUIView(_ uiView: MediaSeekSlider, context: Context) {
-    uiView.bufferingProgress = viewModel.bufferingProgress
-    uiView.sliderProgress = viewModel.sliderProgress
+    uiView.bufferingProgress = bufferingProgress
+    uiView.sliderProgress = sliderProgress
   }
 }

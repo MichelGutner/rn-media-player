@@ -16,8 +16,21 @@ class RNVideoPlayer: RCTViewManager {
   }
 }
 
+//public class RCTEventDispatcher: NSObject {
+//  @objc var onMediaCompleted: RCTBubblingEventBlock?
+//  public func sendEvent(_ event: RCTEvent) {
+//    Swift.print("Event: \(event)")
+//  }
+//  @objc public func sendOnMediaBufferCompletedEvent() {
+//    Swift.print("Event: onMediaCompleted")
+//    onMediaCompleted?(["completed": true as Any])
+//  }
+//}
+
 @available(iOS 14.0, *)
 class RNVideoPlayerViewX : UIView {
+  fileprivate var playerSource: PlayerSource?
+  
   fileprivate var mediaPlayer: MediaPlayerAdapterView?
   fileprivate var mediaPlayerControlView: MediaPlayerControlView?
   fileprivate var isFullscreen: Bool = false
@@ -40,11 +53,12 @@ class RNVideoPlayerViewX : UIView {
   @objc var entersFullScreenWhenPlaybackBegins: Bool = false
   @objc var controlsStyles: NSDictionary? = [:]
   @objc var tapToSeek: NSDictionary? = [:]
-
   
   @objc var rate: Float = 0.0 {
     didSet {
-//      adjustPlaybackRate(to: rate)
+      if let mediaPlayer {
+        appConfig.log("rate \(rate)")
+      }
     }
   }
   
@@ -58,19 +72,19 @@ class RNVideoPlayerViewX : UIView {
   
   @objc var autoPlay: Bool = false {
     didSet {
-      rctConfigManager.shouldAutoPlay = autoPlay
+      appConfig.shouldAutoPlay = autoPlay
     }
   }
   
   @objc var source: NSDictionary? = [:] {
     didSet {
-      mediaPlayer?.setup(with: source)
+      playerSource?.setup(with: source)
     }
   }
   
   @objc var menus: NSDictionary? = [:] {
     didSet {
-      rctConfigManager.menus = menus
+      appConfig.playbackMenu = menus
     }
   }
   
@@ -86,6 +100,7 @@ class RNVideoPlayerViewX : UIView {
   override func layoutSubviews() {
     // This ensure that layout not change when player stay on fullscreen controller.
     if (!isFullscreen) {
+      playerSource?.frame = bounds
       mediaPlayer?.frame = bounds
     }
     
@@ -94,119 +109,124 @@ class RNVideoPlayerViewX : UIView {
   }
   
   deinit {
-    mediaPlayer?.release()
-    mediaPlayer = nil
-    mediaPlayerControlView = nil
-    observable = nil
+//    mediaPlayer?.release()
+//    mediaPlayer = nil
+//    mediaPlayerControlView = nil
+//    observable = nil
+    playerSource = nil
   }
   
   private func setup() {
-    rctConfigManager.allowLogs.toggle()
-    observable = MediaPlayerObservable()
-    mediaPlayer = MediaPlayerAdapterView()
-    mediaPlayerControlView = MediaPlayerControlView(observable: observable!)
-    
-    mediaPlayerControlView?.mediaPlayerAdapter = mediaPlayer
-    mediaPlayerControlView?.delegate = self
-    
-    mediaPlayer?.delegate = self
-
-    mediaPlayer!.frame = bounds
-    mediaPlayerControlView?.view.frame = bounds
-    
-    insertSubview(mediaPlayer!, at: 0)
-    insertSubview(mediaPlayerControlView!.view, at: 1)
+    appConfig.isLoggingEnabled.toggle()
+    playerSource = PlayerSource()
+//    observable = MediaPlayerObservable()
+//    mediaPlayer = MediaPlayerAdapterView()
+//    mediaPlayerControlView = MediaPlayerControlView(observable: observable!)
+//    
+//    mediaPlayerControlView?.mediaPlayerAdapter = mediaPlayer
+//    mediaPlayerControlView?.delegate = self
+//    
+//    mediaPlayer?.delegate = self
+//
+//    mediaPlayer!.frame = bounds
+//    mediaPlayerControlView?.view.frame = bounds
+//    
+//    insertSubview(mediaPlayer!, at: 0)
+//    insertSubview(mediaPlayerControlView!.view, at: 1)
+    if let playerSource {
+      insertSubview(playerSource, at: 0)
+    }
   }
 }
 
-@available(iOS 14.0, *)
-extension RNVideoPlayerViewX: MediaPlayerAdapterViewDelegate, MediaPlayerControlViewDelegate {
-  func controlView(_ controlView: MediaPlayerControlView, didButtonPressed buttonType: MediaPlayerControlButtonType, actionState: MediaPlayerControlActionState?) {
-    switch buttonType {
-    case .playPause:
-      switch mediaPlayer?.playbackState {
-      case .playing:
-        mediaPlayer?.onPause()
-      case .paused:
-        mediaPlayer?.onPlay()
-      case .stopped: break
-        // TODO: need implementation
-      case .ended:
-        mediaPlayer?.onReplay()
-      case .error: break
-        // TODO: need implementation
-      case nil: break
-        //
-      }
-      
-      observable?.updateIsPlaying(to: mediaPlayer!.isPlaying)
-      
-    case .fullscreen:
-      isFullscreen = actionState == .fullscreenActive
-      observable?.updateIsFullScreen(to: isFullscreen)
-    case .optionsMenu: break
-      //
-    }
-  }
-  
-  func controlView(_ controlView: MediaPlayerControlView, didChangeFrom fromValue: Double, didChangeTo toValue: CMTime) {
-    mediaPlayer?.seekTo(with: toValue) { [self] finished in
-      // need add schedule
-      if  finished {
-        observable?.updateIsSeeking(to: false)
-      }
-    }
-  }
-  
-  
-  func mediaPlayer(_ player: MediaPlayerAdapterView, didFinishPlayingWithError error: (any Error)?) {
-    //
-  }
-  
-  func mediaPlayer(_ player: MediaPlayerAdapterView, didChangePlaybackState state: PlaybackState) {
-    rctConfigManager.log("playbackState: \(state)")
-    observable?.updateIsPlaying(to: state == .playing)
-    //
-  }
-  
-  func mediaPlayer(_ player: MediaPlayerAdapterView, didChangePlaybackTime currentTime: TimeInterval, loadedTimeRanges: TimeInterval, diChangePlaybackDuration duration: TimeInterval) {
-    guard duration > 0,
-          !duration.isNaN,
-          !currentTime.isNaN,
-          loadedTimeRanges >= 0,
-          !loadedTimeRanges.isNaN else {
-      rctConfigManager.log("Invalid values for progress calculation. Duration: \(duration), CurrentTime: \(currentTime), LoadedTimeRanges: \(loadedTimeRanges)")
-      return
-    }
-    
-    let sliderProgressValue = currentTime / duration
-    let bufferingProgressValue = loadedTimeRanges / duration
-    observable?.updateSeekBar(sliderProgressValue: sliderProgressValue, bufferingProgressValue: bufferingProgressValue)
-    observable?.updateMediaTimeValues(currentTimeValue: currentTime, duration: duration)
-    
-  }
-  
-  func mediaPlayer(_ player: MediaPlayerAdapterView, duration: TimeInterval) {
-    rctConfigManager.log("duration: \(duration)")
-    //
-  }
-  
-  func mediaPlayer(_ player: MediaPlayerAdapterView, mediaDidChangePlaybackRate rate: Float) {
-    //
-  }
-  
-  func mediaPlayer(_ player: MediaPlayerAdapterView, mediaIsPlayingDidChange isPlaying: Bool) {
-    //
-  }
-  
-  func mediaPlayer(_ player: MediaPlayerAdapterView, didChangeReadyToDisplay isReadyToDisplay: Bool) {
-    observable?.updateIsReadyToDisplay(to: isReadyToDisplay)
-  }
-  
-  func mediaPlayer(_ player: MediaPlayerAdapterView, didFailWithError error: (any Error)?) {
-    //
-  }
-}
+//@available(iOS 14.0, *)
+//extension RNVideoPlayerViewX: MediaPlayerAdapterViewDelegate, MediaPlayerControlViewDelegate {  
+//  func controlView(_ controlView: MediaPlayerControlView, didButtonPressed buttonType: MediaPlayerControlButtonType, actionState: MediaPlayerControlActionState?, actionValues: Any?) {
+//    switch buttonType {
+//    case .playPause:
+//      switch mediaPlayer?.playbackState {
+//      case .playing:
+//        mediaPlayer?.onPause()
+//      case .paused:
+//        mediaPlayer?.onPlay()
+//      case .stopped: break
+//        // TODO: need implementation
+//      case .ended:
+//        mediaPlayer?.onReplay()
+//      case .error: break
+//        // TODO: need implementation
+//      case nil: break
+//        //
+//      }
+//      observable?.updateIsPlaying(to: mediaPlayer!.isPlaying)
+//      
+//    case .fullscreen:
+//      isFullscreen = actionState == .fullscreenActive
+//      observable?.updateIsFullScreen(to: isFullscreen)
+//    case .optionsMenu:
+//      let values = actionValues as! (String, Any)
+//      onMenuItemSelected?(["name": values.0, "value": values.1])
+//    }
+//  }
+//  
+//  func controlView(_ controlView: MediaPlayerControlView, didChangeFrom fromValue: Double, didChangeTo toValue: CMTime) {
+//    mediaPlayer?.seekTo(with: toValue) { [self] finished in
+//      // need add schedule
+//      if  finished {
+////        observable?.updateIsSeeking(to: false)
+//      }
+//    }
+//  }
+//  
+//  
+//  func mediaPlayer(_ player: MediaPlayerAdapterView, didFinishPlayingWithError error: (any Error)?) {
+//    //
+//  }
+//  
+//  func mediaPlayer(_ player: MediaPlayerAdapterView, didChangePlaybackState state: PlaybackState) {
+//    appConfig.log("playbackState: \(state)")
+//    observable?.updateIsPlaying(to: state == .playing)
+//    //
+//  }
+//  
+//  func mediaPlayer(_ player: MediaPlayerAdapterView, didChangePlaybackTime currentTime: TimeInterval, loadedTimeRanges: TimeInterval, diChangePlaybackDuration duration: TimeInterval) {
+//    guard duration > 0,
+//          !duration.isNaN,
+//          !currentTime.isNaN,
+//          loadedTimeRanges >= 0,
+//          !loadedTimeRanges.isNaN else {
+//      appConfig.log("Invalid values for progress calculation. Duration: \(duration), CurrentTime: \(currentTime), LoadedTimeRanges: \(loadedTimeRanges)")
+//      return
+//    }
+//    
+//    let sliderProgressValue = currentTime / duration
+//    let bufferingProgressValue = loadedTimeRanges / duration
+////    observable?.updateSeekBar(sliderProgressValue: sliderProgressValue, bufferingProgressValue: bufferingProgressValue)
+////    observable?.updateMediaTimeValues(currentTimeValue: currentTime, duration: duration)
+//    
+//  }
+//  
+//  func mediaPlayer(_ player: MediaPlayerAdapterView, duration: TimeInterval) {
+//    appConfig.log("duration: \(duration)")
+//    //
+//  }
+//  
+//  func mediaPlayer(_ player: MediaPlayerAdapterView, mediaDidChangePlaybackRate rate: Float) {
+//    //
+//  }
+//  
+//  func mediaPlayer(_ player: MediaPlayerAdapterView, mediaIsPlayingDidChange isPlaying: Bool) {
+//    //
+//  }
+//  
+//  func mediaPlayer(_ player: MediaPlayerAdapterView, didChangeReadyToDisplay isReadyToDisplay: Bool) {
+//    observable?.updateIsReadyToDisplay(to: isReadyToDisplay)
+//  }
+//  
+//  func mediaPlayer(_ player: MediaPlayerAdapterView, didFailWithError error: (any Error)?) {
+//    appConfig.log("didFailWithError: \(error?.localizedDescription)")
+//  }
+//}
 
 @available(iOS 14.0, *)
 class RNVideoPlayerView : UIView {
@@ -262,7 +282,7 @@ class RNVideoPlayerView : UIView {
   @objc var autoPlay: Bool = false {
     didSet {
       if autoPlay {
-        rctConfigManager.shouldAutoPlay = true
+        appConfig.shouldAutoPlay = true
       }
     }
   }
@@ -279,7 +299,7 @@ class RNVideoPlayerView : UIView {
   
   
   private func setup() {
-    rctConfigManager.allowLogs.toggle()
+    appConfig.isLoggingEnabled.toggle()
     mediaPlayerVC = MediaPlayerAdapterView()
     mediaPlayerVC?.setup(with: source)
 

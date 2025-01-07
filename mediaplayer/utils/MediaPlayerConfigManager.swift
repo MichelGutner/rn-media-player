@@ -8,9 +8,11 @@ import AVFoundation
 import Foundation
 import AVKit
 
-public let rctConfigManager = MediaPlayerConfigManager.shared
+public let appConfig = MediaPlayerConfigManager.shared
+public let playerInstance = PlayerManager.shared.currentPlayer
+public let playerManager = PlayerManager.self
 
-fileprivate let playbackSpeeds: NSDictionary = [
+fileprivate let defaultOptionsMenu: NSDictionary = [
   "Speeds": [
       "data": [
           ["name": "0.5x", "value": "0.5"],
@@ -28,40 +30,40 @@ open class MediaPlayerConfigManager {
   open var shouldAutoPlay: Bool = false {
     didSet {
       if shouldAutoPlay {
-        rctConfigManager.log("Auto play enabled")
+        appConfig.log("Auto play enabled")
       } else {
-        rctConfigManager.log("Auto play disabled")
+        appConfig.log("Auto play disabled")
       }
     }
   }
   
-  open var menus: NSDictionary? = playbackSpeeds {
+  open var playbackMenu: NSDictionary? = defaultOptionsMenu {
     didSet {
-      if menus != oldValue {
-        rctConfigManager.log("New menu items has been set")
+      if playbackMenu != oldValue {
+        appConfig.log("New menu items has been set")
       }
     }
   }
 
-  open var allowLogs: Bool = false
+  open var isLoggingEnabled: Bool = false
   
   internal static func asset(from resource: MediaPlayerResourceDefinition) -> AVURLAsset {
     return AVURLAsset(url: resource.url, options: resource.options)
   }
   
-  internal static func buildPlayerItem(from resource: MediaPlayerResource, completionHandler: @escaping (_ playerItem: AVPlayerItem) -> Void) {
-    let asset = resource.definitions[0].avURLAsset
-    let metadataItems = resource.metadataItems
-    let item = AVPlayerItem(asset: asset)
-    item.externalMetadata = metadataItems
-
-    completionHandler(item)
-  }
-  
   func log(_ info:String) {
-      if allowLogs {
+      if isLoggingEnabled {
           print(info)
       }
   }
 }
 
+public class PlayerManager {
+  public static let shared = PlayerManager()
+  open weak var currentPlayer: AVPlayer?
+  open var timeObserve: Any?
+  
+  internal static func updateInstance(player: AVPlayer?) {
+    shared.currentPlayer = player
+  }
+}
