@@ -25,7 +25,6 @@ public protocol PlayerSourceViewDelegate : AnyObject {
   func mediaPlayer(_ player: PlayerSource, didFinishPlayingWithError error: Error?)
   func mediaPlayer(_ player: PlayerSource, didChangePlaybackState state: PlaybackState)
   func mediaPlayer(_ player: PlayerSource, duration: TimeInterval)
-  func mediaPlayer(_ player: PlayerSource, didChangePlaybackTime currentTime: TimeInterval, loadedTimeRanges timeRanges: TimeInterval, diChangePlaybackDuration duration: TimeInterval)
   func mediaPlayer(_ player: PlayerSource, mediaDidChangePlaybackRate rate: Float)
   func mediaPlayer(_ player: PlayerSource, mediaIsPlayingDidChange isPlaying: Bool)
   func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool)

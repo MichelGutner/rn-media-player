@@ -84,7 +84,7 @@ struct InteractiveMediaSeekSlider : View {
             
             let targetTime = CMTime(seconds: progressInSeconds, preferredTimescale: 600)
             
-            NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
+//            NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
             
             player?.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
               if completed {

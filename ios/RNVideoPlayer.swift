@@ -160,11 +160,6 @@ extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
     appConfig.log("PlaybackState -> \(state)")
     PlaybackStateObservable.updateIsPlaying(to: state == .playing)
   }
-  
-  func mediaPlayer(_ player: PlayerSource, didChangePlaybackTime currentTime: TimeInterval, loadedTimeRanges: TimeInterval, diChangePlaybackDuration duration: TimeInterval) {
-    
-  }
-
 }
 
 @available(iOS 14.0, *)
@@ -231,10 +226,7 @@ class RNVideoPlayerView : UIView {
   @objc var tapToSeek: NSDictionary? = [:]
   
   @objc var source: NSDictionary? = [:] {
-    didSet {
-//      setupPlayer()
-      setup()
-    }
+    didSet { setup() }
   }
   
   @objc var rate: Float = 0.0 {

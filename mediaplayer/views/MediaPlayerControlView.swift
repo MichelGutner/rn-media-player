@@ -72,6 +72,8 @@ open class MediaPlayerControlView: UIViewController {
     
     uiViewController = UIHostingController(rootView: rootControlsView)
     didMoveControlsToParent(to: self)
+    let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
+    view.addGestureRecognizer(pinchGesture)
   }
   
   fileprivate func toggleFullscreenMode() {
@@ -88,14 +90,13 @@ open class MediaPlayerControlView: UIViewController {
     guard !isFullscreenTransition else { return }
     guard let mainBounds = self.view?.window?.windowScene?.screen.bounds else { return }
     guard let playerLayer = sharedInstance?.playerLayer else { return }
-//    mediaSessionManager.isControlsVisible = false
     isFullscreenTransition = true
     
     fullscreenVC.view.bounds = mainBounds
     fullscreenVC.modalPresentationStyle = .overFullScreen
     
-//    let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
-//    fullscreenVC.view.addGestureRecognizer(pinchGesture)
+    let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
+    fullscreenVC.view.addGestureRecognizer(pinchGesture)
     
     self.fullscreenVC.view.backgroundColor = .black
     fullscreenVC.view.layer.addSublayer(playerLayer)
@@ -160,6 +161,42 @@ open class MediaPlayerControlView: UIViewController {
     self.isFullscreen = false
   }
 }
+  
+  @objc private func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
+    var currentZoomScale: CGFloat = 1.0
+    guard let playerLayer = sharedInstance?.playerLayer else { return }
+    let touch1 = gesture.location(ofTouch: 0, in: view)
+    let touch2 = gesture.location(ofTouch: 1, in: view)
+    let minZoom = 1.0
+    let maxZoom = 2.0
+
+    let isHorizontal = abs(touch1.x - touch2.x) > abs(touch1.y - touch2.y)
+
+    if gesture.state == .changed || gesture.state == .began {
+      let scale = gesture.scale
+      var newScale = currentZoomScale * scale
+      
+      newScale = max(minZoom, min(newScale, maxZoom))
+      
+      if isHorizontal {
+        if (newScale > 1) {
+          playerLayer.videoGravity = .resize
+          NotificationCenter.default.post(name: .EventPinchZoom, object: nil, userInfo: ["currentZoom": "resize"])
+          return;
+        }
+      } else {
+        if (newScale > 1) {
+          playerLayer.videoGravity = .resizeAspectFill
+          NotificationCenter.default.post(name: .EventPinchZoom, object: nil, userInfo: ["currentZoom": "resizeAspectFill"])
+          return;
+        }
+      }
+      playerLayer.videoGravity = .resizeAspect
+      
+      NotificationCenter.default.post(name: .EventPinchZoom, object: nil, userInfo: ["currentZoom": "resizeAspect"])
+      
+    }
+  }
   
   fileprivate func addPlayerLayerFrameWithSafeArea(_ frame: CGRect) {
     guard let playerLayer = sharedInstance?.playerLayer else { return }

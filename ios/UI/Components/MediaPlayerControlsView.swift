@@ -28,7 +28,6 @@ public struct MediaPlayerControlsView : View {
   @ObservedObject private var screenState = ScreenStateObservable.shared
   
   @ObservedObject var mediaSession = MediaSessionManager()
-  @ObservedObject var observable = MediaPlayerObservable()
   @State private var isTapped: Bool = false
   @State private var isTappedLeft: Bool = false
   
@@ -136,7 +135,7 @@ public struct MediaPlayerControlsView : View {
                 Button(action: {
                   delegate?.controlDidTap(self, controlType: .fullscreen)
                 }, label: {
-                  Image(systemName: observable.isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                  Image(systemName: screenState.isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
                     .rotationEffect(.degrees(90))
                     .padding(EdgeInsets.init(top: 12, leading: 12, bottom: 4, trailing: 12))
                     .foregroundColor(.white)
