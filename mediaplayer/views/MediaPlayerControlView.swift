@@ -30,17 +30,15 @@ public protocol MediaPlayerControlViewDelegate: AnyObject {
 @available(iOS 14.0, *)
 open class MediaPlayerControlView: UIViewController {
   fileprivate var uiViewController: UIHostingController<MediaPlayerControlsView>!
-  @ObservedObject var observable: MediaPlayerObservable
   open weak var delegate: MediaPlayerControlViewDelegate?
-  var mediaPlayerAdapter: MediaPlayerAdapterView?
+  var sharedInstance: PlayerSource? = Shared.instance.source
   fileprivate var fullscreenVC = UIViewController()
   fileprivate var rootVC = UIApplication.shared.windows.first?.rootViewController
   
   fileprivate var isFullscreen: Bool = false
   fileprivate var isFullscreenTransition: Bool = false
   
-  init (observable: MediaPlayerObservable) {
-    self.observable = observable
+  init () {
     super.init(nibName: nil, bundle: nil)
     setupUI()
   }
@@ -50,17 +48,17 @@ open class MediaPlayerControlView: UIViewController {
   }
   
   open override func viewDidDisappear(_ animated: Bool) {
+    sharedInstance  = nil
     uiViewController.view.removeFromSuperview()
     uiViewController.removeFromParent()
     fullscreenVC.removeFromParent()
-    delegate = nil
   }
   
   open override func viewWillLayoutSubviews() {
     guard let mainBounds = view.window?.windowScene?.screen.bounds else { return }
 
     if isFullscreen && !isFullscreenTransition {
-      self.mediaPlayerAdapter?.playerLayer?.frame = mainBounds
+      self.sharedInstance?.playerLayer?.frame = mainBounds
     }
     
     if !isFullscreenTransition && !isFullscreen {
@@ -69,15 +67,7 @@ open class MediaPlayerControlView: UIViewController {
   }
   
   fileprivate func setupUI() {
-    var rootControlsView = MediaPlayerControlsView(
-      player: mediaPlayerAdapter?.player,
-      menus: .constant([:]),
-      observable: observable,
-      onPlayPause: { [weak self] in
-        guard let self = self else { return }
-        self.delegate?.controlView(self, didButtonPressed: .playPause, actionState: nil, actionValues: nil)
-      }
-    )
+    var rootControlsView = MediaPlayerControlsView()
     rootControlsView.delegate = self
     
     uiViewController = UIHostingController(rootView: rootControlsView)
@@ -97,7 +87,7 @@ open class MediaPlayerControlView: UIViewController {
   func didPresentFullscreenMode() {
     guard !isFullscreenTransition else { return }
     guard let mainBounds = self.view?.window?.windowScene?.screen.bounds else { return }
-    guard let playerLayer = mediaPlayerAdapter?.playerLayer else { return }
+    guard let playerLayer = sharedInstance?.playerLayer else { return }
 //    mediaSessionManager.isControlsVisible = false
     isFullscreenTransition = true
     
@@ -116,13 +106,13 @@ open class MediaPlayerControlView: UIViewController {
     } else {
       UIView.animate(withDuration: 0.5, animations: { [self] in
         self.addPlayerLayerFrameWithSafeArea(mainBounds)
-        self.mediaPlayerAdapter?.playerLayer?.position = CGPoint(x: mainBounds.midX, y: calculateCurrentOffsetY())
+        self.sharedInstance?.playerLayer?.position = CGPoint(x: mainBounds.midX, y: calculateCurrentOffsetY())
       })
     }
     
     rootVC?.present(fullscreenVC, animated: false) {
       UIView.animate(withDuration: 0.5, animations: {
-        self.mediaPlayerAdapter?.playerLayer?.position = CGPoint(x: UIScreen.main.bounds.midX, y: self.fullscreenVC.view.bounds.midY)
+        self.sharedInstance?.playerLayer?.position = CGPoint(x: UIScreen.main.bounds.midX, y: self.fullscreenVC.view.bounds.midY)
       }, completion: { [self] _ in
         self.isFullscreen = true
         isFullscreenTransition = false
@@ -152,7 +142,7 @@ open class MediaPlayerControlView: UIViewController {
   }
   
   func didDismissFullscreenMode() {
-    guard let playerLayer = mediaPlayerAdapter?.playerLayer! else { return }
+    guard let playerLayer = sharedInstance?.playerLayer! else { return }
     isFullscreenTransition = true
 
     playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
@@ -172,7 +162,7 @@ open class MediaPlayerControlView: UIViewController {
 }
   
   fileprivate func addPlayerLayerFrameWithSafeArea(_ frame: CGRect) {
-    guard let playerLayer = mediaPlayerAdapter?.playerLayer else { return }
+    guard let playerLayer = sharedInstance?.playerLayer else { return }
     playerLayer.frame = frame.inset(by: UIEdgeInsets(top: self.view.safeAreaInsets.top, left: self.view.safeAreaInsets.left, bottom: self.view.safeAreaInsets.bottom, right: self.view.safeAreaInsets.right))
   }
   
@@ -205,7 +195,6 @@ open class MediaPlayerControlView: UIViewController {
 @available(iOS 14.0, *)
 extension MediaPlayerControlView : MediaPlayerControlsViewDelegate {
   public func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlsViewType, optionMenuSelected option: ((String, Any))) {
-    appConfig.log("option \(option)")
     delegate?.controlView(self, didButtonPressed: .optionsMenu, actionState: .none, actionValues: option)
   }
   

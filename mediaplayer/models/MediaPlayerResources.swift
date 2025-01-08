@@ -31,15 +31,15 @@ open class MediaPlayerResourceDefinition {
   
   public var options: [String: Any]?
   
-  open var avURLAsset: AVURLAsset {
-    get {
-      guard !url.isFileURL, url.pathExtension != "m3u8" else {
-        return AVURLAsset(url: url)
-      }
-      
-      return MediaPlayerConfigManager.asset(from: self)
-    }
-  }
+//  open var avURLAsset: AVURLAsset {
+//    get {
+//      guard !url.isFileURL, url.pathExtension != "m3u8" else {
+//        return AVURLAsset(url: url)
+//      }
+//      
+////      return MediaPlayerConfigManager.asset(from: self)
+//    }
+//  }
   
   public init(url: URL, definition: String? = "", options: [String : Any]? = nil) {
     self.url = url

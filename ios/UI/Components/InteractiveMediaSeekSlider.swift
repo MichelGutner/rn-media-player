@@ -32,7 +32,8 @@ struct InteractiveMediaSeekSlider : View {
   @State private var showThumbnails: Bool = false
 
   @State private var lastProgress: Double = 0.0
-  @State private var isSeeking = false
+  @Binding var isSeeking: Bool
+  @State private var TaskDetached: Task<Void, Never>?
   
   var body: some View {
     ZStack {
@@ -127,51 +128,66 @@ struct InteractiveMediaSeekSlider : View {
     }
     .background(Color.clear)
     .frame(maxWidth: .infinity)
-//    .onReceive(mediaSession.$thumbnailsDictionary, perform: { thumbnails in
-//      guard let thumbnails,
-//            let enabled = thumbnails["isEnabled"] as? Bool,
-//            enabled,
-//            let url = thumbnails["sourceUrl"] as? String
-//      else { return }
-//      generatingThumbnailsFrames(url)
-//    })
     .onAppear {
-      player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: .main) { time in
-        guard let currentItem = player?.currentItem else {
-         return
-       }
-       
-       if time.seconds.isNaN || currentItem.duration.seconds.isNaN {
-         return
-       }
-       
-       guard let duration = player?.currentItem?.duration.seconds else { return }
-                 self.duration = duration
-                 self.missingDuration = duration - time.seconds
-                 self.currentTime = time.seconds
-       //          mediaSession.updateNowPlayingInfo(time: time.seconds)
-       
-       let loadedTimeRanges = currentItem.loadedTimeRanges
-       if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
-         let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
-         let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
-         let totalBuffering = (bufferedStart + bufferedDuration) / duration
-         self.updateBufferProgress(totalBuffering)
-       }
-     }
+      let thumbnails = appConfig.thumbnails
+      if thumbnails != nil {
+        guard let thumbnails,
+              let enabled = thumbnails["isEnabled"] as? Bool,
+              enabled,
+              let url = thumbnails["sourceUrl"] as? String
+        else { return }
+        generatingThumbnailsFrames(url)
+      }
+      setupPeriodTimeObserve()
     }
     .onDisappear {
       thumbnailsUIImageFrames.removeAll()
       draggingImage = nil
+      TaskDetached?.cancel()
+      appConfig.log("isDissapearing")
     }
   }
   
-  private func updateBufferProgress(_ progress: CGFloat) {
-    self.bufferingProgress = progress
+  private func setupPeriodTimeObserve() {
+    player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: .main) { time in
+      guard let currentItem = player?.currentItem else {
+        return
+      }
+      
+      if time.seconds.isNaN || currentItem.duration.seconds.isNaN {
+        return
+      }
+      
+      guard let duration = player?.currentItem?.duration.seconds else { return }
+      self.duration = duration
+      self.missingDuration = duration - time.seconds
+      self.currentTime = time.seconds
+      //          mediaSession.updateNowPlayingInfo(time: time.seconds)
+      
+      let loadedTimeRanges = currentItem.loadedTimeRanges
+      if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {
+        let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
+        let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
+        let totalBuffering = (bufferedStart + bufferedDuration) / duration
+        self.bufferingProgress = totalBuffering
+      }
+      let playbackState = Shared.instance.source?.playbackState
+      
+      if !isSeeking, playbackState == .playing {
+        sliderProgress = currentTime / duration
+      }
+    }
   }
   
   private func generatingThumbnailsFrames(_ url: String) {
-    Task.detached {
+    if Shared.instance.source?.playbackState != .waiting {
+      return
+    }
+    
+    TaskDetached?.cancel()
+    
+    
+    TaskDetached = Task.detached(priority: .userInitiated) {
       let asset = AVAsset(url: URL(string: url)!)
       
       do {
@@ -180,7 +196,7 @@ struct InteractiveMediaSeekSlider : View {
         
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
-        generator.maximumSize = .init(width: 250, height: 150)
+        generator.maximumSize = .init(width: 230, height: 140)
         
         //  TODO: must be implemented frame times per seconds from bridge
         for progress in stride(from: 0, to: totalDuration / Double(1 * 100), by: 0.01) {
@@ -190,6 +206,10 @@ struct InteractiveMediaSeekSlider : View {
         let localFrames = framesTimes
         
         generator.generateCGImagesAsynchronously(forTimes: localFrames) { requestedTime, image, _, _, error in
+          guard !TaskDetached!.isCancelled else {
+            generator.cancelAllCGImageGeneration()
+            return
+          }
           guard let cgImage = image, error == nil else {
             return
           }

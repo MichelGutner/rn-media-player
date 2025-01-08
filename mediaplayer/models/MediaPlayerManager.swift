@@ -9,6 +9,17 @@ import Foundation
 import UIKit
 import AVFoundation
 import SwiftUI
+import Combine
+
+
+public class Shared {
+    public static let instance = Shared()
+    public var source: PlayerSource?
+  
+    internal static func setInstance(_ source: PlayerSource?) {
+    instance.source = source
+  }
+}
 
 public protocol PlayerSourceViewDelegate : AnyObject {
   func mediaPlayer(_ player: PlayerSource, didFinishPlayingWithError error: Error?)
@@ -21,10 +32,11 @@ public protocol PlayerSourceViewDelegate : AnyObject {
   func mediaPlayer(_ player: PlayerSource, didFailWithError error: (any Error)?)
 }
 
+
 open class PlayerSource: UIView {
   fileprivate var startTime: Double = 0.0
   fileprivate var lastPlayerItem: AVPlayerItem?
-  fileprivate let playerLayerManager = MediaPlayerLayerManager()
+  fileprivate var playerLayerManager: MediaPlayerLayerManager? = MediaPlayerLayerManager()
   fileprivate let audioManager = MediaPlayerAudioManager()
   
   open weak var delegate: PlayerSourceViewDelegate?
@@ -35,17 +47,15 @@ open class PlayerSource: UIView {
     }
   }
   
-  open lazy var player: AVPlayer? = {
-    guard let playerItem = playerItem else { return nil }
-    
-    let player = AVPlayer(playerItem: playerItem)
-    player.seek(to: CMTime(seconds: startTime, preferredTimescale: 600))
-    player.play()
-    return player
-  }()
+  open var playerLayer: AVPlayerLayer? {
+    playerLayerManager?.activeLayer
+  }
+  
+  open weak var player: AVPlayer?
   
   public override init(frame: CGRect) {
     super.init(frame: frame)
+    Shared.setInstance(self)
   }
   
   required public init?(coder: NSCoder) {
@@ -87,7 +97,7 @@ open class PlayerSource: UIView {
     playbackState = .playing
   }
   
-  open var playbackState: PlaybackState = .stopped {
+  open var playbackState: PlaybackState = .waiting {
     didSet {
       if oldValue != playbackState {
         delegate?.mediaPlayer(self, didChangePlaybackState: playbackState)
@@ -95,10 +105,10 @@ open class PlayerSource: UIView {
     }
   }
   
-  open var isReadyToDisplay: Bool = false {
+  open var isReady: Bool = false {
     didSet {
-      if oldValue != isReadyToDisplay {
-        delegate?.mediaPlayer(self, didChangeReadyToDisplay: isReadyToDisplay)
+      if oldValue != isReady {
+        delegate?.mediaPlayer(self, didChangeReadyToDisplay: isReady)
       }
     }
   }
@@ -121,14 +131,6 @@ open class PlayerSource: UIView {
     NotificationCenter.default.addObserver(self, selector: #selector(didDisconnectPlayerLayer), name: UIApplication.didEnterBackgroundNotification, object: nil)
   }
   
-  fileprivate func addPlayerItemObservers(for item: AVPlayerItem) {
-//    item.addObserver(self, forKeyPath: "status", options: [.new], context: nil)
-  }
-  
-  fileprivate func removePlayerItemObservers(for item: AVPlayerItem) {
-//    item.removeObserver(self, forKeyPath: "status")
-  }
-  
   @objc fileprivate func playerDidFinishPlaying() {
     if playbackState != .ended {
       if let playerItem = playerItem {
@@ -145,7 +147,7 @@ open class PlayerSource: UIView {
     guard let player = player else {
       return
     }
-    playerLayerManager.attachPlayer(with: player) { [weak self] playerLayer in
+    playerLayerManager?.attachPlayer(with: player) { [weak self] playerLayer in
       guard let self = self else { return }
       playerLayer.frame = self.bounds
       self.layer.addSublayer(playerLayer)
@@ -156,12 +158,13 @@ open class PlayerSource: UIView {
   }
   
   @objc fileprivate func didDisconnectPlayerLayer() {
-    playerLayerManager.detachCurrentLayer()
+    playerLayerManager?.detachCurrentLayer()
   }
   
-  open func setup(with source: NSDictionary?) {
+  internal func setup(with source: NSDictionary?) {
     guard let urlString = source?["url"] as? String,
           let videoURL = URL(string: urlString) else {
+      appConfig.log("Invalid URL or missing URL in source.")
       return
     }
     
@@ -172,32 +175,40 @@ open class PlayerSource: UIView {
     let newPlayerItem = AVPlayerItem(url: videoURL)
     newPlayerItem.externalMetadata = metadata.items
     
+    let strongPlayer = AVPlayer(playerItem: newPlayerItem)
+    strongPlayer.seek(to: CMTime(seconds: startTime, preferredTimescale: 600))
+    
+    // Atribui a referência forte à propriedade weak
+    self.player = strongPlayer
+    
     self.playerItem = newPlayerItem
     self.startTime = startTime
+    self.playbackState = .waiting
     
     audioManager.activateAudioSession { isSuccess, error in
-        if isSuccess {
-          appConfig.log("Audio session activated successfully.")
-        } else {
-          appConfig.log("Failed to activate audio session: \(error)")
-        }
+      if isSuccess {
+        appConfig.log("Audio session activated successfully.")
+      } else {
+        appConfig.log("Failed to activate audio session: \(error)")
+      }
     }
   }
   
-  open func cleanup() {
+  public func cleanup() {
       NotificationCenter.default.removeObserver(self)
+      
+      didDisconnectPlayerLayer()
       
       if let playerItem = lastPlayerItem {
           NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerItem)
           removePlayerItemObservers(for: playerItem)
       }
       
-      if let player = player {
-          player.pause()
-          player.replaceCurrentItem(with: nil)
-      }
+      player?.pause()
+      player?.replaceCurrentItem(with: nil)
+      player = nil
+      lastPlayerItem = nil
       
-      playerLayerManager.detachCurrentLayer()
       
       audioManager.deactivateAudioSession { isSuccess, error in
           if isSuccess {
@@ -206,15 +217,54 @@ open class PlayerSource: UIView {
               print("Failed to deactivate audio session: \(error)")
           }
       }
+      
+      isPlaying = false
+      playbackState = .waiting
+      isReady = false
   }
   
   open override func layoutSubviews() {
     super.layoutSubviews()
-    playerLayerManager.setLayerFrame(to: bounds)
+    playerLayerManager?.setLayerFrame(to: bounds)
+  }
+}
+
+extension PlayerSource {
+  fileprivate func addPlayerItemObservers(for item: AVPlayerItem) {
+    item.addObserver(self, forKeyPath: "status", options: [.new], context: nil)
   }
   
-  deinit {
-    cleanup()
+  fileprivate func removePlayerItemObservers(for item: AVPlayerItem) {
+    item.removeObserver(self, forKeyPath: "status")
+  }
+  
+  override open func observeValue(
+    forKeyPath keyPath: String?,
+    of object: Any?,
+    change: [NSKeyValueChangeKey : Any]?,
+    context: UnsafeMutableRawPointer?)
+  {
+    if keyPath == #keyPath(AVPlayer.status) {
+      if let playerItem = playerItem {
+        switch playerItem.status {
+        case .readyToPlay:
+          if appConfig.shouldAutoPlay {
+            player?.play()
+            playbackState = .playing
+          }
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.isReady = true
+          }
+          break
+        case .unknown:
+          self.playbackState = .waiting
+        case .failed:
+          self.delegate?.mediaPlayer(self, didFailWithError: playerItem.error)
+          self.playbackState = .error
+        @unknown default: break
+        }
+      }
+    }
   }
 }
 
@@ -255,24 +305,31 @@ open class MediaPlayerAudioManager {
 }
 
 open class MediaPlayerLayerManager {
-    fileprivate var activeLayer: AVPlayerLayer?
+  fileprivate var activeLayer: AVPlayerLayer?
   
-    open func attachPlayer(with player: AVPlayer, onAttached: @escaping (AVPlayerLayer) -> Void) {
-        detachCurrentLayer()
-        
-        let newPlayerLayer = AVPlayerLayer(player: player)
-        activeLayer = newPlayerLayer
-        onAttached(newPlayerLayer)
-    }
+  open func attachPlayer(with player: AVPlayer, onAttached: @escaping (AVPlayerLayer) -> Void) {
+    detachCurrentLayer()
     
-    open func detachCurrentLayer() {
-        activeLayer?.removeFromSuperlayer()
-        activeLayer = nil
-    }
-    
-    open func setLayerFrame(to frame: CGRect) {
-        activeLayer?.frame = frame
-    }
+    let newPlayerLayer = AVPlayerLayer(player: player)
+    newPlayerLayer.name = UUID().uuidString
+    appConfig.log("Connected player layer with id \(newPlayerLayer.name ?? "unknown")")
+    activeLayer = newPlayerLayer
+    onAttached(newPlayerLayer)
+  }
+  
+  open func detachCurrentLayer() {
+      if let name = activeLayer?.name {
+          appConfig.log("Desconnected player layer with id \(name)")
+      } else {
+          appConfig.log("No active player layer to detach")
+      }
+      activeLayer?.removeFromSuperlayer()
+      activeLayer = nil
+  }
+  
+  open func setLayerFrame(to frame: CGRect) {
+    activeLayer?.frame = frame
+  }
 }
 
 open class MediaPlayerItemMetadataManager {

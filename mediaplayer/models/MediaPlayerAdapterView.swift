@@ -11,7 +11,7 @@ import AVFoundation
 public enum PlaybackState {
   case playing
   case paused
-  case stopped
+  case waiting
   case ended
   case error
 }
@@ -100,7 +100,7 @@ open class MediaPlayerAdapterView : UIView {
     playbackState = .playing
   }
   
-  open var playbackState: PlaybackState = .stopped {
+  open var playbackState: PlaybackState = .waiting {
     didSet {
       if oldValue != playbackState {
         delegate?.mediaPlayer(self, didChangePlaybackState: playbackState)
@@ -220,7 +220,7 @@ open class MediaPlayerAdapterView : UIView {
           isReadyToDisplay = true
           break
         case .unknown:
-          self.playbackState = .stopped
+          self.playbackState = .waiting
         case .failed:
           self.delegate?.mediaPlayer(self, didFailWithError: playerItem.error)
           self.playbackState = .error

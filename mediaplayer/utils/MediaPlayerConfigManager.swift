@@ -9,8 +9,6 @@ import Foundation
 import AVKit
 
 public let appConfig = MediaPlayerConfigManager.shared
-public let playerInstance = PlayerManager.shared.currentPlayer
-public let playerManager = PlayerManager.self
 
 fileprivate let defaultOptionsMenu: NSDictionary = [
   "Speeds": [
@@ -44,16 +42,20 @@ open class MediaPlayerConfigManager {
       }
     }
   }
+  
+  open var thumbnails: NSDictionary? = nil {
+    didSet {
+      if thumbnails != oldValue {
+        appConfig.log("Thumbnails has been set")
+      }
+    }
+  }
 
   open var isLoggingEnabled: Bool = false
   
-  internal static func asset(from resource: MediaPlayerResourceDefinition) -> AVURLAsset {
-    return AVURLAsset(url: resource.url, options: resource.options)
-  }
-  
-  func log(_ info:String) {
+  func log( _ info: Any) {
       if isLoggingEnabled {
-          print(info)
+        print("RNMediaPlayer \(info)")
       }
   }
 }

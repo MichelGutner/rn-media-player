@@ -9,12 +9,30 @@ import SwiftUI
 import AVFoundation
 import UIKit
 
+import SwiftUI
+
+struct PlayPauseButtonRepresentable: UIViewRepresentable {
+    var action: () -> Void
+    var color: CGColor?
+    var frame: CGRect
+    
+    func makeUIView(context: Context) -> PlayPauseButton {
+      let button = PlayPauseButton(frame: frame, action: action, color: color)
+        return button
+    }
+    
+    func updateUIView(_ uiView: PlayPauseButton, context: Context) {
+        // Atualize as propriedades do botão, se necessário
+    }
+}
+
 class PlayPauseButton: UIButton {
+    @ObservedObject private var playbackState = PlaybackStateObservable.shared
     private var action: () -> Void
     private var color: CGColor?
+    
     private var playLeftLayer: CAShapeLayer!
     private var playRightLayer: CAShapeLayer!
-    
     private var pauseLeftLayer: CAShapeLayer!
     private var pauseRightLayer: CAShapeLayer!
     
@@ -24,11 +42,12 @@ class PlayPauseButton: UIButton {
         }
     }
     
-  init(frame: CGRect, action: @escaping () -> Void, color: CGColor?) {
+    init(frame: CGRect, action: @escaping () -> Void, color: CGColor?) {
         self.action = action
         self.color = color
         super.init(frame: frame)
         setupLayers()
+        setupObserver()
         addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
     }
     
@@ -37,13 +56,17 @@ class PlayPauseButton: UIButton {
     }
     
     private func setupLayers() {
-        self.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        // Configuração do botão
+        self.backgroundColor = UIColor.black.withAlphaComponent(0.2)
         self.layer.cornerRadius = self.bounds.width
         
+        // Criação dos layers
         playLeftLayer = createLayer(path: UIBezierPath.playLeftIcon(bounds: bounds).cgPath)
         playRightLayer = createLayer(path: UIBezierPath.playRightIcon(bounds: bounds).cgPath)
         pauseLeftLayer = createLayer(path: UIBezierPath.pauseLeftIcon(bounds: bounds).cgPath)
         pauseRightLayer = createLayer(path: UIBezierPath.pauseRightIcon(bounds: bounds).cgPath)
+        
+        updateLayersVisibility()
     }
     
     private func createLayer(path: CGPath) -> CAShapeLayer {
@@ -56,29 +79,42 @@ class PlayPauseButton: UIButton {
         return layer
     }
     
-    func updateLayersVisibility(observable: MediaSessionManager) {
-//        playLeftLayer.isHidden = observable.isPlaying
-//        playRightLayer.isHidden = observable.isPlaying
-//        pauseLeftLayer.isHidden = !observable.isPlaying
-//        pauseRightLayer.isHidden = !observable.isPlaying
-    }
-    
     @objc private func buttonTapped() {
         action()
     }
     
-    public func animateLayerTransition(observable: MediaSessionManager) {
+    private func setupObserver() {
+        playbackState.$isPlaying
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.animateLayerTransition()
+            }
+            .store(in: &playbackState.cancellables)
+    }
+    
+    private func animateLayerTransition() {
         let animation = CABasicAnimation(keyPath: "path")
         animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
         animation.duration = 0.5
-
-//      if observable.isPlaying {
-//            applyAnimation(animation, from: playLeftLayer, to: pauseLeftLayer)
-//            applyAnimation(animation, from: playRightLayer, to: pauseRightLayer)
-//        } else {
-//            applyAnimation(animation, from: pauseLeftLayer, to: playLeftLayer)
-//            applyAnimation(animation, from: pauseRightLayer, to: playRightLayer)
-//        }
+        
+        if playbackState.isPlaying {
+            applyAnimation(animation, from: playLeftLayer, to: pauseLeftLayer)
+            applyAnimation(animation, from: playRightLayer, to: pauseRightLayer)
+        } else {
+            applyAnimation(animation, from: pauseLeftLayer, to: playLeftLayer)
+            applyAnimation(animation, from: pauseRightLayer, to: playRightLayer)
+        }
+        
+        updateLayersVisibility()
+    }
+    
+    private func updateLayersVisibility() {
+        let isPlaying = playbackState.isPlaying
+        
+        playLeftLayer.isHidden = isPlaying
+        playRightLayer.isHidden = isPlaying
+        pauseLeftLayer.isHidden = !isPlaying
+        pauseRightLayer.isHidden = !isPlaying
     }
     
     private func applyAnimation(_ animation: CABasicAnimation, from fromLayer: CAShapeLayer, to toLayer: CAShapeLayer) {
@@ -87,4 +123,9 @@ class PlayPauseButton: UIButton {
         fromLayer.add(animation, forKey: "path")
         toLayer.add(animation, forKey: "path")
     }
+    
+    deinit {
+      playbackState.cancellables.forEach { $0.cancel() }
+    }
 }
+
