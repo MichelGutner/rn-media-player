@@ -147,10 +147,16 @@ public struct MediaPlayerControlsView : View {
               }
               .opacity(isSeeking ? 0 : 1)
               .animation(.easeInOut(duration: 0.2), value: isSeeking)
-              
-              // SeekSlider Control
-              //              MediaPlayerSeekSlider()
-              InteractiveMediaSeekSlider(player: Shared.instance.source?.player, isSeeking: $isSeeking)
+
+              InteractiveMediaSeekSlider(
+                player: Shared.instance.source?.player,
+                isSeeking: $isSeeking,
+                onSeekBegan: {
+                  cancelTimeoutWorkItem()
+                },
+                onSeekEnded: {
+                  scheduleHideControls()
+                })
             }
             .offset(y: isControlsVisible ? 0 : 5)
             .opacity(isControlsVisible ? 1 : 0)
@@ -172,7 +178,11 @@ public struct MediaPlayerControlsView : View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .onAppear {
-        scheduleHideControls()
+      playbackState.$isPlaying.sink { [self] isPlaying in
+        if isPlaying, !isSeeking, isControlsVisible {
+          scheduleHideControls()
+        }
+      }.store(in: &playbackState.cancellables)
     }
   }
   

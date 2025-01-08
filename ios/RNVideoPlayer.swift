@@ -32,8 +32,6 @@ class RNVideoPlayerViewX : UIView {
   fileprivate var playerSource: PlayerSource?
   fileprivate var mediaPlayerControlView: MediaPlayerControlView?
   
-  fileprivate var isFullscreen: Bool = false
-  
   @objc var onMenuItemSelected: RCTBubblingEventBlock?
   @objc var onMediaBuffering: RCTBubblingEventBlock?
   @objc var onMediaReady: RCTBubblingEventBlock?
@@ -101,7 +99,7 @@ class RNVideoPlayerViewX : UIView {
   
   override func layoutSubviews() {
     // This ensure that layout not change when player stay on fullscreen controller.
-    if (!isFullscreen) {
+    if (!ScreenStateObservable.shared.isFullScreen) {
       playerSource?.frame = bounds
     }
     mediaPlayerControlView?.view?.frame = bounds

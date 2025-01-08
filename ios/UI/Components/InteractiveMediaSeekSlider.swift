@@ -34,31 +34,29 @@ struct InteractiveMediaSeekSlider : View {
   @State private var lastProgress: Double = 0.0
   @Binding var isSeeking: Bool
   @State private var TaskDetached: Task<Void, Never>?
+  var onSeekBegan: (() -> Void)?
+  var onSeekEnded: (() -> Void)?
   
   var body: some View {
     ZStack {
       VStack {
-        MediaSeekSliderView(
+        MediaSeekSliderRepresentable(
           bufferingProgress: $bufferingProgress,
           sliderProgress: $sliderProgress,
           onProgressBegan: { _ in
             guard let currentItem = player?.currentItem else {
               return
             }
-            
             lastProgress = currentItem.currentTime().seconds / duration
-            
             isSeeking = true
             showThumbnails = true
-//            mediaSession.cancelTimeoutWorkItem()
+            onSeekBegan?()
           },
-          
           onProgressChanged: { progress in
             guard let currentItem = player?.currentItem else {
               return
             }
             
-            // Obtém a duração do item atual
             let durationInSeconds = currentItem.duration.seconds
             guard durationInSeconds.isFinite else {
               return
@@ -88,21 +86,15 @@ struct InteractiveMediaSeekSlider : View {
             
             NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
             
-            if progress < 1 {
-//              mediaSession.isFinished = false
-            }
-            
             player?.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
               if completed {
                 isSeeking = false
-//                mediaSession.scheduleHideControls()
+                onSeekEnded?()
               }
             }
           }
         )
-        .frame(height: 24)
-        .scaleEffect(x: isSeeking ? 1.03 : 1, y: isSeeking ? 1.5 : 1, anchor: .bottom)
-        .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: isSeeking)
+        .frame(height: 20)
         
         HStack {
           TimeCodes(time: $currentTime, UIControlsProps: .constant(.none))

@@ -72,5 +72,7 @@ public class ScreenStateObservable: ObservableObject {
       ScreenStateObservable.shared.isFullScreen = value
     }
     
-
+  deinit {
+    appConfig.log("Deinitializing ScreenStateObservable")
+  }
 }

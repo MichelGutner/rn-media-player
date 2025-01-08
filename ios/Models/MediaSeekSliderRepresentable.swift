@@ -9,7 +9,7 @@
 import SwiftUI
 import AVFoundation
 
-struct MediaSeekSliderView: UIViewRepresentable {
+struct MediaSeekSliderRepresentable: UIViewRepresentable {
   @Binding var bufferingProgress: Double
   @Binding var sliderProgress: Double
   var onProgressBegan: ((CGFloat) -> Void)?
