@@ -38,11 +38,21 @@ open class PlayerSource: UIView {
   fileprivate var playerLayerManager: MediaPlayerLayerManager? = MediaPlayerLayerManager()
   fileprivate let audioManager = MediaPlayerAudioManager()
   
+  fileprivate var playbackRate: Float = 0.0 {
+    didSet {
+        if let player, playbackState == .playing {
+          appConfig.log("Playback rate hass been changed: to -> \(playbackRate)")
+          player.rate = playbackRate
+        }
+    }
+  }
+
+
   open weak var delegate: PlayerSourceViewDelegate?
   
   open var playerItem: AVPlayerItem? {
     didSet {
-      onPlayerItemDidChange()
+      didChangePlayerItem()
     }
   }
   
@@ -96,12 +106,63 @@ open class PlayerSource: UIView {
     playbackState = .playing
   }
   
+  open func onBackwardTime(_ targetTime: Int) {
+    guard let player else { return }
+    guard let currentItem = player.currentItem else { return }
+    let currentTime = CMTimeGetSeconds(player.currentTime())
+    let newTime = max(currentTime - Double(targetTime), 0)
+    
+    if newTime < currentItem.duration.seconds, playbackState == .ended {
+      playbackState = .playing
+    }
+    
+    player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
+                toleranceBefore: .zero,
+                toleranceAfter: .zero,
+                completionHandler: { _ in })
+  }
+  
+  open func onForwardTime(_ targetTime: Int) {
+    guard let player else { return }
+    guard let currentItem = player.currentItem else { return }
+    
+    let currentTime = CMTimeGetSeconds(player.currentTime())
+    let newTime = max(currentTime + Double(targetTime), 0)
+    
+    player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
+                toleranceBefore: .zero,
+                toleranceAfter: .zero,
+                completionHandler: { _ in })
+  }
+  
   open var playbackState: PlaybackState = .waiting {
     didSet {
       if oldValue != playbackState {
+        switch playbackState {
+        case .playing:
+          onPlay()
+          setRate(to: playbackRate)
+        case .paused:
+          onPause()
+        case .replay:
+          onReplay()
+        case .waiting: break
+        case .ended: break
+          // implement if need call loop video
+//          onReplay()
+        case .error: break
+        }
         delegate?.mediaPlayer(self, didChangePlaybackState: playbackState)
       }
     }
+  }
+  
+  open func setPlaybackState(to state: PlaybackState) {
+    playbackState = state
+  }
+  
+  open func setRate(to rate: Float) {
+    self.playbackRate = rate
   }
   
   open var isReady: Bool = false {
@@ -112,7 +173,7 @@ open class PlayerSource: UIView {
     }
   }
   
-  fileprivate func onPlayerItemDidChange() {
+  fileprivate func didChangePlayerItem() {
     if lastPlayerItem == playerItem {
       return
     }
@@ -120,7 +181,7 @@ open class PlayerSource: UIView {
     didConnectPlayerLayer()
     
     if let item = playerItem {
-      NotificationCenter.default.addObserver(self, selector: #selector(playerDidFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: item)
+      NotificationCenter.default.addObserver(self, selector: #selector(didFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: item)
       addPlayerItemObservers(for: item)
     }
     
@@ -130,7 +191,7 @@ open class PlayerSource: UIView {
     NotificationCenter.default.addObserver(self, selector: #selector(didDisconnectPlayerLayer), name: UIApplication.didEnterBackgroundNotification, object: nil)
   }
   
-  @objc fileprivate func playerDidFinishPlaying() {
+  @objc fileprivate func didFinishPlaying() {
     if playbackState != .ended {
       if let playerItem = playerItem {
         delegate?.mediaPlayer(self, duration: CMTimeGetSeconds(playerItem.duration))
@@ -193,11 +254,15 @@ open class PlayerSource: UIView {
     }
   }
   
-  public func cleanup() {
+  public func prepareToDeInit() {
       NotificationCenter.default.removeObserver(self)
-      
-      didDisconnectPlayerLayer()
-      
+    
+    lastPlayerItem = nil
+    playerItem = nil
+    playerLayer?.player = nil
+    
+    didDisconnectPlayerLayer()
+    
       if let playerItem = lastPlayerItem {
           NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerItem)
           removePlayerItemObservers(for: playerItem)
@@ -206,7 +271,7 @@ open class PlayerSource: UIView {
       player?.pause()
       player?.replaceCurrentItem(with: nil)
       player = nil
-      lastPlayerItem = nil
+
       
       
       audioManager.deactivateAudioSession { isSuccess, error in
@@ -318,7 +383,7 @@ open class MediaPlayerLayerManager {
   
   open func detachCurrentLayer() {
       if let name = activeLayer?.name {
-          appConfig.log("Desconnected player layer with id \(name)")
+          appConfig.log("Disconnected player layer with id \(name)")
       } else {
           appConfig.log("No active player layer to detach")
       }

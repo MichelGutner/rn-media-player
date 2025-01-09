@@ -35,7 +35,6 @@ public class MediaPlayerObservable: ObservableObject {
 import Combine
 
 open class PlaybackStateObservable: ObservableObject {
-    open var cancellables: Set<AnyCancellable> = []
     public static let shared = PlaybackStateObservable()
     private init() {}
     
@@ -54,10 +53,6 @@ open class PlaybackStateObservable: ObservableObject {
     internal static func updateIsReady(to value: Bool) {
       PlaybackStateObservable.shared.isReady = value
     }
-  
-  deinit {
-    appConfig.log("Deinitializing PlaybackStateObservable")
-  }
 }
 
 import Combine
@@ -71,8 +66,4 @@ public class ScreenStateObservable: ObservableObject {
     internal static func updateIsFullScreen(to value: Bool) {
       ScreenStateObservable.shared.isFullScreen = value
     }
-    
-  deinit {
-    appConfig.log("Deinitializing ScreenStateObservable")
-  }
 }

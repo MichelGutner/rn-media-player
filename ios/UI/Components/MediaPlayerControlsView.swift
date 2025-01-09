@@ -9,17 +9,12 @@ import SwiftUI
 import AVKit
 import Combine
 
-public enum MediaPlayerControlsViewType {
-  case playPause
-  case fullscreen
-  case optionsMenu
-}
-
 @available(iOS 14.0, *)
 public protocol MediaPlayerControlsViewDelegate : AnyObject {
-  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlsViewType)
-  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlsViewType, optionMenuSelected option: ((String, Any)))
-  func sliderDidChange(_ control: MediaPlayerControlsView, didChangeFrom fromValue: Double, didChangeTo toValue: CMTime)
+  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType)
+  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, seekGestureValue value: Int)
+  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, optionMenuSelected option: ((String, Any)))
+  func sliderDidChange(_ control: MediaPlayerControlsView, didChangeProgressFrom fromValue: Double, didChangeProgressTo toValue: Double)
 }
 
 @available(iOS 14.0, *)
@@ -49,7 +44,8 @@ public struct MediaPlayerControlsView : View {
   @State private var isControlsVisible: Bool = true
   @State private var timeoutWorkItem: DispatchWorkItem?
   @State private var isSeeking: Bool = false
-
+  @State private var cancellables = Set<AnyCancellable>()
+  
   public var body: some View {
     ZStack{
       CustomLoading(color: .white)
@@ -74,14 +70,29 @@ public struct MediaPlayerControlsView : View {
         HStack(spacing: StandardSizes.large55) {
           DoubleTapSeek(
             isTapped: $isTappedLeft,
-            mediaSession: mediaSession
+            onSeek: { value, completed in
+              cancelTimeoutWorkItem()
+              delegate?.controlDidTap(self, controlType: .seekGestureBackward, seekGestureValue: value)
+              
+              if completed {
+                scheduleHideControls()
+              }
+            }
           )
           DoubleTapSeek(
             isTapped: $isTapped,
-            mediaSession: mediaSession,
-            isForward: true
+            isForward: true,
+            onSeek: { value, completed in
+              cancelTimeoutWorkItem()
+              delegate?.controlDidTap(self, controlType: .seekGestureForward, seekGestureValue: value)
+              
+              if completed {
+                scheduleHideControls()
+              }
+            }
           )
         }
+        
       }
       .opacity(isControlsVisible ? 1 : 0.0001)
       .animation(.easeInOut(duration: 0.35), value: isControlsVisible)
@@ -92,8 +103,7 @@ public struct MediaPlayerControlsView : View {
             scheduleHideControls()
           }, color: UIColor.white.cgColor, frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 35, height: 35)))
           .frame(width: 70, height: 70)
-          .opacity(isControlsVisible && !isSeeking ? 1 : 0)
-          .animation(.easeInOut(duration: 0.2), value: isControlsVisible || isSeeking)
+          .opacity(!isSeeking ? 1 : 0)
           VStack {
             HStack(alignment: .top) {
               Group {
@@ -117,8 +127,7 @@ public struct MediaPlayerControlsView : View {
                 .frame(width: 35, height: 35)
             }
             .offset(y: isControlsVisible ? 0 : -5)
-            .opacity(isControlsVisible && !isSeeking ? 1 : 0)
-            .animation(.easeInOut(duration: 0.2), value: isControlsVisible || isSeeking)
+            .opacity(!isSeeking ? 1 : 0)
             
             Spacer()
             
@@ -134,6 +143,7 @@ public struct MediaPlayerControlsView : View {
                 
                 Button(action: {
                   delegate?.controlDidTap(self, controlType: .fullscreen)
+                  scheduleHideControls()
                 }, label: {
                   Image(systemName: screenState.isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
                     .rotationEffect(.degrees(90))
@@ -144,30 +154,30 @@ public struct MediaPlayerControlsView : View {
                 .background(Color.clear)
                 .clipShape(Circle())
               }
-              .opacity(isSeeking ? 0 : 1)
-              .animation(.easeInOut(duration: 0.2), value: isSeeking)
-
+              .opacity(!isSeeking ? 1 : 0)
+              
               InteractiveMediaSeekSlider(
-                player: Shared.instance.source?.player,
                 isSeeking: $isSeeking,
                 onSeekBegan: {
                   cancelTimeoutWorkItem()
                 },
-                onSeekEnded: {
+                onSeekEnded: { startProgress, endProgress in
                   scheduleHideControls()
+                  self.delegate?.sliderDidChange(self, didChangeProgressFrom: startProgress, didChangeProgressTo: endProgress)
                 })
             }
             .offset(y: isControlsVisible ? 0 : 5)
-            .opacity(isControlsVisible ? 1 : 0)
-            .animation(.easeInOut(duration: 0.2), value: isControlsVisible)
+            
+            .animation(.easeInOut, value: isControlsVisible)
           }
           .padding(16)
           .background(Color.clear)
         }
+          .opacity(isControlsVisible ? 1 : 0)
       )
       .onTapGesture {
         if playbackState.isReady {
-            toggleControls()
+          toggleControls()
           if isControlsVisible {
             scheduleHideControls()
           }
@@ -181,7 +191,7 @@ public struct MediaPlayerControlsView : View {
         if isPlaying, !isSeeking, isControlsVisible {
           scheduleHideControls()
         }
-      }.store(in: &playbackState.cancellables)
+      }.store(in: &cancellables)
     }
   }
   
@@ -219,98 +229,4 @@ public struct MediaPlayerControlsView : View {
       }
     }
   }
-  
-  
-//  @ViewBuilder
-//  @available(iOS 14.0, *)
-//  private func MediaPlayerSeekSlider() -> some View {
-//    ZStack {
-//      VStack {
-//        MediaSeekSliderView(
-//          viewModel: observable,
-//          onProgressBegan: { _ in
-//            lastProgress = observable.currentTime / observable.duration
-//            startSliderProgressFrom = observable.currentTime
-//
-//            showThumbnails = true
-//            observable.updateIsSeeking(to: true)
-//            //            mediaSession.cancelTimeoutWorkItem()
-//          },
-//          
-//          onProgressChanged: { progress in
-//            let draggIndex = Int(observable.sliderProgress / 0.01)
-//            
-//            if thumbnailsUIImageFrames.indices.contains(draggIndex) {
-//              draggingImage = thumbnailsUIImageFrames[draggIndex]
-//            }
-//          },
-//          onProgressEnded: { progress in
-//            showThumbnails = false
-//            let progressInSeconds = observable.duration * progress
-//            let lastProgressInSeconds = observable.duration * lastProgress
-////
-//            let targetTime = CMTime(seconds: progressInSeconds, preferredTimescale: 600)
-////
-////            NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
-//            delegate?.sliderDidChange(self, didChangeFrom: startSliderProgressFrom, didChangeTo: targetTime)
-//          }
-//        )
-//        .frame(height: 24)
-//        .scaleEffect(x: observable.isSeeking ? 1.03 : 1, y: observable.isSeeking ? 1.5 : 1, anchor: .bottom)
-//        .animation(.interpolatingSpring(stiffness: 100, damping: 30, initialVelocity: 0.2), value: observable.isSeeking)
-//        
-//        HStack {
-//          TimeCodes(time: .constant(observable.currentTime), UIControlsProps: .constant(.none))
-//          Spacer()
-//          TimeCodes(time: .constant(observable.duration - observable.currentTime), UIControlsProps: .constant(.none), suffixValue: "-")
-//        }
-//      }
-//      .overlay(
-//        HStack {
-//          GeometryReader { geometry in
-//            Thumbnails(
-//              duration: .constant(observable.duration),
-//              geometry: geometry,
-//              UIControlsProps: .constant(.none),
-//              sliderProgress: .constant(observable.sliderProgress),
-//              isSeeking: $showThumbnails,
-//              draggingImage: $draggingImage
-//            )
-//            Spacer()
-//          }
-//        }
-//      )
-//    }
-//    .background(Color.clear)
-//    .frame(maxWidth: .infinity)
-//  }
-
-  
 }
-
-//@available(iOS 14.0, *)
-//extension MediaPlayerControlsView {
-//  private func togglePlayback() {
-//    guard let player = mediaSession.player else { return }
-//    DispatchQueue.main.async { [self] in
-//      if mediaSession.isFinished {
-//        player.seek(to: .zero)
-//        player.play()
-//        mediaSession.isFinished = false
-//      }
-//      
-//      if player.timeControlStatus == .playing {
-//        player.pause()
-//        mediaSession.cancelTimeoutWorkItem()
-//        NotificationCenter.default.post(name: .EventPlayPause, object: false)
-//      } else {
-//        player.play()
-//        scheduleHideControls()
-//        player.rate = mediaSession.newRate
-//        NotificationCenter.default.post(name: .EventPlayPause, object: true)
-//      }
-//    }
-//  }
-//  
-//
-//}

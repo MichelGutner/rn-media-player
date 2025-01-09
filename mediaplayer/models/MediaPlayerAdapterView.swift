@@ -8,12 +8,13 @@
 import Foundation
 import AVFoundation
 
-public enum PlaybackState {
-  case playing
-  case paused
-  case waiting
-  case ended
-  case error
+public enum PlaybackState : Int {
+  case playing = 1
+  case paused = 2
+  case waiting = 0
+  case ended = 3
+  case error = 4
+  case replay = 5
 }
 
 public protocol MediaPlayerAdapterViewDelegate : AnyObject {

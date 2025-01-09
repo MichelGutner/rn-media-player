@@ -13,18 +13,22 @@ public enum MediaPlayerControlButtonType {
   case playPause
   case fullscreen
   case optionsMenu
+  case seekGestureForward
+  case seekGestureBackward
 }
 
 
 public enum MediaPlayerControlActionState : Int {
   case fullscreenActive = 0
   case fullscreenInactive = 1
+  case seekGestureForward = 2
+  case seekGestureBackward = 3
 }
 
 @available(iOS 14.0, *)
 public protocol MediaPlayerControlViewDelegate: AnyObject {
   func controlView(_ controlView: MediaPlayerControlView, didButtonPressed button: MediaPlayerControlButtonType, actionState: MediaPlayerControlActionState?, actionValues: Any?)
-  func controlView(_ controlView: MediaPlayerControlView, didChangeFrom fromValue: Double, didChangeTo toValue: CMTime)
+  func controlView(_ controlView: MediaPlayerControlView, didChangeProgressFrom fromValue: Double, didChangeProgressTo toValue: Double)
 }
 
 @available(iOS 14.0, *)
@@ -231,22 +235,27 @@ open class MediaPlayerControlView: UIViewController {
 
 @available(iOS 14.0, *)
 extension MediaPlayerControlView : MediaPlayerControlsViewDelegate {
-  public func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlsViewType, optionMenuSelected option: ((String, Any))) {
+  public func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, seekGestureValue value: Int) {
+    delegate?.controlView(self, didButtonPressed: controlType, actionState: .none, actionValues: value)
+  }
+  
+  public func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, optionMenuSelected option: ((String, Any))) {
     delegate?.controlView(self, didButtonPressed: .optionsMenu, actionState: .none, actionValues: option)
   }
   
-  public func sliderDidChange(_ control: MediaPlayerControlsView, didChangeFrom fromValue: Double, didChangeTo toValue: CMTime) {
-    appConfig.log("from \(fromValue) to \(toValue.seconds)")
-    delegate?.controlView(self, didChangeFrom: fromValue, didChangeTo: toValue)
+  public func sliderDidChange(_ control: MediaPlayerControlsView, didChangeProgressFrom fromValue: Double, didChangeProgressTo toValue: Double) {
+    delegate?.controlView(self, didChangeProgressFrom: fromValue, didChangeProgressTo: toValue)
   }
   
-  public func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlsViewType) {
+  public func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType) {
     switch controlType {
     case .fullscreen:
       toggleFullscreenMode()
     case .playPause:
       delegate?.controlView(self, didButtonPressed: .playPause, actionState: .none, actionValues: nil)
     case .optionsMenu: break
+    case .seekGestureForward: break
+    case .seekGestureBackward: break
     }
   }
 }

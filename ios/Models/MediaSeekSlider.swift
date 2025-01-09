@@ -15,16 +15,16 @@ class MediaSeekSlider: UIView {
   private let progressBar = UIView()
   private let thumbView = UIView()
   
-  var bufferingProgress: CGFloat = 0 {
+  var bufferingProgress: Double = 0 {
     didSet { updateBufferingBar() }
   }
-  var sliderProgress: CGFloat = 0 {
+  var sliderProgress: Double = 0 {
     didSet { updateProgressBar() }
   }
   
-  var onProgressBegan: ((CGFloat) -> Void)?
-  var onProgressChanged: ((CGFloat) -> Void)?
-  var onProgressEnded: ((CGFloat) -> Void)?
+  var onProgressBegan: ((Double) -> Void)?
+  var onProgressChanged: ((Double) -> Void)?
+  var onProgressEnded: ((Double) -> Void)?
   
   override init(frame: CGRect) {
     super.init(frame: frame)
@@ -49,7 +49,7 @@ class MediaSeekSlider: UIView {
     progressBar.backgroundColor = .white
     backgroundBar.addSubview(progressBar)
     
-    thumbView.backgroundColor = .white.withAlphaComponent(0.0001)
+    thumbView.backgroundColor = .clear
 //    thumbView.backgroundColor = .white.withAlphaComponent(0.5)
     thumbView.frame.size = CGSize(width: 35, height: 35)
     thumbView.layer.cornerRadius = thumbView.bounds.width / 2
@@ -82,11 +82,17 @@ class MediaSeekSlider: UIView {
     
     switch gesture.state {
     case .began:
+      animateTransition { [self] in
+        thumbView.backgroundColor = .systemFill
+      }
       onProgressBegan?(progress)
     case .changed:
       sliderProgress = progress
       onProgressChanged?(sliderProgress)
     case .ended:
+      animateTransition { [self] in
+        thumbView.backgroundColor = .clear
+      }
       sliderProgress = progress
       onProgressEnded?(sliderProgress)
     default:
@@ -101,5 +107,16 @@ class MediaSeekSlider: UIView {
   private func updateProgressBar() {
     progressBar.frame.size.width = sliderProgress * bounds.width
     setNeedsLayout()
+  }
+  
+  fileprivate func animateTransition(onAnimate: @escaping () -> Void) {
+    UIView.animate(
+      withDuration: 0.5,
+      delay: 0,
+      usingSpringWithDamping: 0.5,
+      initialSpringVelocity: 1,
+      options: [],
+      animations: onAnimate
+    )
   }
 }

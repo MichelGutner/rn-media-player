@@ -53,6 +53,7 @@ class RNVideoPlayerViewX : UIView {
 //      if let playerSource {
 //        appConfig.log("rate \(rate)")
 //      }
+      playerSource?.setRate(to: rate)
     }
   }
   
@@ -107,8 +108,8 @@ class RNVideoPlayerViewX : UIView {
   }
   
   deinit {
-    playerSource?.cleanup()
-    PlaybackStateObservable.shared.cancellables.removeAll()
+      playerSource?.prepareToDeInit()
+//      PlaybackStateObservable.shared.cancellables.removeAll()
   }
   
   private func setup() {
@@ -129,7 +130,7 @@ class RNVideoPlayerViewX : UIView {
 @available(iOS 14.0, *)
 extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
   func mediaPlayer(_ player: PlayerSource, mediaIsPlayingDidChange isPlaying: Bool) {
-    PlaybackStateObservable.updateIsPlaying(to: isPlaying)
+//    PlaybackStateObservable.updateIsPlaying(to: isPlaying)
   }
   
   func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool) {
@@ -157,42 +158,44 @@ extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
   }
   
   func mediaPlayer(_ player: PlayerSource, didChangePlaybackState state: PlaybackState) {
-    appConfig.log("PlaybackState -> \(state)")
+    appConfig.log("File RNVideoPlayer Line: 160 PlaybackState -> \(state)")
     PlaybackStateObservable.updateIsPlaying(to: state == .playing)
   }
 }
 
 @available(iOS 14.0, *)
 extension RNVideoPlayerViewX : MediaPlayerControlViewDelegate {
+  func controlView(_ controlView: MediaPlayerControlView, didChangeProgressFrom fromValue: Double, didChangeProgressTo toValue: Double) {
+    if toValue < 1, playerSource?.playbackState == .ended {
+      playerSource?.setPlaybackState(to: .playing)
+    }
+    appConfig.log("Seeking fromValue \(fromValue) toValue \(toValue)")
+  }
+  
   func controlView(_ controlView: MediaPlayerControlView, didButtonPressed buttonType: MediaPlayerControlButtonType, actionState: MediaPlayerControlActionState?, actionValues: Any?) {
     switch buttonType {
     case .playPause:
       switch playerSource?.playbackState {
-      case .playing:
-        playerSource?.onPause()
-      case .paused:
-        playerSource?.onPlay()
-      case .waiting: break
-        // TODO: need implementation
-      case .ended:
-        playerSource?.onReplay()
-      case .error: break
-        // TODO: need implementation
-      case nil: break
-        //
+        case .playing: playerSource?.setPlaybackState(to: .paused)
+        case .paused: playerSource?.setPlaybackState(to: .playing)
+        case .waiting: break
+        case .ended: playerSource?.setPlaybackState(to: .replay)
+        case .error: break
+        case .replay: break
+        case nil: break
       }
-      
     case .fullscreen:
       ScreenStateObservable.updateIsFullScreen(to: actionState == .fullscreenActive)
     case .optionsMenu:
       let values = actionValues as! (String, Any)
       onMenuItemSelected?(["name": values.0, "value": values.1])
+    case .seekGestureForward:
+      playerSource?.onForwardTime(actionValues as! Int)
+    case .seekGestureBackward:
+      playerSource?.onBackwardTime(actionValues as! Int)
     }
   }
-  
-  func controlView(_ controlView: MediaPlayerControlView, didChangeFrom fromValue: Double, didChangeTo toValue: CMTime) {
-    //
-  }
+
 }
 
 @available(iOS 14.0, *)

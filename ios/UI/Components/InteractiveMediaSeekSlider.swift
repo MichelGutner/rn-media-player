@@ -13,7 +13,7 @@ public var timeObserver: Any? = nil
 
 @available(iOS 14.0, *)
 struct InteractiveMediaSeekSlider : View {
-  var player: AVPlayer?
+  var player: AVPlayer? = Shared.instance.source?.player
   @State private var interval = CMTime(value: 1, timescale: 2)
   @State private var sliderProgress: Double = 0.0
   @State private var bufferingProgress: Double = 0.0
@@ -35,7 +35,7 @@ struct InteractiveMediaSeekSlider : View {
   @Binding var isSeeking: Bool
   @State private var TaskDetached: Task<Void, Never>?
   var onSeekBegan: (() -> Void)?
-  var onSeekEnded: (() -> Void)?
+  var onSeekEnded: ((_ start: Double, _ end: Double) -> Void)?
   
   var body: some View {
     ZStack {
@@ -80,16 +80,17 @@ struct InteractiveMediaSeekSlider : View {
             }
             
             let progressInSeconds = durationInSeconds * progress
-            let lastProgressInSeconds = durationInSeconds * lastProgress
             
             let targetTime = CMTime(seconds: progressInSeconds, preferredTimescale: 600)
             
 //            NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
             
+
+            
             player?.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
               if completed {
                 isSeeking = false
-                onSeekEnded?()
+                onSeekEnded?(lastProgress, progress)
               }
             }
           }
@@ -136,7 +137,6 @@ struct InteractiveMediaSeekSlider : View {
       thumbnailsUIImageFrames.removeAll()
       draggingImage = nil
       TaskDetached?.cancel()
-      appConfig.log("isDissapearing")
     }
   }
   
