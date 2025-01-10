@@ -29,7 +29,6 @@ class RNVideoPlayer: RCTViewManager {
 
 @available(iOS 14.0, *)
 class RNVideoPlayerViewX : UIView {
-  fileprivate var playerSource: PlayerSource?
   fileprivate var mediaPlayerControlView: MediaPlayerControlView?
   
   @objc var onMenuItemSelected: RCTBubblingEventBlock?
@@ -53,7 +52,7 @@ class RNVideoPlayerViewX : UIView {
 //      if let playerSource {
 //        appConfig.log("rate \(rate)")
 //      }
-      playerSource?.setRate(to: rate)
+//      playerSource?.setRate(to: rate)
     }
   }
   
@@ -73,7 +72,8 @@ class RNVideoPlayerViewX : UIView {
   
   @objc var source: NSDictionary? = [:] {
     didSet {
-      playerSource?.setup(with: source)
+//      playerSource?.setup(with: source)
+      setup()
     }
   }
   
@@ -91,7 +91,7 @@ class RNVideoPlayerViewX : UIView {
   
   override init(frame: CGRect) {
     super.init(frame: frame)
-    setup()
+//    setup()
   }
   
   required init?(coder: NSCoder) {
@@ -101,28 +101,28 @@ class RNVideoPlayerViewX : UIView {
   override func layoutSubviews() {
     // This ensure that layout not change when player stay on fullscreen controller.
     if (!ScreenStateObservable.shared.isFullScreen) {
-      playerSource?.frame = bounds
+//      playerSource?.frame = bounds
+      mediaPlayerControlView?.view?.frame = bounds
     }
-    mediaPlayerControlView?.view?.frame = bounds
     super.layoutSubviews()
   }
   
-  deinit {
-      playerSource?.prepareToDeInit()
+//  deinit {
+//      playerSource?.prepareToDeInit()
 //      PlaybackStateObservable.shared.cancellables.removeAll()
-  }
+//  }
   
   private func setup() {
     appConfig.isLoggingEnabled.toggle()
-    playerSource = PlayerSource()
+//    playerSource = PlayerSource()
     
-    playerSource?.delegate = self
-    mediaPlayerControlView = MediaPlayerControlView()
+//    playerSource?.delegate = self
+    mediaPlayerControlView = MediaPlayerControlView(source: source)
     mediaPlayerControlView?.delegate = self
     
-    if let playerSource, let mediaPlayerControlView {
-      insertSubview(playerSource, at: 0)
-      insertSubview(mediaPlayerControlView.view, at: 1)
+    if let mediaPlayerControlView {
+//      insertSubview(playerSource, at: 0)
+      addSubview(mediaPlayerControlView.view)
     }
   }
 }
@@ -166,33 +166,33 @@ extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
 @available(iOS 14.0, *)
 extension RNVideoPlayerViewX : MediaPlayerControlViewDelegate {
   func controlView(_ controlView: MediaPlayerControlView, didChangeProgressFrom fromValue: Double, didChangeProgressTo toValue: Double) {
-    if toValue < 1, playerSource?.playbackState == .ended {
-      playerSource?.setPlaybackState(to: .playing)
-    }
+//    if toValue < 1, playerSource?.playbackState == .ended {
+//      playerSource?.setPlaybackState(to: .playing)
+//    }
     appConfig.log("Seeking fromValue \(fromValue) toValue \(toValue)")
   }
   
   func controlView(_ controlView: MediaPlayerControlView, didButtonPressed buttonType: MediaPlayerControlButtonType, actionState: MediaPlayerControlActionState?, actionValues: Any?) {
     switch buttonType {
-    case .playPause:
-      switch playerSource?.playbackState {
-        case .playing: playerSource?.setPlaybackState(to: .paused)
-        case .paused: playerSource?.setPlaybackState(to: .playing)
-        case .waiting: break
-        case .ended: playerSource?.setPlaybackState(to: .replay)
-        case .error: break
-        case .replay: break
-        case nil: break
-      }
+    case .playPause: break
+//      switch playerSource?.playbackState {
+//        case .playing: playerSource?.setPlaybackState(to: .paused)
+//        case .paused: playerSource?.setPlaybackState(to: .playing)
+//        case .waiting: break
+//        case .ended: playerSource?.setPlaybackState(to: .replay)
+//        case .error: break
+//        case .replay: break
+//        case nil: break
+//      }
     case .fullscreen:
       ScreenStateObservable.updateIsFullScreen(to: actionState == .fullscreenActive)
     case .optionsMenu:
       let values = actionValues as! (String, Any)
       onMenuItemSelected?(["name": values.0, "value": values.1])
-    case .seekGestureForward:
-      playerSource?.onForwardTime(actionValues as! Int)
-    case .seekGestureBackward:
-      playerSource?.onBackwardTime(actionValues as! Int)
+    case .seekGestureForward: break
+//      playerSource?.onForwardTime(actionValues as! Int)
+    case .seekGestureBackward: break
+//      playerSource?.onBackwardTime(actionValues as! Int)
     }
   }
 

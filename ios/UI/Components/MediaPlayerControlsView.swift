@@ -23,7 +23,7 @@ public struct MediaPlayerControlsView : View {
   @ObservedObject private var screenState = ScreenStateObservable.shared
   
   @ObservedObject var mediaSession = MediaSessionManager()
-  @State private var isTapped: Bool = false
+  @State private var isTappedRight: Bool = false
   @State private var isTappedLeft: Bool = false
   
   @State private var currentTime: Double = 0.0
@@ -47,145 +47,57 @@ public struct MediaPlayerControlsView : View {
   @State private var cancellables = Set<AnyCancellable>()
   
   public var body: some View {
-    ZStack{
-      CustomLoading(color: .white)
-        .opacity(playbackState.isReady ? 0 : 1)
+    ZStack {
+//      CustomLoading(color: .white)
+//        .opacity(playbackState.isReady ? 0 : 1)
       
-      ZStack {
-        LinearGradient(
-          gradient: Gradient(
-            colors: [
-              Color.black.opacity(0.5),
-              Color.black.opacity(0.2),
-              Color.black.opacity(0.5)
-            ]
-          ),
-          startPoint: .top,
-          endPoint: .bottom
-        )
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .ignoresSafeArea()
-        
-        // DoubleTap Seek ---
-        HStack(spacing: StandardSizes.large55) {
-          DoubleTapSeek(
-            isTapped: $isTappedLeft,
-            onSeek: { value, completed in
-              cancelTimeoutWorkItem()
-              delegate?.controlDidTap(self, controlType: .seekGestureBackward, seekGestureValue: value)
-              
-              if completed {
-                scheduleHideControls()
-              }
-            }
-          )
-          DoubleTapSeek(
-            isTapped: $isTapped,
-            isForward: true,
-            onSeek: { value, completed in
-              cancelTimeoutWorkItem()
-              delegate?.controlDidTap(self, controlType: .seekGestureForward, seekGestureValue: value)
-              
-              if completed {
-                scheduleHideControls()
-              }
-            }
-          )
-        }
-        
-      }
-      .opacity(isControlsVisible ? 1 : 0.0001)
-      .animation(.easeInOut(duration: 0.35), value: isControlsVisible)
+      LinearGradient(
+        gradient: Gradient(
+          colors: [
+            Color.black.opacity(0.5),
+            Color.black.opacity(0.2),
+            Color.black.opacity(0.5)
+          ]
+        ),
+        startPoint: .top,
+        endPoint: .bottom
+      )
+      .ignoresSafeArea()
+      .opacity(isControlsVisible ? 1 : 0)
+      
       .overlay(
         ZStack(alignment: .center) {
-          PlayPauseButtonRepresentable(action: {
-            delegate?.controlDidTap(self, controlType: .playPause)
-            scheduleHideControls()
-          }, color: UIColor.white.cgColor, frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 35, height: 35)))
-          .frame(width: 70, height: 70)
-          .opacity(!isSeeking ? 1 : 0)
+          MiddleControlsView()
+            .opacity(isControlsVisible ? 1 : 0)
+          
           VStack {
-            HStack(alignment: .top) {
-              Group {
-                // Header title
-                if let title = mediaSession.currentItemtitle {
-                  if #available(iOS 15.0, *) {
-                    Text(title)
-                      .font(.system(size: 14))
-                      .foregroundStyle(.white)
-                  } else {
-                    Text(title)
-                      .font(.system(size: 14))
-                      .foregroundColor(.white)
-                  }
-                }
-              }
-              Spacer()
-              
-              // Router Picker -- AirPlay
-              RoutePickerView()
-                .frame(width: 35, height: 35)
-            }
-            .offset(y: isControlsVisible ? 0 : -5)
-            .opacity(!isSeeking ? 1 : 0)
-            
+            HeaderControlsView()
+              .opacity(isControlsVisible ? 1 : 0)
             Spacer()
-            
-            VStack {
-              Spacer()
-              HStack {
-                Spacer()
-                CustomMenus(onSelect: { key, value in
-                  delegate?.controlDidTap(self, controlType: .optionsMenu, optionMenuSelected: (key, value))
-                })
-                .background(Color.clear)
-                .clipShape(Circle())
-                
-                Button(action: {
-                  delegate?.controlDidTap(self, controlType: .fullscreen)
-                  scheduleHideControls()
-                }, label: {
-                  Image(systemName: screenState.isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
-                    .rotationEffect(.degrees(90))
-                    .padding(EdgeInsets.init(top: 12, leading: 12, bottom: 4, trailing: 12))
-                    .foregroundColor(.white)
-                    .font(.system(size: 20))
-                })
-                .background(Color.clear)
-                .clipShape(Circle())
-              }
-              .opacity(!isSeeking ? 1 : 0)
-              
-              InteractiveMediaSeekSlider(
-                isSeeking: $isSeeking,
-                onSeekBegan: {
-                  cancelTimeoutWorkItem()
-                },
-                onSeekEnded: { startProgress, endProgress in
-                  scheduleHideControls()
-                  self.delegate?.sliderDidChange(self, didChangeProgressFrom: startProgress, didChangeProgressTo: endProgress)
-                })
-            }
-            .offset(y: isControlsVisible ? 0 : 5)
-            
-            .animation(.easeInOut, value: isControlsVisible)
+            BottomControlsView()
+              .opacity(isControlsVisible ? 1 : 0)
           }
           .padding(16)
           .background(Color.clear)
         }
-          .opacity(isControlsVisible ? 1 : 0)
       )
-      .onTapGesture {
-        if playbackState.isReady {
-          toggleControls()
-          if isControlsVisible {
-            scheduleHideControls()
-          }
-        }
-      }
-      .opacity(playbackState.isReady ? 1 : 0)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
+//    .overlay(
+//      DoubleTapSeekControlView()
+////        .allowsHitTesting(!isControlsVisible)
+//    )
+    .onTapGesture(count: 2, perform: {
+      isControlsVisible = false
+    })
+    .onTapGesture {
+      if playbackState.isReady {
+        toggleControls()
+        if isControlsVisible {
+          scheduleHideControls()
+        }
+      }
+    }
     .onAppear {
       playbackState.$isPlaying.sink { [self] isPlaying in
         if isPlaying, !isSeeking, isControlsVisible {
@@ -195,8 +107,108 @@ public struct MediaPlayerControlsView : View {
     }
   }
   
+  @ViewBuilder
+  func DoubleTapSeekControlView() -> some View {
+    HStack(spacing: StandardSizes.large55) {
+      DoubleTapSeek(
+        isTapped: $isTappedLeft,
+        onSeek: { value, completed in
+          isControlsVisible = false
+          delegate?.controlDidTap(self, controlType: .seekGestureBackward, seekGestureValue: value)
+        }
+      )
+      .contentShape(Rectangle()) // Garante área de toque mesmo invisível
+      
+      DoubleTapSeek(
+        isTapped: $isTappedRight,
+        isForward: true,
+        onSeek: { value, completed in
+          isControlsVisible = false
+          delegate?.controlDidTap(self, controlType: .seekGestureForward, seekGestureValue: value)
+        }
+      )
+    }
+  }
+  
+  @ViewBuilder
+  func HeaderControlsView() -> some View {
+    HStack(alignment: .top) {
+      Group {
+        // Header title
+        if let title = mediaSession.currentItemtitle {
+          if #available(iOS 15.0, *) {
+            Text(title)
+              .font(.system(size: 14))
+              .foregroundStyle(.white)
+          } else {
+            Text(title)
+              .font(.system(size: 14))
+              .foregroundColor(.white)
+          }
+        }
+      }
+      Spacer()
+      
+      // Router Picker -- AirPlay
+      RoutePickerView()
+        .frame(width: 35, height: 35)
+    }
+    .offset(y: isControlsVisible ? 0 : -5)
+    .opacity(!isSeeking ? 1 : 0)
+  }
+  
+  @ViewBuilder
+  func MiddleControlsView() -> some View {
+    PlayPauseButtonRepresentable(action: {
+      delegate?.controlDidTap(self, controlType: .playPause)
+      scheduleHideControls()
+    }, color: UIColor.white.cgColor, frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 35, height: 35)))
+    .frame(width: 70, height: 70)
+    .opacity(!isSeeking ? 1 : 0)
+  }
+  
+  @ViewBuilder
+  func BottomControlsView() -> some View {
+    VStack {
+      HStack {
+        Spacer()
+        CustomMenus(onSelect: { key, value in
+          delegate?.controlDidTap(self, controlType: .optionsMenu, optionMenuSelected: (key, value))
+        })
+        .background(Color.blue)
+        .clipShape(Circle())
+        
+        Button(action: {
+          delegate?.controlDidTap(self, controlType: .fullscreen)
+          scheduleHideControls()
+        }, label: {
+          Image(systemName: screenState.isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+            .rotationEffect(.degrees(90))
+            .foregroundColor(.white)
+            .font(.system(size: 18))
+        })
+        .padding(12)
+        .background(Color.blue)
+        .clipShape(Circle())
+      }
+      .opacity(!isSeeking ? 1 : 0)
+      
+      InteractiveMediaSeekSlider(
+        isSeeking: $isSeeking,
+        onSeekBegan: {
+          cancelTimeoutWorkItem()
+        },
+        onSeekEnded: { startProgress, endProgress in
+          scheduleHideControls()
+          self.delegate?.sliderDidChange(self, didChangeProgressFrom: startProgress, didChangeProgressTo: endProgress)
+        })
+    }
+    .offset(y: isControlsVisible ? 0 : 5)
+    .animation(.easeInOut, value: isControlsVisible)
+  }
+  
   func toggleControls() {
-    withAnimation(.easeInOut(duration: 0.4), {
+    withAnimation(.easeInOut(duration: 0.25), {
       isControlsVisible.toggle()
     })
   }
@@ -209,14 +221,14 @@ public struct MediaPlayerControlsView : View {
       
       if (playbackState.isPlaying) {
         self.timeoutWorkItem = .init(block: { [self] in
-          withAnimation(.easeInOut(duration: 0.4), {
+          withAnimation(.easeInOut(duration: 1), {
             isControlsVisible = false
           })
         })
         
         
         if let timeoutWorkItem {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: timeoutWorkItem)
+          DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: timeoutWorkItem)
         }
       }
     }

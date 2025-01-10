@@ -31,7 +31,7 @@ struct DoubleTapSeek: View {
             .font(.title)
             .rotationEffect(.init(degrees: isForward ? 180 : 0))
             
-            Text("\(!isForward ? "- " : "")\(tappedQuantity * (15 ?? 10)) ".appending("segundos" ?? "seconds"))
+            Text("\(tappedQuantity * (15 ?? 10)) ".appending("segundos" ?? "seconds"))
               .font(.caption)
               .fontWeight(.bold)
               .foregroundColor(.white)
