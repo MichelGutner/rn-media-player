@@ -48,8 +48,8 @@ public struct MediaPlayerControlsView : View {
   
   public var body: some View {
     ZStack {
-//      CustomLoading(color: .white)
-//        .opacity(playbackState.isReady ? 0 : 1)
+      //      CustomLoading(color: .white)
+      //        .opacity(playbackState.isReady ? 0 : 1)
       
       LinearGradient(
         gradient: Gradient(
@@ -64,39 +64,35 @@ public struct MediaPlayerControlsView : View {
       )
       .ignoresSafeArea()
       .opacity(isControlsVisible ? 1 : 0)
-      
-      .overlay(
-        ZStack(alignment: .center) {
-          MiddleControlsView()
-            .opacity(isControlsVisible ? 1 : 0)
-          
-          VStack {
-            HeaderControlsView()
-              .opacity(isControlsVisible ? 1 : 0)
-            Spacer()
-            BottomControlsView()
-              .opacity(isControlsVisible ? 1 : 0)
-          }
-          .padding(16)
-          .background(Color.clear)
-        }
-      )
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-//    .overlay(
-//      DoubleTapSeekControlView()
-////        .allowsHitTesting(!isControlsVisible)
-//    )
-    .onTapGesture(count: 2, perform: {
-      isControlsVisible = false
-    })
-    .onTapGesture {
-      if playbackState.isReady {
-        toggleControls()
-        if isControlsVisible {
-          scheduleHideControls()
+    .overlay(
+      DoubleTapSeekControlView()
+    )
+    .overlay(
+      ZStack(alignment: .center) {
+        MiddleControlsView()
+          .opacity(isControlsVisible ? 1 : 0)
+        
+        VStack {
+          HeaderControlsView()
+            .opacity(isControlsVisible ? 1 : 0)
+          Spacer()
+          BottomControlsView()
+            .opacity(isControlsVisible || isSeeking ? 1 : 0)
         }
+        .padding(16)
+        .background(Color.clear)
       }
+    )
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .contentShape(Rectangle())
+    .onTapGesture {
+      //      if playbackState.isReady {
+      toggleControls()
+      if isControlsVisible {
+        scheduleHideControls()
+      }
+      //      }
     }
     .onAppear {
       playbackState.$isPlaying.sink { [self] isPlaying in
@@ -113,8 +109,12 @@ public struct MediaPlayerControlsView : View {
       DoubleTapSeek(
         isTapped: $isTappedLeft,
         onSeek: { value, completed in
+          isSeeking = true
           isControlsVisible = false
           delegate?.controlDidTap(self, controlType: .seekGestureBackward, seekGestureValue: value)
+          if completed {
+            isSeeking = false
+          }
         }
       )
       .contentShape(Rectangle()) // Garante área de toque mesmo invisível
@@ -123,8 +123,12 @@ public struct MediaPlayerControlsView : View {
         isTapped: $isTappedRight,
         isForward: true,
         onSeek: { value, completed in
+          isSeeking = true
           isControlsVisible = false
           delegate?.controlDidTap(self, controlType: .seekGestureForward, seekGestureValue: value)
+          if completed {
+            isSeeking = false
+          }
         }
       )
     }
@@ -221,7 +225,7 @@ public struct MediaPlayerControlsView : View {
       
       if (playbackState.isPlaying) {
         self.timeoutWorkItem = .init(block: { [self] in
-          withAnimation(.easeInOut(duration: 1), {
+          withAnimation(.easeInOut(duration: 0.35), {
             isControlsVisible = false
           })
         })

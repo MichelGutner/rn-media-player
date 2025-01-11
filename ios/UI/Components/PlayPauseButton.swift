@@ -48,7 +48,6 @@ class PlayPauseButton: UIButton {
     super.init(frame: frame)
     setupLayers()
     setupObserver()
-    addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
   }
   
   required init?(coder: NSCoder) {

@@ -29,7 +29,9 @@ class RNVideoPlayer: RCTViewManager {
 
 @available(iOS 14.0, *)
 class RNVideoPlayerViewX : UIView {
-  fileprivate var mediaPlayerControlView: MediaPlayerControlView?
+  fileprivate var mediaSource = PlayerSource()
+  fileprivate var playerLayerVC: RCTMediaPlayerLayerController?
+  fileprivate var controlsVC: UIHostingController<MediaPlayerControlsView>?
   
   @objc var onMenuItemSelected: RCTBubblingEventBlock?
   @objc var onMediaBuffering: RCTBubblingEventBlock?
@@ -47,14 +49,7 @@ class RNVideoPlayerViewX : UIView {
   @objc var controlsStyles: NSDictionary? = [:]
   @objc var tapToSeek: NSDictionary? = [:]
   
-  @objc var rate: Float = 0.0 {
-    didSet {
-//      if let playerSource {
-//        appConfig.log("rate \(rate)")
-//      }
-//      playerSource?.setRate(to: rate)
-    }
-  }
+  @objc var rate: Float = 0.0
   
   @objc var replaceMediaUrl: String = "" {
     didSet {
@@ -66,14 +61,18 @@ class RNVideoPlayerViewX : UIView {
   
   @objc var autoPlay: Bool = false {
     didSet {
-      appConfig.shouldAutoPlay = autoPlay
+      if autoPlay {
+        mediaSource.setPlaybackState(to: .playing)
+      }
     }
   }
   
   @objc var source: NSDictionary? = [:] {
     didSet {
-//      playerSource?.setup(with: source)
-      setup()
+      mediaSource.setup(with: source) { [self] player in
+        playerLayerVC = RCTMediaPlayerLayerController(player: player)
+        setup()
+      }
     }
   }
   
@@ -91,7 +90,6 @@ class RNVideoPlayerViewX : UIView {
   
   override init(frame: CGRect) {
     super.init(frame: frame)
-//    setup()
   }
   
   required init?(coder: NSCoder) {
@@ -100,29 +98,30 @@ class RNVideoPlayerViewX : UIView {
   
   override func layoutSubviews() {
     // This ensure that layout not change when player stay on fullscreen controller.
-    if (!ScreenStateObservable.shared.isFullScreen) {
-//      playerSource?.frame = bounds
-      mediaPlayerControlView?.view?.frame = bounds
-    }
+//    if (!ScreenStateObservable.shared.isFullScreen) {
+      playerLayerVC?.view.frame = bounds
+//    }
     super.layoutSubviews()
   }
   
-//  deinit {
-//      playerSource?.prepareToDeInit()
-//      PlaybackStateObservable.shared.cancellables.removeAll()
-//  }
+  deinit {
+    mediaSource.prepareToDeInit()
+    playerLayerVC?.prepareToDeInit()
+  }
   
   private func setup() {
     appConfig.isLoggingEnabled.toggle()
-//    playerSource = PlayerSource()
+    let rootControlsView = MediaPlayerControlsView()    
+//        rootControlsView.delegate = self
+    controlsVC = UIHostingController(rootView: rootControlsView)
     
-//    playerSource?.delegate = self
-    mediaPlayerControlView = MediaPlayerControlView(source: source)
-    mediaPlayerControlView?.delegate = self
-    
-    if let mediaPlayerControlView {
-//      insertSubview(playerSource, at: 0)
-      addSubview(mediaPlayerControlView.view)
+    mediaSource.delegate = self
+    if let playerLayerVC {
+      playerLayerVC.addContentOverlayController(with: controlsVC!)
+      addSubview(playerLayerVC.view)
+      DispatchQueue.main.asyncAfter(deadline: .now() + 5, execute: {
+        playerLayerVC.didPresentFullscreen()
+      })
     }
   }
 }

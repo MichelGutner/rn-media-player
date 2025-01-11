@@ -13,7 +13,7 @@ public var timeObserver: Any? = nil
 
 @available(iOS 14.0, *)
 struct InteractiveMediaSeekSlider : View {
-  var player: AVPlayer? = Shared.instance.source?.player
+  var player: AVPlayer? = nil
   @State private var interval = CMTime(value: 1, timescale: 2)
   @State private var sliderProgress: Double = 0.0
   @State private var bufferingProgress: Double = 0.0
