@@ -5,7 +5,8 @@
 //  Created by Michel Gutner on 03/10/24.
 //
 
-import AVKit
+import Foundation
+import AVFoundation
 import SwiftUI
 import Combine
 
@@ -13,6 +14,7 @@ public var timeObserver: Any? = nil
 
 @available(iOS 14.0, *)
 struct InteractiveMediaSeekSlider : View {
+  @ObservedObject private var playbackState = PlaybackStateObservable.shared
   var player: AVPlayer? = nil
   @State private var interval = CMTime(value: 1, timescale: 2)
   @State private var sliderProgress: Double = 0.0
@@ -141,8 +143,12 @@ struct InteractiveMediaSeekSlider : View {
   }
   
   private func setupPeriodTimeObserve() {
-    player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: .main) { time in
-      guard let currentItem = player?.currentItem else {
+    guard let player else {
+      appConfig.log("not player")
+      return
+    }
+    player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: .main) { time in
+      guard let currentItem = player.currentItem else {
         return
       }
       
@@ -150,7 +156,7 @@ struct InteractiveMediaSeekSlider : View {
         return
       }
       
-      guard let duration = player?.currentItem?.duration.seconds else { return }
+      guard let duration = player.currentItem?.duration.seconds else { return }
       self.duration = duration
       self.missingDuration = duration - time.seconds
       self.currentTime = time.seconds
@@ -163,33 +169,30 @@ struct InteractiveMediaSeekSlider : View {
         let totalBuffering = (bufferedStart + bufferedDuration) / duration
         self.bufferingProgress = totalBuffering
       }
-      let playbackState = Shared.instance.source?.playbackState
       
-      if !isSeeking, playbackState == .playing {
+      if !isSeeking {
         sliderProgress = currentTime / duration
       }
     }
   }
   
   private func generatingThumbnailsFrames(_ url: String) {
-    if Shared.instance.source?.playbackState != .waiting {
+    if playbackState.isReady {
       return
     }
     
     TaskDetached?.cancel()
+    let asset = AVAsset(url: URL(string: url)!)
+    let generator = AVAssetImageGenerator(asset: asset)
+    generator.appliesPreferredTrackTransform = true
+    generator.maximumSize = .init(width: 230, height: 140)
     
     
     TaskDetached = Task.detached(priority: .userInitiated) {
-      let asset = AVAsset(url: URL(string: url)!)
-      
       do {
         let totalDuration = asset.duration.seconds
         var framesTimes: [NSValue] = []
-        
-        let generator = AVAssetImageGenerator(asset: asset)
-        generator.appliesPreferredTrackTransform = true
-        generator.maximumSize = .init(width: 230, height: 140)
-        
+      
         //  TODO: must be implemented frame times per seconds from bridge
         for progress in stride(from: 0, to: totalDuration / Double(1 * 100), by: 0.01) {
           let time = CMTime(seconds: totalDuration * Double(progress), preferredTimescale: 600)
@@ -197,18 +200,25 @@ struct InteractiveMediaSeekSlider : View {
         }
         let localFrames = framesTimes
         
-        generator.generateCGImagesAsynchronously(forTimes: localFrames) { requestedTime, image, _, _, error in
-          guard !TaskDetached!.isCancelled else {
-            generator.cancelAllCGImageGeneration()
-            return
-          }
-          guard let cgImage = image, error == nil else {
-            return
-          }
-          
-          DispatchQueue.main.async {
-            let uiImage = UIImage(cgImage: cgImage)
-            thumbnailsUIImageFrames.append(uiImage)
+        await withCheckedContinuation { continuation in
+          generator.generateCGImagesAsynchronously(forTimes: localFrames) { requestedTime, image, _, _, error in
+            guard !TaskDetached!.isCancelled else {
+              generator.cancelAllCGImageGeneration()
+              continuation.resume()
+              return
+            }
+            guard let cgImage = image, error == nil else {
+              return
+            }
+            
+            DispatchQueue.main.async {
+              let uiImage = UIImage(cgImage: cgImage)
+              thumbnailsUIImageFrames.append(uiImage)
+            }
+            
+            if requestedTime == localFrames.last?.timeValue {
+                 continuation.resume()
+             }
           }
         }
       }

@@ -45,7 +45,7 @@ struct CustomMenus: View {
             return Button(action: {
                 if let value = item["value"] {
                     selectedOptionItem[option.key] = name
-                  NotificationCenter.default.post(name: .EventMenuSelectOption, object: (option.key, value))
+//                  NotificationCenter.default.post(name: .EventMenuSelectOption, object: (option.key, value))
                   onSelect((option.key, value))
                 }
             }) {

@@ -5,20 +5,17 @@
 //  Created by Michel Gutner on 06/01/25.
 //
 
-import Foundation
-import UIKit
 import AVFoundation
-import SwiftUI
 import Combine
 
 
-public class Shared {
-    public static let instance = Shared()
-    public var source: PlayerSource?
-  
-    internal static func setInstance(_ source: PlayerSource?) {
-    instance.source = source
-  }
+public enum PlaybackState : Int {
+  case playing = 1
+  case paused = 2
+  case waiting = 0
+  case ended = 3
+  case error = 4
+  case replay = 5
 }
 
 public protocol PlayerSourceViewDelegate : AnyObject {
@@ -37,9 +34,10 @@ open class PlayerSource {
   fileprivate var lastPlayerItem: AVPlayerItem?
   fileprivate let audioManager = MediaPlayerAudioManager()
   
-  fileprivate var playbackRate: Float = 0.0 {
+  fileprivate var playbackRate: Float = 1.0 {
     didSet {
       if oldValue != playbackRate {
+        appConfig.log("[PlayerSource] Changing playback rate to \(playbackRate)")
         if let player, playbackState == .playing {
           player.rate = playbackRate
         }
@@ -57,12 +55,7 @@ open class PlayerSource {
     }
   }
   
-  fileprivate weak var player: AVPlayer?
-  
-//  public override init(frame: CGRect) {
-//    super.init(frame: frame)
-//    Shared.setInstance(self)
-//  }
+  open weak var player: AVPlayer?
   
   required public init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
@@ -81,11 +74,22 @@ open class PlayerSource {
     }
   }
   
+  open var isReady: Bool = false {
+    didSet {
+      if oldValue != isReady {
+        delegate?.mediaPlayer(self, didChangeReadyToDisplay: isReady)
+      }
+    }
+  }
+  
   open func onPlay() {
     guard let player else { return }
     player.play()
     isPlaying = true
     playbackState = .playing
+    if player.rate != playbackRate {
+      setRate(to: playbackRate > 0 ? playbackRate : 1)
+    }
   }
   
   open func onPause() {
@@ -138,7 +142,6 @@ open class PlayerSource {
         switch playbackState {
         case .playing:
           onPlay()
-          setRate(to: playbackRate)
         case .paused:
           onPause()
         case .replay:
@@ -159,15 +162,14 @@ open class PlayerSource {
   }
   
   open func setRate(to rate: Float) {
+    if (rate == 0) {
+      setPlaybackState(to: .paused)
+    }
     self.playbackRate = rate
   }
   
-  open var isReady: Bool = false {
-    didSet {
-      if oldValue != isReady {
-        delegate?.mediaPlayer(self, didChangeReadyToDisplay: isReady)
-      }
-    }
+  open func setIsReadyToPlay(_ isReady: Bool) {
+    self.isReady = isReady
   }
   
   fileprivate func didChangePlayerItem() {
@@ -231,32 +233,32 @@ open class PlayerSource {
   }
   
   public func prepareToDeInit() {
-      NotificationCenter.default.removeObserver(self)
+    NotificationCenter.default.removeObserver(self)
     
     lastPlayerItem = nil
     playerItem = nil
     
-      if let playerItem = lastPlayerItem {
-          NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerItem)
+    if let playerItem = lastPlayerItem {
+      NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: playerItem)
+    }
+    
+    player?.pause()
+    player?.replaceCurrentItem(with: nil)
+    player = nil
+    
+    
+    
+    audioManager.deactivateAudioSession { isSuccess, error in
+      if isSuccess {
+        print("Audio session deactivated successfully.")
+      } else {
+        print("Failed to deactivate audio session: \(error)")
       }
-      
-      player?.pause()
-      player?.replaceCurrentItem(with: nil)
-      player = nil
-
-      
-      
-      audioManager.deactivateAudioSession { isSuccess, error in
-          if isSuccess {
-              print("Audio session deactivated successfully.")
-          } else {
-              print("Failed to deactivate audio session: \(error)")
-          }
-      }
-      
-      isPlaying = false
-      playbackState = .waiting
-      isReady = false
+    }
+    
+    isPlaying = false
+    playbackState = .waiting
+    isReady = false
   }
 }
 

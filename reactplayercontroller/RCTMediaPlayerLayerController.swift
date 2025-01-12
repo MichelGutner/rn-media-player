@@ -5,9 +5,8 @@
 //  Created by Michel Gutner on 10/01/25.
 //
 
-import Foundation
 import AVFoundation
-import UIKit
+import Combine
 
 public enum RCTLayerManagerActionType {
   case pinchToZoom
@@ -16,11 +15,14 @@ public enum RCTLayerManagerActionType {
 
 public protocol RCTMediaPlayerLayerManagerProtocol: AnyObject {
   func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, didRequestControl action: RCTLayerManagerActionType, didChangeState state: Any?)
+  func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, isReadyForDisplay state: Bool)
 }
 
 open class RCTMediaPlayerLayerController : UIViewController {
+  fileprivate var cancellables: Set<AnyCancellable> = []
   fileprivate var playerLayer = MediaPlayerLayerManager()
   fileprivate var fullscreenController = UIViewController()
+  fileprivate weak var contentOverlayController: UIViewController?
   open weak var delegate: RCTMediaPlayerLayerManagerProtocol?
   
   fileprivate var rootVC = UIApplication.shared.windows.first?.rootViewController
@@ -28,12 +30,11 @@ open class RCTMediaPlayerLayerController : UIViewController {
   fileprivate var isFullscreenTransition: Bool = false
   fileprivate let currentZoomScale: CGFloat = 1.0
   
-  fileprivate weak var contentOverlayController: UIViewController?
-  
   init (player: AVPlayer) {
     super.init(nibName: nil, bundle: nil)
     playerLayer.attachPlayer(with: player)
     self.view.layer.addSublayer(playerLayer)
+    addObserve()
     
     let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
     view.addGestureRecognizer(pinchGesture)
@@ -55,8 +56,19 @@ open class RCTMediaPlayerLayerController : UIViewController {
     }
   }
   
+  fileprivate func addObserve() {
+    playerLayer.publisher(for: \.isReadyForDisplay)
+      .receive(on: DispatchQueue.main)
+      .sink { [self] isReady in
+        if isReady {
+          self.delegate?.playerLayerControlView(self, isReadyForDisplay: true)
+        }
+      }.store(in: &cancellables)
+  }
+  
   open func prepareToDeInit() {
     playerLayer.detachPlayer()
+    cancellables.removeAll()
   }
   
   open func addContentOverlayController(with controller: UIViewController) {
@@ -161,19 +173,19 @@ open class RCTMediaPlayerLayerController : UIViewController {
         if (newScale > 1) {
           playerLayer.videoGravity = .resize
 //          NotificationCenter.default.post(name: .EventPinchZoom, object: nil, userInfo: ["currentZoom": "resize"])
-          self.delegate?.playerLayerControlView(self, didRequestControl: .fullscreen, didChangeState: ["currentZoom": "resize"])
+          self.delegate?.playerLayerControlView(self, didRequestControl: .pinchToZoom, didChangeState: ["currentZoom": "resize"])
           return;
         }
       } else {
         if (newScale > 1) {
           playerLayer.videoGravity = .resizeAspectFill
-          self.delegate?.playerLayerControlView(self, didRequestControl: .fullscreen, didChangeState: ["currentZoom": "resizeAspectFill"])
+          self.delegate?.playerLayerControlView(self, didRequestControl: .pinchToZoom, didChangeState: ["currentZoom": "resizeAspectFill"])
           return;
         }
       }
       playerLayer.videoGravity = .resizeAspect
       
-      self.delegate?.playerLayerControlView(self, didRequestControl: .fullscreen, didChangeState: ["currentZoom": "resizeAspect"]) 
+      self.delegate?.playerLayerControlView(self, didRequestControl: .pinchToZoom, didChangeState: ["currentZoom": "resizeAspect"]) 
     }
   }
   

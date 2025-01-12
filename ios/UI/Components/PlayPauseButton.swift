@@ -55,9 +55,10 @@ class PlayPauseButton: UIButton {
   }
   
   private func setupLayers() {
-    // Configuração do botão
+    
     self.backgroundColor = UIColor.black.withAlphaComponent(0.2)
     self.layer.cornerRadius = self.bounds.width
+    addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
     
     // Criação dos layers
     playLeftLayer = createLayer(path: UIBezierPath.playLeftIcon(bounds: bounds).cgPath)

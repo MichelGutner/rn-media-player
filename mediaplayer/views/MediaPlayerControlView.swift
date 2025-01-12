@@ -248,6 +248,10 @@ open class MediaPlayerControlView: UIViewController {
 
 @available(iOS 14.0, *)
 extension MediaPlayerControlView : MediaPlayerControlsViewDelegate {
+  public func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, didChangeControlEvent event: Any?) {
+    //
+  }
+  
   public func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, seekGestureValue value: Int) {
     delegate?.controlView(self, didButtonPressed: controlType, actionState: .none, actionValues: value)
   }

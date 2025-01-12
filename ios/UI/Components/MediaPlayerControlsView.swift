@@ -11,7 +11,7 @@ import Combine
 
 @available(iOS 14.0, *)
 public protocol MediaPlayerControlsViewDelegate : AnyObject {
-  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType)
+  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, didChangeControlEvent event: Any?)
   func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, seekGestureValue value: Int)
   func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, optionMenuSelected option: ((String, Any)))
   func sliderDidChange(_ control: MediaPlayerControlsView, didChangeProgressFrom fromValue: Double, didChangeProgressTo toValue: Double)
@@ -19,10 +19,10 @@ public protocol MediaPlayerControlsViewDelegate : AnyObject {
 
 @available(iOS 14.0, *)
 public struct MediaPlayerControlsView : View {
-  @ObservedObject private var playbackState = PlaybackStateObservable.shared
   @ObservedObject private var screenState = ScreenStateObservable.shared
+  @ObservedObject private var playbackState = PlaybackStateObservable.shared
   
-  @ObservedObject var mediaSession = MediaSessionManager()
+  var mediaSource: PlayerSource
   @State private var isTappedRight: Bool = false
   @State private var isTappedLeft: Bool = false
   
@@ -48,9 +48,6 @@ public struct MediaPlayerControlsView : View {
   
   public var body: some View {
     ZStack {
-      //      CustomLoading(color: .white)
-      //        .opacity(playbackState.isReady ? 0 : 1)
-      
       LinearGradient(
         gradient: Gradient(
           colors: [
@@ -69,10 +66,6 @@ public struct MediaPlayerControlsView : View {
       DoubleTapSeekControlView()
     )
     .overlay(
-      ZStack(alignment: .center) {
-        MiddleControlsView()
-          .opacity(isControlsVisible ? 1 : 0)
-        
         VStack {
           HeaderControlsView()
             .opacity(isControlsVisible ? 1 : 0)
@@ -82,17 +75,31 @@ public struct MediaPlayerControlsView : View {
         }
         .padding(16)
         .background(Color.clear)
+    )
+    .overlay(
+      ZStack(alignment: .center) {
+        MiddleControlsView()
+          .opacity(isControlsVisible ? 1 : 0)
       }
+    )
+    .overlay(
+      ZStack(alignment: .center) {
+        CustomLoading(color: .white)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .background(Color.black)
+      .opacity(playbackState.isReady ? 0 : 1)
+      .animation(.easeInOut(duration: 0.35), value: playbackState.isReady)
     )
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .contentShape(Rectangle())
     .onTapGesture {
-      //      if playbackState.isReady {
+            if playbackState.isReady {
       toggleControls()
       if isControlsVisible {
         scheduleHideControls()
       }
-      //      }
+            }
     }
     .onAppear {
       playbackState.$isPlaying.sink { [self] isPlaying in
@@ -117,7 +124,6 @@ public struct MediaPlayerControlsView : View {
           }
         }
       )
-      .contentShape(Rectangle()) // Garante área de toque mesmo invisível
       
       DoubleTapSeek(
         isTapped: $isTappedRight,
@@ -139,17 +145,17 @@ public struct MediaPlayerControlsView : View {
     HStack(alignment: .top) {
       Group {
         // Header title
-        if let title = mediaSession.currentItemtitle {
-          if #available(iOS 15.0, *) {
-            Text(title)
-              .font(.system(size: 14))
-              .foregroundStyle(.white)
-          } else {
-            Text(title)
-              .font(.system(size: 14))
-              .foregroundColor(.white)
-          }
-        }
+//        if let title = mediaSession.currentItemtitle {
+//          if #available(iOS 15.0, *) {
+//            Text(title)
+//              .font(.system(size: 14))
+//              .foregroundStyle(.white)
+//          } else {
+//            Text(title)
+//              .font(.system(size: 14))
+//              .foregroundColor(.white)
+//          }
+//        }
       }
       Spacer()
       
@@ -164,10 +170,10 @@ public struct MediaPlayerControlsView : View {
   @ViewBuilder
   func MiddleControlsView() -> some View {
     PlayPauseButtonRepresentable(action: {
-      delegate?.controlDidTap(self, controlType: .playPause)
+      delegate?.controlDidTap(self, controlType: .playPause, didChangeControlEvent: nil)
       scheduleHideControls()
-    }, color: UIColor.white.cgColor, frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 35, height: 35)))
-    .frame(width: 70, height: 70)
+    }, color: UIColor.white.cgColor, frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 30, height: 30)))
+    .frame(width: 60, height: 60)
     .opacity(!isSeeking ? 1 : 0)
   }
   
@@ -177,13 +183,12 @@ public struct MediaPlayerControlsView : View {
       HStack {
         Spacer()
         CustomMenus(onSelect: { key, value in
-          delegate?.controlDidTap(self, controlType: .optionsMenu, optionMenuSelected: (key, value))
+          delegate?.controlDidTap(self, controlType: .optionsMenu, didChangeControlEvent: (key, value))
         })
-        .background(Color.blue)
-        .clipShape(Circle())
+//        .clipShape(Circle())
         
         Button(action: {
-          delegate?.controlDidTap(self, controlType: .fullscreen)
+          delegate?.controlDidTap(self, controlType: .fullscreen, didChangeControlEvent: !screenState.isFullScreen)
           scheduleHideControls()
         }, label: {
           Image(systemName: screenState.isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
@@ -192,12 +197,12 @@ public struct MediaPlayerControlsView : View {
             .font(.system(size: 18))
         })
         .padding(12)
-        .background(Color.blue)
         .clipShape(Circle())
       }
       .opacity(!isSeeking ? 1 : 0)
       
       InteractiveMediaSeekSlider(
+        player: mediaSource.player,
         isSeeking: $isSeeking,
         onSeekBegan: {
           cancelTimeoutWorkItem()
@@ -211,13 +216,13 @@ public struct MediaPlayerControlsView : View {
     .animation(.easeInOut, value: isControlsVisible)
   }
   
-  func toggleControls() {
+  fileprivate func toggleControls() {
     withAnimation(.easeInOut(duration: 0.25), {
       isControlsVisible.toggle()
     })
   }
   
-  func scheduleHideControls() {
+  fileprivate func scheduleHideControls() {
     DispatchQueue.main.async { [self] in
       if let timeoutWorkItem {
         timeoutWorkItem.cancel()
@@ -238,7 +243,7 @@ public struct MediaPlayerControlsView : View {
     }
   }
   
-  func cancelTimeoutWorkItem() {
+  fileprivate func cancelTimeoutWorkItem() {
     DispatchQueue.main.async { [self] in
       if let timeoutWorkItem {
         timeoutWorkItem.cancel()

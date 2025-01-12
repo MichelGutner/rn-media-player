@@ -44,9 +44,10 @@ open class MediaPlayerLayerManager: AVPlayerLayer {
     self.removeFromSuperlayer()
   }
   
-  /// Define o quadro (frame) do layer.
-  /// - Parameter frame: O quadro a ser aplicado.
+  /// Updates the frame of the layer to the specified CGRect.
+  /// - Parameter frame: The new frame to be applied to the layer.
+  ///   This defines the size and position of the layer in its superlayer's coordinate system.
   open func setLayerFrame(to frame: CGRect) {
-    self.frame = frame
+      self.frame = frame
   }
 }
