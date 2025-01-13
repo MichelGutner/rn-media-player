@@ -23,7 +23,6 @@ public protocol PlayerSourceViewDelegate : AnyObject {
   func mediaPlayer(_ player: PlayerSource, didChangePlaybackState state: PlaybackState)
   func mediaPlayer(_ player: PlayerSource, duration: TimeInterval)
   func mediaPlayer(_ player: PlayerSource, mediaDidChangePlaybackRate rate: Float)
-  func mediaPlayer(_ player: PlayerSource, mediaIsPlayingDidChange isPlaying: Bool)
   func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool)
   func mediaPlayer(_ player: PlayerSource, didFailWithError error: (any Error)?)
 }
@@ -33,14 +32,33 @@ open class PlayerSource {
   fileprivate var startTime: Double = 0.0
   fileprivate var lastPlayerItem: AVPlayerItem?
   fileprivate let audioManager = MediaPlayerAudioManager()
+  fileprivate var cancellables: Set<AnyCancellable> = []
   
   fileprivate var playbackRate: Float = 1.0 {
     didSet {
       if oldValue != playbackRate {
         appConfig.log("[PlayerSource] Changing playback rate to \(playbackRate)")
-        if let player, playbackState == .playing {
-          player.rate = playbackRate
+        if playbackState == .playing {
+          player?.rate = playbackRate
         }
+      }
+    }
+  }
+  
+  open var playbackState: PlaybackState = .paused {
+    didSet {
+      if oldValue != playbackState {
+        switch playbackState {
+        case .playing: onPlay()
+        case .paused: onPause()
+        case .replay: onReplay()
+        case .waiting: break
+        case .ended: break
+          // implement if need call loop video
+//          onReplay()
+        case .error: break
+        }
+        delegate?.mediaPlayer(self, didChangePlaybackState: playbackState)
       }
     }
   }
@@ -66,14 +84,6 @@ open class PlayerSource {
     return (player.currentItem?.asset as? AVURLAsset)?.url
   }
   
-  open var isPlaying: Bool = false {
-    didSet {
-      if oldValue != isPlaying {
-        delegate?.mediaPlayer(self, mediaIsPlayingDidChange: isPlaying)
-      }
-    }
-  }
-  
   open var isReady: Bool = false {
     didSet {
       if oldValue != isReady {
@@ -85,17 +95,15 @@ open class PlayerSource {
   open func onPlay() {
     guard let player else { return }
     player.play()
-    isPlaying = true
-    playbackState = .playing
-    if player.rate != playbackRate {
-      setRate(to: playbackRate > 0 ? playbackRate : 1)
-    }
+    // This ensure that player layer not lock when playback returned from paused
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [self] in
+      player.rate = playbackRate
+    })
   }
   
   open func onPause() {
     guard let player else { return }
     player.pause()
-    isPlaying = false
     playbackState = .paused
   }
   
@@ -103,7 +111,6 @@ open class PlayerSource {
     guard let player else { return }
     player.seek(to: .zero)
     player.play()
-    isPlaying = true
     playbackState = .playing
   }
   
@@ -136,35 +143,11 @@ open class PlayerSource {
                 completionHandler: { _ in })
   }
   
-  open var playbackState: PlaybackState = .waiting {
-    didSet {
-      if oldValue != playbackState {
-        switch playbackState {
-        case .playing:
-          onPlay()
-        case .paused:
-          onPause()
-        case .replay:
-          onReplay()
-        case .waiting: break
-        case .ended: break
-          // implement if need call loop video
-//          onReplay()
-        case .error: break
-        }
-        delegate?.mediaPlayer(self, didChangePlaybackState: playbackState)
-      }
-    }
-  }
-  
   open func setPlaybackState(to state: PlaybackState) {
     playbackState = state
   }
   
   open func setRate(to rate: Float) {
-    if (rate == 0) {
-      setPlaybackState(to: .paused)
-    }
     self.playbackRate = rate
   }
   
@@ -182,9 +165,6 @@ open class PlayerSource {
     }
     
     lastPlayerItem = playerItem
-    
-//    NotificationCenter.default.addObserver(self, selector: #selector(didConnectPlayerLayer), name: UIApplication.willEnterForegroundNotification, object: nil)
-//    NotificationCenter.default.addObserver(self, selector: #selector(didDisconnectPlayerLayer), name: UIApplication.didEnterBackgroundNotification, object: nil)
   }
   
   @objc fileprivate func didFinishPlaying() {
@@ -194,7 +174,6 @@ open class PlayerSource {
       }
       
       self.playbackState = .ended
-      self.isPlaying = false
       appConfig.log("Media Player has finished playing.")
     }
   }
@@ -208,6 +187,7 @@ open class PlayerSource {
     
     let startTime = source?["startTime"] as? Double ?? 0.0
     let externalMetadataDict = source?["metadata"] as? NSDictionary
+    let autoStart = source?["autoStart"] as? Bool ?? false
     let metadata = MediaPlayerItemMetadataManager(metadata: externalMetadataDict)
     
     let newPlayerItem = AVPlayerItem(url: videoURL)
@@ -218,23 +198,67 @@ open class PlayerSource {
     completionHandler(strongPlayer)
     
     self.player = strongPlayer
-    appConfig.log("player: \(strongPlayer)")
     self.playerItem = newPlayerItem
     self.startTime = startTime
-    self.playbackState = .waiting
+    
+    if autoStart {
+      setPlaybackState(to: .playing)
+    }
     
     audioManager.activateAudioSession { isSuccess, error in
       if isSuccess {
-        appConfig.log("Audio session activated successfully.")
+        appConfig.log("[MediaPlayerManager] audio session activated successfully.")
       } else {
-        appConfig.log("Failed to activate audio session: \(error)")
+        appConfig.log("[MediaPlayerManager] failed to activate audio session: \(error)")
       }
     }
   }
   
+  open func setPlayerWithNewURL(_ url: String, completion: @escaping (_ success: Bool, _ error: Error?) -> Void) {
+      guard let newUrl = URL(string: url) else {
+          completion(false, NSError(domain: "InvalidURL", code: 0, userInfo: [NSLocalizedDescriptionKey: "The provided URL is invalid."]))
+          return
+      }
+      
+      if newUrl == self.assetURL {
+          return
+      }
+      
+    let currentTime = player?.currentTime() ?? CMTime.zero
+      let asset = AVURLAsset(url: newUrl)
+      let newPlayerItem = AVPlayerItem(asset: asset)
+      
+      // Substitui o item atual no player
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+          guard let self = self else {
+              completion(false, NSError(domain: "DeallocatedPlayer", code: 2, userInfo: [NSLocalizedDescriptionKey: "The player instance has been deallocated."]))
+              return
+          }
+          
+          self.player?.replaceCurrentItem(with: newPlayerItem)
+          self.player?.seek(to: currentTime)
+          
+          var playerItemStatusObservation: NSKeyValueObservation?
+          
+          // Observa o status do novo item
+          playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { item, _ in
+              if let error = item.error {
+                  playerItemStatusObservation?.invalidate()
+                  completion(false, error)
+                  return
+              }
+              
+              guard item.status == .readyToPlay else {
+                  return
+              }
+              
+              playerItemStatusObservation?.invalidate()
+              completion(true, nil)
+          }
+      }
+  }
+
   public func prepareToDeInit() {
-    NotificationCenter.default.removeObserver(self)
-    
     lastPlayerItem = nil
     playerItem = nil
     
@@ -256,7 +280,6 @@ open class PlayerSource {
       }
     }
     
-    isPlaying = false
     playbackState = .waiting
     isReady = false
   }

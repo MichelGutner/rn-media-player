@@ -21,10 +21,6 @@ const VideoPlayer =
 
 export const Video = (props: VideoPlayer) => {
   return (
-    <VideoPlayer
-      {...props}
-      style={{ ...props?.style, overflow: 'hidden' }}
-      rate={Number(props.rate)}
-    />
+    <VideoPlayer {...props} style={{ ...props?.style, overflow: 'hidden' }} />
   );
 };

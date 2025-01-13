@@ -66,13 +66,13 @@ public struct MediaPlayerControlsView : View {
       DoubleTapSeekControlView()
     )
     .overlay(
-        VStack {
-          HeaderControlsView()
-            .opacity(isControlsVisible ? 1 : 0)
-          Spacer()
-          BottomControlsView()
-            .opacity(isControlsVisible || isSeeking ? 1 : 0)
-        }
+      VStack {
+        HeaderControlsView()
+          .opacity(isControlsVisible ? 1 : 0)
+        Spacer()
+        BottomControlsView()
+          .opacity(isControlsVisible || isSeeking ? 1 : 0)
+      }
         .padding(16)
         .background(Color.clear)
     )
@@ -86,20 +86,20 @@ public struct MediaPlayerControlsView : View {
       ZStack(alignment: .center) {
         CustomLoading(color: .white)
       }
-      .frame(maxWidth: .infinity, maxHeight: .infinity)
-      .background(Color.black)
-      .opacity(playbackState.isReady ? 0 : 1)
-      .animation(.easeInOut(duration: 0.35), value: playbackState.isReady)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.black)
+        .opacity(playbackState.isReady ? 0 : 1)
+        .animation(.easeInOut(duration: 0.35), value: playbackState.isReady)
     )
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .contentShape(Rectangle())
     .onTapGesture {
-            if playbackState.isReady {
-      toggleControls()
-      if isControlsVisible {
-        scheduleHideControls()
+      if playbackState.isReady {
+        toggleControls()
+        if isControlsVisible {
+          scheduleHideControls()
+        }
       }
-            }
     }
     .onAppear {
       playbackState.$isPlaying.sink { [self] isPlaying in

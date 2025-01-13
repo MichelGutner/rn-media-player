@@ -69,6 +69,7 @@ open class RCTMediaPlayerLayerController : UIViewController {
   open func prepareToDeInit() {
     playerLayer.detachPlayer()
     cancellables.removeAll()
+    self.delegate?.playerLayerControlView(self, isReadyForDisplay: false)
   }
   
   open func addContentOverlayController(with controller: UIViewController) {
@@ -185,7 +186,7 @@ open class RCTMediaPlayerLayerController : UIViewController {
       }
       playerLayer.videoGravity = .resizeAspect
       
-      self.delegate?.playerLayerControlView(self, didRequestControl: .pinchToZoom, didChangeState: ["currentZoom": "resizeAspect"]) 
+      self.delegate?.playerLayerControlView(self, didRequestControl: .pinchToZoom, didChangeState: ["currentZoom": "resizeAspect"])
     }
   }
   
