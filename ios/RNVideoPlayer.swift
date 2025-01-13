@@ -206,7 +206,7 @@ extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
   func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool) {
     appConfig.log("[PlayerSourceDelegate] isReadyToDisplay -> \(isReadyToDisplay)")
     PlaybackStateObservable.setIsReadyForDisplay(to: isReadyToDisplay)
-    if isReadyToDisplay {
+    if entersFullScreenWhenPlaybackBegins {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
         self.playerLayerVC?.didPresentFullscreen()
       })

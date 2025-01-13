@@ -240,7 +240,6 @@ open class PlayerSource {
           
           var playerItemStatusObservation: NSKeyValueObservation?
           
-          // Observa o status do novo item
           playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { item, _ in
               if let error = item.error {
                   playerItemStatusObservation?.invalidate()
