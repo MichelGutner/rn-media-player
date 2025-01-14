@@ -12,8 +12,6 @@ import Combine
 @available(iOS 14.0, *)
 public protocol MediaPlayerControlsViewDelegate : AnyObject {
   func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, didChangeControlEvent event: Any?)
-  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, seekGestureValue value: Int)
-  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, optionMenuSelected option: ((String, Any)))
   func sliderDidChange(_ control: MediaPlayerControlsView, didChangeProgressFrom fromValue: Double, didChangeProgressTo toValue: Double)
 }
 
@@ -40,6 +38,7 @@ public struct MediaPlayerControlsView : View {
   @State private var showThumbnails: Bool = false
   
   @State private var startSliderProgressFrom = 0.0
+  @State private var isDraggingSlider: Bool = false
   
   @State private var isControlsVisible: Bool = true
   @State private var timeoutWorkItem: DispatchWorkItem?
@@ -116,11 +115,12 @@ public struct MediaPlayerControlsView : View {
       DoubleTapSeek(
         isTapped: $isTappedLeft,
         onSeek: { value, completed in
-          isSeeking = true
+          appConfig.log("value \(value)")
+          isDraggingSlider = true
           isControlsVisible = false
-          delegate?.controlDidTap(self, controlType: .seekGestureBackward, seekGestureValue: value)
+          self.delegate?.controlDidTap(self, controlType: .seekGestureBackward, didChangeControlEvent: value)
           if completed {
-            isSeeking = false
+            isDraggingSlider = false
           }
         }
       )
@@ -129,11 +129,11 @@ public struct MediaPlayerControlsView : View {
         isTapped: $isTappedRight,
         isForward: true,
         onSeek: { value, completed in
-          isSeeking = true
+          isDraggingSlider = true
           isControlsVisible = false
-          delegate?.controlDidTap(self, controlType: .seekGestureForward, seekGestureValue: value)
+          self.delegate?.controlDidTap(self, controlType: .seekGestureForward, didChangeControlEvent: value)
           if completed {
-            isSeeking = false
+            isDraggingSlider = false
           }
         }
       )
@@ -164,7 +164,7 @@ public struct MediaPlayerControlsView : View {
         .frame(width: 35, height: 35)
     }
     .offset(y: isControlsVisible ? 0 : -5)
-    .opacity(!isSeeking ? 1 : 0)
+    .opacity(!isDraggingSlider ? 1 : 0)
   }
   
   @ViewBuilder
@@ -174,7 +174,7 @@ public struct MediaPlayerControlsView : View {
       scheduleHideControls()
     }, color: UIColor.white.cgColor, frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 30, height: 30)))
     .frame(width: 60, height: 60)
-    .opacity(!isSeeking ? 1 : 0)
+    .opacity(!isDraggingSlider ? 1 : 0)
   }
   
   @ViewBuilder
@@ -185,7 +185,6 @@ public struct MediaPlayerControlsView : View {
         CustomMenus(onSelect: { key, value in
           delegate?.controlDidTap(self, controlType: .optionsMenu, didChangeControlEvent: (key, value))
         })
-//        .clipShape(Circle())
         
         Button(action: {
           delegate?.controlDidTap(self, controlType: .fullscreen, didChangeControlEvent: !screenState.isFullScreen)
@@ -199,20 +198,22 @@ public struct MediaPlayerControlsView : View {
         .padding(12)
         .clipShape(Circle())
       }
-      .opacity(!isSeeking ? 1 : 0)
+      .opacity(!isDraggingSlider ? 1 : 0)
       
       InteractiveMediaSeekSlider(
         player: mediaSource.player,
         isSeeking: $isSeeking,
         onSeekBegan: {
+          isDraggingSlider = true
           cancelTimeoutWorkItem()
         },
         onSeekEnded: { startProgress, endProgress in
+          isDraggingSlider = false
           scheduleHideControls()
           self.delegate?.sliderDidChange(self, didChangeProgressFrom: startProgress, didChangeProgressTo: endProgress)
         })
     }
-    .offset(y: isControlsVisible ? 0 : 5)
+    .offset(y: isControlsVisible || isDraggingSlider || isSeeking ? 0 : 5)
     .animation(.easeInOut, value: isControlsVisible)
   }
   

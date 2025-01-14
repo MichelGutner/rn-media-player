@@ -88,16 +88,16 @@ struct InteractiveMediaSeekSlider : View {
 //            NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
             
 
+            onSeekEnded?(lastProgress, progress)
             
             player?.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
               if completed {
-                isSeeking = false
-                onSeekEnded?(lastProgress, progress)
+                isSeeking = false    
               }
             }
           }
         )
-        .frame(height: 20)
+        .frame(height: 30)
         
         HStack {
           TimeCodes(time: $currentTime, UIControlsProps: .constant(.none))

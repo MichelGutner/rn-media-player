@@ -16,6 +16,7 @@ public enum PlaybackState : Int {
   case ended = 3
   case error = 4
   case replay = 5
+  case none = 9
 }
 
 public protocol PlayerSourceViewDelegate : AnyObject {
@@ -45,7 +46,7 @@ open class PlayerSource {
     }
   }
   
-  open var playbackState: PlaybackState = .paused {
+  open var playbackState: PlaybackState = .none {
     didSet {
       if oldValue != playbackState {
         switch playbackState {
@@ -57,6 +58,7 @@ open class PlayerSource {
           // implement if need call loop video
 //          onReplay()
         case .error: break
+        case .none: break
         }
         delegate?.mediaPlayer(self, didChangePlaybackState: playbackState)
       }
@@ -92,22 +94,21 @@ open class PlayerSource {
     }
   }
   
-  open func onPlay() {
+  fileprivate func onPlay() {
     guard let player else { return }
     player.play()
     // This ensure that player layer not lock when playback returned from paused
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [self] in
-      player.rate = playbackRate
+      player.rate = playbackRate > 0 ? playbackRate : 1
     })
   }
   
-  open func onPause() {
+  fileprivate func onPause() {
     guard let player else { return }
     player.pause()
-    playbackState = .paused
   }
   
-  open func onReplay() {
+  fileprivate func onReplay() {
     guard let player else { return }
     player.seek(to: .zero)
     player.play()
@@ -148,6 +149,9 @@ open class PlayerSource {
   }
   
   open func setRate(to rate: Float) {
+    if (rate.isZero) {
+      setPlaybackState(to: .waiting)
+    }
     self.playbackRate = rate
   }
   
@@ -201,7 +205,8 @@ open class PlayerSource {
     self.playerItem = newPlayerItem
     self.startTime = startTime
     
-    if autoStart {
+    if autoStart, playbackState != .waiting {
+      appConfig.log("waiting for player to become ready playbackState \(playbackState.rawValue)")
       setPlaybackState(to: .playing)
     }
     
@@ -221,41 +226,55 @@ open class PlayerSource {
       }
       
       if newUrl == self.assetURL {
+        completion(false, nil)
           return
       }
       
-    let currentTime = player?.currentTime() ?? CMTime.zero
+      let currentTime = player?.currentTime() ?? .zero
       let asset = AVURLAsset(url: newUrl)
       let newPlayerItem = AVPlayerItem(asset: asset)
       
-      // Substitui o item atual no player
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+      asset.loadValuesAsynchronously(forKeys: ["playable"]) { [weak self] in
           guard let self = self else {
               completion(false, NSError(domain: "DeallocatedPlayer", code: 2, userInfo: [NSLocalizedDescriptionKey: "The player instance has been deallocated."]))
               return
           }
           
-          self.player?.replaceCurrentItem(with: newPlayerItem)
-          self.player?.seek(to: currentTime)
+          var error: NSError?
+          let status = asset.statusOfValue(forKey: "playable", error: &error)
           
-          var playerItemStatusObservation: NSKeyValueObservation?
+          guard status == .loaded else {
+              DispatchQueue.main.async {
+                  completion(false, error ?? NSError(domain: "AssetNotPlayable", code: 3, userInfo: [NSLocalizedDescriptionKey: "The asset is not playable."]))
+              }
+              return
+          }
           
-          playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { item, _ in
-              if let error = item.error {
+          DispatchQueue.main.async {
+              self.player?.replaceCurrentItem(with: newPlayerItem)
+              self.player?.seek(to: currentTime, toleranceBefore: .zero, toleranceAfter: .zero)
+              
+              // Observa o status do novo item
+              var playerItemStatusObservation: NSKeyValueObservation?
+              playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { item, _ in
+                  if let itemError = item.error {
+                      playerItemStatusObservation?.invalidate()
+                      completion(false, itemError)
+                      return
+                  }
+                  
+                  guard item.status == .readyToPlay else {
+                      return
+                  }
+                  
                   playerItemStatusObservation?.invalidate()
-                  completion(false, error)
-                  return
+                  completion(true, nil)
               }
-              
-              guard item.status == .readyToPlay else {
-                  return
-              }
-              
-              playerItemStatusObservation?.invalidate()
-              completion(true, nil)
           }
       }
   }
+
+
 
   public func prepareToDeInit() {
     lastPlayerItem = nil

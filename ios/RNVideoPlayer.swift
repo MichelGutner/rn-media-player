@@ -101,6 +101,7 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
     didSet {
       let url = replaceMediaUrl
       if (url.isEmpty) { return }
+      appConfig.log("url")
       mediaSource.setPlayerWithNewURL(url) { success, error in
         if success {
           appConfig.log("[PlayerSource] player updated successfully.")
@@ -251,10 +252,13 @@ extension RNVideoPlayerViewX : MediaPlayerControlsViewDelegate {
       case .paused:
         mediaSource.setPlaybackState(to: .playing)
         sendEvent(.onMediaPlayPause, true)
-      case .waiting: break
+      case .waiting:
+        mediaSource.setPlaybackState(to: .playing)
+        sendEvent(.onMediaPlayPause, true)
       case .ended: mediaSource.setPlaybackState(to: .replay)
       case .error: break
       case .replay: break
+      case .none: break
       }
     case .fullscreen:
       if event as! Bool {
@@ -268,39 +272,17 @@ extension RNVideoPlayerViewX : MediaPlayerControlsViewDelegate {
         mediaSource.setRate(to: values.1 as! Float)
       }
       onMenuItemSelected?(["name": values.0, "value": values.1])
-    case .seekGestureForward: break
-//      mediaSource.onForwardTime(event as! Int)
-    case .seekGestureBackward: break
-//      mediaSource.onBackwardTime(event as! Int)
+    case .seekGestureForward:
+      mediaSource.onForwardTime(event as! Int)
+    case .seekGestureBackward:
+      mediaSource.onBackwardTime(event as! Int)
     }
-  }
-  
-  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, seekGestureValue value: Int) {
-    //
-  }
-  
-  func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, optionMenuSelected option: ((String, Any))) {
-    //
   }
   
   func sliderDidChange(_ control: MediaPlayerControlsView, didChangeProgressFrom fromValue: Double, didChangeProgressTo toValue: Double) {
+    appConfig.log("from \(fromValue) to \(toValue)")
     //
   }
-  
-  func controlView(_ controlView: MediaPlayerControlView, didButtonPressed buttonType: MediaPlayerControlButtonType, actionState: MediaPlayerControlActionState?, actionValues: Any?) {
-    switch buttonType {
-    case .playPause: break
-    case .fullscreen:
-      ScreenStateObservable.setFullscreenState(to: actionState == .fullscreenActive)
-    case .optionsMenu:
-      sendEvent(.onMenuItemSelected, actionValues!)
-    case .seekGestureForward: break
-//      playerSource?.onForwardTime(actionValues as! Int)
-    case .seekGestureBackward: break
-//      playerSource?.onBackwardTime(actionValues as! Int)
-    }
-  }
-
 }
 
 //@available(iOS 14.0, *)

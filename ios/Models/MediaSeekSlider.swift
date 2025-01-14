@@ -50,7 +50,7 @@ class MediaSeekSlider: UIView {
     backgroundBar.addSubview(progressBar)
     
     thumbView.backgroundColor = .clear
-    thumbView.frame.size = CGSize(width: 35, height: 35)
+    thumbView.frame.size = CGSize(width: 45, height: 45)
     thumbView.layer.cornerRadius = thumbView.bounds.width / 2
     addSubview(thumbView)
     thumbView.layer.zPosition = 10
