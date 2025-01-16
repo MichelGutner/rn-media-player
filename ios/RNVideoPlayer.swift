@@ -17,18 +17,6 @@ class RNVideoPlayer: RCTViewManager {
   }
 }
 
-//public class RCTEventDispatcher: NSObject {
-//  @objc var onMediaCompleted: RCTBubblingEventBlock?
-//  public func sendEvent(_ event: RCTEvent) {
-//    Swift.print("Event: \(event)")
-//  }
-//  @objc public func sendOnMediaBufferCompletedEvent() {
-//    Swift.print("Event: onMediaCompleted")
-//    onMediaCompleted?(["completed": true as Any])
-//  }
-//}
-
-
 
 class MediaPlayerEventDispatcher : UIView {
   @objc public var onMenuItemSelected: RCTBubblingEventBlock?
@@ -137,7 +125,7 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
               let url = thumbnails["sourceUrl"] as? String
         else { return }
         videoThumbnailGenerator = VideoThumbnailGenerator(videoURL: url) { image, completed in
-          ThumbnailManager.addThumbnail(image)
+          ThumbnailManager.setImage(image)
           if completed {
             appConfig.log("[Thumbnails] all images generated successfully")
           }
@@ -164,7 +152,7 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
     mediaSource.prepareToDeInit()
     playerLayerVC?.prepareToDeInit()
     videoThumbnailGenerator?.cancel()
-    ThumbnailManager.clearThumbnails()
+    ThumbnailManager.clearImages()
   }
   
   private func setup() {

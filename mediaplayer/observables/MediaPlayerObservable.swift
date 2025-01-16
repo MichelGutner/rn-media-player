@@ -50,13 +50,13 @@ public class ThumbnailManager: ObservableObject {
   private init() {}
   @Published public var images: [UIImage] = []
   
-  internal static func addThumbnail(_ thumbnail: UIImage) {
+  internal static func setImage(_ image: UIImage) {
     DispatchQueue.main.async {
-      ThumbnailManager.shared.images.append(thumbnail)
+      ThumbnailManager.shared.images.append(image)
     }
   }
   
-  internal static func clearThumbnails() {
+  internal static func clearImages() {
     DispatchQueue.main.async {
       ThumbnailManager.shared.images.removeAll()
     }
