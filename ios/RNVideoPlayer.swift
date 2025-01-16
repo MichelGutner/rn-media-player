@@ -69,6 +69,7 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
   fileprivate var playerLayerVC: RCTMediaPlayerLayerController?
   fileprivate var controlsVC: UIHostingController<MediaPlayerControlsView>?
   fileprivate var rootControlsView: MediaPlayerControlsView?
+  fileprivate var videoThumbnailGenerator: VideoThumbnailGenerator?
   fileprivate var isFullscreen: Bool = false
   
   fileprivate var cancellables: Set<AnyCancellable> = []
@@ -88,7 +89,6 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
   @objc var controlsStyles: NSDictionary? = [:]
   @objc var tapToSeek: NSDictionary? = [:]
   
-  
   @objc var rate: Float = 1.0 {
     didSet {
       if !rate.isNaN || oldValue != rate {
@@ -101,7 +101,6 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
     didSet {
       let url = replaceMediaUrl
       if (url.isEmpty) { return }
-      appConfig.log("url")
       mediaSource.setPlayerWithNewURL(url) { success, error in
         if success {
           appConfig.log("[PlayerSource] player updated successfully.")
@@ -131,7 +130,19 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
   
   @objc var thumbnails: NSDictionary? = [:] {
     didSet {
-      appConfig.thumbnails = thumbnails
+      if thumbnails != nil {
+        guard let thumbnails,
+              let enabled = thumbnails["isEnabled"] as? Bool,
+              enabled,
+              let url = thumbnails["sourceUrl"] as? String
+        else { return }
+        videoThumbnailGenerator = VideoThumbnailGenerator(videoURL: url) { image, completed in
+          ThumbnailManager.addThumbnail(image)
+          if completed {
+            appConfig.log("[Thumbnails] all images generated successfully")
+          }
+        }
+      }
     }
   }
   
@@ -152,6 +163,8 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
   override func removeFromSuperview() {
     mediaSource.prepareToDeInit()
     playerLayerVC?.prepareToDeInit()
+    videoThumbnailGenerator?.cancel()
+    ThumbnailManager.clearThumbnails()
   }
   
   private func setup() {
@@ -167,6 +180,9 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
       addSubview(playerLayerVC.view)
     }
 
+    if autoPlay {
+      mediaSource.setPlaybackState(to: .playing)
+    }
   }
   
   private func addNotificationsObservers() {
@@ -196,7 +212,7 @@ extension RNVideoPlayerViewX: RCTMediaPlayerLayerManagerProtocol {
       //
     case .fullscreen:
       DispatchQueue.main.async {
-        ScreenStateObservable.setFullscreenState(to: state as? Bool ?? false)
+        SharedScreenState.setFullscreenState(to: state as? Bool ?? false)
       }
     }
   }
@@ -206,11 +222,15 @@ extension RNVideoPlayerViewX: RCTMediaPlayerLayerManagerProtocol {
 extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
   func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool) {
     appConfig.log("[PlayerSourceDelegate] isReadyToDisplay -> \(isReadyToDisplay)")
-    PlaybackStateObservable.setIsReadyForDisplay(to: isReadyToDisplay)
+    SharedPlaybackState.setIsReadyForDisplay(to: isReadyToDisplay)
     if entersFullScreenWhenPlaybackBegins {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
         self.playerLayerVC?.didPresentFullscreen()
       })
+    }
+    
+    if autoPlay {
+      mediaSource.setPlaybackState(to: .playing)
     }
   }
   
@@ -236,7 +256,13 @@ extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
   
   func mediaPlayer(_ player: PlayerSource, didChangePlaybackState state: PlaybackState) {
     appConfig.log("[PlayerSourceDelegate] PlaybackState -> \(state)")
-    PlaybackStateObservable.updateIsPlaying(to: state == .playing)
+    SharedPlaybackState.updateIsPlaying(to: state == .playing)
+  }
+  
+  func mediaPlayer(_ player: PlayerSource, playerItemMetadata: [AVMetadataItem]?) {
+    let title = playerItemMetadata?.first { $0.identifier == .commonIdentifierTitle }?.stringValue ?? ""
+    let artist = playerItemMetadata?.first {$0.identifier == .commonIdentifierArtist }?.stringValue ?? ""
+    SharedMetadataIdentifier.setMetadata(title: title, artist: artist)
   }
 }
 

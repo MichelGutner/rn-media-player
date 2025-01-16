@@ -27,7 +27,7 @@ struct PlayPauseButtonRepresentable: UIViewRepresentable {
 
 class PlayPauseButton: UIButton {
   private var cancellables = Set<AnyCancellable>()
-  @ObservedObject private var playbackState = PlaybackStateObservable.shared
+  @ObservedObject private var playbackState = SharedPlaybackState.instance
   private var action: () -> Void
   private var color: CGColor?
   

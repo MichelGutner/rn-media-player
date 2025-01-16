@@ -9,6 +9,22 @@ import SwiftUI
 import AVKit
 import Combine
 
+public enum MediaPlayerControlButtonType {
+  case playPause
+  case fullscreen
+  case optionsMenu
+  case seekGestureForward
+  case seekGestureBackward
+}
+
+
+public enum MediaPlayerControlActionState : Int {
+  case fullscreenActive = 0
+  case fullscreenInactive = 1
+  case seekGestureForward = 2
+  case seekGestureBackward = 3
+}
+
 @available(iOS 14.0, *)
 public protocol MediaPlayerControlsViewDelegate : AnyObject {
   func controlDidTap(_ control: MediaPlayerControlsView, controlType: MediaPlayerControlButtonType, didChangeControlEvent event: Any?)
@@ -17,8 +33,9 @@ public protocol MediaPlayerControlsViewDelegate : AnyObject {
 
 @available(iOS 14.0, *)
 public struct MediaPlayerControlsView : View {
-  @ObservedObject private var screenState = ScreenStateObservable.shared
-  @ObservedObject private var playbackState = PlaybackStateObservable.shared
+  @ObservedObject private var screenState = SharedScreenState.instance
+  @ObservedObject private var playbackState = SharedPlaybackState.instance
+  @ObservedObject private var metadataIdentifier = SharedMetadataIdentifier.instance
   
   var mediaSource: PlayerSource
   @State private var isTappedRight: Bool = false
@@ -70,7 +87,7 @@ public struct MediaPlayerControlsView : View {
           .opacity(isControlsVisible ? 1 : 0)
         Spacer()
         BottomControlsView()
-          .opacity(isControlsVisible || isSeeking ? 1 : 0)
+          .opacity(isControlsVisible || isSeeking || isDraggingSlider ? 1 : 0)
       }
         .padding(16)
         .background(Color.clear)
@@ -145,17 +162,17 @@ public struct MediaPlayerControlsView : View {
     HStack(alignment: .top) {
       Group {
         // Header title
-//        if let title = mediaSession.currentItemtitle {
-//          if #available(iOS 15.0, *) {
-//            Text(title)
-//              .font(.system(size: 14))
-//              .foregroundStyle(.white)
-//          } else {
-//            Text(title)
-//              .font(.system(size: 14))
-//              .foregroundColor(.white)
-//          }
-//        }
+        let title = metadataIdentifier.title
+        
+          if #available(iOS 15.0, *) {
+            Text(title)
+              .font(.system(size: 14))
+              .foregroundStyle(.white)
+          } else {
+            Text(title)
+              .font(.system(size: 14))
+              .foregroundColor(.white)
+          }
       }
       Spacer()
       

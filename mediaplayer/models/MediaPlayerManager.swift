@@ -26,8 +26,8 @@ public protocol PlayerSourceViewDelegate : AnyObject {
   func mediaPlayer(_ player: PlayerSource, mediaDidChangePlaybackRate rate: Float)
   func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool)
   func mediaPlayer(_ player: PlayerSource, didFailWithError error: (any Error)?)
+  func mediaPlayer(_ player: PlayerSource, playerItemMetadata: [AVMetadataItem]?)
 }
-
 
 open class PlayerSource {
   fileprivate var startTime: Double = 0.0
@@ -165,6 +165,7 @@ open class PlayerSource {
     }
     
     if let item = playerItem {
+      delegate?.mediaPlayer(self, playerItemMetadata: playerItem?.externalMetadata ?? [])
       NotificationCenter.default.addObserver(self, selector: #selector(didFinishPlaying), name: .AVPlayerItemDidPlayToEndTime, object: item)
     }
     
@@ -191,7 +192,6 @@ open class PlayerSource {
     
     let startTime = source?["startTime"] as? Double ?? 0.0
     let externalMetadataDict = source?["metadata"] as? NSDictionary
-    let autoStart = source?["autoStart"] as? Bool ?? false
     let metadata = MediaPlayerItemMetadataManager(metadata: externalMetadataDict)
     
     let newPlayerItem = AVPlayerItem(url: videoURL)
@@ -204,11 +204,6 @@ open class PlayerSource {
     self.player = strongPlayer
     self.playerItem = newPlayerItem
     self.startTime = startTime
-    
-    if autoStart, playbackState != .waiting {
-      appConfig.log("waiting for player to become ready playbackState \(playbackState.rawValue)")
-      setPlaybackState(to: .playing)
-    }
     
     audioManager.activateAudioSession { isSuccess, error in
       if isSuccess {
@@ -273,9 +268,7 @@ open class PlayerSource {
           }
       }
   }
-
-
-
+  
   public func prepareToDeInit() {
     lastPlayerItem = nil
     playerItem = nil
@@ -300,124 +293,5 @@ open class PlayerSource {
     
     playbackState = .waiting
     isReady = false
-  }
-}
-
-//extension PlayerSource {
-//  fileprivate func addPlayerItemObservers(for item: AVPlayerItem) {
-//    item.addObserver(self, forKeyPath: "status", options: [.new], context: nil)
-//  }
-//  
-//  fileprivate func removePlayerItemObservers(for item: AVPlayerItem) {
-//    item.removeObserver(self, forKeyPath: "status")
-//  }
-//  
-//  override open func observeValue(
-//    forKeyPath keyPath: String?,
-//    of object: Any?,
-//    change: [NSKeyValueChangeKey : Any]?,
-//    context: UnsafeMutableRawPointer?)
-//  {
-//    if keyPath == #keyPath(AVPlayer.status) {
-//      if let playerItem = playerItem {
-//        switch playerItem.status {
-//        case .readyToPlay:
-//          if appConfig.shouldAutoPlay {
-//            player?.play()
-//            playbackState = .playing
-//          }
-//          DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-//            self.isReady = true
-//          }
-//          break
-//        case .unknown:
-//          self.playbackState = .waiting
-//        case .failed:
-//          self.delegate?.mediaPlayer(self, didFailWithError: playerItem.error)
-//          self.playbackState = .error
-//        @unknown default: break
-//        }
-//      }
-//    }
-//  }
-//}
-
-open class MediaPlayerAudioManager {
-    fileprivate var audioSession = AVAudioSession.sharedInstance()
-    fileprivate var errorDetails: [String: Any] = [:]
-    
-    open func activateAudioSession(onCompletion: @escaping (_ isSuccess: Bool, _ error: [String: Any]) -> Void) {
-        do {
-            try audioSession.setCategory(.playback, mode: .default, options: [])
-            try audioSession.setActive(true)
-            onCompletion(true, [:])
-        } catch let error as NSError {
-            errorDetails = [
-                NSLocalizedDescriptionKey: "Unable to activate the audio session.",
-                NSLocalizedFailureReasonErrorKey: "An error occurred while activating the audio session.",
-                NSLocalizedRecoverySuggestionErrorKey: "Check if another process is using the audio session or ensure the configuration is correct.",
-                NSUnderlyingErrorKey: error
-            ]
-            onCompletion(false, errorDetails)
-        }
-    }
-    
-    open func deactivateAudioSession(onCompletion: @escaping (_ isSuccess: Bool, _ error: [String: Any]) -> Void) {
-        do {
-            try audioSession.setActive(false)
-            onCompletion(true, [:])
-        } catch let error as NSError {
-            errorDetails = [
-                NSLocalizedDescriptionKey: "Unable to deactivate the audio session.",
-                NSLocalizedFailureReasonErrorKey: "An error occurred while deactivating the audio session.",
-                NSLocalizedRecoverySuggestionErrorKey: "Ensure no other processes are holding the audio session.",
-                NSUnderlyingErrorKey: error
-            ]
-            onCompletion(false, errorDetails)
-        }
-    }
-}
-
-open class MediaPlayerItemMetadataManager {
-  private let metadataIdentifier: AVMetadataIdentifier? = nil
-  private var metadata: NSDictionary
-  open var items: [AVMetadataItem] = []
-  
-  init(metadata: NSDictionary?) {
-    self.metadata = metadata ?? [:]
-    processMetadata()
-  }
-  
-  fileprivate func processMetadata() {
-    for (key, value) in metadata {
-      guard let keyString = key as? String,
-            let valueString = value as? String else {
-        continue
-      }
-      
-      guard let identifier = mapKeyToMetadataIdentifier(keyString) else {
-        continue
-      }
-      
-      let metadataItem = AVMutableMetadataItem()
-      metadataItem.identifier = identifier
-      metadataItem.value = valueString as NSString
-      metadataItem.locale = Locale.current
-      
-      items.append(metadataItem)
-    }
-  }
-  
-  fileprivate func mapKeyToMetadataIdentifier(_ key: String) -> AVMetadataIdentifier? {
-    switch key {
-    case "title":
-      return .commonIdentifierTitle
-    case "artist":
-      return .commonIdentifierArtist
-    case "albumName":
-      return .commonIdentifierAlbumName
-    default:
-      return nil
-    }
   }
 }

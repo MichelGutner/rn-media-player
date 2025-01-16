@@ -20,7 +20,7 @@ import AVKit
 struct RoutePickerView: UIViewRepresentable {
     func makeUIView(context: Context) -> AVRoutePickerView {
         let routePickerView = AVRoutePickerView()
-        routePickerView.activeTintColor = .white
+        routePickerView.activeTintColor = .blue
         routePickerView.tintColor = .white
         routePickerView.prioritizesVideoDevices = true
       
