@@ -34,8 +34,9 @@ public protocol MediaPlayerControlsViewDelegate : AnyObject {
 @available(iOS 14.0, *)
 public struct MediaPlayerControlsView : View {
   @ObservedObject private var screenState = SharedScreenState.instance
-  @ObservedObject private var playbackState = SharedPlaybackState.instance
+  @ObservedObject private var playback = PlaybackManager.shared
   @ObservedObject private var metadataIdentifier = SharedMetadataIdentifier.instance
+  @ObservedObject private var configs = RCTConfigManager.shared
   
   var mediaSource: PlayerSource
   @State private var isTappedRight: Bool = false
@@ -104,13 +105,13 @@ public struct MediaPlayerControlsView : View {
       }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
-        .opacity(playbackState.isReady ? 0 : 1)
-        .animation(.easeInOut(duration: 0.35), value: playbackState.isReady)
+        .opacity(playback.isReady ? 0 : 1)
+        .animation(.easeInOut(duration: 0.35), value: playback.isReady)
     )
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .contentShape(Rectangle())
     .onTapGesture {
-      if playbackState.isReady {
+      if playback.isReady {
         toggleControls()
         if isControlsVisible {
           scheduleHideControls()
@@ -118,7 +119,7 @@ public struct MediaPlayerControlsView : View {
       }
     }
     .onAppear {
-      playbackState.$isPlaying.sink { [self] isPlaying in
+      playback.$isPlaying.sink { [self] isPlaying in
         if isPlaying, !isSeeking, isControlsVisible {
           scheduleHideControls()
         }
@@ -130,9 +131,10 @@ public struct MediaPlayerControlsView : View {
   func DoubleTapSeekControlView() -> some View {
     HStack(spacing: StandardSizes.large55) {
       DoubleTapSeek(
+        value: configs.data.doubleTapToSeek?.value,
+        suffixLabel: configs.data.doubleTapToSeek?.suffixLabel,
         isTapped: $isTappedLeft,
         onSeek: { value, completed in
-          appConfig.log("value \(value)")
           isDraggingSlider = true
           isControlsVisible = false
           self.delegate?.controlDidTap(self, controlType: .seekGestureBackward, didChangeControlEvent: value)
@@ -143,6 +145,8 @@ public struct MediaPlayerControlsView : View {
       )
       
       DoubleTapSeek(
+        value: configs.data.doubleTapToSeek?.value,
+        suffixLabel: configs.data.doubleTapToSeek?.suffixLabel,
         isTapped: $isTappedRight,
         isForward: true,
         onSeek: { value, completed in
@@ -246,7 +250,7 @@ public struct MediaPlayerControlsView : View {
         timeoutWorkItem.cancel()
       }
       
-      if (playbackState.isPlaying) {
+      if (playback.isPlaying) {
         self.timeoutWorkItem = .init(block: { [self] in
           withAnimation(.easeInOut(duration: 0.35), {
             isControlsVisible = false

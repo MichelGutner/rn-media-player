@@ -15,7 +15,7 @@ public enum RCTLayerManagerActionType {
 
 public protocol RCTMediaPlayerLayerManagerProtocol: AnyObject {
   func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, didRequestControl action: RCTLayerManagerActionType, didChangeState state: Any?)
-  func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, isReadyForDisplay state: Bool)
+  func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, isReadyForDisplay state: Bool, duration: Double)
 }
 
 open class RCTMediaPlayerLayerController : UIViewController {
@@ -61,7 +61,7 @@ open class RCTMediaPlayerLayerController : UIViewController {
       .receive(on: DispatchQueue.main)
       .sink { [self] isReady in
         if isReady {
-          self.delegate?.playerLayerControlView(self, isReadyForDisplay: true)
+          self.delegate?.playerLayerControlView(self, isReadyForDisplay: true, duration: self.playerLayer.player?.currentItem?.duration.seconds ?? 0)
         }
       }.store(in: &cancellables)
   }
@@ -69,7 +69,7 @@ open class RCTMediaPlayerLayerController : UIViewController {
   open func prepareToDeInit() {
     playerLayer.detachPlayer()
     cancellables.removeAll()
-    self.delegate?.playerLayerControlView(self, isReadyForDisplay: false)
+    self.delegate?.playerLayerControlView(self, isReadyForDisplay: false, duration: 0)
   }
   
   open func addContentOverlayController(with controller: UIViewController) {

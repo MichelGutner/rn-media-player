@@ -85,7 +85,6 @@ export type VideoPlayer = Omit<ViewProps, 'style'> & {
   source: {
     url: string;
     startTime?: number;
-    autoStart?: boolean;
     metadata: {
       title?: string;
       artist?: string;

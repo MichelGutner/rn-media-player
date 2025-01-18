@@ -20,13 +20,11 @@ public enum PlaybackState : Int {
 }
 
 public protocol PlayerSourceViewDelegate : AnyObject {
-  func mediaPlayer(_ player: PlayerSource, didFinishPlayingWithError error: Error?)
   func mediaPlayer(_ player: PlayerSource, didChangePlaybackState state: PlaybackState)
-  func mediaPlayer(_ player: PlayerSource, duration: TimeInterval)
-  func mediaPlayer(_ player: PlayerSource, mediaDidChangePlaybackRate rate: Float)
   func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool)
-  func mediaPlayer(_ player: PlayerSource, didFailWithError error: (any Error)?)
+  func mediaPlayer(_ player: PlayerSource, loadFail error: (any Error)?)
   func mediaPlayer(_ player: PlayerSource, playerItemMetadata: [AVMetadataItem]?)
+  func mediaPlayer(_ control: PlayerSource, currentTime: Double, duration: Double, bufferingProgress: CGFloat)
 }
 
 open class PlayerSource {
@@ -34,11 +32,12 @@ open class PlayerSource {
   fileprivate var lastPlayerItem: AVPlayerItem?
   fileprivate let audioManager = MediaPlayerAudioManager()
   fileprivate var cancellables: Set<AnyCancellable> = []
+  fileprivate var timeObserver: Any?
   
   fileprivate var playbackRate: Float = 1.0 {
     didSet {
       if oldValue != playbackRate {
-        appConfig.log("[PlayerSource] Changing playback rate to \(playbackRate)")
+        appConfig.log("[MediaPlayerManager] Changing playback rate to \(playbackRate)")
         if playbackState == .playing {
           player?.rate = playbackRate
         }
@@ -49,6 +48,7 @@ open class PlayerSource {
   open var playbackState: PlaybackState = .none {
     didSet {
       if oldValue != playbackState {
+        appConfig.log("[MediaPlayerManager] Changing playback state to \(playbackState)")
         switch playbackState {
         case .playing: onPlay()
         case .paused: onPause()
@@ -95,23 +95,20 @@ open class PlayerSource {
   }
   
   fileprivate func onPlay() {
-    guard let player else { return }
-    player.play()
-    // This ensure that player layer not lock when playback returned from paused
+    player?.play()
+    // This ensure that player layer not freeze when playback returned from paused
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: { [self] in
-      player.rate = playbackRate > 0 ? playbackRate : 1
+      player?.rate = playbackRate > 0 ? playbackRate : 1
     })
   }
   
   fileprivate func onPause() {
-    guard let player else { return }
-    player.pause()
+    player?.pause()
   }
   
   fileprivate func onReplay() {
-    guard let player else { return }
-    player.seek(to: .zero)
-    player.play()
+    player?.seek(to: .zero)
+    player?.play()
     playbackState = .playing
   }
   
@@ -145,6 +142,7 @@ open class PlayerSource {
   }
   
   open func setPlaybackState(to state: PlaybackState) {
+    appConfig.log("PlayerSource setPlaybackState to \(state)")
     playbackState = state
   }
   
@@ -170,16 +168,13 @@ open class PlayerSource {
     }
     
     lastPlayerItem = playerItem
+    addPlayerItemObserve()
   }
   
   @objc fileprivate func didFinishPlaying() {
     if playbackState != .ended {
-      if let playerItem = playerItem {
-        delegate?.mediaPlayer(self, duration: CMTimeGetSeconds(playerItem.duration))
-      }
-      
       self.playbackState = .ended
-      appConfig.log("Media Player has finished playing.")
+      appConfig.log("[MediaPlayerManager] Media Player has finished playing.")
     }
   }
 
@@ -228,8 +223,8 @@ open class PlayerSource {
       let currentTime = player?.currentTime() ?? .zero
       let asset = AVURLAsset(url: newUrl)
       let newPlayerItem = AVPlayerItem(asset: asset)
-      
-      asset.loadValuesAsynchronously(forKeys: ["playable"]) { [weak self] in
+    
+    asset.loadValuesAsynchronously(forKeys: ["playable"]) { [weak self] in
           guard let self = self else {
               completion(false, NSError(domain: "DeallocatedPlayer", code: 2, userInfo: [NSLocalizedDescriptionKey: "The player instance has been deallocated."]))
               return
@@ -248,8 +243,7 @@ open class PlayerSource {
           DispatchQueue.main.async {
               self.player?.replaceCurrentItem(with: newPlayerItem)
               self.player?.seek(to: currentTime, toleranceBefore: .zero, toleranceAfter: .zero)
-              
-              // Observa o status do novo item
+            
               var playerItemStatusObservation: NSKeyValueObservation?
               playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { item, _ in
                   if let itemError = item.error {
@@ -269,7 +263,39 @@ open class PlayerSource {
       }
   }
   
+  fileprivate func addPlayerItemObserve() {
+    player?.currentItem?.publisher(for: \.status)
+      .receive(on: DispatchQueue.main)
+      .sink { [self] status in
+        switch status {
+        case .failed:
+          self.delegate?.mediaPlayer(self, loadFail: player?.currentItem?.error)
+        case .unknown: break
+        case .readyToPlay: break
+        @unknown default: break
+        }
+      }.store(in: &cancellables)
+    
+    timeObserver = player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 2), queue: .main) { [weak self] time in
+      guard let self = self else { return }
+      guard let timeRanges = self.playerItem?.loadedTimeRanges else { return }
+      
+      if self.playbackState == .paused { return }
+      if let firstTimeRange = timeRanges.first?.timeRangeValue {
+        let bufferedStart = CMTimeGetSeconds(firstTimeRange.start)
+        let bufferedDuration = CMTimeGetSeconds(firstTimeRange.duration)
+        let totalBuffering = bufferedStart + bufferedDuration
+        self.delegate?.mediaPlayer(self, currentTime: time.seconds, duration: (playerItem?.duration.seconds ?? 0), bufferingProgress: totalBuffering)
+      }
+    }
+  }
+  
   public func prepareToDeInit() {
+    if let timeObserver {
+      appConfig.log("[PlayerSource] Removed time observer.")
+      player?.removeTimeObserver(timeObserver)
+    }
+    
     lastPlayerItem = nil
     playerItem = nil
     
@@ -280,8 +306,6 @@ open class PlayerSource {
     player?.pause()
     player?.replaceCurrentItem(with: nil)
     player = nil
-    
-    
     
     audioManager.deactivateAudioSession { isSuccess, error in
       if isSuccess {

@@ -7,20 +7,31 @@
 
 import Combine
 
-open class SharedPlaybackState: ObservableObject {
-    public static let instance = SharedPlaybackState()
-    private init() {}
-    
-    @Published public var isPlaying: Bool = false
-    @Published public var isReady: Bool = false
-    
-    internal static func updateIsPlaying(to value: Bool) {
-      SharedPlaybackState.instance.isPlaying = value
-    }
+open class PlaybackManager: ObservableObject {
+  public static let shared = PlaybackManager()
+  private init() {}
   
-    internal static func setIsReadyForDisplay(to value: Bool) {
-      SharedPlaybackState.instance.isReady = value
-    }
+  @Published public var isPlaying: Bool = false
+  @Published public var isReady: Bool = false
+  @Published public var currentTime: Double = 0.0
+  @Published public var currentTimePercent: Double = 0.0
+  @Published public var duration: Double = 0.0
+  @Published public var buffering: CGFloat = 0.0
+  
+  internal static func updateIsPlaying(to value: Bool) {
+    PlaybackManager.shared.isPlaying = value
+  }
+  
+  internal static func setIsReadyForDisplay(to value: Bool) {
+    PlaybackManager.shared.isReady = value
+  }
+  
+  internal static func setPlaybackTimes(currentTime: Double, duration: Double, buffering: CGFloat) {
+    PlaybackManager.shared.currentTime = currentTime
+    PlaybackManager.shared.currentTimePercent = currentTime / duration
+    PlaybackManager.shared.duration = duration
+    PlaybackManager.shared.buffering = buffering
+  }
 }
 
 public class SharedScreenState: ObservableObject {
@@ -62,3 +73,52 @@ public class ThumbnailManager: ObservableObject {
     }
   }
 }
+
+public class RCTConfigManager : ObservableObject {
+  public static var shared = RCTConfigManager()
+  
+  private var doubleTapToSeek : NSDictionary = [
+    "value": 10,
+    "suffixLabel": "seconds"
+  ]
+  
+  @Published public var data: RCTConfigData!
+  
+  private init() {
+    data = RCTConfigData()
+  }
+
+  internal static func setDoubleTapToSeek(with config: NSDictionary? = [:]) {
+    let defaultConfig : NSDictionary = [
+      "value": 10,
+      "suffixLabel": "seconds"
+    ]
+    
+    let finalConfig = (config != nil && config?.count ?? 0 > 0) ? config! : defaultConfig
+    
+    appConfig.log("default finalConfig: \(finalConfig)")
+    
+    RCTConfigManager.shared.data.setDoubleTapToSeek(dictionary: finalConfig)
+  }
+}
+
+public class RCTConfigData {
+  public init() {}
+  
+    public struct DoubleTapConfig {
+        public let value: Int
+        public let suffixLabel: String
+
+        public init(dictionary: NSDictionary) {
+            self.value = dictionary["value"] as? Int ?? 0
+            self.suffixLabel = dictionary["suffixLabel"] as? String ?? ""
+        }
+    }
+
+    public var doubleTapToSeek: DoubleTapConfig!
+
+    public func setDoubleTapToSeek(dictionary: NSDictionary) {
+        self.doubleTapToSeek = DoubleTapConfig(dictionary: dictionary)
+    }
+}
+

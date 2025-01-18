@@ -14,7 +14,7 @@ public var timeObserver: Any? = nil
 
 @available(iOS 14.0, *)
 struct InteractiveMediaSeekSlider : View {
-  @ObservedObject private var playbackState = SharedPlaybackState.instance
+  @ObservedObject private var playback = PlaybackManager.shared
   @ObservedObject private var thumbnail = ThumbnailManager.shared
   
   var player: AVPlayer? = nil
@@ -86,9 +86,6 @@ struct InteractiveMediaSeekSlider : View {
             
             let targetTime = CMTime(seconds: progressInSeconds, preferredTimescale: 600)
             
-            //            NotificationCenter.default.post(name: .EventSeekBar, object: nil, userInfo: ["start": (lastProgress, lastProgressInSeconds), "ended": (progress, progressInSeconds)])
-            
-            
             onSeekEnded?(lastProgress, progress)
             
             player?.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
@@ -149,7 +146,6 @@ struct InteractiveMediaSeekSlider : View {
       self.duration = duration
       self.missingDuration = duration - time.seconds
       self.currentTime = time.seconds
-      //          mediaSession.updateNowPlayingInfo(time: time.seconds)
       
       let loadedTimeRanges = currentItem.loadedTimeRanges
       if let firstTimeRange = loadedTimeRanges.first?.timeRangeValue {

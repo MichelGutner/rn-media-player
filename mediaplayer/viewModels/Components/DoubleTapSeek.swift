@@ -5,13 +5,11 @@ struct DoubleTapSeek: View {
   @State private var showArrows: [Bool] = [false, false, false]
   @State private var resetDuration: TimeInterval = 0.7
   @State private var resetTimer: Timer?
+  var value: Int? = 10
+  var suffixLabel: String? = ""
   @Binding var isTapped: Bool
   var isForward: Bool = false
   var onSeek: ((Int, Bool) -> Void)?
-  
-//  var seekValue: Int? = 10
-//  var suffixSeekValue: String? = "seconds"
-  
   
   var body: some View {
     Circle()
@@ -31,7 +29,7 @@ struct DoubleTapSeek: View {
             .font(.title)
             .rotationEffect(.init(degrees: isForward ? 180 : 0))
             
-            Text("\(tappedQuantity * (15 ?? 10)) ".appending("segundos" ?? "seconds"))
+            Text("\(tappedQuantity * (value ?? 10)) ".appending(suffixLabel ?? "seconds"))
               .font(.caption)
               .fontWeight(.bold)
               .foregroundColor(.white)
@@ -45,9 +43,9 @@ struct DoubleTapSeek: View {
         self.isTapped = true
         tappedQuantity += 1
         if isForward {
-          onSeek?(10, false)
+          onSeek?((value ?? 10), false)
         } else {
-          onSeek?(10, false)
+          onSeek?((value ?? 10), false)
         }
 
         resetTimer?.invalidate()

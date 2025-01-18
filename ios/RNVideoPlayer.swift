@@ -19,14 +19,30 @@ class RNVideoPlayer: RCTViewManager {
 
 
 class MediaPlayerEventDispatcher : UIView {
-  @objc public var onMenuItemSelected: RCTBubblingEventBlock?
+  @objc var onMenuItemSelected: RCTBubblingEventBlock?
   @objc var onMediaPlayPause: RCTDirectEventBlock?
   @objc var onMediaError: RCTDirectEventBlock?
+  @objc var onMediaBuffering: RCTBubblingEventBlock?
+  @objc var onMediaSeekBar: RCTDirectEventBlock?
+  @objc var onMediaReady: RCTBubblingEventBlock?
+  @objc var onMediaCompleted: RCTBubblingEventBlock?
+  @objc var onFullScreenStateChanged: RCTDirectEventBlock?
+  @objc var onMediaBufferCompleted: RCTDirectEventBlock?
+  @objc var onMediaPinchZoom: RCTDirectEventBlock?
+  
+  @objc var onMediaRouter: RCTDirectEventBlock?
   
   public enum Dispatcher {
     case onMenuItemSelected
     case onMediaPlayPause
     case onMediaError
+    case onMediaBuffering
+    case onMediaSeekBar
+    case onMediaReady
+    case onMediaCompleted
+    case onFullScreenStateChanged
+    case onMediaBufferCompleted
+    case onMediaPinchZoom
   }
   
   func sendEvent(_ dispatcher: Dispatcher, _ receivedValue: Any) {
@@ -47,6 +63,20 @@ class MediaPlayerEventDispatcher : UIView {
           "fixSuggestion": error.userInfo[NSLocalizedRecoverySuggestionErrorKey]
         ]
       ])
+    case .onMediaBuffering:
+      onMediaBuffering?(receivedValue as? [AnyHashable : Any])
+    case .onMediaSeekBar:
+      onMediaSeekBar?(receivedValue as? [AnyHashable : Any])
+    case .onMediaReady:
+      onMediaReady?(receivedValue as? [AnyHashable : Any])
+    case .onMediaCompleted:
+      onMediaCompleted?(receivedValue as? [AnyHashable : Any])
+    case .onFullScreenStateChanged:
+      onFullScreenStateChanged?(receivedValue as? [AnyHashable : Any])
+    case .onMediaBufferCompleted:
+      onMediaBufferCompleted?(receivedValue as? [AnyHashable : Any])
+    case .onMediaPinchZoom:
+      onMediaPinchZoom?(receivedValue as? [AnyHashable : Any])
     }
   }
 }
@@ -61,21 +91,19 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
   fileprivate var isFullscreen: Bool = false
   
   fileprivate var cancellables: Set<AnyCancellable> = []
-  
-
-  @objc var onMediaBuffering: RCTBubblingEventBlock?
-  @objc var onMediaReady: RCTBubblingEventBlock?
-  @objc var onMediaCompleted: RCTBubblingEventBlock?
-  @objc var onFullScreenStateChanged: RCTDirectEventBlock?
-  @objc var onMediaBufferCompleted: RCTDirectEventBlock?
-  @objc var onMediaRouter: RCTDirectEventBlock?
-  @objc var onMediaSeekBar: RCTDirectEventBlock?
-  @objc var onMediaPinchZoom: RCTDirectEventBlock?
 
   @objc var entersFullScreenWhenPlaybackBegins: Bool = false
   
   @objc var controlsStyles: NSDictionary? = [:]
-  @objc var tapToSeek: NSDictionary? = [:]
+  
+  
+  @objc var doubleTapToSeek: NSDictionary? = nil {
+    didSet {
+      if oldValue != doubleTapToSeek {
+        RCTConfigManager.setDoubleTapToSeek(with: doubleTapToSeek)
+      }
+    }
+  }
   
   @objc var rate: Float = 1.0 {
     didSet {
@@ -85,19 +113,19 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
     }
   }
   
-  @objc var replaceMediaUrl: String = "" {
-    didSet {
-      let url = replaceMediaUrl
-      if (url.isEmpty) { return }
-      mediaSource.setPlayerWithNewURL(url) { success, error in
-        if success {
-          appConfig.log("[PlayerSource] player updated successfully.")
-        } else if let error = error {
-          appConfig.log("[PlayerSource] failed to update player: \(error.localizedDescription)")
-        }
+  @objc var replaceMediaUrl: String? = nil {
+      didSet {
+          guard let validUrl = replaceMediaUrl, !validUrl.isEmpty else { return }
+          mediaSource.setPlayerWithNewURL(validUrl) { success, error in
+              if success {
+                  appConfig.log("[PlayerSource] Player updated successfully.")
+              } else if let error = error {
+                  self.sendEvent(.onMediaError, error)
+              }
+          }
       }
-    }
   }
+
   
   @objc var autoPlay: Bool = false
   
@@ -168,6 +196,7 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
       addSubview(playerLayerVC.view)
     }
 
+    appConfig.log("teessttss, autoply: \(autoPlay)")
     if autoPlay {
       mediaSource.setPlaybackState(to: .playing)
     }
@@ -190,15 +219,17 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
 
 @available(iOS 14.0, *)
 extension RNVideoPlayerViewX: RCTMediaPlayerLayerManagerProtocol {
-  func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, isReadyForDisplay state: Bool) {
+  func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, isReadyForDisplay state: Bool, duration: Double) {
+    sendEvent(.onMediaReady, ["loaded": state, "duration": duration])
     mediaSource.setIsReadyToPlay(state)
   }
   
   func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, didRequestControl action: RCTLayerManagerActionType, didChangeState state: Any?) {
     switch action {
-    case .pinchToZoom: break
-      //
+    case .pinchToZoom:
+      sendEvent(.onMediaPinchZoom, state!)
     case .fullscreen:
+      sendEvent(.onFullScreenStateChanged, ["isFullscreen": state])
       DispatchQueue.main.async {
         SharedScreenState.setFullscreenState(to: state as? Bool ?? false)
       }
@@ -208,9 +239,16 @@ extension RNVideoPlayerViewX: RCTMediaPlayerLayerManagerProtocol {
 
 @available(iOS 14.0, *)
 extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
+  func mediaPlayer(_ control: PlayerSource, currentTime: Double, duration: Double, bufferingProgress: CGFloat) {
+    let timeInfo: [String: Any] = ["totalBuffered": bufferingProgress, "progress": currentTime]
+    let bufferCompleted: [String: Any] = ["completed": bufferingProgress >= duration]
+    sendEvent(.onMediaBuffering, timeInfo)
+    sendEvent(.onMediaBufferCompleted, bufferCompleted)
+  }
+  
   func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool) {
     appConfig.log("[PlayerSourceDelegate] isReadyToDisplay -> \(isReadyToDisplay)")
-    SharedPlaybackState.setIsReadyForDisplay(to: isReadyToDisplay)
+    PlaybackManager.setIsReadyForDisplay(to: isReadyToDisplay)
     if entersFullScreenWhenPlaybackBegins {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
         self.playerLayerVC?.didPresentFullscreen()
@@ -222,29 +260,16 @@ extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
     }
   }
   
-  func mediaPlayer(_ player: PlayerSource, didFinishPlayingWithError error: (any Error)?) {
-    //
-  }
-  
-  func mediaPlayer(_ player: PlayerSource, duration: TimeInterval) {
-    //
-  }
-  
-  func mediaPlayer(_ player: PlayerSource, mediaDidChangePlaybackRate rate: Float) {
-    //
-  }
-  
-  func mediaPlayer(_ player: PlayerSource, didFailWithError error: (any Error)?) {
-    //
-  }
-  
-  func mediaPlayer(_ player: PlayerSourceViewDelegate, didFinishPlayingWithError error: (any Error)?) {
-    //
+  func mediaPlayer(_ player: PlayerSource, loadFail error: (any Error)?) {
+    sendEvent(.onMediaError, error as Any)
   }
   
   func mediaPlayer(_ player: PlayerSource, didChangePlaybackState state: PlaybackState) {
-    appConfig.log("[PlayerSourceDelegate] PlaybackState -> \(state)")
-    SharedPlaybackState.updateIsPlaying(to: state == .playing)
+    let isFinished = state == .ended
+    if isFinished {
+      sendEvent(.onMediaCompleted, ["completed": true])
+    }
+    PlaybackManager.updateIsPlaying(to: state == .playing)
   }
   
   func mediaPlayer(_ player: PlayerSource, playerItemMetadata: [AVMetadataItem]?) {
@@ -263,16 +288,22 @@ extension RNVideoPlayerViewX : MediaPlayerControlsViewDelegate {
       case .playing:
         mediaSource.setPlaybackState(to: .paused)
         sendEvent(.onMediaPlayPause, false)
+        break
       case .paused:
         mediaSource.setPlaybackState(to: .playing)
         sendEvent(.onMediaPlayPause, true)
+        break
       case .waiting:
         mediaSource.setPlaybackState(to: .playing)
         sendEvent(.onMediaPlayPause, true)
+        break
       case .ended: mediaSource.setPlaybackState(to: .replay)
       case .error: break
       case .replay: break
-      case .none: break
+      case .none:
+        mediaSource.setPlaybackState(to: .playing)
+        sendEvent(.onMediaPlayPause, true)
+        break
       }
     case .fullscreen:
       if event as! Bool {
@@ -285,7 +316,7 @@ extension RNVideoPlayerViewX : MediaPlayerControlsViewDelegate {
       if (values.0 == "Speeds") {
         mediaSource.setRate(to: values.1 as! Float)
       }
-      onMenuItemSelected?(["name": values.0, "value": values.1])
+//      sendEvent(.onMenuItemSelected, event)
     case .seekGestureForward:
       mediaSource.onForwardTime(event as! Int)
     case .seekGestureBackward:
@@ -294,8 +325,11 @@ extension RNVideoPlayerViewX : MediaPlayerControlsViewDelegate {
   }
   
   func sliderDidChange(_ control: MediaPlayerControlsView, didChangeProgressFrom fromValue: Double, didChangeProgressTo toValue: Double) {
-    appConfig.log("from \(fromValue) to \(toValue)")
-    //
+    let lastProgressInSeconds = fromValue * (mediaSource.playerItem?.duration.seconds ?? 0)
+    let progressInSeconds = toValue * (mediaSource.playerItem?.duration.seconds ?? 0)
+    
+    let sliderProgressInfo = ["start": ["percent": fromValue, "seconds": lastProgressInSeconds], "ended": ["percent": toValue, "seconds": progressInSeconds]]
+    self.sendEvent(.onMediaSeekBar, sliderProgressInfo)
   }
 }
 
