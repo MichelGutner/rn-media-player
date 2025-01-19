@@ -18,7 +18,7 @@ class VideoPlayerViewController : UIViewController {
   private var playerLayer : AVPlayerLayer!
   
   private var currentZoomScale: CGFloat = 1.0
-  private var audioSession = AVAudioSession.sharedInstance()
+//  private var audioSession = AVAudioSession.sharedInstance()
   private var fullscreenVC = UIViewController()
   private let rootVC = UIApplication.shared.windows.first?.rootViewController
   

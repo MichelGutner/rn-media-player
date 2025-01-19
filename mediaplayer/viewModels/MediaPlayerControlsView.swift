@@ -182,7 +182,7 @@ public struct MediaPlayerControlsView : View {
       
       // Router Picker -- AirPlay
       RoutePickerView()
-        .frame(width: 35, height: 35)
+        .frame(width: 25, height: 25)
     }
     .offset(y: isControlsVisible ? 0 : -5)
     .opacity(!isDraggingSlider ? 1 : 0)
