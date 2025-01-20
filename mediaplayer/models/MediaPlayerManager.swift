@@ -114,18 +114,18 @@ open class PlayerSource {
   
   open func onBackwardTime(_ targetTime: Int) {
     guard let player else { return }
-    guard let currentItem = player.currentItem else { return }
+    guard let currentItem = player.currentItem, targetTime > 0 else { return }
     let currentTime = CMTimeGetSeconds(player.currentTime())
-    let newTime = max(currentTime - Double(targetTime), 0)
-    
-    if newTime < currentItem.duration.seconds, playbackState == .ended {
-      playbackState = .playing
-    }
-    
+    let newTime = currentTime - Double(targetTime)
+
     player.seek(to: CMTime(seconds: newTime, preferredTimescale: currentItem.duration.timescale),
                 toleranceBefore: .zero,
                 toleranceAfter: .zero,
                 completionHandler: { _ in })
+    
+    if newTime < currentItem.duration.seconds, playbackState == .ended {
+      playbackState = .playing
+    }
   }
   
   open func onForwardTime(_ targetTime: Int) {

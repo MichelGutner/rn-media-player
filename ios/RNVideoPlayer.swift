@@ -4,6 +4,7 @@ import UIKit
 import React
 import AVFoundation
 import Combine
+import MediaPlayer
 
 @available(iOS 14.0, *)
 @objc(RNVideoPlayer)
@@ -88,6 +89,7 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
   fileprivate var controlsVC: UIHostingController<MediaPlayerControlsView>?
   fileprivate var rootControlsView: MediaPlayerControlsView?
   fileprivate var videoThumbnailGenerator: VideoThumbnailGenerator?
+  fileprivate var remoteControls: RemoteControls?
   fileprivate var isFullscreen: Bool = false
   
   fileprivate var cancellables: Set<AnyCancellable> = []
@@ -133,6 +135,7 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
     didSet {
       mediaSource.setup(with: source) { [self] player in
         playerLayerVC = RCTMediaPlayerLayerController(player: player)
+        remoteControls = RemoteControls(player: player)
         setup()
       }
     }
@@ -187,16 +190,20 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
     appConfig.isLoggingEnabled.toggle()
     rootControlsView = MediaPlayerControlsView(mediaSource: mediaSource)
     rootControlsView?.delegate = self
+    
     controlsVC = UIHostingController(rootView: rootControlsView!)
     
     mediaSource.delegate = self
+    remoteControls?.delegate = self
+    
     if let playerLayerVC {
       playerLayerVC.addContentOverlayController(with: controlsVC!)
       playerLayerVC.delegate = self
       addSubview(playerLayerVC.view)
     }
-
-    appConfig.log("teessttss, autoply: \(autoPlay)")
+    
+    remoteControls?.makeNowPlayingInfo()
+    
     if autoPlay {
       mediaSource.setPlaybackState(to: .playing)
     }
@@ -216,6 +223,19 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
   }
 }
 
+@available(iOS 14.0, *)
+extension RNVideoPlayerViewX: RemoteControlsDelegate {
+  func remoteControls(_ remoteControls: RemoteControls, didReceive command: RemoteControlCommand) {
+    switch command {
+    case .play:
+      mediaSource.setPlaybackState(to: .playing)
+    case .pause:
+      mediaSource.setPlaybackState(to: .paused)
+    case .skipForward: break
+    case .skipBackward: break
+    }
+  }
+}
 
 @available(iOS 14.0, *)
 extension RNVideoPlayerViewX: RCTMediaPlayerLayerManagerProtocol {
@@ -244,6 +264,7 @@ extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
     let bufferCompleted: [String: Any] = ["completed": bufferingProgress >= duration]
     sendEvent(.onMediaBuffering, timeInfo)
     sendEvent(.onMediaBufferCompleted, bufferCompleted)
+    remoteControls?.setPlaybackTimes(currentTime: currentTime, duration: duration)
   }
   
   func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool) {
@@ -316,11 +337,14 @@ extension RNVideoPlayerViewX : MediaPlayerControlsViewDelegate {
       if (values.0 == "Speeds") {
         mediaSource.setRate(to: values.1 as! Float)
       }
-//      sendEvent(.onMenuItemSelected, event)
-    case .seekGestureForward:
-      mediaSource.onForwardTime(event as! Int)
+      sendEvent(.onMenuItemSelected, event)
+      break
     case .seekGestureBackward:
       mediaSource.onBackwardTime(event as! Int)
+      break
+    case .seekGestureForward:
+      mediaSource.onForwardTime(event as! Int)
+      break
     }
   }
   
@@ -332,236 +356,3 @@ extension RNVideoPlayerViewX : MediaPlayerControlsViewDelegate {
     self.sendEvent(.onMediaSeekBar, sliderProgressInfo)
   }
 }
-
-//@available(iOS 14.0, *)
-//class RNVideoPlayerView : UIView {
-//  private var mediaSession: MediaSessionManager? = nil
-//  private var eventsManager: RCTEvents? = nil
-//  private var videoPlayerView: VideoPlayerViewController? = .none
-//  private var player: AVPlayer? = nil
-//
-//  private var isInitialized = false
-//  @objc var menus: NSDictionary? = [:]
-//  @objc var thumbnails: NSDictionary? = [:]
-//  
-//  @objc var onMenuItemSelected: RCTBubblingEventBlock?
-//  @objc var onMediaBuffering: RCTBubblingEventBlock?
-//  @objc var onMediaReady: RCTBubblingEventBlock?
-//  @objc var onMediaCompleted: RCTBubblingEventBlock?
-//  @objc var onFullScreenStateChanged: RCTDirectEventBlock?
-//  @objc var onMediaError: RCTDirectEventBlock?
-//  @objc var onMediaBufferCompleted: RCTDirectEventBlock?
-//  @objc var onMediaPlayPause: RCTDirectEventBlock?
-//  @objc var onMediaRouter: RCTDirectEventBlock?
-//  @objc var onMediaSeekBar: RCTDirectEventBlock?
-//  @objc var onMediaPinchZoom: RCTDirectEventBlock?
-//
-//  @objc var entersFullScreenWhenPlaybackBegins: Bool = false
-//  @objc var controlsStyles: NSDictionary? = [:]
-//  @objc var tapToSeek: NSDictionary? = [:]
-////  
-////  @objc var source: NSDictionary? = [:] {
-////    didSet { setup() }
-////  }
-//  
-//  @objc var rate: Float = 0.0 {
-//    didSet {
-//      adjustPlaybackRate(to: rate)
-//    }
-//  }
-//  
-//  @objc var replaceMediaUrl: String = "" {
-//    didSet {
-//      let url = replaceMediaUrl
-//      if (url.isEmpty) { return }
-//      updatePlayerWithNewURL(url)
-//    }
-//  }
-//  
-//  @objc var autoPlay: Bool = false {
-//    didSet {
-//      if autoPlay {
-//        appConfig.shouldAutoPlay = true
-//      }
-//    }
-//  }
-//  
-//  override init(frame: CGRect) {
-//    super.init(frame: frame)
-//  }
-//  
-//  required init?(coder: NSCoder) {
-//    fatalError("init(coder:) has not been implemented")
-//  }
-//  
-//  @objc var resizeMode: NSString = "contain"
-//  
-//  
-////  private func setup() {
-////    appConfig.isLoggingEnabled.toggle()
-////    mediaPlayerVC = MediaPlayerAdapterView()
-////    mediaPlayerVC?.setup(with: source)
-////
-////    if let wrapper = mediaPlayerVC {
-////      wrapper.frame = bounds
-////      addSubview(wrapper)
-////    }
-////  }
-//  
-//  private func setupPlayer() {
-//    mediaSession = MediaSessionManager()
-//    mediaSession?.entersFullScreenWhenPlaybackBegins = entersFullScreenWhenPlaybackBegins
-//    guard let mediaSession else { return }
-//    videoPlayerView?.releaseResources()
-//    guard let urlString = source?["url"] as? String,
-//          let videoURL = URL(string: urlString) else {
-//      return
-//    }
-//    let startTime = source?["startTime"] as? Double ?? 0
-//    
-//    DispatchQueue.main.async { [self] in
-//      self.player = AVPlayer(url: videoURL)
-//      self.player?.seek(to: CMTime(seconds: startTime, preferredTimescale: 1))
-//      
-//      if self.autoPlay == true {
-//          self.player?.play()
-//      }
-//      
-//      if let metadata = source?["metadata"] as? NSDictionary {
-//        player?.currentItem!.externalMetadata = createMetadata(for: metadata)
-//      }
-//      
-//      if let tapToSeek {
-//        guard let suffix = tapToSeek["suffixLabel"] as? String,
-//              let value = tapToSeek["value"] as? Int else { return }
-//        mediaSession.tapToSeek = (value, suffix)
-//      }
-//      
-//      if let player {
-//        eventsManager =  RCTEvents(
-//          onVideoProgress: onMediaBuffering,
-//          onError: onMediaError,
-//          onCompleted: onMediaCompleted,
-//          onFullscreen: onFullScreenStateChanged,
-//          onPlayPause: onMediaPlayPause,
-//          onMediaRouter: onMediaRouter,
-//          onSeekBar: onMediaSeekBar,
-//          onReady: onMediaReady,
-//          onPinchZoom: onMediaPinchZoom,
-//          onMenuItemSelected: onMenuItemSelected
-//        )
-//        eventsManager?.setupNotifications()
-//        
-//        videoPlayerView = VideoPlayerViewController(player: player, mediaSession: mediaSession, menus: menus)
-//        if let wrapper = videoPlayerView?.view {
-//          addSubview(wrapper)
-//        }
-//      }
-//      
-//      mediaSession.makeNowPlayingInfo()
-//      mediaSession.setupRemoteCommandCenter()
-//      mediaSession.setupPlayerObservation()
-//      if let thumbnails {
-//        mediaSession.thumbnailsDictionary = thumbnails
-//      }
-//    }
-//  }
-//  
-//  private func createMetadata(for source: NSDictionary?) -> [AVMetadataItem] {
-//    var metadataItems: [AVMetadataItem] = []
-//    
-//    if let source {
-//      for (key, value) in source {
-//        guard let keyString = key as? String,
-//              let valueString = value as? String else {
-//            continue
-//        }
-//        
-//        guard let identifier = mapKeyToMetadataIdentifier(keyString) else { continue }
-//        
-//        let metadataItem = AVMutableMetadataItem()
-//        metadataItem.identifier = identifier
-//        metadataItem.value = valueString as NSString
-//        metadataItem.locale = Locale.current
-//        
-//        metadataItems.append(metadataItem)
-//      }
-//    }
-//    
-//    return metadataItems
-//  }
-//  
-//  private func mapKeyToMetadataIdentifier(_ key: String) -> AVMetadataIdentifier? {
-//      switch key {
-//      case "title":
-//          return .commonIdentifierTitle
-//      case "artist":
-//          return .commonIdentifierArtist
-//      case "albumName":
-//          return .commonIdentifierAlbumName
-//      default:
-//          return nil
-//      }
-//  }
-//  
-//  override func layoutSubviews() {
-////    videoPlayerView?.view.frame = bounds
-//    mediaPlayerVC?.frame = bounds
-//    super.layoutSubviews()
-//  }
-//  
-//  override func removeFromSuperview() {
-//    videoPlayerView?.releaseResources()
-//  }
-//  
-//  @objc private func updatePlayerWithNewURL(_ url: String) {
-//    let newUrl = URL(string: url)
-//
-//    if (newUrl == mediaSession?.urlOfCurrentPlayerItem()) {
-//      return
-//    }
-//    
-//    let currentTime = mediaSession?.player?.currentItem?.currentTime() ?? CMTime.zero
-//    let asset = AVURLAsset(url: newUrl!)
-//    let newPlayerItem = AVPlayerItem(asset: asset)
-//    
-//    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: { [self] in
-//      eventsManager?.setupNotifications()
-//      
-//      player?.replaceCurrentItem(with: newPlayerItem)
-//      player?.seek(to: currentTime)
-//    
-//      var playerItemStatusObservation: NSKeyValueObservation?
-//      playerItemStatusObservation = newPlayerItem.observe(\.status, options: [.new]) { (item, _) in
-//        NotificationCenter.default.post(name: .AVPlayerErrors, object: extractPlayerItemError(item))
-//        guard item.status == .readyToPlay else {
-//          return
-//        }
-//        playerItemStatusObservation?.invalidate()
-//      }
-//    })
-//  }
-//  
-//  @objc private func adjustPlaybackRate(to rate: Float) {
-//    mediaSession?.newRate = rate
-//    DispatchQueue.main.async(execute: { [self] in
-//      if (self.player?.timeControlStatus == .playing) {
-//        self.player?.rate = rate
-//      }
-//    })
-//  }
-//}
-
-//@available(iOS 14.0, *)
-//extension RNVideoPlayerView {
-//  func videoGravity(_ videoResize: Resize) -> AVLayerVideoGravity  {
-//    switch (videoResize) {
-//    case .stretch:
-//      return .resize
-//    case .cover:
-//      return .resizeAspectFill
-//    case .contain:
-//      return .resizeAspect
-//    }
-//  }
-//}
