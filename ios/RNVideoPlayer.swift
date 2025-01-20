@@ -175,7 +175,7 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
   }
   
   override func layoutSubviews() {
-      playerLayerVC?.view.frame = bounds
+    playerLayerVC?.view.frame = bounds
     super.layoutSubviews()
   }
   
@@ -184,6 +184,7 @@ class RNVideoPlayerViewX : MediaPlayerEventDispatcher {
     playerLayerVC?.prepareToDeInit()
     videoThumbnailGenerator?.cancel()
     ThumbnailManager.clearImages()
+    remoteControls?.prepareToDeInit()
   }
   
   private func setup() {
@@ -239,11 +240,6 @@ extension RNVideoPlayerViewX: RemoteControlsDelegate {
 
 @available(iOS 14.0, *)
 extension RNVideoPlayerViewX: RCTMediaPlayerLayerManagerProtocol {
-  func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, isReadyForDisplay state: Bool, duration: Double) {
-    sendEvent(.onMediaReady, ["loaded": state, "duration": duration])
-    mediaSource.setIsReadyToPlay(state)
-  }
-  
   func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, didRequestControl action: RCTLayerManagerActionType, didChangeState state: Any?) {
     switch action {
     case .pinchToZoom:
@@ -271,7 +267,7 @@ extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
     appConfig.log("[PlayerSourceDelegate] isReadyToDisplay -> \(isReadyToDisplay)")
     PlaybackManager.setIsReadyForDisplay(to: isReadyToDisplay)
     if entersFullScreenWhenPlaybackBegins {
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1.2, execute: {
         self.playerLayerVC?.didPresentFullscreen()
       })
     }
@@ -279,6 +275,8 @@ extension RNVideoPlayerViewX: PlayerSourceViewDelegate {
     if autoPlay {
       mediaSource.setPlaybackState(to: .playing)
     }
+    
+    sendEvent(.onMediaReady, ["loaded": isReadyToDisplay, "duration": player.playerItem?.duration.seconds ?? 0.0])
   }
   
   func mediaPlayer(_ player: PlayerSource, loadFail error: (any Error)?) {
@@ -337,7 +335,7 @@ extension RNVideoPlayerViewX : MediaPlayerControlsViewDelegate {
       if (values.0 == "Speeds") {
         mediaSource.setRate(to: values.1 as! Float)
       }
-      sendEvent(.onMenuItemSelected, event)
+      sendEvent(.onMenuItemSelected, event as Any)
       break
     case .seekGestureBackward:
       mediaSource.onBackwardTime(event as! Int)

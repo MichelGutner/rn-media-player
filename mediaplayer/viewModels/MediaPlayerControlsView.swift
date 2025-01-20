@@ -42,20 +42,7 @@ public struct MediaPlayerControlsView : View {
   @State private var isTappedRight: Bool = false
   @State private var isTappedLeft: Bool = false
   
-  @State private var currentTime: Double = 0.0
-  @State private var duration: Double = 0.0
-  
-  @State private var bufferingProgress: CGFloat = 0.0
-  @State private var lastProgress: Double = 0.0
-  
   public weak var delegate: MediaPlayerControlsViewDelegate?
-  
-  @State private var seekerThumbImageSize: CGSize = .init(width: 12, height: 12)
-  @State private var thumbnailsUIImageFrames: [UIImage] = []
-  @State private var draggingImage: UIImage? = nil
-  @State private var showThumbnails: Bool = false
-  
-  @State private var startSliderProgressFrom = 0.0
   @State private var isDraggingSlider: Bool = false
   
   @State private var isControlsVisible: Bool = true
@@ -203,10 +190,13 @@ public struct MediaPlayerControlsView : View {
     VStack {
       HStack {
         Spacer()
+        // TODO: fix hit slop
         CustomMenus(onSelect: { key, value in
           delegate?.controlDidTap(self, controlType: .optionsMenu, didChangeControlEvent: (key, value))
         })
+        .background(Color.blue)
         
+        // TODO: fix hit slop
         Button(action: {
           delegate?.controlDidTap(self, controlType: .fullscreen, didChangeControlEvent: !screenState.isFullScreen)
           scheduleHideControls()

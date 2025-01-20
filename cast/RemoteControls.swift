@@ -137,4 +137,10 @@ open class RemoteControls {
       return .success
     }
   }
+  
+  open func prepareToDeInit() {
+    MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    MPNowPlayingInfoCenter.default().playbackState = .stopped
+  }
+
 }

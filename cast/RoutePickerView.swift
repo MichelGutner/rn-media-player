@@ -1,14 +1,4 @@
-//
-//  EvoPlayerSwiftUIView.swift
-//  Pods
-//
-//  Created by Michel Gutner on 09/11/24.
-//
-
-
-//
-//  EvoPlayerSwiftUIView.swift
-//  react-native-evo-player
+//  RoutePickerView.swift
 //
 //  Created by Michel Gutner on 07/11/24.
 //

@@ -271,7 +271,9 @@ open class PlayerSource {
         case .failed:
           self.delegate?.mediaPlayer(self, loadFail: player?.currentItem?.error)
         case .unknown: break
-        case .readyToPlay: break
+        case .readyToPlay:
+          self.delegate?.mediaPlayer(self, didChangeReadyToDisplay: true)
+          break
         @unknown default: break
         }
       }.store(in: &cancellables)

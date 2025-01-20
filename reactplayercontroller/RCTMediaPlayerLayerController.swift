@@ -15,11 +15,9 @@ public enum RCTLayerManagerActionType {
 
 public protocol RCTMediaPlayerLayerManagerProtocol: AnyObject {
   func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, didRequestControl action: RCTLayerManagerActionType, didChangeState state: Any?)
-  func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, isReadyForDisplay state: Bool, duration: Double)
 }
 
 open class RCTMediaPlayerLayerController : UIViewController {
-  fileprivate var cancellables: Set<AnyCancellable> = []
   fileprivate var playerLayer = MediaPlayerLayerManager()
   fileprivate var fullscreenController = UIViewController()
   fileprivate weak var contentOverlayController: UIViewController?
@@ -34,8 +32,7 @@ open class RCTMediaPlayerLayerController : UIViewController {
     super.init(nibName: nil, bundle: nil)
     playerLayer.attachPlayer(with: player)
     self.view.layer.addSublayer(playerLayer)
-    addObserve()
-    
+
     let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
     view.addGestureRecognizer(pinchGesture)
   }
@@ -56,20 +53,8 @@ open class RCTMediaPlayerLayerController : UIViewController {
     }
   }
   
-  fileprivate func addObserve() {
-    playerLayer.publisher(for: \.isReadyForDisplay)
-      .receive(on: DispatchQueue.main)
-      .sink { [self] isReady in
-        if isReady {
-          self.delegate?.playerLayerControlView(self, isReadyForDisplay: true, duration: self.playerLayer.player?.currentItem?.duration.seconds ?? 0)
-        }
-      }.store(in: &cancellables)
-  }
-  
   open func prepareToDeInit() {
     playerLayer.detachPlayer()
-    cancellables.removeAll()
-    self.delegate?.playerLayerControlView(self, isReadyForDisplay: false, duration: 0)
   }
   
   open func addContentOverlayController(with controller: UIViewController) {
@@ -173,7 +158,6 @@ open class RCTMediaPlayerLayerController : UIViewController {
       if isHorizontal {
         if (newScale > 1) {
           playerLayer.videoGravity = .resize
-//          NotificationCenter.default.post(name: .EventPinchZoom, object: nil, userInfo: ["currentZoom": "resize"])
           self.delegate?.playerLayerControlView(self, didRequestControl: .pinchToZoom, didChangeState: ["currentZoom": "resize"])
           return;
         }
