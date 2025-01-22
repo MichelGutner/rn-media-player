@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
 import { Platform, UIManager, requireNativeComponent } from 'react-native';
 import type { VideoPlayer } from './types';
@@ -20,11 +19,5 @@ const VideoPlayer =
       };
 
 export const Video = (props: VideoPlayer) => {
-  return (
-    <VideoPlayer
-      {...props}
-      style={{ ...props?.style, overflow: 'hidden' }}
-      rate={Number(props.rate)}
-    />
-  );
+  return <VideoPlayer {...props} style={{ ...props?.style }} />;
 };

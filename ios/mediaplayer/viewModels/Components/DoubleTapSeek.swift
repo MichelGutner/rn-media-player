@@ -5,17 +5,15 @@ struct DoubleTapSeek: View {
   @State private var showArrows: [Bool] = [false, false, false]
   @State private var resetDuration: TimeInterval = 0.7
   @State private var resetTimer: Timer?
+  var value: Int? = 10
+  var suffixLabel: String? = ""
   @Binding var isTapped: Bool
-  @ObservedObject var mediaSession: MediaSessionManager
   var isForward: Bool = false
-  
-//  var seekValue: Int? = 10
-//  var suffixSeekValue: String? = "seconds"
-  
+  var onSeek: ((Int, Bool) -> Void)?
   
   var body: some View {
     Circle()
-      .fill(Color.black).opacity(VariantPercent.p10)
+      .fill(Color.black).opacity(0.1)
       .scaleEffect(2, anchor: isForward ? .leading : .trailing)
       .opacity(isTapped ? 1 : 0)
       .overlay(
@@ -31,7 +29,7 @@ struct DoubleTapSeek: View {
             .font(.title)
             .rotationEffect(.init(degrees: isForward ? 180 : 0))
             
-            Text("\(!isForward ? "- " : "")\(tappedQuantity * (mediaSession.tapToSeek?.seekValue ?? 10)) ".appending(mediaSession.tapToSeek?.suffixSeekValue ?? "seconds"))
+            Text("\(tappedQuantity * (value ?? 10)) ".appending(suffixLabel ?? "seconds"))
               .font(.caption)
               .fontWeight(.bold)
               .foregroundColor(.white)
@@ -43,12 +41,11 @@ struct DoubleTapSeek: View {
       .contentShape(Rectangle())
       .onTapGesture(count: isTapped ? 1 : 2) {
         self.isTapped = true
-        mediaSession.isSeeking = true
         tappedQuantity += 1
         if isForward {
-          mediaSession.onForwardTime(mediaSession.tapToSeek?.seekValue ?? 10)
+          onSeek?((value ?? 10), false)
         } else {
-          mediaSession.onBackwardTime(mediaSession.tapToSeek?.seekValue ?? 10)
+          onSeek?((value ?? 10), false)
         }
 
         resetTimer?.invalidate()
@@ -74,8 +71,7 @@ struct DoubleTapSeek: View {
         resetTimer = Timer.scheduledTimer(withTimeInterval: resetDuration, repeats: false) { _ in
           self.isTapped = false
           tappedQuantity = 0
-          mediaSession.scheduleHideControls()
-          mediaSession.isSeeking = false
+          onSeek?(0, true)
         }
       }
   }

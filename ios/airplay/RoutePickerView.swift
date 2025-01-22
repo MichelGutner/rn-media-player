@@ -1,14 +1,4 @@
-//
-//  EvoPlayerSwiftUIView.swift
-//  Pods
-//
-//  Created by Michel Gutner on 09/11/24.
-//
-
-
-//
-//  EvoPlayerSwiftUIView.swift
-//  react-native-evo-player
+//  RoutePickerView.swift
 //
 //  Created by Michel Gutner on 07/11/24.
 //
@@ -20,7 +10,7 @@ import AVKit
 struct RoutePickerView: UIViewRepresentable {
     func makeUIView(context: Context) -> AVRoutePickerView {
         let routePickerView = AVRoutePickerView()
-        routePickerView.activeTintColor = .white
+        routePickerView.activeTintColor = .blue
         routePickerView.tintColor = .white
         routePickerView.prioritizesVideoDevices = true
       

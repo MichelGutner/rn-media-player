@@ -9,22 +9,21 @@ import SwiftUI
 
 @available(iOS 14.0, *)
 struct CustomMenus: View {
-    @Binding var menus: NSDictionary?
+  public var onSelect: ((String, Any)) -> Void
     @State private var selectedOptionItem: [String: String] = [:]
     
-    var body: some View {
-        Menu {
-            ForEach(menuOptions, id: \.key) { option in
-                createMenu(for: option)
-            }
-        } label: {
-            Image(systemName: "ellipsis.circle")
-                .padding(EdgeInsets.init(top: 12, leading: 12, bottom: 4, trailing: 12))
-                .padding(.bottom, 0)
-                .foregroundColor(.white)
-                .font(.system(size: 22))
-        }
+  var body: some View {
+    Menu {
+      ForEach(menuOptions, id: \.key) { option in
+        createMenu(for: option)
+      }
+    } label: {
+      Image(systemName: "ellipsis.circle")
+        .foregroundColor(.white)
+        .font(.system(size: 16))
+        .padding(12)
     }
+  }
     
     // MARK: - Subviews
     private func createMenu(for option: (key: String, values: NSDictionary)) -> some View {
@@ -46,7 +45,7 @@ struct CustomMenus: View {
             return Button(action: {
                 if let value = item["value"] {
                     selectedOptionItem[option.key] = name
-                  NotificationCenter.default.post(name: .EventMenuSelectOption, object: (option.key, value))
+                  onSelect((option.key, value))
                 }
             }) {
               if #available(iOS 14.5, *) {
@@ -71,7 +70,7 @@ struct CustomMenus: View {
     
 
     private var menuOptions: [(key: String, values: NSDictionary)] {
-        guard let menus = menus else { return [] }
+      guard let menus = appConfig.playbackMenu else { return [] }
         return menus.compactMap { (key, value) in
             guard let key = key as? String, let values = value as? NSDictionary else { return nil }
             return (key: key, values: values)

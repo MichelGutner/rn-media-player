@@ -12,9 +12,8 @@ import AVKit
 struct Thumbnails : View {
   @Binding var duration: Double
   var geometry: GeometryProxy
-  @Binding var UIControlsProps: Styles?
   
-  @Binding var sliderProgress: CGFloat
+  @Binding var sliderProgress: Double
   @Binding var isSeeking: Bool
   @Binding var draggingImage: UIImage?
   
@@ -31,10 +30,10 @@ struct Thumbnails : View {
             .resizable()
             .aspectRatio(contentMode: .fill)
             .frame(width: thumbSize.width, height: thumbSize.height)
-            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
-              RoundedRectangle(cornerRadius: CornerRadius.medium, style: .continuous)
-                .stroke(Color(uiColor: (UIControlsProps?.seekSlider.thumbnailBorderColor) ?? .white), lineWidth: 0.5)
+              RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color(uiColor: .white), lineWidth: 0.5)
             )
           Text(stringFromTimeInterval(interval: TimeInterval(truncating: (sliderProgress * duration) as NSNumber)))
             .font(.caption)

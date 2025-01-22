@@ -10,8 +10,7 @@
 
 RCT_EXPORT_VIEW_PROPERTY(source, NSDictionary);
 RCT_EXPORT_VIEW_PROPERTY(controlsStyles, NSDictionary)
-RCT_EXPORT_VIEW_PROPERTY(tapToSeek, NSDictionary)
-RCT_EXPORT_VIEW_PROPERTY(screenBehavior, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(doubleTapToSeek, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(thumbnails, NSDictionary)
 
 RCT_EXPORT_VIEW_PROPERTY(paused, BOOL);
@@ -21,20 +20,19 @@ RCT_EXPORT_VIEW_PROPERTY(rate, float)
 
 
 RCT_EXPORT_VIEW_PROPERTY(resizeMode, NSString)
-RCT_EXPORT_VIEW_PROPERTY(changeQualityUrl, NSString)
+RCT_EXPORT_VIEW_PROPERTY(replaceMediaUrl, NSString)
 
 
-RCT_EXPORT_VIEW_PROPERTY(onVideoProgress, RCTBubblingEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onCompleted, RCTBubblingEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onFullscreen, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onError, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onReady, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onBufferCompleted, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onBuffer, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onPlayPause, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMediaBuffering, RCTBubblingEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMediaCompleted, RCTBubblingEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onFullScreenStateChanged, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMediaError, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMediaReady, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMediaBufferCompleted, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMediaPlayPause, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onMediaRouter, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onSeekBar, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onPinchZoom, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMediaSeekBar, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMediaPinchZoom, RCTDirectEventBlock)
 
 RCT_EXPORT_VIEW_PROPERTY(menus, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(onMenuItemSelected, RCTBubblingEventBlock)

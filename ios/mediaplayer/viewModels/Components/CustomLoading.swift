@@ -12,7 +12,7 @@ import SwiftUI
 struct CustomLoading: View {
   let color: UIColor?
   @State var isLoading : Bool = false
-  @State var size = calculateSizeByWidth(36, VariantPercent.p20)
+  @State var size = calculateSizeByWidth(36, 0.2)
   var body: some View {
     Circle().trim(from: 0, to: 0.7)
       .stroke(Color(uiColor: color ?? .white), lineWidth: 3)
