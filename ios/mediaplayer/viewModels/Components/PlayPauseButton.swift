@@ -94,7 +94,7 @@ class PlayPauseButton: UIButton {
   private func animateLayerTransition() {
     let animation = CABasicAnimation(keyPath: "path")
     animation.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-    animation.duration = 0.5
+    animation.duration = 0.3
     
     if playbackState.isPlaying {
       applyAnimation(animation, from: playLeftLayer, to: pauseLeftLayer)

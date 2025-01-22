@@ -116,7 +116,7 @@ public struct MediaPlayerControlsView : View {
   
   @ViewBuilder
   func DoubleTapSeekControlView() -> some View {
-    HStack(spacing: StandardSizes.large55) {
+    HStack(spacing: 55) {
       DoubleTapSeek(
         value: configs.data.doubleTapToSeek?.value,
         suffixLabel: configs.data.doubleTapToSeek?.suffixLabel,
@@ -177,11 +177,15 @@ public struct MediaPlayerControlsView : View {
   
   @ViewBuilder
   func MiddleControlsView() -> some View {
-    PlayPauseButtonRepresentable(action: {
-      delegate?.controlDidTap(self, controlType: .playPause, didChangeControlEvent: nil)
-      scheduleHideControls()
-    }, color: UIColor.white.cgColor, frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 30, height: 30)))
-    .frame(width: 60, height: 60)
+    PlayPauseButtonRepresentable(
+      action: {
+        delegate?.controlDidTap(self, controlType: .playPause, didChangeControlEvent: nil)
+        scheduleHideControls()
+      },
+      color: UIColor.white.cgColor,
+      frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 35, height: 35))
+    )
+    .frame(width: 70, height: 70)
     .opacity(!isDraggingSlider ? 1 : 0)
   }
   
@@ -190,13 +194,10 @@ public struct MediaPlayerControlsView : View {
     VStack {
       HStack {
         Spacer()
-        // TODO: fix hit slop
         CustomMenus(onSelect: { key, value in
           delegate?.controlDidTap(self, controlType: .optionsMenu, didChangeControlEvent: (key, value))
         })
-        .background(Color.blue)
-        
-        // TODO: fix hit slop
+
         Button(action: {
           delegate?.controlDidTap(self, controlType: .fullscreen, didChangeControlEvent: !screenState.isFullScreen)
           scheduleHideControls()

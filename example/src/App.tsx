@@ -52,7 +52,7 @@ function App(): JSX.Element {
           metadata: { title, artist },
           startTime: 150,
         }}
-        // thumbnails={{ isEnabled: true, sourceUrl: uri }}
+        thumbnails={{ isEnabled: true, sourceUrl: uri }}
         style={{
           width: '100%',
           height: 300,

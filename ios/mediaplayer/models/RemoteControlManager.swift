@@ -15,13 +15,13 @@ public enum RemoteControlCommand {
   case skipBackward
 }
 
-public protocol RemoteControlsDelegate: AnyObject {
-  func remoteControls(_ remoteControls: RemoteControls, didReceive command: RemoteControlCommand)
+public protocol RemoteControlManagerDelegate: AnyObject {
+  func remoteControls(_ remoteControls: RemoteControlManager, didReceive command: RemoteControlCommand)
 }
 
-open class RemoteControls {
+open class RemoteControlManager {
   fileprivate var player: AVPlayer?
-  open weak var delegate: RemoteControlsDelegate?
+  open weak var delegate: RemoteControlManagerDelegate?
   fileprivate var nowPlayingInfo: [String : Any]? = [:]
   
   public init(player: AVPlayer?) {

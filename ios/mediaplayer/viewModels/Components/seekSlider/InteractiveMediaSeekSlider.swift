@@ -98,9 +98,9 @@ struct InteractiveMediaSeekSlider : View {
         .frame(height: 20)
         
         HStack {
-          TimeCodes(time: $currentTime, UIControlsProps: .constant(.none))
+          TimeCodes(time: $currentTime)
           Spacer()
-          TimeCodes(time: $missingDuration, UIControlsProps: .constant(.none), suffixValue: "-")
+          TimeCodes(time: $missingDuration, suffixValue: "-")
         }
       }
       .overlay(
@@ -109,7 +109,6 @@ struct InteractiveMediaSeekSlider : View {
             Thumbnails(
               duration: $duration,
               geometry: geometry,
-              UIControlsProps: .constant(.none),
               sliderProgress: $sliderProgress,
               isSeeking: $showThumbnails,
               draggingImage: $draggingImage

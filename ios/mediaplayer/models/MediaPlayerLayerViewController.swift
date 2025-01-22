@@ -8,20 +8,20 @@
 import AVFoundation
 import Combine
 
-public enum RCTLayerManagerActionType {
+public enum PlayerLayerViewControllerActionType {
   case pinchToZoom
   case fullscreen
 }
 
-public protocol RCTMediaPlayerLayerManagerProtocol: AnyObject {
-  func playerLayerControlView(_ playerLayer: RCTMediaPlayerLayerController, didRequestControl action: RCTLayerManagerActionType, didChangeState state: Any?)
+public protocol MediaPlayerLayerViewControllerDelegate: AnyObject {
+  func playerLayerControlView(_ playerLayer: MediaPlayerLayerViewController, didRequestControl action: PlayerLayerViewControllerActionType, didChangeState state: Any?)
 }
 
-open class RCTMediaPlayerLayerController : UIViewController {
+open class MediaPlayerLayerViewController : UIViewController {
   fileprivate var playerLayer = MediaPlayerLayerManager()
   fileprivate var fullscreenController = UIViewController()
   fileprivate weak var contentOverlayController: UIViewController?
-  open weak var delegate: RCTMediaPlayerLayerManagerProtocol?
+  open weak var delegate: MediaPlayerLayerViewControllerDelegate?
   
   fileprivate var rootVC = UIApplication.shared.windows.first?.rootViewController
   fileprivate var isFullscreen: Bool = false
@@ -32,7 +32,7 @@ open class RCTMediaPlayerLayerController : UIViewController {
     super.init(nibName: nil, bundle: nil)
     playerLayer.attachPlayer(with: player)
     self.view.layer.addSublayer(playerLayer)
-
+    
     let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchGesture(_:)))
     view.addGestureRecognizer(pinchGesture)
   }
@@ -43,7 +43,7 @@ open class RCTMediaPlayerLayerController : UIViewController {
   
   open override func viewWillLayoutSubviews() {
     guard let mainBounds = view.window?.windowScene?.screen.bounds else { return }
-
+    
     if isFullscreen && !isFullscreenTransition {
       playerLayer.frame = mainBounds
     }
@@ -93,7 +93,7 @@ open class RCTMediaPlayerLayerController : UIViewController {
         self.delegate?.playerLayerControlView(self, didRequestControl: .fullscreen, didChangeState: true)
         self.isFullscreen = true
         isFullscreenTransition = false
-
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
           if let contentOverlayController {
             contentOverlayController.willMove(toParent: nil)
@@ -121,23 +121,17 @@ open class RCTMediaPlayerLayerController : UIViewController {
   
   open func didDismissFullscreen() {
     isFullscreenTransition = true
-
-    playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
-
-    UIView.animate(withDuration: 0.5, animations: {
-        self.fullscreenController.view.backgroundColor = .clear
-    })
-      
+    
     self.fullscreenController.dismiss(animated: false) { [self] in
-    playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
-    self.attachPlayerLayerWithSafeArea(self.view.bounds)
-    self.view.layer.addSublayer(playerLayer)
-    self.didMoveControlsToParent(to: self)
-    self.isFullscreenTransition = false
-    self.isFullscreen = false
+      playerLayer.position = CGPoint(x: self.view.bounds.midX, y: self.view.bounds.midY)
+      self.attachPlayerLayerWithSafeArea(self.view.bounds)
+      self.view.layer.addSublayer(playerLayer)
+      self.didMoveControlsToParent(to: self)
+      self.isFullscreenTransition = false
+      self.isFullscreen = false
       self.delegate?.playerLayerControlView(self, didRequestControl: .fullscreen, didChangeState: false)
+    }
   }
-}
   
   @objc fileprivate func handlePinchGesture(_ gesture: UIPinchGestureRecognizer) {
     guard gesture.numberOfTouches >= 2 else { return }
@@ -146,9 +140,9 @@ open class RCTMediaPlayerLayerController : UIViewController {
     let touch2 = gesture.location(ofTouch: 1, in: view)
     let minZoom = 1.0
     let maxZoom = 2.0
-
+    
     let isHorizontal = abs(touch1.x - touch2.x) > abs(touch1.y - touch2.y)
-
+    
     if gesture.state == .changed || gesture.state == .began {
       let scale = gesture.scale
       var newScale = currentZoomScale * scale
@@ -191,22 +185,22 @@ open class RCTMediaPlayerLayerController : UIViewController {
   }
   
   fileprivate func didMoveControlsToParent(to controller: UIViewController) {
-      if let contentOverlayController {
-          if contentOverlayController.parent != controller {
-            contentOverlayController.removeFromParent()
-
-            contentOverlayController.view.backgroundColor = .clear
-              controller.view.addSubview(contentOverlayController.view)
-            contentOverlayController.didMove(toParent: self)
-
-            contentOverlayController.view.translatesAutoresizingMaskIntoConstraints = false
-              NSLayoutConstraint.activate([
-                contentOverlayController.view.leadingAnchor.constraint(equalTo: controller.view.leadingAnchor),
-                contentOverlayController.view.trailingAnchor.constraint(equalTo: controller.view.trailingAnchor),
-                contentOverlayController.view.topAnchor.constraint(equalTo: controller.view.topAnchor),
-                contentOverlayController.view.bottomAnchor.constraint(equalTo: controller.view.bottomAnchor)
-              ])
-          }
+    if let contentOverlayController {
+      if contentOverlayController.parent != controller {
+        contentOverlayController.removeFromParent()
+        
+        contentOverlayController.view.backgroundColor = .clear
+        controller.view.addSubview(contentOverlayController.view)
+        contentOverlayController.didMove(toParent: self)
+        
+        contentOverlayController.view.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+          contentOverlayController.view.leadingAnchor.constraint(equalTo: controller.view.leadingAnchor),
+          contentOverlayController.view.trailingAnchor.constraint(equalTo: controller.view.trailingAnchor),
+          contentOverlayController.view.topAnchor.constraint(equalTo: controller.view.topAnchor),
+          contentOverlayController.view.bottomAnchor.constraint(equalTo: controller.view.bottomAnchor)
+        ])
       }
+    }
   }
 }

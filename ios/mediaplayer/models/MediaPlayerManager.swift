@@ -88,9 +88,7 @@ open class PlayerSource {
   
   open var isReady: Bool = false {
     didSet {
-      if oldValue != isReady {
-        delegate?.mediaPlayer(self, didChangeReadyToDisplay: isReady)
-      }
+      delegate?.mediaPlayer(self, didChangeReadyToDisplay: isReady)
     }
   }
   
@@ -142,7 +140,6 @@ open class PlayerSource {
   }
   
   open func setPlaybackState(to state: PlaybackState) {
-    appConfig.log("PlayerSource setPlaybackState to \(state)")
     playbackState = state
   }
   
@@ -318,6 +315,6 @@ open class PlayerSource {
     }
     
     playbackState = .waiting
-    isReady = false
+    setIsReadyToPlay(false)
   }
 }
