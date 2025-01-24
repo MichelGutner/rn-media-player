@@ -51,10 +51,10 @@ class PlayPauseButton(context: Context) : FrameLayout(context) {
   }
 
   fun updateIcon(isPlaying: Boolean) {
-    if (isPlaying && playPauseButton.drawable == drawables.fromPauseToPlay) {
+    if (isPlaying) {
       playPauseButton.setImageDrawable(drawables.fromPlayToPause)
       drawables.fromPlayToPause.start()
-    } else if (!isPlaying && playPauseButton.drawable == drawables.fromPlayToPause) {
+    } else  {
       playPauseButton.setImageDrawable(drawables.fromPauseToPlay)
       drawables.fromPauseToPlay.start()
     }
