@@ -124,7 +124,7 @@ object RCTEvents {
   const val MEDIA_PINCH_ZOOM = "onMediaPinchZoom"
   const val FULL_SCREEN_STATE_CHANGED = "onFullScreenStateChanged"
 
-  val rctRegisteredEvents = listOf(
+  val registered = listOf(
     MENU_ITEM_SELECTED,
     MEDIA_READY,
     MEDIA_COMPLETED,

@@ -24,7 +24,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> {
     val mapBuilder = MapBuilder.builder<String, Any>()
-    RCTEvents.rctRegisteredEvents.forEach { event ->
+    RCTEvents.registered.forEach { event ->
       mapBuilder.put(event, MapBuilder.of("registrationName", event))
     }
 
@@ -76,14 +76,15 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "menus")
-  fun setMenus(view: MediaPlayerView, menus: ReadableMap) {
-    val reactConfigAdapter = RCTConfigs.getInstance()
+  fun setMenus(view: MediaPlayerView, menus: ReadableMap?) {
+    if (menus != null) {
+      val reactConfigAdapter = RCTConfigs.getInstance()
 
-    menus.entryIterator.forEach { entry ->
-      reactConfigAdapter.set(entry.key, entry.value)
+      menus.entryIterator.forEach { entry ->
+        reactConfigAdapter.set(entry.key, entry.value)
+      }
+      reactConfigAdapter.set(RCTConfigs.Key.MENU_ITEMS, menus.toHashMap().keys)
     }
-    reactConfigAdapter.set(RCTConfigs.Key.MENU_ITEMS, menus.toHashMap().keys)
-
   }
 
   @OptIn(UnstableApi::class)
