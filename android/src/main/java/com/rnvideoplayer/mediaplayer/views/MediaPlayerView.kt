@@ -11,14 +11,20 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.util.UnstableApi
 import com.facebook.react.uimanager.ThemedReactContext
+import com.rnvideoplayer.mediaplayer.logger.Debug
 import com.rnvideoplayer.mediaplayer.models.RCTDirectEvents
 import com.rnvideoplayer.mediaplayer.models.MediaPlayerAdapter
+import com.rnvideoplayer.mediaplayer.models.MediaPlayerListener
+import com.rnvideoplayer.mediaplayer.models.PlaybackState
 import com.rnvideoplayer.mediaplayer.models.RCTConfigs
+import com.rnvideoplayer.mediaplayer.viewModels.ControlType
 import com.rnvideoplayer.mediaplayer.viewModels.MediaPlayerControls
+import com.rnvideoplayer.mediaplayer.viewModels.MediaPlayerControlsViewListener
 import com.rnvideoplayer.mediaplayer.viewModels.components.PopUpMenu
 import com.rnvideoplayer.utils.TaskScheduler
 import com.rnvideoplayer.utils.TimeUnitFormat
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
 
 
 @SuppressLint("ViewConstructor")
@@ -58,6 +64,8 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
       isFinished = isLastPosition
       timeoutControls()
     }
+    mediaPlayer.setListener(MediaPlayerSourceListener())
+    this.setListener(MediaPlayerControlsListener())
   }
 
   override fun onAttachedToWindow() {
@@ -170,8 +178,8 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
       }
 
       override fun onPlaybackStateChanged(isPlaying: Boolean) {
-        updateAnimatedPlayPauseIcon(isPlaying)
-        rctEvent.onMediaPlayPause(isPlaying)
+//        updateAnimatedPlayPauseIcon(isPlaying)
+//        rctEvent.onMediaPlayPause(isPlaying)
       }
 
       override fun onMediaError(error: PlaybackException?, mediaItem: MediaItem?) {
@@ -217,13 +225,18 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     viewTreeObserver.addOnGlobalLayoutListener(object :
       ViewTreeObserver.OnGlobalLayoutListener {
       override fun onGlobalLayout() {
-        val gestureSeekValue =
-          rctConfigs.get(RCTConfigs.Key.DOUBLE_TAP_TO_SEEK_VALUE) as Int
-        val gestureSeekSuffix =
-          rctConfigs.get(RCTConfigs.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL)
+        var gestureSeekValue = 10
+        var gestureSeekSuffix = "seconds"
+        if (rctConfigs.get(RCTConfigs.Key.DOUBLE_TAP_TO_SEEK_VALUE) != null) {
+          gestureSeekValue = rctConfigs.get(RCTConfigs.Key.DOUBLE_TAP_TO_SEEK_VALUE) as Int
+        }
 
-        modifyConfigLeftGestureSeek(gestureSeekValue, gestureSeekSuffix.toString())
-        modifyConfigRightGestureSeek(gestureSeekValue, gestureSeekSuffix.toString())
+        if (rctConfigs.get(RCTConfigs.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL) != null) {
+          gestureSeekSuffix = rctConfigs.get(RCTConfigs.Key.DOUBLE_TAP_TO_SEEK_SUFFIX_LABEL).toString()
+        }
+
+        modifyConfigLeftGestureSeek(gestureSeekValue, gestureSeekSuffix)
+        modifyConfigRightGestureSeek(gestureSeekValue, gestureSeekSuffix)
 
         viewTreeObserver.removeOnGlobalLayoutListener(this)
       }
@@ -295,6 +308,52 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
           mediaPlayer.setMediaSource(newMediaSource, currentPosition)
           mediaPlayer.prepare()*/
     mediaPlayer.onMediaBuild(url, currentPosition, currentMetadata)
+  }
+
+  private inner class MediaPlayerSourceListener : MediaPlayerListener {
+    override fun onPlaybackStateChange(playbackStateChanged: PlaybackState) {
+      Debug.log(playbackStateChanged.toString())
+      when(playbackStateChanged) {
+        PlaybackState.PLAYING -> {
+          updateAnimatedPlayPauseIcon(true)
+        }
+        PlaybackState.PAUSED -> {
+          updateAnimatedPlayPauseIcon(false)
+        }
+        PlaybackState.ENDED -> {
+          updateAnimatedPlayPauseIcon(false)
+        }
+        PlaybackState.NONE -> {
+          updateAnimatedPlayPauseIcon(false)
+        }
+        PlaybackState.WAITING -> {}
+      }
+    }
+
+    override fun onPlaybackStart(started: Boolean, duration: Long) {
+      setSeekBarDuration(duration)
+      rctEvent.onMediaReady(timeUnitHandler.toSecondsDouble(duration))
+      removeLoading()
+    }
+
+    override fun onPlaybackChangeBuffering(currentProgress: Long, bufferedProgress: Long) {
+      //
+    }
+  }
+
+  private inner class MediaPlayerControlsListener : MediaPlayerControlsViewListener {
+    override fun control(type: ControlType, event: Any?) {
+      Debug.log("control $type")
+      when(type) {
+        ControlType.PLAY_PAUSE -> {
+          mediaPlayer.onMediaTogglePlayPause()
+        }
+        ControlType.FULLSCREEN -> TODO()
+        ControlType.OPTIONS_MENU -> TODO()
+        ControlType.SEEK_GESTURE_FORWARD -> TODO()
+        ControlType.SEEK_GESTURE_BACKWARD -> TODO()
+      }
+    }
   }
 }
 
