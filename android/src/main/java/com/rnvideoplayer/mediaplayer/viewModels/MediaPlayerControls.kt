@@ -18,6 +18,7 @@ import com.rnvideoplayer.cast.CastButton
 import com.rnvideoplayer.extensions.fadeIn
 import com.rnvideoplayer.extensions.fadeOut
 import com.rnvideoplayer.extensions.withTranslationAnimation
+import com.rnvideoplayer.mediaplayer.logger.Debug
 import com.rnvideoplayer.mediaplayer.models.MediaPlayerAdapter
 import com.rnvideoplayer.mediaplayer.viewModels.components.DoubleTapSeek
 import com.rnvideoplayer.mediaplayer.viewModels.components.FullscreenButton
@@ -33,8 +34,25 @@ import com.rnvideoplayer.utils.Utils
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
+enum class ControlType {
+  PLAY_PAUSE,
+  FULLSCREEN,
+  OPTIONS_MENU,
+  SEEK_GESTURE_FORWARD,
+  SEEK_GESTURE_BACKWARD
+}
+interface MediaPlayerControlsViewListener {
+  fun control(type: ControlType, event: Any? = null)
+}
+
 @UnstableApi
 abstract class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout(context) {
+  private var listener: MediaPlayerControlsViewListener? = null
+
+  open fun setListener(listener: MediaPlayerControlsViewListener) {
+    this.listener = listener
+  }
+
   interface Callback {
     fun setOnPlayPauseClickListener()
     fun setOnFullscreenClickListener()
@@ -218,7 +236,8 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
 
   private fun setupControlsCallback() {
     playPauseControl.setOnClickListener {
-      callback?.setOnPlayPauseClickListener()
+//      callback?.setOnPlayPauseClickListener()
+      listener?.control(ControlType.PLAY_PAUSE)
     }
     fullscreenButton.setOnClickListener {
       callback?.setOnFullscreenClickListener()
@@ -322,12 +341,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
 
         startScrubberPositionPercent = if (totalDurationSeconds > 0) {
           (startScrubberPositionSeconds * 100) / totalDurationSeconds
-        } else {
-          0
-        }
-
-        this@MediaPlayerControls.seekBar.animate().scaleX(1f).scaleY(1.5f).setDuration(500)
-          .start()
+        } else { 0 }
         shouldShowThumbnail()
         hideInteractionControls()
       }
@@ -362,8 +376,6 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
         )
         shouldHideThumbnail()
         showInteractionControls()
-
-        this@MediaPlayerControls.seekBar.animate().scaleX(1.0f).scaleY(1.0f).setDuration(500).start()
 
         val positionTolerance = -1
         val isLastPosition = endScrubberPositionSeconds >= totalDurationSeconds - positionTolerance
