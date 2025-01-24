@@ -16,41 +16,42 @@ private var selectedItemMap = mutableMapOf<String, String>()
 
 @Suppress("UNCHECKED_CAST")
 class PopUpMenu(
-    private var context: Context,
-    view: View,
-    callback: (String, Any) -> Unit
+  private var context: Context,
+  view: View,
+  callback: (String, Any) -> Unit
 ) {
   private val window = (view.context as? Activity)?.window
   private val reactConfigAdapter = RCTConfigs.getInstance()
   private val popup = PopupMenu(context, view)
 
   init {
+    val menuItems = (reactConfigAdapter.get(RCTConfigs.Key.MENU_ITEMS) as? Set<*>)?.filterIsInstance<String>()
+    if (menuItems != null) {
+      menuItems.forEach { menuItemTitle ->
+        val optionReadableMap = reactConfigAdapter.get(menuItemTitle) as? ReadableMap
+        val options = optionReadableMap?.getArray("data")
 
-    val menuItems = reactConfigAdapter.get(RCTConfigs.Key.MENU_ITEMS) as MutableSet<String>
-    menuItems.forEach { menuItemTitle ->
-      val optionReadableMap = reactConfigAdapter.get(menuItemTitle) as ReadableMap
-      val options = optionReadableMap.getArray("data")
-
-      if (selectedItemMap[menuItemTitle] == null) {
-        selectedItemMap[menuItemTitle] = optionReadableMap.getString("initialItemSelected") ?: ""
-      }
-
-      val item = popup.menu.addSubMenu(menuItemTitle)
-
-      options?.toArrayList()?.forEach { it ->
-        val option = it as? Map<*, *>
-        val name = option?.get("name")
-        val value = option?.get("value");
-        val subItem = item.add(name.toString())
-        if (selectedItemMap[menuItemTitle] == subItem.title) {
-          subItem.setIcon(ContextCompat.getDrawable(context, R.drawable.baseline_check))
+        if (selectedItemMap[menuItemTitle] == null) {
+          selectedItemMap[menuItemTitle] = optionReadableMap?.getString("initialItemSelected") ?: ""
         }
-        subItem.setOnMenuItemClickListener { subMenuItem ->
-          if (value != null) {
-            callback(menuItemTitle, value)
-            selectedItemMap[menuItemTitle] = subMenuItem.title.toString()
+
+        val item = popup.menu.addSubMenu(menuItemTitle)
+
+        options?.toArrayList()?.forEach { it ->
+          val option = it as? Map<*, *>
+          val name = option?.get("name")
+          val value = option?.get("value")
+          val subItem = item.add(name.toString())
+          if (selectedItemMap[menuItemTitle] == subItem.title) {
+            subItem.setIcon(ContextCompat.getDrawable(context, R.drawable.baseline_check))
           }
-          true
+          subItem.setOnMenuItemClickListener { subMenuItem ->
+            if (value != null) {
+              callback(menuItemTitle, value)
+              selectedItemMap[menuItemTitle] = subMenuItem.title.toString()
+            }
+            true
+          }
         }
       }
     }
