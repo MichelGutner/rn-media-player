@@ -10,6 +10,7 @@ import com.facebook.react.common.MapBuilder
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
+import com.rnvideoplayer.mediaplayer.logger.Debug
 import com.rnvideoplayer.mediaplayer.models.RCTConfigs
 import com.rnvideoplayer.mediaplayer.models.RCTEvents
 import com.rnvideoplayer.mediaplayer.views.MediaPlayerView
@@ -34,14 +35,19 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   @OptIn(UnstableApi::class)
   @ReactProp(name = "source")
   fun setSource(view: MediaPlayerView, source: ReadableMap?) {
-    val url = source?.getString("url") as String
-    val startTime = source.getDouble("startTime")
-    val metadata = source.getMap("metadata")
+    var startTime = 0.0
+    if (source?.hasKey("startTime") == true) {
+      startTime = source.getDouble("startTime")
+      Debug.log("startTime: $startTime")
+    }
+    val metadata = source?.getMap("metadata")
 
-    val longStartTime = if (startTime == 0.0) 0 else (startTime * 1000).toLong()
+    val url = source?.getString("url") as String
+
+    val longStartTime = (startTime * 1000).toLong()
     val mediaMetadata = MediaMetadata.Builder()
-      .setTitle(metadata?.getString("title"))
-      .setArtist(metadata?.getString("artist"))
+      .setTitle(metadata?.getString("title") ?: "")
+      .setArtist(metadata?.getString("artist") ?: "")
       .build()
 
     view.setupMediaPlayer(url, longStartTime, mediaMetadata)
@@ -65,7 +71,9 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   @OptIn(UnstableApi::class)
   @ReactProp(name = "rate")
   fun setRate(view: MediaPlayerView, rate: Double) {
-    view.onChangePlaybackSpeed(rate.toFloat())
+    if (rate.isFinite()) {
+      view.onChangePlaybackSpeed(rate.toFloat())
+    }
   }
 
   @OptIn(UnstableApi::class)
