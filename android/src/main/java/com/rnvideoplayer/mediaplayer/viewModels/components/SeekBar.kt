@@ -66,10 +66,13 @@ class SeekBar(context: Context) : LinearLayout(context), ICustomSeekBar {
 
   private fun seekBarWrapper(context: Context): DefaultTimeBar {
     return CustomDefaultTimeBar(context).apply {
-      setScrubberColor(Color.TRANSPARENT)
+      setScrubberColor(Color.BLUE)
+      setUnplayedColor(Color.argb(30,255,255,255))
+      setBufferedColor(Color.argb(80,255,255,255))
+//      setBackgroundColor(Color.argb(20,255,255,255))
       layoutParams = LayoutParams(
         0,
-        50
+        70
       ).apply {
         weight = 1f
         gravity = Gravity.BOTTOM
@@ -85,11 +88,11 @@ class CustomDefaultTimeBar(context: Context, attrs: AttributeSet? = null) :
   init {
     val barHeightField = DefaultTimeBar::class.java.getDeclaredField("barHeight")
     barHeightField.isAccessible = true
-    barHeightField.set(this, dpToPx(10))
+    barHeightField.set(this, dpToPx(4))
 
     val scrubberSizeField = DefaultTimeBar::class.java.getDeclaredField("scrubberEnabledSize")
     scrubberSizeField.isAccessible = true
-    scrubberSizeField.set(this, dpToPx(15))
+    scrubberSizeField.set(this, dpToPx(25))
   }
 
   private fun dpToPx(dp: Int): Int {

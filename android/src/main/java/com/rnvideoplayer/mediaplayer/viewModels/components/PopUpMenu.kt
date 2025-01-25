@@ -18,7 +18,7 @@ private var selectedItemMap = mutableMapOf<String, String>()
 class PopUpMenu(
   private var context: Context,
   view: View,
-  callback: (String, Any) -> Unit
+  onSelectItem: (String, Any) -> Unit
 ) {
   private val window = (view.context as? Activity)?.window
   private val reactConfigAdapter = RCTConfigs.getInstance()
@@ -26,8 +26,7 @@ class PopUpMenu(
 
   init {
     val menuItems = (reactConfigAdapter.get(RCTConfigs.Key.MENU_ITEMS) as? Set<*>)?.filterIsInstance<String>()
-    if (menuItems != null) {
-      menuItems.forEach { menuItemTitle ->
+    menuItems?.forEach { menuItemTitle ->
         val optionReadableMap = reactConfigAdapter.get(menuItemTitle) as? ReadableMap
         val options = optionReadableMap?.getArray("data")
 
@@ -47,13 +46,12 @@ class PopUpMenu(
           }
           subItem.setOnMenuItemClickListener { subMenuItem ->
             if (value != null) {
-              callback(menuItemTitle, value)
+              onSelectItem(menuItemTitle, value)
               selectedItemMap[menuItemTitle] = subMenuItem.title.toString()
             }
             true
           }
         }
-      }
     }
   }
 

@@ -10,11 +10,12 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.mediaplayer.logger.Debug
 import com.rnvideoplayer.mediaplayer.models.RCTDirectEvents
-import com.rnvideoplayer.mediaplayer.models.MediaPlayerAdapter
-import com.rnvideoplayer.mediaplayer.models.MediaPlayerListener
+import com.rnvideoplayer.mediaplayer.models.MediaPlayerSource
+import com.rnvideoplayer.mediaplayer.models.IMediaPlayerSourceListener
 import com.rnvideoplayer.mediaplayer.models.PlaybackState
 import com.rnvideoplayer.mediaplayer.models.RCTConfigs
 import com.rnvideoplayer.mediaplayer.viewModels.ControlType
@@ -24,7 +25,6 @@ import com.rnvideoplayer.mediaplayer.viewModels.components.PopUpMenu
 import com.rnvideoplayer.utils.TaskScheduler
 import com.rnvideoplayer.utils.TimeUnitFormat
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration
 
 
 @SuppressLint("ViewConstructor")
@@ -37,7 +37,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   private var taskScheduler = TaskScheduler()
   private var rctConfigs = RCTConfigs.getInstance()
   private var timeUnitHandler = TimeUnitFormat()
-  private val mediaPlayer = MediaPlayerAdapter(context)
+  private val mediaPlayer = MediaPlayerSource(context)
 
 
   private var isFullscreen = false
@@ -45,10 +45,11 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   private var enterFullScreenWhenPlaybackBegins = false
 
   private val mediaPlayerSurfaceView = mediaPlayer.surfaceView
+  private var currentProgress: Long = 0
+  private var currentItem: MediaItem? = null
 
   init {
     setupReactConfigs()
-    setupPlayerCallbacks()
     seekBarListener(
       mediaPlayer,
       getIsSeeking = {
@@ -62,7 +63,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
         scrubberPosition.endPositionPercent.toDouble(),
       )
       isFinished = isLastPosition
-      timeoutControls()
+      scheduleTimeoutControls()
     }
     mediaPlayer.setListener(MediaPlayerSourceListener())
     this.setListener(MediaPlayerControlsListener())
@@ -72,44 +73,13 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     super.onAttachedToWindow()
     setSurfaceMediaPlayerView(mediaPlayerSurfaceView)
 
-    addMediaPlayerControlsCallback(object : Callback {
-      override fun setOnPlayPauseClickListener() {
-        mediaPlayer.onMediaTogglePlayPause()
-        timeoutControls()
-      }
-
-      override fun setOnFullscreenClickListener() {
-        toggleFullscreen()
-      }
-
-      override fun setOnOptionsMenuButtonClickListener(anchorView: View) {
-        showPopUp(anchorView)
-      }
-
-      override fun setOnLeftSeekGestureClickListener(receivedValue: Int) {
-        mediaPlayer.seekToRelativePosition(-((receivedValue * 1000).toLong()))
-      }
-
-      override fun setOnRightSeekGestureClickListener(receivedValue: Int) {
-        mediaPlayer.seekToRelativePosition(((receivedValue * 1000).toLong()))
-      }
-
-      override fun onPinchZoomChanged(zoom: String) {
-        rctEvent.onMediaPinchZoom(zoom)
-      }
-
-      override fun onViewSingleTouchFinished() {
-        timeoutControls()
-      }
-    })
-
     val enterFullscreenWhenPlaybackBeginsConfig =
       rctConfigs.get(RCTConfigs.Key.ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS)
         ?: false
     enterFullScreenWhenPlaybackBegins = enterFullscreenWhenPlaybackBeginsConfig as Boolean
 
     postDelayed({
-      timeoutControls()
+      scheduleTimeoutControls()
       if (enterFullscreenWhenPlaybackBeginsConfig) {
         mutateFullScreenState(enterFullScreenWhenPlaybackBegins)
       }
@@ -169,58 +139,6 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     }
   }
 
-  private fun setupPlayerCallbacks() {
-    mediaPlayer.addCallback(object : MediaPlayerAdapter.Callback {
-      override fun onMediaLoaded(duration: Long) {
-        setSeekBarDuration(duration)
-        rctEvent.onMediaReady(timeUnitHandler.toSecondsDouble(duration))
-        removeLoading()
-      }
-
-      override fun onPlaybackStateChanged(isPlaying: Boolean) {
-//        updateAnimatedPlayPauseIcon(isPlaying)
-//        rctEvent.onMediaPlayPause(isPlaying)
-      }
-
-      override fun onMediaError(error: PlaybackException?, mediaItem: MediaItem?) {
-        val uri = mediaItem?.localConfiguration?.uri
-        rctEvent.onMediaError(
-          uri.toString(),
-          error,
-          mapOf(
-            "NSLocalizedDescriptionKey" to error?.message,
-            "NSLocalizedFailureReasonErrorKey" to "Failed to play the video.",
-            "NSLocalizedRecoverySuggestionErrorKey" to "Please check the video source or try again later."
-          ).toString()
-        )
-      }
-
-      override fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long) {
-        setSeekBarProgress(currentProgress, bufferedProgress)
-        rctEvent.onMediaBuffering(
-          TimeUnit.MILLISECONDS.toSeconds(currentProgress).toDouble(),
-          TimeUnit.MILLISECONDS.toSeconds(bufferedProgress).toDouble()
-        )
-      }
-
-      override fun onMediaBufferCompleted() {
-        rctEvent.onMediaBufferCompleted()
-      }
-
-      override fun getMediaMetadata(mediaMetadata: MediaMetadata) {
-        setVideoTitle(mediaMetadata.title.toString())
-      }
-
-      override fun onPlaybackStateEndedInvoked() {
-        setThumbnailTranslateX(0f)
-      }
-
-      override fun onMediaEnded() {
-        rctEvent.onMediaCompleted()
-      }
-    })
-  }
-
   private fun setupReactConfigs() {
     viewTreeObserver.addOnGlobalLayoutListener(object :
       ViewTreeObserver.OnGlobalLayoutListener {
@@ -245,7 +163,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
 
   private fun toggleFullscreen() {
     hideOverlay(animated = false)
-    timeoutControls()
+    scheduleTimeoutControls()
     mutateFullScreenState(!isFullscreen)
     rctEvent.onFullScreenStateChanged(isFullscreen)
   }
@@ -259,13 +177,13 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   private fun showPopUp(view: View) {
     val popupMenu by lazy {
       PopUpMenu(context, view) { title, value ->
-        rctEvent.onMenuItemSelected(title, value.toString())
+        rctEvent.onMenuItemSelected(title, value)
       }
     }
     popupMenu.show()
   }
 
-  private fun timeoutControls() {
+  private fun scheduleTimeoutControls() {
     taskScheduler.cancelTask()
 
     taskScheduler.createTask(3500) {
@@ -293,13 +211,9 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   }
 
   fun onReplaceMedia(url: String) {
-    val currentMediaItem = mediaPlayer.currentMediaItem
-    val currentPosition = mediaPlayer.currentProgress
-    val currentMetadata = currentMediaItem?.mediaMetadata
+    val currentMetadata = currentItem?.mediaMetadata
+    if (currentItem?.localConfiguration?.uri.toString() == url) return
 
-    if (currentMediaItem?.localConfiguration?.uri.toString() == url) {
-      return
-    }
     /*      val dataSourceFactory = DefaultDataSource.Factory(context)
           val newMediaItem = MediaItem.fromUri(url)
           val newMediaSource =
@@ -307,10 +221,15 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
 
           mediaPlayer.setMediaSource(newMediaSource, currentPosition)
           mediaPlayer.prepare()*/
-    mediaPlayer.onMediaBuild(url, currentPosition, currentMetadata)
+    mediaPlayer.onMediaBuild(url, currentProgress, currentMetadata)
   }
 
-  private inner class MediaPlayerSourceListener : MediaPlayerListener {
+  private inner class MediaPlayerSourceListener : IMediaPlayerSourceListener {
+    override fun onPlaybackInstance(player: ExoPlayer) {
+      currentItem = player.currentMediaItem
+      setVideoTitle(player.mediaMetadata.title.toString())
+    }
+
     override fun onPlaybackStateChange(playbackStateChanged: PlaybackState) {
       Debug.log(playbackStateChanged.toString())
       when(playbackStateChanged) {
@@ -321,6 +240,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
           updateAnimatedPlayPauseIcon(false)
         }
         PlaybackState.ENDED -> {
+          rctEvent.onMediaCompleted()
           updateAnimatedPlayPauseIcon(false)
         }
         PlaybackState.NONE -> {
@@ -337,21 +257,54 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     }
 
     override fun onPlaybackChangeBuffering(currentProgress: Long, bufferedProgress: Long) {
-      //
+      this@MediaPlayerView.currentProgress = currentProgress
+      setSeekBarProgress(currentProgress, bufferedProgress)
+      rctEvent.onMediaBuffering(
+        TimeUnit.MILLISECONDS.toSeconds(currentProgress).toDouble(),
+        TimeUnit.MILLISECONDS.toSeconds(bufferedProgress).toDouble()
+      )
+    }
+
+    override fun onPlaybackBufferCompleted(bufferCompleted: Boolean) {
+      rctEvent.onMediaBufferCompleted()
+    }
+
+    override fun onPLayBackError(error: PlaybackException, currentItem: MediaItem?) {
+      val uri = currentItem?.localConfiguration?.uri
+      rctEvent.onMediaError(
+        uri.toString(),
+        error,
+        mapOf(
+          "NSLocalizedDescriptionKey" to error.message,
+          "NSLocalizedFailureReasonErrorKey" to "Failed to play the video.",
+          "NSLocalizedRecoverySuggestionErrorKey" to "Please check the video source or try again later."
+        ).toString()
+      )
     }
   }
 
   private inner class MediaPlayerControlsListener : MediaPlayerControlsViewListener {
     override fun control(type: ControlType, event: Any?) {
-      Debug.log("control $type")
       when(type) {
         ControlType.PLAY_PAUSE -> {
-          mediaPlayer.onMediaTogglePlayPause()
+          mediaPlayer.onMediaTogglePlaybackState { oldState: PlaybackState ->
+            if (oldState == PlaybackState.ENDED) {
+              setThumbnailPositionX(0f)
+            }
+          }
+          scheduleTimeoutControls()
         }
-        ControlType.FULLSCREEN -> TODO()
-        ControlType.OPTIONS_MENU -> TODO()
-        ControlType.SEEK_GESTURE_FORWARD -> TODO()
-        ControlType.SEEK_GESTURE_BACKWARD -> TODO()
+        ControlType.FULLSCREEN -> toggleFullscreen()
+        ControlType.OPTIONS_MENU -> showPopUp(event as View)
+        ControlType.SEEK_GESTURE_FORWARD -> {
+          mediaPlayer.seekToRelativePosition(-((event as Int * 1000).toLong()))
+        }
+        ControlType.SEEK_GESTURE_BACKWARD -> {
+          mediaPlayer.seekToRelativePosition((event as Int * 1000).toLong())
+        }
+
+        ControlType.PINCH_ZOOM -> rctEvent.onMediaPinchZoom(event.toString())
+        ControlType.TOUCH_VIEW -> scheduleTimeoutControls()
       }
     }
   }

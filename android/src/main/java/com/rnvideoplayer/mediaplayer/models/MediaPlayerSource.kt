@@ -24,71 +24,39 @@ enum class PlaybackState {
   WAITING
 }
 
-interface MediaPlayerListener {
+interface IMediaPlayerSourceListener {
+  fun onPlaybackInstance(player: ExoPlayer)
   fun onPlaybackStateChange(playbackStateChanged: PlaybackState)
   fun onPlaybackStart(started: Boolean, duration: Long)
   fun onPlaybackChangeBuffering(currentProgress: Long, bufferedProgress: Long)
+  fun onPlaybackBufferCompleted(bufferCompleted: Boolean)
+  fun onPLayBackError(error: PlaybackException, currentItem: MediaItem? = null)
 }
 
-open class MediaPlayerAdapter(context: Context) {
+open class MediaPlayerSource(context: Context) {
   private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build()
   private val progressInterval: Long = 1000L
   private val handler = Handler(Looper.getMainLooper())
   private var callback: Callback? = null
-  private var listener: MediaPlayerListener? = null
+  private var listener: IMediaPlayerSourceListener? = null
 
   private var playbackState: PlaybackState = PlaybackState.NONE
   private var isInitialized: Boolean = false
 
   val surfaceView: SurfaceView = SurfaceView(context)
   val duration: Long get() = exoPlayer.duration
-  val currentMediaItem: MediaItem? get() = exoPlayer.currentMediaItem
-  val currentProgress: Long get() = exoPlayer.currentPosition
   val isPlaying: Boolean get() = exoPlayer.isPlaying
-  val instance: ExoPlayer get() = exoPlayer
 
   interface Callback {
-    fun onMediaLoaded(duration: Long)
-    fun onPlaybackStateChanged(isPlaying: Boolean)
-    fun onMediaError(error: PlaybackException?, mediaItem: MediaItem?)
-    fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long)
-    fun onMediaBufferCompleted()
-    fun getMediaMetadata(mediaMetadata: MediaMetadata)
-    fun onPlaybackStateEndedInvoked()
     fun onMediaEnded()
   }
 
   init {
     setVideoSurface()
     exoPlayer.addListener(object : Player.Listener {
-      @SuppressLint("WrongConstant")
-      override fun onEvents(player: Player, events: Player.Events) {
-        super.onEvents(player, events)
-        if (!isInitialized && events.containsAny(
-            Player.EVENT_PLAY_WHEN_READY_CHANGED,
-            Player.EVENT_PLAYBACK_STATE_CHANGED,
-            Player.EVENT_PLAYBACK_SUPPRESSION_REASON_CHANGED
-          )
-        ) {
-          isInitialized = true
-//          onPlaybackStateChanged(player.isPlaying)
-          if (player.playWhenReady) {
-            setPlaybackState(PlaybackState.PLAYING)
-          } else {
-            setPlaybackState(PlaybackState.PAUSED)
-          }
-          return
-        }
-        if (events.contains(Player.EVENT_RENDERED_FIRST_FRAME)) {
-          Log.d(TAG, "Media Player has been rendered first frame")
-          startMediaProgress()
-          listener?.onPlaybackStart(true, instance.duration)
-          return
-        }
-        if (events.contains(Player.EVENT_PLAYER_ERROR)) {
-          onMediaError(player.playerError, player.currentMediaItem)
-          return
-        }
+      override fun onPlayerError(error: PlaybackException) {
+        super.onPlayerError(error)
+        listener?.onPLayBackError(error, exoPlayer.currentMediaItem)
       }
 
       @SuppressLint("SwitchIntDef")
@@ -101,10 +69,33 @@ open class MediaPlayerAdapter(context: Context) {
           }
         }
       }
+
+      override fun onEvents(player: Player, events: Player.Events) {
+        super.onEvents(player, events)
+        if (!isInitialized) {
+          isInitialized = true
+          if (player.playWhenReady) {
+            setPlaybackState(PlaybackState.PLAYING)
+          } else {
+            setPlaybackState(PlaybackState.PAUSED)
+          }
+        }
+
+        if (player.isPlaying && playbackState == PlaybackState.ENDED) {
+          setPlaybackState(PlaybackState.PLAYING)
+        }
+      }
+
+      override fun onRenderedFirstFrame() {
+        super.onRenderedFirstFrame()
+        Log.d(TAG, "Media Player has been rendered first frame")
+        startMediaProgress()
+        listener?.onPlaybackStart(true, exoPlayer.duration)
+      }
     })
   }
 
-  fun setListener(listener: MediaPlayerListener?) {
+  fun setListener(listener: IMediaPlayerSourceListener?) {
     this.listener = listener
   }
 
@@ -129,40 +120,12 @@ open class MediaPlayerAdapter(context: Context) {
     listener?.onPlaybackStateChange(playbackState)
   }
 
-  fun addCallback(callback: Callback) {
-    this.callback = callback
-  }
-
   private fun removeCallback() {
     this.callback = null
   }
 
   protected fun onMediaEnded() {
     callback?.onMediaEnded()
-  }
-
-  protected fun onPlaybackStateChanged(isPlaying: Boolean) {
-    callback?.onPlaybackStateChanged(isPlaying)
-  }
-
-  protected fun onMediaLoaded(duration: Long) {
-    callback?.onMediaLoaded(duration)
-  }
-
-  protected fun onMediaError(e: PlaybackException?, mediaItem: MediaItem?) {
-    callback?.onMediaError(e, mediaItem)
-  }
-
-  protected fun onMediaBuffering(currentProgress: Long, bufferedProgress: Long) {
-    callback?.onMediaBuffering(currentProgress, bufferedProgress)
-  }
-
-  protected fun onMediaBufferCompleted() {
-    callback?.onMediaBufferCompleted()
-  }
-
-  private fun getMediaItemMetadata(metadata: MediaMetadata) {
-    callback?.getMediaMetadata(metadata)
   }
 
   private fun initializeMediaPlayer(url: String, startTime: Long = 0, metadata: MediaMetadata?) {
@@ -185,9 +148,9 @@ open class MediaPlayerAdapter(context: Context) {
       mediaItem
     }
 
-    getMediaItemMetadata(mediaItemWithMetadata.mediaMetadata)
     exoPlayer.setMediaItem(mediaItemWithMetadata, startTime)
     exoPlayer.prepare()
+    listener?.onPlaybackInstance(exoPlayer)
   }
 
   private fun setVideoSurface() {
@@ -215,11 +178,12 @@ open class MediaPlayerAdapter(context: Context) {
     override fun run() {
       if (exoPlayer.isPlaying) {
         val position = exoPlayer.contentPosition
-        val buffered = exoPlayer.contentBufferedPosition
-        onMediaBuffering(position, buffered)
+        val totalBuffered = exoPlayer.contentBufferedPosition
+        val isBufferingCompleted = totalBuffered == duration
+        listener?.onPlaybackChangeBuffering(position,totalBuffered)
 
-        if (buffered == duration) {
-          onMediaBufferCompleted()
+        if (isBufferingCompleted) {
+          listener?.onPlaybackBufferCompleted(true)
         }
       }
       handler.postDelayed(this, progressInterval)
@@ -262,9 +226,10 @@ open class MediaPlayerAdapter(context: Context) {
     exoPlayer.setPlaybackSpeed(rate)
   }
 
-  // TODO: need refactor
-  fun onMediaTogglePlayPause() {
-    when (playbackState) {
+  fun onMediaTogglePlaybackState(onStateChange: (oldState: PlaybackState) -> Unit = { _ -> }) {
+    val currentState = playbackState
+
+    when (currentState) {
       PlaybackState.PLAYING -> {
         this.onPause()
       }
@@ -272,14 +237,18 @@ open class MediaPlayerAdapter(context: Context) {
       PlaybackState.PAUSED -> {
         this.onPlay()
       }
+
       PlaybackState.ENDED -> {
         this.onReplay()
       }
+
       PlaybackState.NONE -> {
         this.onPlay()
       }
+
       PlaybackState.WAITING -> {}
     }
+    onStateChange(currentState)
   }
 
   fun onMediaRelease() {
@@ -305,6 +274,6 @@ open class MediaPlayerAdapter(context: Context) {
   }
 
   companion object {
-    private val TAG = MediaPlayerAdapter::class.java.simpleName
+    private val TAG = MediaPlayerSource::class.java.simpleName
   }
 }

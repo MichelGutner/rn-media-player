@@ -38,7 +38,7 @@ class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
   private val thumbnailTimeCodes = createThumbnailTimeCodes(context)
   private var translateXTimeCodes: Int = 0
 
-  var customTranslationX = 0f
+  var positionX = 0f
 
   init {
     layoutParams = LayoutParams(

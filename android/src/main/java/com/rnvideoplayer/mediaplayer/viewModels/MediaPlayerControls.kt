@@ -18,8 +18,7 @@ import com.rnvideoplayer.cast.CastButton
 import com.rnvideoplayer.extensions.fadeIn
 import com.rnvideoplayer.extensions.fadeOut
 import com.rnvideoplayer.extensions.withTranslationAnimation
-import com.rnvideoplayer.mediaplayer.logger.Debug
-import com.rnvideoplayer.mediaplayer.models.MediaPlayerAdapter
+import com.rnvideoplayer.mediaplayer.models.MediaPlayerSource
 import com.rnvideoplayer.mediaplayer.viewModels.components.DoubleTapSeek
 import com.rnvideoplayer.mediaplayer.viewModels.components.FullscreenButton
 import com.rnvideoplayer.mediaplayer.viewModels.components.Loading
@@ -39,7 +38,9 @@ enum class ControlType {
   FULLSCREEN,
   OPTIONS_MENU,
   SEEK_GESTURE_FORWARD,
-  SEEK_GESTURE_BACKWARD
+  SEEK_GESTURE_BACKWARD,
+  PINCH_ZOOM,
+  TOUCH_VIEW
 }
 interface MediaPlayerControlsViewListener {
   fun control(type: ControlType, event: Any? = null)
@@ -52,18 +53,6 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
   open fun setListener(listener: MediaPlayerControlsViewListener) {
     this.listener = listener
   }
-
-  interface Callback {
-    fun setOnPlayPauseClickListener()
-    fun setOnFullscreenClickListener()
-    fun setOnOptionsMenuButtonClickListener(anchorView: View)
-    fun setOnLeftSeekGestureClickListener(receivedValue: Int)
-    fun setOnRightSeekGestureClickListener(receivedValue: Int)
-    fun onPinchZoomChanged(zoom: String)
-    fun onViewSingleTouchFinished()
-  }
-
-  private var callback: Callback? = null
   private val playerLayer = PlayerLayer(context)
   private val overlay = createOverlayView()
 
@@ -208,12 +197,12 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
 
       MotionEvent.ACTION_UP -> {
         if (event.pointerCount == 1 && !isPinchGesture && clickCount < 2) {
-          callback?.onViewSingleTouchFinished()
+          listener?.control(ControlType.TOUCH_VIEW)
           toggleOverlayVisibility()
         } else {
           val roundedScaleX = (playerLayer.frame.scaleX * 100).roundToInt() / 100f
           val currentZoom = if (roundedScaleX > 1) "resizeAspectFill" else "resizeAspect"
-          callback?.onPinchZoomChanged(currentZoom)
+          listener?.control(ControlType.PINCH_ZOOM, currentZoom)
         }
 
         if (clickCount >= 2) {
@@ -236,20 +225,19 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
 
   private fun setupControlsCallback() {
     playPauseControl.setOnClickListener {
-//      callback?.setOnPlayPauseClickListener()
       listener?.control(ControlType.PLAY_PAUSE)
     }
     fullscreenButton.setOnClickListener {
-      callback?.setOnFullscreenClickListener()
+      listener?.control(ControlType.FULLSCREEN)
     }
     optionsMenuButton.setOnClickListener { anchorView ->
-      callback?.setOnOptionsMenuButtonClickListener(anchorView)
+      listener?.control(ControlType.OPTIONS_MENU, anchorView)
     }
     leftSeekGestureView.onTapListener { value ->
-      callback?.setOnLeftSeekGestureClickListener(value)
+      listener?.control(ControlType.SEEK_GESTURE_BACKWARD, value)
     }
     rightSeekGestureView.onTapListener { value ->
-      callback?.setOnRightSeekGestureClickListener(value)
+      listener?.control(ControlType.SEEK_GESTURE_FORWARD, value)
     }
   }
 
@@ -328,7 +316,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
   }
 
   open fun seekBarListener(
-    exoPlayer: MediaPlayerAdapter,
+    exoPlayer: MediaPlayerSource,
     getIsSeeking: (Boolean) -> Unit,
     onSeek: (lastPosition: Boolean, ScrubberPosition) -> Unit
   ) {
@@ -423,10 +411,6 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
     fullscreenButton.updateFullscreenIcon(isFullscreen)
   }
 
-  open fun addMediaPlayerControlsCallback(callback: Callback) {
-    this.callback = callback
-  }
-
   open fun setSurfaceMediaPlayerView(surfaceView: SurfaceView) {
     playerLayer.frame.addView(surfaceView)
   }
@@ -480,8 +464,8 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
     thumbnail.onTranslateX(seconds, duration, seekBar.width)
   }
 
-  open fun setThumbnailTranslateX(value: Float) {
-    thumbnail.customTranslationX = value
+  open fun setThumbnailPositionX(value: Float) {
+    thumbnail.positionX = value
   }
 
   open fun shouldExecuteDownloadThumbnailFrames(url: String) {
