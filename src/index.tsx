@@ -19,5 +19,5 @@ const VideoPlayer =
       };
 
 export const Video = (props: VideoPlayer) => {
-  return <VideoPlayer {...props} style={{ ...props?.style }} />;
+  return <VideoPlayer {...props} />;
 };

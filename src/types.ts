@@ -84,11 +84,11 @@ type TOnVideoBufferCompleted = TGenericEventHandler<{
 export type VideoPlayer = Omit<ViewProps, 'style'> & {
   source: {
     url: string;
-    startTime?: number;
-    metadata: {
+    metadata?: {
       title?: string;
       artist?: string;
     };
+    startTime?: number;
   };
   thumbnails?: {
     sourceUrl: string;
