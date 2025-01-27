@@ -50,40 +50,40 @@ function App(): JSX.Element {
         source={{
           url: uri,
           metadata: { title, artist },
-          startTime: 150,
+          startTime: 34,
         }}
-        thumbnails={{ isEnabled: true, sourceUrl: uri }}
+        // thumbnails={{ isEnabled: true, sourceUrl: uri }}
         style={{
           width: '100%',
           height: 300,
           backgroundColor: 'black',
         }}
-        autoPlay={true}
-        rate={rate}
-        replaceMediaUrl={playbackQuality}
-        entersFullScreenWhenPlaybackBegins
+        // autoPlay
+        // rate={rate}
+        // replaceMediaUrl={playbackQuality}
+        // entersFullScreenWhenPlaybackBegins
         // doubleTapToSeek={{
         //   value: 15,
         //   suffixLabel: 'segundos',
         // }}
-        menus={{
-          [SpeedsKey]: { data: speedsValues, initialItemSelected: 'Normal' },
-          [Qualities]: {
-            data: qualitiesValues,
-            initialItemSelected: qualitiesValues[0]?.name as string,
-          },
-        }}
+        // menus={{
+        //   [SpeedsKey]: { data: speedsValues, initialItemSelected: 'Normal' },
+        //   [Qualities]: {
+        //     data: qualitiesValues,
+        //     initialItemSelected: qualitiesValues[0]?.name as string,
+        //   },
+        // }}
         // onFullScreenStateChanged={({ nativeEvent }) => {
         //   console.log('fullscreen', nativeEvent);
         // }}
-        onMenuItemSelected={({ nativeEvent }) => {
-          if (nativeEvent.name === SpeedsKey) {
-            setRate(nativeEvent.value);
-          }
-          if (nativeEvent.name === Qualities) {
-            setPlaybackQuality(nativeEvent.value);
-          }
-        }}
+        // onMenuItemSelected={({ nativeEvent }) => {
+        //   if (nativeEvent.name === SpeedsKey) {
+        //     setRate(nativeEvent.value);
+        //   }
+        //   if (nativeEvent.name === Qualities) {
+        //     setPlaybackQuality(nativeEvent.value);
+        //   }
+        // }}
         // onMediaBuffering={({ nativeEvent }) => {
         //   console.log('video progress', nativeEvent);
         // }}
@@ -96,7 +96,7 @@ function App(): JSX.Element {
         //   console.log(completed)
         // }
         // onMediaBufferCompleted={(e) => console.log(e.nativeEvent)}
-        onMediaReady={({ nativeEvent }) => console.log(nativeEvent)}
+        // onMediaReady={({ nativeEvent }) => console.log(nativeEvent)}
         // onMediaPinchZoom={({ nativeEvent }) =>
         //   console.log(nativeEvent.currentZoom)
         // }

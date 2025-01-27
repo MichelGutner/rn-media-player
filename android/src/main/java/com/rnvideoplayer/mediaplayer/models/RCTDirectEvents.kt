@@ -42,10 +42,12 @@ open class RCTDirectEvents(private val context: Context, private val view: View)
     }
   }
 
-  fun onMenuItemSelected(itemName: String, itemValue: String) {
+  fun onMenuItemSelected(itemName: String, itemValue: Any) {
     dispatchEvent(RCTEvents.MENU_ITEM_SELECTED) {
       putString("name", itemName)
-      putString("value", itemValue)
+      if (itemValue is Number) putDouble("value", itemValue.toDouble())
+      if (itemValue is String) putString("value", itemValue.toString())
+      if (itemValue is Boolean) putBoolean("value", itemValue)
     }
   }
 
@@ -124,7 +126,7 @@ object RCTEvents {
   const val MEDIA_PINCH_ZOOM = "onMediaPinchZoom"
   const val FULL_SCREEN_STATE_CHANGED = "onFullScreenStateChanged"
 
-  val rctRegisteredEvents = listOf(
+  val registered = listOf(
     MENU_ITEM_SELECTED,
     MEDIA_READY,
     MEDIA_COMPLETED,

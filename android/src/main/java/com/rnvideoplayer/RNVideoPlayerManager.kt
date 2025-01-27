@@ -1,18 +1,25 @@
 package com.rnvideoplayer
 
 import android.view.View
+import android.view.ViewTreeObserver
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.ReadableType
 import com.facebook.react.common.MapBuilder
+import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.uimanager.SimpleViewManager
+import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
+import com.rnvideoplayer.mediaplayer.logger.Debug
 import com.rnvideoplayer.mediaplayer.models.RCTConfigs
 import com.rnvideoplayer.mediaplayer.models.RCTEvents
 import com.rnvideoplayer.mediaplayer.views.MediaPlayerView
+
+var currentWidth = -1
+var currentHeight = -1
 
 class RNVideoPlayer : SimpleViewManager<View>() {
   override fun getName() = "RNVideoPlayer"
@@ -24,7 +31,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
   override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> {
     val mapBuilder = MapBuilder.builder<String, Any>()
-    RCTEvents.rctRegisteredEvents.forEach { event ->
+    RCTEvents.registered.forEach { event ->
       mapBuilder.put(event, MapBuilder.of("registrationName", event))
     }
 
@@ -34,14 +41,18 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   @OptIn(UnstableApi::class)
   @ReactProp(name = "source")
   fun setSource(view: MediaPlayerView, source: ReadableMap?) {
-    val url = source?.getString("url") as String
-    val startTime = source.getDouble("startTime")
-    val metadata = source.getMap("metadata")
+    var startTime = 0.0
+    if (source?.hasKey("startTime") == true) {
+      startTime = source.getDouble("startTime")
+    }
+    val metadata = source?.getMap("metadata")
 
-    val longStartTime = if (startTime == 0.0) 0 else (startTime * 1000).toLong()
+    val url = source?.getString("url") as String
+
+    val longStartTime = (startTime * 1000).toLong()
     val mediaMetadata = MediaMetadata.Builder()
-      .setTitle(metadata?.getString("title"))
-      .setArtist(metadata?.getString("artist"))
+      .setTitle(metadata?.getString("title") ?: "")
+      .setArtist(metadata?.getString("artist") ?: "")
       .build()
 
     view.setupMediaPlayer(url, longStartTime, mediaMetadata)
@@ -65,7 +76,9 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   @OptIn(UnstableApi::class)
   @ReactProp(name = "rate")
   fun setRate(view: MediaPlayerView, rate: Double) {
-    view.onChangePlaybackSpeed(rate.toFloat())
+    if (rate.isFinite()) {
+      view.onChangePlaybackSpeed(rate.toFloat())
+    }
   }
 
   @OptIn(UnstableApi::class)
@@ -76,14 +89,15 @@ class RNVideoPlayer : SimpleViewManager<View>() {
 
   @OptIn(UnstableApi::class)
   @ReactProp(name = "menus")
-  fun setMenus(view: MediaPlayerView, menus: ReadableMap) {
-    val reactConfigAdapter = RCTConfigs.getInstance()
+  fun setMenus(view: MediaPlayerView, menus: ReadableMap?) {
+    if (menus != null) {
+      val reactConfigAdapter = RCTConfigs.getInstance()
 
-    menus.entryIterator.forEach { entry ->
-      reactConfigAdapter.set(entry.key, entry.value)
+      menus.entryIterator.forEach { entry ->
+        reactConfigAdapter.set(entry.key, entry.value)
+      }
+      reactConfigAdapter.set(RCTConfigs.Key.MENU_ITEMS, menus.toHashMap().keys)
     }
-    reactConfigAdapter.set(RCTConfigs.Key.MENU_ITEMS, menus.toHashMap().keys)
-
   }
 
   @OptIn(UnstableApi::class)

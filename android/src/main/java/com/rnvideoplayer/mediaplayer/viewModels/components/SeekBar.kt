@@ -67,13 +67,16 @@ class SeekBar(context: Context) : LinearLayout(context), ICustomSeekBar {
   private fun seekBarWrapper(context: Context): DefaultTimeBar {
     return CustomDefaultTimeBar(context).apply {
       setScrubberColor(Color.TRANSPARENT)
+      setUnplayedColor(Color.argb(30,255,255,255))
+      setBufferedColor(Color.argb(80,255,255,255))
       layoutParams = LayoutParams(
         0,
-        50
+        70
       ).apply {
         weight = 1f
         gravity = Gravity.BOTTOM
       }
+      requestLayout()
     }
   }
 }
@@ -83,13 +86,22 @@ class CustomDefaultTimeBar(context: Context, attrs: AttributeSet? = null) :
   DefaultTimeBar(context, attrs) {
 
   init {
-    val barHeightField = DefaultTimeBar::class.java.getDeclaredField("barHeight")
-    barHeightField.isAccessible = true
-    barHeightField.set(this, dpToPx(10))
+    configureBarDimensions()
+  }
 
-    val scrubberSizeField = DefaultTimeBar::class.java.getDeclaredField("scrubberEnabledSize")
-    scrubberSizeField.isAccessible = true
-    scrubberSizeField.set(this, dpToPx(15))
+  private fun configureBarDimensions() {
+    setPrivateField("barHeight", dpToPx(4))
+    setPrivateField("scrubberEnabledSize", dpToPx(25))
+  }
+
+  private fun setPrivateField(fieldName: String, value: Int) {
+    try {
+      val field = DefaultTimeBar::class.java.getDeclaredField(fieldName)
+      field.isAccessible = true
+      field.set(this, value)
+    } catch (e: Exception) {
+      e.printStackTrace()
+    }
   }
 
   private fun dpToPx(dp: Int): Int {
