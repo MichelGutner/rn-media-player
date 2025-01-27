@@ -15,9 +15,12 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.TimeBar
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.cast.CastButton
+import com.rnvideoplayer.currentHeight
+import com.rnvideoplayer.currentWidth
 import com.rnvideoplayer.extensions.fadeIn
 import com.rnvideoplayer.extensions.fadeOut
 import com.rnvideoplayer.extensions.withTranslationAnimation
+import com.rnvideoplayer.mediaplayer.logger.Debug
 import com.rnvideoplayer.mediaplayer.models.MediaPlayerSource
 import com.rnvideoplayer.mediaplayer.viewModels.components.DoubleTapSeek
 import com.rnvideoplayer.mediaplayer.viewModels.components.FullscreenButton
@@ -163,6 +166,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
     setupControlsCallback()
+    setupLayoutChangeListener()
   }
 
   @SuppressLint("ClickableViewAccessibility")
@@ -221,6 +225,27 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
       }
     }
     return true
+  }
+
+  private fun setupLayoutChangeListener() {
+    addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+      val newWidth = right - left
+      val newHeight = bottom - top
+      val oldWidth = oldRight - oldLeft
+      val oldHeight = oldBottom - oldTop
+
+      if (newWidth != oldWidth || newHeight != oldHeight) {
+          val layoutParams = this.layoutParams
+          if (layoutParams.width != newWidth || layoutParams.height != newHeight) {
+            layoutParams.width = newWidth
+            layoutParams.height = newHeight
+            this.layoutParams = layoutParams
+            this.requestLayout()
+            currentWidth = layoutParams.width
+            currentHeight = layoutParams.height
+          }
+      }
+    }
   }
 
   private fun setupControlsCallback() {
