@@ -15,7 +15,7 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import com.rnvideoplayer.R
 import com.rnvideoplayer.extensions.fadeIn
 import com.rnvideoplayer.extensions.fadeOut
-import com.rnvideoplayer.utils.TimeCodesFormat
+import com.rnvideoplayer.utils.TimeFormat
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
@@ -27,7 +27,7 @@ private interface IThumbnailPreview {
 }
 
 class Thumbnail(context: Context) : LinearLayout(context), IThumbnailPreview {
-  private val helper = TimeCodesFormat()
+  private val helper = TimeFormat()
   private var timestamp = 0L
   private val thumbWidth = dpToPx(240)
   private val thumbHeight = dpToPx(140)

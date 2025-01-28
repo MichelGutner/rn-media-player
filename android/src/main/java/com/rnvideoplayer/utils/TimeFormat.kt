@@ -3,7 +3,7 @@ package com.rnvideoplayer.utils
 import android.annotation.SuppressLint
 import java.util.concurrent.TimeUnit
 
-class TimeCodesFormat {
+class TimeFormat {
   @SuppressLint("DefaultLocale")
   fun format(time: Long): String {
     val hours = TimeUnit.MILLISECONDS.toHours(time)

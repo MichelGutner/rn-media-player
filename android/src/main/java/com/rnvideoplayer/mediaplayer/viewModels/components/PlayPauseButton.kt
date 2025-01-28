@@ -27,7 +27,7 @@ class PlayPauseButton(context: Context) : FrameLayout(context) {
   }
 
   private fun setupLayout() {
-    layoutParams = LayoutParams(170, 170).apply {
+    layoutParams = LayoutParams(120, 120).apply {
       gravity = Gravity.CENTER
     }
     setBackgroundResource(R.drawable.rounded_background)

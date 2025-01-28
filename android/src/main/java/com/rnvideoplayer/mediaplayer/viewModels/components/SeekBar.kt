@@ -71,7 +71,7 @@ class SeekBar(context: Context) : LinearLayout(context), ICustomSeekBar {
       setBufferedColor(Color.argb(80,255,255,255))
       layoutParams = LayoutParams(
         0,
-        70
+        40
       ).apply {
         weight = 1f
         gravity = Gravity.BOTTOM

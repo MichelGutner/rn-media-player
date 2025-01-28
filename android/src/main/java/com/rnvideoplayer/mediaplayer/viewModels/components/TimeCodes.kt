@@ -7,10 +7,10 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.rnvideoplayer.R
 import com.rnvideoplayer.utils.layoutParamsWithGravityCenter
-import com.rnvideoplayer.utils.TimeCodesFormat
+import com.rnvideoplayer.utils.TimeFormat
 
 class TimeCodes(context: Context) : LinearLayout(context) {
-  private var helper = TimeCodesFormat()
+  private var helper = TimeFormat()
   private val position = createTextView(context)
   private val duration = createTextView(context)
 
