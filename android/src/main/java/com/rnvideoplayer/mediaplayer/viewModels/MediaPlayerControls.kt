@@ -20,7 +20,6 @@ import com.rnvideoplayer.currentWidth
 import com.rnvideoplayer.extensions.fadeIn
 import com.rnvideoplayer.extensions.fadeOut
 import com.rnvideoplayer.extensions.withTranslationAnimation
-import com.rnvideoplayer.mediaplayer.logger.Debug
 import com.rnvideoplayer.mediaplayer.models.MediaPlayerSource
 import com.rnvideoplayer.mediaplayer.viewModels.components.DoubleTapSeek
 import com.rnvideoplayer.mediaplayer.viewModels.components.FullscreenButton
@@ -63,7 +62,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
 
   private val videoTitle = VideoTitle(context)
 
-  private val castButton = CastButton(context)
+//  private val castButton = CastButton(context)
 
   private val thumbnail by lazy { Thumbnail(context) }
 
@@ -131,7 +130,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
       }
     })
     // TODO: need refactor
-//    topBarControlsContainer.addView(castButton)
+//    topContainer.addView(castButton)
 
     bottomInteractionControlsContainer.addView(optionsMenuButton)
     bottomInteractionControlsContainer.addView(fullscreenButton)
@@ -444,14 +443,14 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
     fullscreenButton.fadeOut()
     optionsMenuButton.fadeOut()
     playPauseControl.fadeOut()
-    castButton.fadeOut()
+//    castButton.fadeOut()
   }
 
   open fun showInteractionControls() {
     fullscreenButton.fadeIn()
     playPauseControl.fadeIn()
     optionsMenuButton.fadeIn()
-    castButton.fadeIn()
+//    castButton.fadeIn()
   }
 
   open fun removeLoading() {
