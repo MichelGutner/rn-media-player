@@ -52,7 +52,7 @@ function App(): JSX.Element {
           metadata: { title, artist },
           startTime: 34,
         }}
-        thumbnails={{ isEnabled: true, sourceUrl: uri }}
+        // thumbnails={{ isEnabled: true, sourceUrl: uri }}
         style={{
           width: '100%',
           height: 300,
@@ -66,13 +66,13 @@ function App(): JSX.Element {
         //   value: 15,
         //   suffixLabel: 'segundos',
         // }}
-        menus={{
-          [SpeedsKey]: { data: speedsValues, initialItemSelected: 'Normal' },
-          [Qualities]: {
-            data: qualitiesValues,
-            initialItemSelected: qualitiesValues[0]?.name as string,
-          },
-        }}
+        // menus={{
+        //   [SpeedsKey]: { data: speedsValues, initialItemSelected: 'Normal' },
+        //   [Qualities]: {
+        //     data: qualitiesValues,
+        //     initialItemSelected: qualitiesValues[0]?.name as string,
+        //   },
+        // }}
         // onFullScreenStateChanged={({ nativeEvent }) => {
         //   console.log('fullscreen', nativeEvent);
         // }}
