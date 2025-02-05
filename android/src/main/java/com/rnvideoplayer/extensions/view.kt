@@ -11,7 +11,7 @@ fun View.animatedScale(isForward: Boolean) {
     this.translationX = -(this.width.toFloat() / 2f + 40)
   }
   this.pivotY = this.height / 2f
-  this.animate().scaleX(1f).scaleY(1.2f).setDuration(200).start()
+  this.animate().scaleX(1.2f).scaleY(1.2f).setDuration(200).start()
   this.requestLayout()
 }
 

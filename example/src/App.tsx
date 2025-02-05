@@ -8,6 +8,17 @@ import { useRoute } from '@react-navigation/native';
 const SpeedsKey = 'Velocidades de reprodução';
 const Qualities = 'Qualidade';
 
+// menuOptions: {
+//   qualities: {
+//     data: [
+//       { name: 'Baixa', value: 'https://content.jwplatform.com/videos/ijHnL627-VIgN1lMW.mp4' },
+//       { name: 'Média', value: 'https://content.jwplatform.com/videos/ijHnL627-zZbIuxVJ.mp4' },
+//       { name: 'Alta', value: 'https://content.jwplatform.com/videos/ijHnL627-aoHq8DIe.mp4' },
+//     ],
+//     initialItemSelected: 'Baixa',
+//   }
+// }
+
 const speedsValues = [
   { name: '0.5x', value: 0.5 },
   { name: 'Normal', value: 1.0 },
@@ -52,7 +63,7 @@ function App(): JSX.Element {
           metadata: { title, artist },
           startTime: 34,
         }}
-        // thumbnails={{ isEnabled: true, sourceUrl: uri }}
+        thumbnails={{ isEnabled: true, sourceUrl: uri }}
         style={{
           width: '100%',
           height: 300,
@@ -66,13 +77,13 @@ function App(): JSX.Element {
         //   value: 15,
         //   suffixLabel: 'segundos',
         // }}
-        // menus={{
-        //   [SpeedsKey]: { data: speedsValues, initialItemSelected: 'Normal' },
-        //   [Qualities]: {
-        //     data: qualitiesValues,
-        //     initialItemSelected: qualitiesValues[0]?.name as string,
-        //   },
-        // }}
+        menus={{
+          [SpeedsKey]: { data: speedsValues, initialItemSelected: '1.5x' },
+          [Qualities]: {
+            data: qualitiesValues,
+            initialItemSelected: qualitiesValues[0]?.name as string,
+          },
+        }}
         // onFullScreenStateChanged={({ nativeEvent }) => {
         //   console.log('fullscreen', nativeEvent);
         // }}

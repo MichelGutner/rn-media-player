@@ -14,9 +14,6 @@ import androidx.core.view.isVisible
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.TimeBar
 import com.facebook.react.uimanager.ThemedReactContext
-import com.rnvideoplayer.cast.CastButton
-import com.rnvideoplayer.currentHeight
-import com.rnvideoplayer.currentWidth
 import com.rnvideoplayer.extensions.fadeIn
 import com.rnvideoplayer.extensions.fadeOut
 import com.rnvideoplayer.extensions.withTranslationAnimation
@@ -48,11 +45,12 @@ interface MediaPlayerControlsViewListener {
   fun control(type: ControlType, event: Any? = null)
 }
 
+@SuppressLint("ViewConstructor")
 @UnstableApi
-abstract class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout(context) {
+class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout(context) {
   private var listener: MediaPlayerControlsViewListener? = null
 
-  open fun setListener(listener: MediaPlayerControlsViewListener) {
+  fun setListener(listener: MediaPlayerControlsViewListener) {
     this.listener = listener
   }
   private val playerLayer = PlayerLayer(context)
@@ -86,6 +84,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
   }
   private val thumbnailContainer = createHorizontalLinearLayout()
   private val bottomContainer = createSimpleFrameLayout()
+
   private val bottomInteractionControlsContainer = createHorizontalLinearLayout().apply {
     gravity = Gravity.BOTTOM or Gravity.END
     setPadding(0, 0, 12, 8)
@@ -112,7 +111,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
     val endPositionPercent: Int
   )
 
-  val mainLayout = FrameLayout(context).apply {
+  private val mainLayout = FrameLayout(context).apply {
     layoutParams = LayoutParams(
       LayoutParams.MATCH_PARENT,
       LayoutParams.MATCH_PARENT
@@ -129,10 +128,10 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
         weight = 1f
       }
     })
-    // TODO: need refactor
 //    topContainer.addView(castButton)
+    topContainer.addView(optionsMenuButton)
 
-    bottomInteractionControlsContainer.addView(optionsMenuButton)
+//    bottomInteractionControlsContainer.addView(optionsMenuButton)
     bottomInteractionControlsContainer.addView(fullscreenButton)
 
 
@@ -159,13 +158,13 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
 
     mainLayout.addView(playerLayer.frame)
     mainLayout.addView(container)
+
     addView(mainLayout)
   }
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
-    setupControlsCallback()
-    setupLayoutChangeListener()
+    createListeners()
   }
 
   @SuppressLint("ClickableViewAccessibility")
@@ -226,28 +225,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
     return true
   }
 
-  private fun setupLayoutChangeListener() {
-    addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-      val newWidth = right - left
-      val newHeight = bottom - top
-      val oldWidth = oldRight - oldLeft
-      val oldHeight = oldBottom - oldTop
-
-      if (newWidth != oldWidth || newHeight != oldHeight) {
-          val layoutParams = this.layoutParams
-          if (layoutParams.width != newWidth || layoutParams.height != newHeight) {
-            layoutParams.width = newWidth
-            layoutParams.height = newHeight
-            this.layoutParams = layoutParams
-            this.requestLayout()
-            currentWidth = layoutParams.width
-            currentHeight = layoutParams.height
-          }
-      }
-    }
-  }
-
-  private fun setupControlsCallback() {
+  private fun createListeners() {
     playPauseControl.setOnClickListener {
       listener?.control(ControlType.PLAY_PAUSE)
     }
@@ -266,7 +244,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
   }
 
   private fun createOverlayView(): FrameLayout {
-    val paddingInPx = dpToPx(16f)
+    val paddingInPx = dpToPx(14f)
 
     val gradientBackground = GradientDrawable(
       GradientDrawable.Orientation.TOP_BOTTOM,
@@ -339,7 +317,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
     ).toInt()
   }
 
-  open fun seekBarListener(
+  fun seekBarListener(
     exoPlayer: MediaPlayerSource,
     getIsSeeking: (Boolean) -> Unit,
     onSeek: (lastPosition: Boolean, ScrubberPosition) -> Unit
@@ -399,7 +377,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
     })
   }
 
-  open fun toggleOverlayVisibility() {
+  private fun toggleOverlayVisibility() {
     if (overlay.isVisible) {
       hideOverlay()
       seekBarContainer.withTranslationAnimation(20f)
@@ -411,7 +389,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
     }
   }
 
-  open fun hideOverlay(animated: Boolean? = true) {
+  fun hideOverlay(animated: Boolean? = true) {
     if (animated!!) {
       overlay.fadeOut()
     } else {
@@ -419,7 +397,7 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
     }
   }
 
-  open fun showOverlay(animated: Boolean? = true) {
+  private fun showOverlay(animated: Boolean? = true) {
     if (animated!!) {
       overlay.fadeIn()
     } else {
@@ -427,33 +405,33 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
     }
   }
 
-  open fun updateAnimatedPlayPauseIcon(isPlaying: Boolean) {
+  fun updateAnimatedPlayPauseIcon(isPlaying: Boolean) {
     playPauseControl.updateIcon(isPlaying)
   }
 
-  open fun updateFullscreenIcon(isFullscreen: Boolean) {
+  fun updateFullscreenIcon(isFullscreen: Boolean) {
     fullscreenButton.updateFullscreenIcon(isFullscreen)
   }
 
-  open fun setSurfaceMediaPlayerView(surfaceView: SurfaceView) {
+  fun setSurfaceMediaPlayerView(surfaceView: SurfaceView) {
     playerLayer.frame.addView(surfaceView)
   }
 
-  open fun hideInteractionControls() {
+  fun hideInteractionControls() {
     fullscreenButton.fadeOut()
     optionsMenuButton.fadeOut()
     playPauseControl.fadeOut()
 //    castButton.fadeOut()
   }
 
-  open fun showInteractionControls() {
+  fun showInteractionControls() {
     fullscreenButton.fadeIn()
     playPauseControl.fadeIn()
     optionsMenuButton.fadeIn()
 //    castButton.fadeIn()
   }
 
-  open fun removeLoading() {
+  fun removeLoading() {
     postDelayed({
       loading.fadeOut {
         container.removeView(loading)
@@ -462,51 +440,51 @@ abstract class MediaPlayerControls(private val context: ThemedReactContext) : Fr
     }, 300)
   }
 
-  open fun modifyConfigLeftGestureSeek(value: Int, suffix: String) {
+  fun modifyConfigLeftGestureSeek(value: Int, suffix: String) {
     leftSeekGestureView.tapValue = value
     leftSeekGestureView.suffixLabel = suffix
   }
 
-  open fun modifyConfigRightGestureSeek(value: Int, suffix: String) {
+  fun modifyConfigRightGestureSeek(value: Int, suffix: String) {
     rightSeekGestureView.tapValue = value
     rightSeekGestureView.suffixLabel = suffix
   }
 
-  open fun shouldShowThumbnail() {
+  fun shouldShowThumbnail() {
     thumbnail.show()
   }
 
-  open fun shouldHideThumbnail() {
+  fun shouldHideThumbnail() {
     thumbnail.hide()
   }
 
-  open fun shouldUpdateThumbnailPosition(position: Long) {
+  fun shouldUpdateThumbnailPosition(position: Long) {
     thumbnail.updatePosition(position)
   }
 
-  open fun shouldUpdateThumbnailTranslateX(seconds: Double, duration: Double) {
+  fun shouldUpdateThumbnailTranslateX(seconds: Double, duration: Double) {
     thumbnail.onTranslateX(seconds, duration, seekBar.width)
   }
 
-  open fun setThumbnailPositionX(value: Float) {
+  fun setThumbnailPositionX(value: Float) {
     thumbnail.positionX = value
   }
 
-  open fun shouldExecuteDownloadThumbnailFrames(url: String) {
+  fun shouldExecuteDownloadThumbnailFrames(url: String) {
     thumbnail.downloadFrames(url)
   }
 
-  open fun setSeekBarDuration(duration: Long) {
+  fun setSeekBarDuration(duration: Long) {
     seekBar.setDuration(duration)
     timeCodes.setDuration(duration)
   }
 
-  open fun setSeekBarProgress(position: Long, bufferProgress: Long) {
+  fun setSeekBarProgress(position: Long, bufferProgress: Long) {
     seekBar.setPosition(position, bufferProgress)
     timeCodes.setPosition(position)
   }
 
-  open fun setVideoTitle(title: String) {
+  fun setVideoTitle(title: String) {
     videoTitle.setTitle(title)
   }
 }

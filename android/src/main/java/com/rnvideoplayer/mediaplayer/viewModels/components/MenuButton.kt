@@ -16,23 +16,10 @@ import com.rnvideoplayer.R
 class MenuButton(context: Context) : FrameLayout(context) {
   private val button = setupButton(context)
 
-  init {
-    setupLayout()
-    addView(button)
-  }
+  init { addView(button) }
 
   override fun setOnClickListener(l: OnClickListener?) {
     button.setOnClickListener(l)
-  }
-
-  private fun setupLayout() {
-    layoutParams = LayoutParams(
-      ViewGroup.LayoutParams.WRAP_CONTENT,
-      ViewGroup.LayoutParams.WRAP_CONTENT
-    ).apply {
-      gravity = Gravity.CENTER
-    }
-    setPadding(8)
   }
 
   @SuppressLint("ResourceType")
@@ -45,7 +32,15 @@ class MenuButton(context: Context) : FrameLayout(context) {
         true
       )
       setBackgroundResource(typedValue.resourceId)
-      setImageResource(R.drawable.outline_pending_24)
+      setImageResource(R.drawable.outline_settings_24)
+
+      setPadding(8)
+      layoutParams = LayoutParams(
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+      ).apply {
+        gravity = Gravity.CENTER
+      }
     }
   }
 }

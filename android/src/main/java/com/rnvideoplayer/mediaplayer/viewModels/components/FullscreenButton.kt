@@ -13,26 +13,12 @@ import androidx.core.view.setPadding
 import com.rnvideoplayer.R
 
 class FullscreenButton(context: Context) : FrameLayout(context) {
-  private var size: Int = 80
   private val button = setupButton(context)
 
-  init {
-    setupLayout()
-    addView(button)
-  }
+  init { addView(button) }
 
   override fun setOnClickListener(l: OnClickListener?) {
     button.setOnClickListener(l)
-  }
-
-  private fun setupLayout() {
-    layoutParams = LayoutParams(
-      ViewGroup.LayoutParams.WRAP_CONTENT,
-      ViewGroup.LayoutParams.WRAP_CONTENT
-    ).apply {
-      gravity = Gravity.CENTER
-    }
-    setPadding(8)
   }
 
   @SuppressLint("ResourceType")
@@ -46,6 +32,13 @@ class FullscreenButton(context: Context) : FrameLayout(context) {
       )
       setBackgroundResource(typedValue.resourceId)
       setImageResource(R.drawable.animated_full_to_exit)
+      setPadding(8)
+      layoutParams = LayoutParams(
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+      ).apply {
+        gravity = Gravity.CENTER
+      }
     }
   }
 

@@ -66,7 +66,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
       val enabled = thumbnails.getBoolean("isEnabled")
       if (enabled) {
         if (sourceUrl.isNotEmpty()) {
-          view.shouldExecuteDownloadThumbnailFrames(sourceUrl)
+          view.downloadThumbnailFrames(sourceUrl)
         }
       }
     }

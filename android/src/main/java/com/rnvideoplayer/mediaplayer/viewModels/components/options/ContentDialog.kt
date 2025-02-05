@@ -1,4 +1,4 @@
-package com.rnvideoplayer.mediaplayer.viewModels.components
+package com.rnvideoplayer.mediaplayer.viewModels.components.options
 
 import android.annotation.SuppressLint
 import android.content.Context
