@@ -98,6 +98,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     context.currentActivity?.apply {
       requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     }
+    exitFullscreen()
   }
 
   @SuppressLint("SwitchIntDef")
