@@ -3,22 +3,17 @@ package com.rnvideoplayer.mediaplayer.views
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.view.View
-import android.view.ViewGroup
 import android.view.ViewTreeObserver
-import android.view.Window
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.facebook.react.uimanager.ThemedReactContext
-import com.rnvideoplayer.currentHeight
-import com.rnvideoplayer.currentWidth
 import com.rnvideoplayer.mediaplayer.logger.Debug
 import com.rnvideoplayer.mediaplayer.models.RCTDirectEvents
 import com.rnvideoplayer.mediaplayer.models.MediaPlayerSource
-import com.rnvideoplayer.mediaplayer.models.IMediaPlayerSourceListener
+import com.rnvideoplayer.mediaplayer.models.MediaPlayerSourceListener
 import com.rnvideoplayer.mediaplayer.models.PlaybackState
 import com.rnvideoplayer.mediaplayer.models.RCTConfigs
 import com.rnvideoplayer.mediaplayer.viewModels.ControlType
@@ -28,13 +23,16 @@ import com.rnvideoplayer.mediaplayer.viewModels.MediaPlayerContentScreen
 import com.rnvideoplayer.mediaplayer.viewModels.MediaPlayerControls
 import com.rnvideoplayer.mediaplayer.viewModels.MediaPlayerControlsViewListener
 import com.rnvideoplayer.mediaplayer.viewModels.MediaPlayerScreenListener
-import com.rnvideoplayer.mediaplayer.viewModels.components.PopUpMenu
+import com.rnvideoplayer.mediaplayer.viewModels.components.options.CustomDialog
+import com.rnvideoplayer.mediaplayer.viewModels.components.options.MediaPlayerMenuOptions
+import com.rnvideoplayer.mediaplayer.viewModels.components.options.MediaPlayerMenuOptionsListener
+import com.rnvideoplayer.mediaplayer.viewModels.components.options.OptionsDialogType
 import com.rnvideoplayer.utils.TaskScheduler
 import com.rnvideoplayer.utils.TimeUnitFormat
 import java.util.concurrent.TimeUnit
 
-@SuppressLint("ViewConstructor")
 @UnstableApi
+@SuppressLint("ViewConstructor")
 class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerContentScreen(context) {
   private val eventDispatcher = RCTDirectEvents(context, this)
   private var isSeeking = false
@@ -42,9 +40,9 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   private var taskManager = TaskScheduler()
   private var rctConfigs = RCTConfigs.getInstance()
   private var timeFormatter = TimeUnitFormat()
-  private val mediaSource = MediaPlayerSource(context)
-  private val mediaControls = MediaPlayerControls(context)
-
+  private val mediaSource = MediaPlayerSource(context).apply { setListener(SourceListener()) }
+  private val mediaControls = MediaPlayerControls(context).apply { setListener(ControlsViewListener()) }
+  private val dialog by lazy { CustomDialog(context) }
 
   private var isFullscreen = false
   private var isFinished = false
@@ -74,9 +72,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
       scheduleTimeoutControls()
     }
 
-    setListener(MediaPlayerContentScreenListener())
-    mediaSource.setListener(MediaPlayerSourceListener())
-    mediaControls.setListener(MediaPlayerControlsListener())
+    setListener(ContentScreenListener())
   }
 
   override fun onAttachedToWindow() {
@@ -107,8 +103,6 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   @SuppressLint("SwitchIntDef")
   override fun onConfigurationChanged(newConfig: Configuration?) {
     super.onConfigurationChanged(newConfig)
-//    onLayoutListener()
-
 //    when(newConfig?.orientation) {
 //      Configuration.ORIENTATION_LANDSCAPE -> {
 //       onChangeFullscreenState(true)
@@ -154,15 +148,6 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     }
   }
 
-  private fun showPopUp(view: View) {
-    val popupMenu by lazy {
-      PopUpMenu(context, view) { title, value ->
-        eventDispatcher.onMenuItemSelected(title, value)
-      }
-    }
-    popupMenu.show()
-  }
-
   private fun scheduleTimeoutControls() {
     taskManager.cancelTask()
 
@@ -187,7 +172,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   }
 
   fun onChangePlaybackSpeed(rate: Float) {
-    mediaSource.onMediaChangePlaybackSpeed(rate)
+//    mediaSource.onMediaChangePlaybackSpeed(rate)
   }
 
   fun onReplaceMedia(url: String) {
@@ -200,7 +185,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     mediaControls.shouldExecuteDownloadThumbnailFrames(url)
   }
 
-  private inner class MediaPlayerSourceListener : IMediaPlayerSourceListener {
+  private inner class SourceListener : MediaPlayerSourceListener {
     override fun onPlaybackInstance(player: ExoPlayer) {
       currentItem = player.currentMediaItem
       mediaControls.setVideoTitle(player.mediaMetadata.title.toString())
@@ -263,7 +248,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     }
   }
 
-  private inner class MediaPlayerControlsListener : MediaPlayerControlsViewListener {
+  private inner class ControlsViewListener : MediaPlayerControlsViewListener {
     override fun control(type: ControlType, event: Any?) {
       when (type) {
         ControlType.PLAY_PAUSE -> {
@@ -276,7 +261,13 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
         }
 
         ControlType.FULLSCREEN -> toggleFullscreen()
-        ControlType.OPTIONS_MENU -> showPopUp(event as View)
+        ControlType.OPTIONS_MENU -> {
+            val content by lazy { MediaPlayerMenuOptions(context, dialog).apply { setListener(MenuOptionsListener()) } }
+            val reactConfigAdapter = RCTConfigs.getInstance()
+            val menuItems = (reactConfigAdapter.get(RCTConfigs.Key.MENU_ITEMS) as? Set<*>)?.filterIsInstance<String>()
+            content.showOptionsDialog(menuItems!!)
+        }
+
         ControlType.SEEK_GESTURE_FORWARD -> {
           mediaSource.seekToRelativePosition((event as Int * 1000).toLong())
         }
@@ -291,16 +282,14 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     }
   }
 
-  private inner class MediaPlayerContentScreenListener : MediaPlayerScreenListener {
+  private inner class ContentScreenListener : MediaPlayerScreenListener {
     override fun onScreenStateChanged(currentState: EMediaPlayerFullscreen) {
       when (currentState) {
         EMediaPlayerFullscreen.NOT_FULLSCREEN -> {
           eventDispatcher.onFullScreenStateChanged(false) // TODO: need implement enum
           isFullscreen = false
           mediaControls.updateFullscreenIcon(false)
-          mediaControls.setPadding(14,14,14,14)
-          mediaControls.invalidate()
-          mediaControls.requestLayout()
+          mediaControls.setOverlayPadding(14f)
         }
 
         EMediaPlayerFullscreen.IN_TRANSITION -> {
@@ -312,9 +301,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
           isFullscreen = true
           eventDispatcher.onFullScreenStateChanged(true)
           mediaControls.updateFullscreenIcon(true)
-          mediaControls.setPadding(20,20,20,20)
-          mediaControls.invalidate()
-          mediaControls.requestLayout()
+          mediaControls.setOverlayPadding(24f)
         }
       }
     }
@@ -331,6 +318,27 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
         }
       }
     }
+  }
+
+  private inner class MenuOptionsListener : MediaPlayerMenuOptionsListener {
+    override fun onSelected(optionType: OptionsDialogType, title: String, value: Any) {
+      when (optionType) {
+        OptionsDialogType.SPEEDS -> {
+          mediaSource.onMediaChangePlaybackSpeed(value as Double)
+        }
+
+        OptionsDialogType.QUALITIES -> {
+          onReplaceMedia(value as String)
+        }
+
+        OptionsDialogType.CAPTIONS -> {
+//          mediaSource.onMediaChangeCaption(value as String)
+        }
+      }
+
+      eventDispatcher.onMenuItemSelected(title, value)
+    }
+
   }
 }
 

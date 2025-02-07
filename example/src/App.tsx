@@ -8,16 +8,53 @@ import { useRoute } from '@react-navigation/native';
 const SpeedsKey = 'Velocidades de reprodução';
 const Qualities = 'Qualidade';
 
-// menuOptions: {
-//   qualities: {
-//     data: [
-//       { name: 'Baixa', value: 'https://content.jwplatform.com/videos/ijHnL627-VIgN1lMW.mp4' },
-//       { name: 'Média', value: 'https://content.jwplatform.com/videos/ijHnL627-zZbIuxVJ.mp4' },
-//       { name: 'Alta', value: 'https://content.jwplatform.com/videos/ijHnL627-aoHq8DIe.mp4' },
-//     ],
-//     initialItemSelected: 'Baixa',
-//   }
-// }
+const menuOptions = {
+  qualities: {
+    title: 'Qualidades',
+    options: [
+      {
+        name: 'Baixa',
+        value: 'https://content.jwplatform.com/videos/ijHnL627-VIgN1lMW.mp4',
+      },
+      {
+        name: 'Média',
+        value: 'https://content.jwplatform.com/videos/ijHnL627-zZbIuxVJ.mp4',
+      },
+      {
+        name: 'Alta',
+        value: 'https://content.jwplatform.com/videos/ijHnL627-aoHq8DIe.mp4',
+      },
+    ],
+    initialOptionSelected: 'Baixa',
+    disabled: false,
+  },
+  speeds: {
+    title: 'Velocidades de reprodução',
+    options: [
+      { name: '0.5x', value: 0.5 },
+      { name: 'Normal', value: 1.0 },
+      { name: '1.5x', value: 1.5 },
+      { name: '2.0x', value: 2.0 },
+    ],
+    initialOptionSelected: 'Normal',
+    disabled: false,
+  },
+  captions: {
+    title: 'Legendas',
+    options: [
+      {
+        name: 'Português',
+        value: 'https://content.jwplatform.com/strips/ijHnL627-120.vtt',
+      },
+      {
+        name: 'Inglês',
+        value: 'https://content.jwplatform.com/strips/ijHnL627-120.vtt',
+      },
+    ],
+    initialOptionSelected: 'Português',
+    disabled: false,
+  }
+}
 
 const speedsValues = [
   { name: '0.5x', value: 0.5 },
@@ -69,6 +106,7 @@ function App(): JSX.Element {
           height: 300,
           backgroundColor: 'black',
         }}
+        menuOptions={menuOptions}
         // autoPlay
         // rate={rate}
         // replaceMediaUrl={playbackQuality}
@@ -77,13 +115,6 @@ function App(): JSX.Element {
         //   value: 15,
         //   suffixLabel: 'segundos',
         // }}
-        menus={{
-          [SpeedsKey]: { data: speedsValues, initialItemSelected: '1.5x' },
-          [Qualities]: {
-            data: qualitiesValues,
-            initialItemSelected: qualitiesValues[0]?.name as string,
-          },
-        }}
         // onFullScreenStateChanged={({ nativeEvent }) => {
         //   console.log('fullscreen', nativeEvent);
         // }}

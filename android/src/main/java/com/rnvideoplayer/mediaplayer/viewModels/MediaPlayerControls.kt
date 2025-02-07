@@ -487,4 +487,11 @@ class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout
   fun setVideoTitle(title: String) {
     videoTitle.setTitle(title)
   }
+
+  fun setOverlayPadding(padding: Float) {
+    val paddingInPx = dpToPx(padding)
+    overlay.setPadding(paddingInPx, paddingInPx, paddingInPx, paddingInPx)
+    overlay.invalidate()
+    overlay.requestLayout()
+  }
 }

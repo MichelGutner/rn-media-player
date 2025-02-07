@@ -1,6 +1,7 @@
 import React from 'react';
 import { Platform, UIManager, requireNativeComponent } from 'react-native';
 import type { VideoPlayer } from './types';
+import { setDefaultConfigs } from './helpers';
 export { EResizeMode } from './types';
 export type { VideoPlayer as TVideoPlayerProps } from './types';
 
@@ -19,5 +20,6 @@ const VideoPlayer =
       };
 
 export const Video = (props: VideoPlayer) => {
-  return <VideoPlayer {...props} />;
+  const configs = setDefaultConfigs(props);
+  return <VideoPlayer {...configs} />;
 };

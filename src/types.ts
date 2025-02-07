@@ -119,16 +119,22 @@ export type VideoPlayer = Omit<ViewProps, 'style'> & {
   onMediaPinchZoom?: TonPinchZoom;
   onMediaError?: TOnError;
   onMenuItemSelected?: TGenericEventHandler<{ name: string; value: any }>;
-  menus?: {
-    [key: string]: {
-      readonly data: { name: string; value: unknown }[];
-      readonly initialItemSelected: string;
-    };
+  menuOptions: {
+    qualities: TMenuOptions;
+    speeds: TMenuOptions;
+    captions: TMenuOptions;
   };
   /**
    * iOS only
    */
   onMediaRouter?: TOnMediaRouter;
+};
+
+type TMenuOptions = {
+  title?: string;
+  options?: { name: string; value: unknown }[];
+  initialOptionSelected?: string;
+  disabled?: boolean;
 };
 
 type TGenericEventHandler<T> = DirectEventHandler<Readonly<T>>;
