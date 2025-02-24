@@ -20,8 +20,6 @@ RCT_EXPORT_VIEW_PROPERTY(rate, float)
 
 
 RCT_EXPORT_VIEW_PROPERTY(resizeMode, NSString)
-RCT_EXPORT_VIEW_PROPERTY(replaceMediaUrl, NSString)
-
 
 RCT_EXPORT_VIEW_PROPERTY(onMediaBuffering, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onMediaCompleted, RCTBubblingEventBlock)
@@ -34,7 +32,7 @@ RCT_EXPORT_VIEW_PROPERTY(onMediaRouter, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onMediaSeekBar, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onMediaPinchZoom, RCTDirectEventBlock)
 
-RCT_EXPORT_VIEW_PROPERTY(menus, NSDictionary)
+RCT_EXPORT_VIEW_PROPERTY(menuOptions, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(onMenuItemSelected, RCTBubblingEventBlock)
 
 @end

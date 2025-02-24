@@ -5,12 +5,9 @@ import { downloadFile } from './downloadFile';
 import { directories } from '@kesha-antonov/react-native-background-downloader';
 import { useRoute } from '@react-navigation/native';
 
-const SpeedsKey = 'Velocidades de reprodução';
-const Qualities = 'Qualidade';
-
 const menuOptions = {
   qualities: {
-    title: 'Qualidades',
+    title: 'Qualidade',
     options: [
       {
         name: 'Baixa',
@@ -29,18 +26,19 @@ const menuOptions = {
     disabled: false,
   },
   speeds: {
-    title: 'Velocidades de reprodução',
-    options: [
-      { name: '0.5x', value: 0.5 },
-      { name: 'Normal', value: 1.0 },
-      { name: '1.5x', value: 1.5 },
-      { name: '2.0x', value: 2.0 },
-    ],
-    initialOptionSelected: 'Normal',
+    title: 'Velocidade de reprodução',
+    // options: [
+    //   { name: '0.5x', value: 0.5 },
+    //   { name: 'Normal', value: 1.0 },
+    //   // { name: '1.5x', value: 1.5 },
+    //   // { name: '2.0x', value: 2.0 },
+    // ],
+    // initialOptionSelected: 'Normal',
     disabled: false,
   },
   captions: {
-    title: 'Legendas',
+    title: 'Legenda',
+    offOptionName: 'Sem legenda',
     options: [
       {
         name: 'Português',
@@ -51,32 +49,10 @@ const menuOptions = {
         value: 'https://content.jwplatform.com/strips/ijHnL627-120.vtt',
       },
     ],
-    initialOptionSelected: 'Português',
+    initialOptionSelected: 'Sem legenda',
     disabled: false,
   }
 }
-
-const speedsValues = [
-  { name: '0.5x', value: 0.5 },
-  { name: 'Normal', value: 1.0 },
-  { name: '1.5x', value: 1.5 },
-  { name: '2.0x', value: 2.0 },
-];
-
-const qualitiesValues = [
-  {
-    name: 'Baixa',
-    value: 'https://content.jwplatform.com/videos/ijHnL627-VIgN1lMW.mp4',
-  },
-  {
-    name: 'Média',
-    value: 'https://content.jwplatform.com/videos/ijHnL627-zZbIuxVJ.mp4',
-  },
-  {
-    name: 'Alta',
-    value: 'https://content.jwplatform.com/videos/ijHnL627-aoHq8DIe.mp4',
-  },
-];
 
 function App(): JSX.Element {
   const route = useRoute<any>();
@@ -109,7 +85,6 @@ function App(): JSX.Element {
         menuOptions={menuOptions}
         // autoPlay
         // rate={rate}
-        // replaceMediaUrl={playbackQuality}
         // entersFullScreenWhenPlaybackBegins
         // doubleTapToSeek={{
         //   value: 15,

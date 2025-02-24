@@ -96,7 +96,7 @@ public class RCTConfigManager : ObservableObject {
     
     let finalConfig = (config != nil && config?.count ?? 0 > 0) ? config! : defaultConfig
     
-    appConfig.log("default finalConfig: \(finalConfig)")
+    Debug.log("default finalConfig: \(finalConfig)")
     
     RCTConfigManager.shared.data.setDoubleTapToSeek(dictionary: finalConfig)
   }

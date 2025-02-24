@@ -50,7 +50,7 @@ class MediaSeekSlider: UIView {
     backgroundBar.addSubview(progressBar)
     
     thumbView.backgroundColor = .clear
-    thumbView.frame.size = CGSize(width: 45, height: 45)
+    thumbView.frame.size = CGSize(width: 35, height: 35)
     thumbView.layer.cornerRadius = thumbView.bounds.width / 2
     addSubview(thumbView)
     thumbView.layer.zPosition = 10
@@ -59,14 +59,14 @@ class MediaSeekSlider: UIView {
   override func layoutSubviews() {
     super.layoutSubviews()
     
-    let sliderheight = bounds.height * 0.2
+    let sliderheight = bounds.height * 0.1
     
-    backgroundBar.frame = CGRect(x: 0, y: bounds.midY, width: bounds.width, height: sliderheight)
+    backgroundBar.frame = CGRect(x: 0, y: bounds.midY - sliderheight / 2, width: bounds.width, height: sliderheight)
     bufferingBar.frame = CGRect(x: 0, y: 0, width: bufferingProgress * bounds.width, height: bounds.height)
     progressBar.frame = CGRect(x: 0, y: 0, width: sliderProgress * bounds.width, height: bounds.height)
     
     let thumbX = sliderProgress * bounds.width
-    thumbView.center = CGPoint(x: max(thumbX, thumbView.bounds.width / 2), y: sliderheight * 3)
+    thumbView.center = CGPoint(x: max(thumbX, thumbView.bounds.width / 2), y: sliderheight * 5)
     bringSubviewToFront(thumbView)
   }
   

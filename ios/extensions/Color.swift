@@ -8,14 +8,20 @@
 import Foundation
 import SwiftUI
 
-@available(iOS 14.0, *)
+//@available(iOS 14.0, *)
 extension Color {
     init(uiColor: UIColor) {
         let components = uiColor.cgColor.components
         let red = components?[0] ?? 1
         let green = components?.count ?? 0 > 1 ? components![1] : 1
         let blue = components?.count ?? 0 > 2 ? components![2] : 1
-      let alpha = uiColor.cgColor.alpha
+        let alpha = uiColor.cgColor.alpha
         self.init(red: Double(red), green: Double(green), blue: Double(blue), opacity: Double(alpha))
     }
+  
+  static var systemPrimaryTextColor: Color {
+    return Color(UIColor { traitCollection in
+      traitCollection.userInterfaceStyle == .dark ? .white : .black
+    })
+  }
 }

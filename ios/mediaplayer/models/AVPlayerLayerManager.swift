@@ -30,17 +30,17 @@ open class MediaPlayerLayerManager: AVPlayerLayer {
   open func attachPlayer(with player: AVPlayer) {
     self.player = player
     self.name = UUID().uuidString
-    appConfig.log("[MediaPlayerLayerManager] Connected player layer with ID: \(self.name ?? "unknown")")
+    Debug.log("[MediaPlayerLayerManager] Connected player layer with ID: \(self.name ?? "unknown")")
   }
   
   /// Remove player instance and disconnect current layer.
   open func detachPlayer() {
     guard self.player != nil else {
-      appConfig.log("[MediaPlayerLayerManager] No player to detach.")
+      Debug.log("[MediaPlayerLayerManager] No player to detach.")
       return
     }
     
-    appConfig.log("[MediaPlayerLayerManager] Disconnected player with ID: \(self.name ?? "unknown")")
+    Debug.log("[MediaPlayerLayerManager] Disconnected player with ID: \(self.name ?? "unknown")")
     self.removeFromSuperlayer()
   }
   

@@ -8,8 +8,6 @@ import AVFoundation
 import Foundation
 import AVKit
 
-public let appConfig = MediaPlayerConfigManager.shared
-
 fileprivate let defaultOptionsMenu: NSDictionary = [
   "Speeds": [
       "data": [
@@ -28,35 +26,19 @@ open class MediaPlayerConfigManager {
   open var shouldAutoPlay: Bool = false {
     didSet {
       if shouldAutoPlay {
-        appConfig.log("Auto play enabled")
+        Debug.log("Auto play enabled")
       } else {
-        appConfig.log("Auto play disabled")
-      }
-    }
-  }
-  
-  open var playbackMenu: NSDictionary? = defaultOptionsMenu {
-    didSet {
-      if playbackMenu != oldValue {
-        appConfig.log("New menu items has been set")
-      }
-    }
-  }
-  
-  open var thumbnails: NSDictionary? = nil {
-    didSet {
-      if thumbnails != oldValue {
-        appConfig.log("Thumbnails has been set")
+        Debug.log("Auto play disabled")
       }
     }
   }
 
-  open var isLoggingEnabled: Bool = false
-  
-  func log( _ info: Any) {
-      if isLoggingEnabled {
-        print("RNMediaPlayer \(info)")
+  open var thumbnails: NSDictionary? = nil {
+    didSet {
+      if thumbnails != oldValue {
+        Debug.log("Thumbnails has been set")
       }
+    }
   }
 }
 
@@ -67,5 +49,19 @@ public class PlayerManager {
   
   internal static func updateInstance(player: AVPlayer?) {
     shared.currentPlayer = player
+  }
+}
+
+class Debug {
+  static var isEnabled: Bool = false
+  
+  static func log(_ info: Any) {
+    if (!isEnabled) { return }
+    print("Log MediaPlayer : \(info)")
+  }
+  
+  static func warning(_ info: Any) {
+    if (!isEnabled) { return }
+    print("Warning MediaPlayer : \(info)")
   }
 }

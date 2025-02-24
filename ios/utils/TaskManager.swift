@@ -29,7 +29,7 @@ class TaskManager {
   }
   
   func cancelAllTasks() {
-    appConfig.log("taskManager cancelAllTasks")
+    Debug.log("taskManager cancelAllTasks")
     queue.async(flags: .barrier) {
       self.tasks.values.forEach { $0.cancel() }
       self.tasks.removeAll()
