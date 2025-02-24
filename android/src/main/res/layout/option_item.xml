@@ -11,10 +11,9 @@
   >
 
   <ImageView
-    android:id="@+id/checkImage"
+    android:id="@+id/menuItemImage"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:src="@drawable/baseline_check"
     android:layout_gravity="center"
     android:focusable="false"
     android:focusableInTouchMode="false"
@@ -29,5 +28,15 @@
     android:paddingStart="12dp"
     android:text="Name"
     tools:ignore="RtlSymmetry" />
+
+  <ImageView
+    android:id="@+id/optionRightIcon"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:focusable="false"
+    android:focusableInTouchMode="false"
+    android:src="@drawable/outline_chevron_right_24"
+    />
 
 </LinearLayout>

@@ -18,6 +18,7 @@ class RNMediaPlayerView : RCTPropsView {
   fileprivate var rootControlsView: MediaPlayerControlsView?
   fileprivate var videoThumbnailGenerator: VideoThumbnailGenerator?
   fileprivate var remoteControls: RemoteControlManager?
+  fileprivate var menuOptionsModal: MenuOptionsControlView? = MenuOptionsControlView()
   
   @objc var controlsStyles: NSDictionary? = [:]
   
@@ -27,12 +28,6 @@ class RNMediaPlayerView : RCTPropsView {
       if oldValue != doubleTapToSeek {
         RCTConfigManager.setDoubleTapToSeek(with: doubleTapToSeek)
       }
-    }
-  }
-
-  @objc var menus: NSDictionary? = [:] {
-    didSet {
-      appConfig.playbackMenu = menus
     }
   }
   
@@ -57,10 +52,11 @@ class RNMediaPlayerView : RCTPropsView {
     videoThumbnailGenerator?.cancel()
     ThumbnailManager.clearImages()
     remoteControls?.prepareToDeInit()
+    menuOptionsModal = nil
   }
   
   private func setup() {
-    appConfig.isLoggingEnabled.toggle()
+    Debug.isEnabled = true
     rootControlsView = MediaPlayerControlsView(mediaSource: mediaSource)
     rootControlsView?.delegate = self
     
@@ -68,12 +64,15 @@ class RNMediaPlayerView : RCTPropsView {
     
     mediaSource.delegate = self
     remoteControls?.delegate = self
+    menuOptionsModal?.delegate = self
     
     if let playerLayerVC {
       playerLayerVC.addContentOverlayController(with: controlsVC!)
       playerLayerVC.delegate = self
       addSubview(playerLayerVC.view)
     }
+    
+    menuOptionsModal?.bounds = bounds
     
     remoteControls?.makeNowPlayingInfo()
   }
@@ -93,7 +92,37 @@ class RNMediaPlayerView : RCTPropsView {
 }
 
 @available(iOS 14.0, *)
-extension RNMediaPlayerView : RRCTPropsViewDelegate {
+extension RNMediaPlayerView : MenuOptionsControlViewDelegate {
+  func onMenuOptionSelected(option: EMenuOptionItem, value: Any) {
+    switch option {
+    case .speeds:
+      mediaSource.setRate(to: value as! Float)
+      break
+    case .captions:
+      Debug.log("captions not implemented")
+      break
+    case .qualities:
+      mediaSource.setPlayerWithNewURL(value as! String) { success, error in
+        if success {
+          Debug.log("[PlayerSource] Player updated successfully.")
+        } else if let error = error {
+          self.sendEvent(.onMediaError, error)
+        }
+      }
+      break
+    case .unkown:
+      Debug.log("unkown option selected")
+      break
+    }
+  }
+}
+
+@available(iOS 14.0, *)
+extension RNMediaPlayerView : RCTPropsViewDelegate {
+  func onMenuOptions(_ menuOptions: NSDictionary) {
+    menuOptionsModal?.setMenuOptions(with: menuOptions)
+  }
+  
   func onRate(_ rate: Float) {
     mediaSource.setRate(to: rate)
   }
@@ -111,22 +140,12 @@ extension RNMediaPlayerView : RRCTPropsViewDelegate {
       setup()
     }
   }
-  
-  func onReplaceMediaUrl(_ url: String) {
-    mediaSource.setPlayerWithNewURL(url) { success, error in
-      if success {
-        appConfig.log("[PlayerSource] Player updated successfully.")
-      } else if let error = error {
-        self.sendEvent(.onMediaError, error)
-      }
-    }
-  }
-  
+
   func onThumbnails(_ url: String) {
     videoThumbnailGenerator = VideoThumbnailGenerator(videoURL: url) { image, completed in
       ThumbnailManager.setImage(image)
       if completed {
-        appConfig.log("[Thumbnails] all images generated successfully")
+        Debug.log("[Thumbnails] all images generated successfully")
       }
     }
   }
@@ -180,7 +199,7 @@ extension RNMediaPlayerView: PlayerSourceViewDelegate {
   }
   
   func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool) {
-    appConfig.log("[PlayerSourceDelegate] isReadyToDisplay -> \(isReadyToDisplay)")
+    Debug.log("[PlayerSourceDelegate] isReadyToDisplay -> \(isReadyToDisplay)")
     PlaybackManager.setIsReadyForDisplay(to: isReadyToDisplay)
     sendEvent(.onMediaReady, ["loaded": isReadyToDisplay, "duration": player.playerItem?.duration.seconds ?? 0.0])
   }
@@ -237,11 +256,7 @@ extension RNMediaPlayerView : MediaPlayerControlsViewDelegate {
         playerLayerVC?.didDismissFullscreen()
       }
     case .optionsMenu:
-      let values = event as! (String, Any)
-      if (values.0 == "Speeds") {
-        mediaSource.setRate(to: values.1 as! Float)
-      }
-      sendEvent(.onMenuItemSelected, event as Any)
+      menuOptionsModal?.present()
       break
     case .seekGestureBackward:
       mediaSource.onBackwardTime(event as! Int)

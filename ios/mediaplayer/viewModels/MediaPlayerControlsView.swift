@@ -74,10 +74,12 @@ public struct MediaPlayerControlsView : View {
         HeaderControlsView()
           .opacity(isControlsVisible ? 1 : 0)
         Spacer()
+        
         BottomControlsView()
           .opacity(isControlsVisible || isSeeking || isDraggingSlider ? 1 : 0)
       }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(Color.clear)
     )
     .overlay(
@@ -155,25 +157,29 @@ public struct MediaPlayerControlsView : View {
         // Header title
         let title = metadataIdentifier.title
         
-          if #available(iOS 15.0, *) {
-            Text(title)
-              .font(.system(size: 14))
-              .foregroundStyle(.white)
-          } else {
-            Text(title)
-              .font(.system(size: 14))
-              .foregroundColor(.white)
-          }
+        Text(title)
+          .font(.system(size: 14))
+          .customColor(.white)
+          .padding(.top, 8)
+        
       }
       Spacer()
       
       // Router Picker -- AirPlay
       RoutePickerView()
-        .frame(width: 25, height: 25)
+        .frame(width: 14, height: 14)
+        .padding(12)
+        .padding(.top, 2)
+      
+      ButtonTemplate(imageName: .constant("gearshape")) {
+        delegate?.controlDidTap(self, controlType: .optionsMenu, didChangeControlEvent: nil)
+      }
+
     }
     .offset(y: isControlsVisible ? 0 : -5)
     .opacity(!isDraggingSlider ? 1 : 0)
   }
+  
   
   @ViewBuilder
   func MiddleControlsView() -> some View {
@@ -183,9 +189,9 @@ public struct MediaPlayerControlsView : View {
         scheduleHideControls()
       },
       color: UIColor.white.cgColor,
-      frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 35, height: 35))
+      frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 30, height: 30))
     )
-    .frame(width: 70, height: 70)
+    .frame(width: 60, height: 60)
     .opacity(!isDraggingSlider ? 1 : 0)
   }
   
@@ -194,21 +200,10 @@ public struct MediaPlayerControlsView : View {
     VStack {
       HStack {
         Spacer()
-        CustomMenus(onSelect: { key, value in
-          delegate?.controlDidTap(self, controlType: .optionsMenu, didChangeControlEvent: (key, value))
-        })
-
-        Button(action: {
+        ButtonTemplate(imageName: .constant(screenState.isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")) {
           delegate?.controlDidTap(self, controlType: .fullscreen, didChangeControlEvent: !screenState.isFullScreen)
           scheduleHideControls()
-        }, label: {
-          Image(systemName: screenState.isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
-            .rotationEffect(.degrees(90))
-            .foregroundColor(.white)
-            .font(.system(size: 18))
-        })
-        .padding(12)
-        .clipShape(Circle())
+        }
       }
       .opacity(!isDraggingSlider ? 1 : 0)
       

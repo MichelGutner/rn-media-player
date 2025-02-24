@@ -5,30 +5,54 @@ import { downloadFile } from './downloadFile';
 import { directories } from '@kesha-antonov/react-native-background-downloader';
 import { useRoute } from '@react-navigation/native';
 
-const SpeedsKey = 'Velocidades de reprodução';
-const Qualities = 'Qualidade';
-
-const speedsValues = [
-  { name: '0.5x', value: 0.5 },
-  { name: 'Normal', value: 1.0 },
-  { name: '1.5x', value: 1.5 },
-  { name: '2.0x', value: 2.0 },
-];
-
-const qualitiesValues = [
-  {
-    name: 'Baixa',
-    value: 'https://content.jwplatform.com/videos/ijHnL627-VIgN1lMW.mp4',
+const menuOptions = {
+  qualities: {
+    title: 'Qualidade',
+    options: [
+      {
+        name: 'Baixa',
+        value: 'https://content.jwplatform.com/videos/ijHnL627-VIgN1lMW.mp4',
+      },
+      {
+        name: 'Média',
+        value: 'https://content.jwplatform.com/videos/ijHnL627-zZbIuxVJ.mp4',
+      },
+      {
+        name: 'Alta',
+        value: 'https://content.jwplatform.com/videos/ijHnL627-aoHq8DIe.mp4',
+      },
+    ],
+    initialOptionSelected: 'Baixa',
+    disabled: false,
   },
-  {
-    name: 'Média',
-    value: 'https://content.jwplatform.com/videos/ijHnL627-zZbIuxVJ.mp4',
+  speeds: {
+    title: 'Velocidade de reprodução',
+    // options: [
+    //   { name: '0.5x', value: 0.5 },
+    //   { name: 'Normal', value: 1.0 },
+    //   // { name: '1.5x', value: 1.5 },
+    //   // { name: '2.0x', value: 2.0 },
+    // ],
+    // initialOptionSelected: 'Normal',
+    disabled: false,
   },
-  {
-    name: 'Alta',
-    value: 'https://content.jwplatform.com/videos/ijHnL627-aoHq8DIe.mp4',
-  },
-];
+  captions: {
+    title: 'Legenda',
+    offOptionName: 'Sem legenda',
+    options: [
+      {
+        name: 'Português',
+        value: 'https://content.jwplatform.com/strips/ijHnL627-120.vtt',
+      },
+      {
+        name: 'Inglês',
+        value: 'https://content.jwplatform.com/strips/ijHnL627-120.vtt',
+      },
+    ],
+    initialOptionSelected: 'Sem legenda',
+    disabled: false,
+  }
+}
 
 function App(): JSX.Element {
   const route = useRoute<any>();
@@ -52,26 +76,19 @@ function App(): JSX.Element {
           metadata: { title, artist },
           startTime: 34,
         }}
-        // thumbnails={{ isEnabled: true, sourceUrl: uri }}
+        thumbnails={{ isEnabled: true, sourceUrl: uri }}
         style={{
           width: '100%',
           height: 300,
           backgroundColor: 'black',
         }}
+        menuOptions={menuOptions}
         // autoPlay
         // rate={rate}
-        // replaceMediaUrl={playbackQuality}
         // entersFullScreenWhenPlaybackBegins
         // doubleTapToSeek={{
         //   value: 15,
         //   suffixLabel: 'segundos',
-        // }}
-        // menus={{
-        //   [SpeedsKey]: { data: speedsValues, initialItemSelected: 'Normal' },
-        //   [Qualities]: {
-        //     data: qualitiesValues,
-        //     initialItemSelected: qualitiesValues[0]?.name as string,
-        //   },
         // }}
         // onFullScreenStateChanged={({ nativeEvent }) => {
         //   console.log('fullscreen', nativeEvent);

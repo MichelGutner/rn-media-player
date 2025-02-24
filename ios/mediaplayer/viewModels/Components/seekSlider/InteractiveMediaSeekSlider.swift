@@ -42,7 +42,7 @@ struct InteractiveMediaSeekSlider : View {
   
   var body: some View {
     ZStack {
-      VStack {
+      HStack {
         MediaSeekSliderRepresentable(
           bufferingProgress: $bufferingProgress,
           sliderProgress: $sliderProgress,
@@ -95,13 +95,9 @@ struct InteractiveMediaSeekSlider : View {
             }
           }
         )
-        .frame(height: 20)
+        .frame(height: 30)
         
-        HStack {
-          TimeCodes(time: $currentTime)
-          Spacer()
-          TimeCodes(time: $missingDuration, suffixValue: "-")
-        }
+        TimeCodes(time: $missingDuration)
       }
       .overlay(
         HStack {
@@ -119,7 +115,8 @@ struct InteractiveMediaSeekSlider : View {
       )
     }
     .background(Color.clear)
-    .frame(maxWidth: .infinity)
+    .contentShape(Rectangle())
+    .frame(maxWidth: .infinity, alignment: .center)
     .onAppear {
       setupPeriodTimeObserve()
     }

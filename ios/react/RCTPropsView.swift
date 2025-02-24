@@ -18,17 +18,17 @@ public enum Dispatcher {
   case onMediaPinchZoom
 }
 
-public protocol RRCTPropsViewDelegate: AnyObject {
+public protocol RCTPropsViewDelegate: AnyObject {
   func onThumbnails(_ url: String)
-  func onReplaceMediaUrl(_ url: String)
   func onSource(_ source: NSDictionary?)
   func onEntersFullScreenWhenPlaybackBegins(_ didEnterFullscreen: Bool)
   func onAutoPlay(_ didPlay: Bool)
   func onRate(_ rate: Float)
+  func onMenuOptions(_ menuOptions: NSDictionary)
 }
 
 class RCTPropsView : UIView {
-  open weak var rctPropsViewDelegate: RRCTPropsViewDelegate?
+  open weak var rctPropsViewDelegate: RCTPropsViewDelegate?
   
   @objc private var onMenuItemSelected: RCTBubblingEventBlock?
   @objc private var onMediaPlayPause: RCTDirectEventBlock?
@@ -105,25 +105,25 @@ class RCTPropsView : UIView {
     }
   }
   
-  @objc private var replaceMediaUrl: String? = nil {
-    didSet {
-      guard let validUrl = replaceMediaUrl, !validUrl.isEmpty else { return }
-      self.rctPropsViewDelegate?.onReplaceMediaUrl(validUrl)
-    }
-  }
-  
   @objc private var source: NSDictionary? = [:] {
     didSet {
       self.rctPropsViewDelegate?.onSource(source)
     }
   }
   
-  @objc var rate: Float = 1.0 {
+  @objc private var rate: Float = 1.0 {
     didSet {
       if !rate.isNaN || oldValue != rate {
         self.rctPropsViewDelegate?.onRate(rate)
       }
     }
   }
+  
+  @objc private var menuOptions: NSDictionary = [:] {
+    didSet {
+      self.rctPropsViewDelegate?.onMenuOptions(menuOptions)
+    }
+  }
+  
 
 }

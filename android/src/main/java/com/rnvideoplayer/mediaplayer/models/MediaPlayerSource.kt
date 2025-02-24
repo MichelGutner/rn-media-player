@@ -24,7 +24,7 @@ enum class PlaybackState {
   WAITING
 }
 
-interface IMediaPlayerSourceListener {
+interface MediaPlayerSourceListener {
   fun onPlaybackInstance(player: ExoPlayer)
   fun onPlaybackStateChange(playbackStateChanged: PlaybackState)
   fun onPlaybackStart(started: Boolean, duration: Long)
@@ -38,7 +38,7 @@ open class MediaPlayerSource(context: Context) {
   private val progressInterval: Long = 1000L
   private val handler = Handler(Looper.getMainLooper())
   private var callback: Callback? = null
-  private var listener: IMediaPlayerSourceListener? = null
+  private var listener: MediaPlayerSourceListener? = null
 
   private var playbackState: PlaybackState = PlaybackState.NONE
   private var isInitialized: Boolean = false
@@ -95,7 +95,7 @@ open class MediaPlayerSource(context: Context) {
     })
   }
 
-  fun setListener(listener: IMediaPlayerSourceListener?) {
+  fun setListener(listener: MediaPlayerSourceListener?) {
     this.listener = listener
   }
 
@@ -222,8 +222,8 @@ open class MediaPlayerSource(context: Context) {
     exoPlayer.playWhenReady = autoPlay
   }
 
-  fun onMediaChangePlaybackSpeed(rate: Float) {
-    exoPlayer.setPlaybackSpeed(rate)
+  fun onMediaChangePlaybackSpeed(rate: Double) {
+    exoPlayer.setPlaybackSpeed(rate.toFloat())
   }
 
   fun onMediaTogglePlaybackState(onStateChange: (oldState: PlaybackState) -> Unit = { _ -> }) {

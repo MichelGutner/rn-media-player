@@ -104,10 +104,6 @@ export type VideoPlayer = Omit<ViewProps, 'style'> & {
     value: number;
     suffixLabel: string;
   };
-  /**
-   * Set this parameter to change the quality of the video
-   */
-  replaceMediaUrl?: string;
   controlsStyles?: TVideoPlayerControlConfig;
   onMediaBufferCompleted?: TOnVideoBufferCompleted;
   onFullScreenStateChanged?: TOnFullscreen;
@@ -119,16 +115,24 @@ export type VideoPlayer = Omit<ViewProps, 'style'> & {
   onMediaPinchZoom?: TonPinchZoom;
   onMediaError?: TOnError;
   onMenuItemSelected?: TGenericEventHandler<{ name: string; value: any }>;
-  menus?: {
-    [key: string]: {
-      readonly data: { name: string; value: unknown }[];
-      readonly initialItemSelected: string;
-    };
+  menuOptions: {
+    qualities: TMenuOptions;
+    speeds: TMenuOptions;
+    captions: TMenuOptions;
   };
   /**
    * iOS only
    */
   onMediaRouter?: TOnMediaRouter;
+};
+
+type TMenuOptions = {
+  title?: string;
+  options: { name: string; value: unknown }[];
+  initialOptionSelected: string;
+  disabled?: boolean;
+  /**@param offOptionName only used to change name for captions options to on or off */
+  offOptionName?: string;
 };
 
 type TGenericEventHandler<T> = DirectEventHandler<Readonly<T>>;

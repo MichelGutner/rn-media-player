@@ -37,7 +37,7 @@ open class PlayerSource {
   fileprivate var playbackRate: Float = 1.0 {
     didSet {
       if oldValue != playbackRate {
-        appConfig.log("[MediaPlayerManager] Changing playback rate to \(playbackRate)")
+        Debug.log("[MediaPlayerManager] Changing playback rate to \(playbackRate)")
         if playbackState == .playing {
           player?.rate = playbackRate
         }
@@ -48,7 +48,7 @@ open class PlayerSource {
   open var playbackState: PlaybackState = .none {
     didSet {
       if oldValue != playbackState {
-        appConfig.log("[MediaPlayerManager] Changing playback state to \(playbackState)")
+        Debug.log("[MediaPlayerManager] Changing playback state to \(playbackState)")
         switch playbackState {
         case .playing: onPlay()
         case .paused: onPause()
@@ -171,14 +171,14 @@ open class PlayerSource {
   @objc fileprivate func didFinishPlaying() {
     if playbackState != .ended {
       self.playbackState = .ended
-      appConfig.log("[MediaPlayerManager] Media Player has finished playing.")
+      Debug.log("[MediaPlayerManager] Media Player has finished playing.")
     }
   }
 
   internal func setup(with source: NSDictionary?, completionHandler: @escaping (_ player: AVPlayer) -> Void) {
     guard let urlString = source?["url"] as? String,
           let videoURL = URL(string: urlString) else {
-      appConfig.log("Invalid URL or missing URL in source.")
+      Debug.log("Invalid URL or missing URL in source.")
       return
     }
     
@@ -199,9 +199,9 @@ open class PlayerSource {
     
     audioManager.activateAudioSession { isSuccess, error in
       if isSuccess {
-        appConfig.log("[MediaPlayerManager] audio session activated successfully.")
+        Debug.log("[MediaPlayerManager] audio session activated successfully.")
       } else {
-        appConfig.log("[MediaPlayerManager] failed to activate audio session: \(error)")
+        Debug.log("[MediaPlayerManager] failed to activate audio session: \(error)")
       }
     }
   }
@@ -291,7 +291,7 @@ open class PlayerSource {
   
   public func prepareToDeInit() {
     if let timeObserver {
-      appConfig.log("[PlayerSource] Removed time observer.")
+      Debug.log("[PlayerSource] Removed time observer.")
       player?.removeTimeObserver(timeObserver)
     }
     

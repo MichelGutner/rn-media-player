@@ -66,7 +66,7 @@ class RNVideoPlayer : SimpleViewManager<View>() {
       val enabled = thumbnails.getBoolean("isEnabled")
       if (enabled) {
         if (sourceUrl.isNotEmpty()) {
-          view.shouldExecuteDownloadThumbnailFrames(sourceUrl)
+          view.downloadThumbnailFrames(sourceUrl)
         }
       }
     }
@@ -88,15 +88,15 @@ class RNVideoPlayer : SimpleViewManager<View>() {
   }
 
   @OptIn(UnstableApi::class)
-  @ReactProp(name = "menus")
-  fun setMenus(view: MediaPlayerView, menus: ReadableMap?) {
-    if (menus != null) {
+  @ReactProp(name = "menuOptions")
+  fun setMenuOptions(view: MediaPlayerView, menuOptions: ReadableMap?) {
+    if (menuOptions != null) {
       val reactConfigAdapter = RCTConfigs.getInstance()
 
-      menus.entryIterator.forEach { entry ->
+      menuOptions.entryIterator.forEach { entry ->
         reactConfigAdapter.set(entry.key, entry.value)
       }
-      reactConfigAdapter.set(RCTConfigs.Key.MENU_ITEMS, menus.toHashMap().keys)
+      reactConfigAdapter.set(RCTConfigs.Key.MENU_ITEMS, menuOptions.toHashMap().keys)
     }
   }
 
