@@ -34,7 +34,7 @@ const menuOptions = {
     //   // { name: '2.0x', value: 2.0 },
     // ],
     // initialOptionSelected: 'Normal',
-    disabled: false,
+    disabled: true,
   },
   captions: {
     title: 'Legenda',
@@ -85,7 +85,7 @@ function App(): JSX.Element {
         menuOptions={menuOptions}
         // autoPlay
         // rate={rate}
-        // entersFullScreenWhenPlaybackBegins
+        entersFullScreenWhenPlaybackBegins
         // doubleTapToSeek={{
         //   value: 15,
         //   suffixLabel: 'segundos',

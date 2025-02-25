@@ -168,6 +168,7 @@ struct MenuOptionsContentView: View {
             let optionsArray = values["options"] as? [NSDictionary],
             let title = values["title"] as? String else { return }
       let initialSelection = values["initialOptionSelected"] ?? optionsArray.first!["name"] as! String
+      let isDisabled = values["disabled"] as? Bool ?? false
       
       let icon: String
       switch keyString {
@@ -187,7 +188,9 @@ struct MenuOptionsContentView: View {
         return MenuOption(id: keyString, name: name, value: value, selected: initialSelection as! String)
       }
       
-      self.menuItems.append(MenuItem(title: title, icon: icon, options: options))
+      if !isDisabled { 
+        self.menuItems.append(MenuItem(title: title, icon: icon, options: options))
+      }
     }
   }
 }

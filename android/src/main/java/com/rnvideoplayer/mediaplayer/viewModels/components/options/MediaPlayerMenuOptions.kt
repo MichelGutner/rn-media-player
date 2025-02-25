@@ -51,6 +51,7 @@ class MediaPlayerMenuOptions(
     for (option in optionsData) {
       val optionReadableMap = reactConfigAdapter.get(option) as? ReadableMap
       val title = optionReadableMap?.getString("title")
+      val isDisabled = optionReadableMap?.getBoolean("disabled") ?: false
       val optionsList = optionReadableMap?.getArray("options")
       val initialOptionSelected = optionReadableMap?.getString("initialOptionSelected") ?: ""
 
@@ -58,7 +59,7 @@ class MediaPlayerMenuOptions(
         selectedOptionByType[option.lowercase()] = initialOptionSelected
       }
 
-      if (title != null) {
+      if (!isDisabled && title != null) {
         optionItems.add(
           MediaPlayerMenuOptionsDataClass(
             title,
@@ -82,6 +83,7 @@ class MediaPlayerMenuOptions(
     for (option in optionItems) {
       val optionView = LayoutInflater.from(context).inflate(R.layout.option_item, null)
       val optionNameTextView: TextView = optionView.findViewById(R.id.optionItemText)
+      val selectedItemTextView: TextView = optionView.findViewById(R.id.selectedItemText)
       val menuItemImageView: ImageView = optionView.findViewById(R.id.menuItemImage)
 
       when (option.parentName) {
@@ -98,6 +100,7 @@ class MediaPlayerMenuOptions(
         }
       }
       optionNameTextView.text = option.name
+      selectedItemTextView.text = option.optionSelected
 
       optionView.setOnClickListener {
         it.postDelayed({
