@@ -70,6 +70,7 @@ public class ThumbnailManager: ObservableObject {
   internal static func clearImages() {
     DispatchQueue.main.async {
       ThumbnailManager.shared.images.removeAll()
+      Debug.log("[ThumbnailManager] Cleared thumbnails from cache - bitmap list size: \(ThumbnailManager.shared.images.count)")
     }
   }
 }
@@ -95,9 +96,7 @@ public class RCTConfigManager : ObservableObject {
     ]
     
     let finalConfig = (config != nil && config?.count ?? 0 > 0) ? config! : defaultConfig
-    
-    Debug.log("default finalConfig: \(finalConfig)")
-    
+        
     RCTConfigManager.shared.data.setDoubleTapToSeek(dictionary: finalConfig)
   }
 }

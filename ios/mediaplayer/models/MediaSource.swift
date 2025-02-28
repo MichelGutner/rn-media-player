@@ -19,15 +19,15 @@ public enum PlaybackState : Int {
   case none = 9
 }
 
-public protocol PlayerSourceViewDelegate : AnyObject {
-  func mediaPlayer(_ player: PlayerSource, didChangePlaybackState state: PlaybackState)
-  func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool)
-  func mediaPlayer(_ player: PlayerSource, loadFail error: (any Error)?)
-  func mediaPlayer(_ player: PlayerSource, playerItemMetadata: [AVMetadataItem]?)
-  func mediaPlayer(_ control: PlayerSource, currentTime: Double, duration: Double, bufferingProgress: CGFloat)
+public protocol MediaSourceDelegate : AnyObject {
+  func mediaPlayer(_ player: MediaSource, didChangePlaybackState state: PlaybackState)
+  func mediaPlayer(_ player: MediaSource, didChangeReadyToDisplay isReadyToDisplay: Bool)
+  func mediaPlayer(_ player: MediaSource, loadFail error: (any Error)?)
+  func mediaPlayer(_ player: MediaSource, playerItemMetadata: [AVMetadataItem]?)
+  func mediaPlayer(_ control: MediaSource, currentTime: Double, duration: Double, bufferingProgress: CGFloat)
 }
 
-open class PlayerSource {
+open class MediaSource {
   fileprivate var startTime: Double = 0.0
   fileprivate var lastPlayerItem: AVPlayerItem?
   fileprivate let audioManager = MediaPlayerAudioManager()
@@ -37,7 +37,7 @@ open class PlayerSource {
   fileprivate var playbackRate: Float = 1.0 {
     didSet {
       if oldValue != playbackRate {
-        Debug.log("[MediaPlayerManager] Changing playback rate to \(playbackRate)")
+        Debug.log("[MediaSource] Changing playback rate to \(playbackRate)")
         if playbackState == .playing {
           player?.rate = playbackRate
         }
@@ -48,7 +48,7 @@ open class PlayerSource {
   open var playbackState: PlaybackState = .none {
     didSet {
       if oldValue != playbackState {
-        Debug.log("[MediaPlayerManager] Changing playback state to \(playbackState)")
+        Debug.log("[MediaSource] Changing playback state to \(playbackState)")
         switch playbackState {
         case .playing: onPlay()
         case .paused: onPause()
@@ -67,7 +67,7 @@ open class PlayerSource {
   
   init() {}
 
-  open weak var delegate: PlayerSourceViewDelegate?
+  open weak var delegate: MediaSourceDelegate?
   
   open var playerItem: AVPlayerItem? {
     didSet {
@@ -171,14 +171,14 @@ open class PlayerSource {
   @objc fileprivate func didFinishPlaying() {
     if playbackState != .ended {
       self.playbackState = .ended
-      Debug.log("[MediaPlayerManager] Media Player has finished playing.")
+      Debug.log("[MediaSource] Media Player has finished playing.")
     }
   }
 
   internal func setup(with source: NSDictionary?, completionHandler: @escaping (_ player: AVPlayer) -> Void) {
     guard let urlString = source?["url"] as? String,
           let videoURL = URL(string: urlString) else {
-      Debug.log("Invalid URL or missing URL in source.")
+      Debug.log("[MediaSource] Invalid URL or missing URL in source.")
       return
     }
     
@@ -197,13 +197,7 @@ open class PlayerSource {
     self.playerItem = newPlayerItem
     self.startTime = startTime
     
-    audioManager.activateAudioSession { isSuccess, error in
-      if isSuccess {
-        Debug.log("[MediaPlayerManager] audio session activated successfully.")
-      } else {
-        Debug.log("[MediaPlayerManager] failed to activate audio session: \(error)")
-      }
-    }
+    audioManager.activateAudioSession()
   }
   
   open func setPlayerWithNewURL(_ url: String, completion: @escaping (_ success: Bool, _ error: Error?) -> Void) {
@@ -291,7 +285,7 @@ open class PlayerSource {
   
   public func prepareToDeInit() {
     if let timeObserver {
-      Debug.log("[PlayerSource] Removed time observer.")
+      Debug.log("[MediaSource] Removed time observer.")
       player?.removeTimeObserver(timeObserver)
     }
     
@@ -306,15 +300,11 @@ open class PlayerSource {
     player?.replaceCurrentItem(with: nil)
     player = nil
     
-    audioManager.deactivateAudioSession { isSuccess, error in
-      if isSuccess {
-        print("Audio session deactivated successfully.")
-      } else {
-        print("Failed to deactivate audio session: \(error)")
-      }
-    }
+    audioManager.deactivateAudioSession()
     
     playbackState = .waiting
     setIsReadyToPlay(false)
+    
+    Debug.log("[MediaSource] removed all media resources.")
   }
 }

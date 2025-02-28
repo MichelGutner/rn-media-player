@@ -8,34 +8,14 @@ const defaultSpeeds = [
 ];
 
 export const setDefaultConfigs = (config: VideoPlayer) => {
-  const defaultCaptions = () => {
-    if (!config?.menuOptions?.captions) {
-      return config.menuOptions;
-    }
-
-    return {
-      ...config?.menuOptions,
-      captions: {
-        ...config?.menuOptions?.captions,
-        options: config?.menuOptions?.captions?.options
-          .concat([
-            {
-              name: config?.menuOptions?.captions?.offOptionName || 'Off',
-              value: 'off',
-            },
-          ])
-          .sort((a, b) => (a.value === 'off' ? -1 : a.name > b.name ? 1 : -1)),
-      },
-    };
-  };
-
   return {
     ...config,
     menuOptions: {
-      captions: createOptions(defaultCaptions(), 'captions').builder({
-        title: 'Captions',
-        initialOptionSelected: 'Off',
-      }),
+      captions: config?.menuOptions?.captions ?? {
+        title: 'Subtitle',
+        disabledCaptionName: 'Off',
+        disabled: true,
+      },
       speeds: createOptions(config.menuOptions, 'speeds').builder({
         title: 'Playback Speed',
         options: defaultSpeeds,
@@ -58,7 +38,7 @@ const validIfOptionExists = (option: string | undefined, options: any[]) => {
 
 const createOptions = (
   menus: VideoPlayer['menuOptions'],
-  tag: keyof VideoPlayer['menuOptions']
+  tag: keyof Omit<VideoPlayer['menuOptions'], 'captions'>
 ) => {
   const builder = (defaultFields?: {
     title: string;
@@ -71,14 +51,12 @@ const createOptions = (
 
     const options = menus?.[tag]?.options || defaultFields?.options;
     const title = menus?.[tag]?.title || defaultFields?.title;
-    const offOptionName = menus?.[tag]?.offOptionName;
     const initialOptionSelected = validIfOptionExists(optionSelected, options);
     const disabled = menus?.[tag]?.disabled || false;
 
     return {
       title,
       options,
-      offOptionName,
       initialOptionSelected,
       disabled,
     };

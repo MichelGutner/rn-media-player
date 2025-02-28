@@ -2,12 +2,11 @@ import SwiftUI
 
 struct MenuOptionsContentView: View {
   @Binding var isMenuVisible: Bool
-  @Binding var menuData: NSDictionary
-  var onMenuItemSelected: (String, Any) -> Void
+  @Binding var menuItems: [MenuItem]
+  @Binding var selectedOptions: [SelectedOption]
+  var onMenuItemSelected: (String, String, Any) -> Void
   @State private var menuOffsetY = UIScreen.main.bounds.height
-  @State private var selectedMenuItem: MenuItem = .init(title: nil, icon: nil, options: [])
-  @State private var selectedOptions: [SelectedOption] = []
-  @State private var menuItems: [MenuItem] = []
+  @State private var selectedMenuItem: MenuItem = .init(id: nil, title: nil, icon: nil, options: [])
   @State private var isModalVisible: Bool = false
   
   var body: some View {
@@ -24,7 +23,7 @@ struct MenuOptionsContentView: View {
         }
         VStack {
           ScrollView {
-            if selectedMenuItem.options!.isEmpty {
+            if (selectedMenuItem.options!.isEmpty) {
               let sortedMenuItems = menuItems.sorted {
                 if $0.icon == "text.word.spacing" { return true }
                 if $1.icon == "text.word.spacing" { return false }
@@ -42,7 +41,7 @@ struct MenuOptionsContentView: View {
                 ) { selectedTitle in
                   hideMenu()
                   DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                    selectedMenuItem = MenuItem(title: selectedTitle, icon: item.icon, options: item.options)
+                    selectedMenuItem = MenuItem(id: item.id, title: selectedTitle, icon: item.icon, options: item.options)
                     showMenu()
                   }
                 }
@@ -61,7 +60,7 @@ struct MenuOptionsContentView: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                           closeMenu()
                         }
-                        onMenuItemSelected(option.id, option.value)
+                        onMenuItemSelected(option.id, option.name, option.value)
                       }
                     )
                   }
@@ -115,14 +114,6 @@ struct MenuOptionsContentView: View {
         }
     )
     .opacity(isMenuVisible ? 1 : 0)
-    .onAppear {
-      let isValidToGenerateNewMenuItems: Bool = menuItems.isEmpty || menuData.count != menuItems.first.map(\.options?.count) ?? 0
-      
-      if  isValidToGenerateNewMenuItems {
-        menuItems.removeAll()
-        parseMenuData()
-      }
-    }
   }
   
   private func showMenu() {
@@ -146,7 +137,7 @@ struct MenuOptionsContentView: View {
     hideMenu()
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
       isMenuVisible = false
-      selectedMenuItem = .init(title: nil, icon: nil, options: [])
+      selectedMenuItem = .init(id: nil, title: nil, icon: nil, options: [])
     }
   }
   
@@ -159,38 +150,5 @@ struct MenuOptionsContentView: View {
     let isLandscape = screenWidth > screenHeight
     
     return isLandscape ? screenHeight : screenWidth
-  }
-  
-  private func parseMenuData() {
-    menuData.allKeys.forEach { key in
-      guard let keyString = key as? String,
-            let values = menuData[key] as? NSDictionary,
-            let optionsArray = values["options"] as? [NSDictionary],
-            let title = values["title"] as? String else { return }
-      let initialSelection = values["initialOptionSelected"] ?? optionsArray.first!["name"] as! String
-      let isDisabled = values["disabled"] as? Bool ?? false
-      
-      let icon: String
-      switch keyString {
-      case "speeds":
-        icon = "timer"
-      case "qualities":
-        icon = "text.word.spacing"
-      case "captions":
-        icon = "captions.bubble"
-      default:
-        icon = "questionmark.circle"
-      }
-      
-      let options = optionsArray.compactMap { dict -> MenuOption? in
-        guard let name = dict["name"] as? String, let value = dict["value"] else { return nil }
-        selectedOptions.append(SelectedOption(parentTitle: title, selectedOption: initialSelection as! String))
-        return MenuOption(id: keyString, name: name, value: value, selected: initialSelection as! String)
-      }
-      
-      if !isDisabled { 
-        self.menuItems.append(MenuItem(title: title, icon: icon, options: options))
-      }
-    }
   }
 }
