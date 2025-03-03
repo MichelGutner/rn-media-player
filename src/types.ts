@@ -121,6 +121,7 @@ export type VideoPlayer = Omit<ViewProps, 'style'> & {
     captions: {
       title?: string;
       disabledCaptionName?: string;
+      disabled?: boolean;
     };
   };
   /**

@@ -8,9 +8,13 @@ import android.view.View.VISIBLE
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.media3.common.Format
+import androidx.media3.common.util.UnstableApi
+import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.WritableArray
+import com.facebook.react.bridge.WritableMap
 import com.rnvideoplayer.R
-import com.rnvideoplayer.mediaplayer.logger.Debug
 import com.rnvideoplayer.mediaplayer.models.RCTConfigs
 
 enum class OptionsDialogType {
@@ -25,32 +29,38 @@ interface MediaPlayerMenuOptionsListener {
 
 private var selectedOptionByType = mutableMapOf<String, String>()
 
+@UnstableApi
 @SuppressLint("ResourceType")
 class MediaPlayerMenuOptions(
   private val context: Context,
-  private val dialog: CustomDialog
+  private val dialog: CustomDialog,
+  private val closedCaptions: MutableList<Format>
 ) {
-
   private var listener: MediaPlayerMenuOptionsListener? = null
+
+  companion object {
+    val TAG: String = MediaPlayerMenuOptions::class.java.simpleName
+  }
+
   fun setListener(listener: MediaPlayerMenuOptionsListener) {
     this.listener = listener
-    Debug.log("MediaPlayerMenuOptionsListener has been initialized with success listener: $listener")
   }
 
   @SuppressLint("InflateParams", "MissingInflatedId")
-  fun showOptionsDialog(
+  fun showOptions(
     optionsData: List<String>,
   ) {
     val dialogView = LayoutInflater.from(context).inflate(R.layout.options_dialog, null)
     val optionsLayout: LinearLayout = dialogView.findViewById(R.id.optionsItem)
     val reactConfigAdapter = RCTConfigs.getInstance()
 
-
     var optionItems: MutableList<MediaPlayerMenuOptionsDataClass> = mutableListOf()
+    val map: WritableArray = Arguments.createArray()
 
     for (option in optionsData) {
       val optionReadableMap = reactConfigAdapter.get(option) as? ReadableMap
       val title = optionReadableMap?.getString("title")
+      val disabledCaptionName = optionReadableMap?.getString("disabledCaptionName")
       val isDisabled = optionReadableMap?.getBoolean("disabled") ?: false
       val optionsList = optionReadableMap?.getArray("options")
       val initialOptionSelected = optionReadableMap?.getString("initialOptionSelected") ?: ""
@@ -60,14 +70,38 @@ class MediaPlayerMenuOptions(
       }
 
       if (!isDisabled && title != null) {
-        optionItems.add(
-          MediaPlayerMenuOptionsDataClass(
-            title,
-            optionsList,
-            option.lowercase(),
-            selectedOptionByType[option]
+        if (option != "captions") {
+          optionItems.add(
+            MediaPlayerMenuOptionsDataClass(
+              title,
+              optionsList,
+              option.lowercase(),
+              selectedOptionByType[option]
+            )
           )
-        )
+        } else {
+          map.pushMap(
+            Arguments.createMap().apply {
+              putString("name", disabledCaptionName)
+              putString("value", "")
+            }
+          )
+          closedCaptions.forEach { track ->
+            val mutableSet: WritableMap = Arguments.createMap()
+            mutableSet.putString("name", track.label)
+            mutableSet.putString("value", track.language)
+            map.pushMap(mutableSet)
+          }
+
+          optionItems.add(
+            MediaPlayerMenuOptionsDataClass(
+              title,
+              map,
+              option.lowercase(),
+              selectedOptionByType[option] ?: disabledCaptionName
+            )
+          )
+        }
       }
     }
 
@@ -104,9 +138,9 @@ class MediaPlayerMenuOptions(
 
       optionView.setOnClickListener {
         it.postDelayed({
+          showSubOptions(option)
+        }, 400)
           dialog.dismiss()
-          showOptions(option)
-        }, 300)
       }
 
       optionsLayout.addView(optionView)
@@ -117,15 +151,14 @@ class MediaPlayerMenuOptions(
   }
 
   @SuppressLint("InflateParams", "MissingInflatedId")
-  fun showOptions(
-    optionData: MediaPlayerMenuOptionsDataClass,
+  fun showSubOptions(
+    subOptions: MediaPlayerMenuOptionsDataClass,
   ) {
     val optionItems: MutableList<OptionItem> = mutableListOf()
     val dialogView = LayoutInflater.from(context).inflate(R.layout.options_dialog, null)
     val optionsLayout: LinearLayout = dialogView.findViewById(R.id.optionsItem)
 
-    if (optionData.value != null) {
-      for (i in optionData.value.toArrayList()) {
+      for (i in subOptions.value?.toArrayList()!!) {
         val data = i as? Map<*, *>
         val name = data?.get("name") as? String
         val value = data?.get("value")
@@ -133,7 +166,6 @@ class MediaPlayerMenuOptions(
           optionItems += OptionItem(name, value)
         }
       }
-    }
 
     for (option in optionItems) {
       val optionView = LayoutInflater.from(context).inflate(R.layout.option_item, null)
@@ -146,23 +178,23 @@ class MediaPlayerMenuOptions(
       menuItemImage.setImageResource(R.drawable.baseline_check)
 
       menuItemImage.visibility =
-        if (option.name == optionData.optionSelected) VISIBLE else INVISIBLE
+        if (option.name == subOptions.optionSelected) VISIBLE else INVISIBLE
 
       optionView.setOnClickListener {
-        if (selectedOptionByType[optionData.parentName] == option.name) {
+        if (selectedOptionByType[subOptions.parentName] == option.name) {
           return@setOnClickListener
         } else {
-          selectedOptionByType[optionData.parentName] = option.name
+          selectedOptionByType[subOptions.parentName] = option.name
         }
 
         it.postDelayed({
           dialog.dismiss()
           listener?.onSelected(
-            OptionsDialogType.valueOf(optionData.parentName.uppercase()),
+            OptionsDialogType.valueOf(subOptions.parentName.uppercase()),
             option.name,
             option.value
           )
-        }, 500)
+        }, 300)
       }
 
       optionsLayout.addView(optionView)

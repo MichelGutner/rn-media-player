@@ -34,22 +34,11 @@ const menuOptions = {
     //   // { name: '2.0x', value: 2.0 },
     // ],
     // initialOptionSelected: 'Normal',
-    disabled: true,
+    disabled: false,
   },
   captions: {
-    title: 'Legenda',
-    offOptionName: 'Sem legenda',
-    options: [
-      {
-        name: 'Português',
-        value: 'https://content.jwplatform.com/strips/ijHnL627-120.vtt',
-      },
-      {
-        name: 'Inglês',
-        value: 'https://content.jwplatform.com/strips/ijHnL627-120.vtt',
-      },
-    ],
-    initialOptionSelected: 'Sem legenda',
+    title: 'Legendas',
+    disabledCaptionName: 'Sem legendas',
     disabled: false,
   }
 }
@@ -63,20 +52,19 @@ function App(): JSX.Element {
   const [rate, setRate] = useState(1);
   const [playbackQuality, setPlaybackQuality] = useState('');
 
-  let downloadedUrl =
-    Platform.OS === 'android'
-      ? `file://${directories.documents}/file.mp4`
-      : uri;
+  let downloadedUrl = `file://${directories.documents}/file.mp4`
+      // : uri;
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <Video
         source={{
-          url: uri,
+          url: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
+          // url: downloadedUrl,
           metadata: { title, artist },
-          startTime: 34,
+          startTime: 135,
         }}
-        thumbnails={{ isEnabled: true, sourceUrl: uri }}
+        thumbnails={{ isEnabled: true, sourceUrl: downloadedUrl }}
         style={{
           width: '100%',
           height: 300,
@@ -85,7 +73,7 @@ function App(): JSX.Element {
         menuOptions={menuOptions}
         // autoPlay
         // rate={rate}
-        entersFullScreenWhenPlaybackBegins
+        // entersFullScreenWhenPlaybackBegins
         // doubleTapToSeek={{
         //   value: 15,
         //   suffixLabel: 'segundos',
@@ -170,7 +158,7 @@ function App(): JSX.Element {
       />
       <TouchableOpacity
         style={{ height: 50, backgroundColor: 'red' }}
-        onPress={() => downloadFile(url)}
+        onPress={() => downloadFile(uri)}
       >
         <Text style={{}}>Baixar Arquivo</Text>
       </TouchableOpacity>
