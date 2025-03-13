@@ -33,8 +33,6 @@ class MenuButton(context: Context) : FrameLayout(context) {
       )
       setBackgroundResource(typedValue.resourceId)
       setImageResource(R.drawable.outline_settings_24)
-
-      setPadding(8)
       layoutParams = LayoutParams(
         ViewGroup.LayoutParams.WRAP_CONTENT,
         ViewGroup.LayoutParams.WRAP_CONTENT

@@ -4,7 +4,7 @@
   <!-- Conteúdo de fundo para o ripple -->
   <item>
     <shape android:shape="rectangle">
-      <solid android:color="#40A4A4A5" />
+      <solid android:color="?attr/colorControlHighlight" />
       <corners android:radius="1000dp" />
     </shape>
   </item>

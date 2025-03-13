@@ -3,6 +3,7 @@ package com.rnvideoplayer.mediaplayer.views
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.media.ExifInterface
 import android.view.ViewTreeObserver
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -11,6 +12,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.facebook.react.uimanager.ThemedReactContext
 import com.rnvideoplayer.mediaplayer.logger.Debug
+import com.rnvideoplayer.mediaplayer.models.HardwareSensorOrientation
+import com.rnvideoplayer.mediaplayer.models.HardwareSensorOrientationListener
 import com.rnvideoplayer.mediaplayer.models.RCTDirectEvents
 import com.rnvideoplayer.mediaplayer.models.MediaPlayerSource
 import com.rnvideoplayer.mediaplayer.models.MediaPlayerSourceListener
@@ -34,6 +37,7 @@ import java.util.concurrent.TimeUnit
 @UnstableApi
 @SuppressLint("ViewConstructor")
 class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerContentScreen(context) {
+  private var currentActivity = context.currentActivity
   private val eventDispatcher = RCTDirectEvents(context, this)
   private var isSeeking = false
 
@@ -44,6 +48,8 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   private val mediaControls =
     MediaPlayerControls(context).apply { setListener(ControlsViewListener()) }
   private val dialog by lazy { CustomDialog(context) }
+  private val hardwareSensor =
+    HardwareSensorOrientation(context).apply { setListener(HardwareSensorListener()) }
 
   private var isFullscreen = false
   private var isFinished = false
@@ -57,12 +63,9 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     registerView(mediaControls)
     mediaControls.addView(mediaSource.subtitleView)
     setupReactConfigs()
-    mediaControls.seekBarListener(
-      mediaSource,
-      getIsSeeking = {
-        isSeeking = it
-      }
-    ) { isLastPosition, scrubberPosition ->
+    mediaControls.seekBarListener(mediaSource, getIsSeeking = {
+      isSeeking = it
+    }) { isLastPosition, scrubberPosition ->
       eventDispatcher.onMediaSeekBar(
         scrubberPosition.startPositionSeconds.toDouble(),
         scrubberPosition.startPositionPercent.toDouble(),
@@ -81,14 +84,13 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     mediaControls.setSurfaceMediaPlayerView(mediaPlayerSurfaceView)
 
     val enterFullscreenWhenPlaybackBeginsConfig =
-      rctConfigs.get(RCTConfigs.Key.ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS)
-        ?: false
+      rctConfigs.get(RCTConfigs.Key.ENTERS_FULL_SCREEN_WHEN_PLAYBACK_BEGINS) ?: false
     enterFullScreenWhenPlaybackBegins = enterFullscreenWhenPlaybackBeginsConfig as Boolean
 
     postDelayed({
       scheduleTimeoutControls()
       if (enterFullscreenWhenPlaybackBeginsConfig) {
-        enterFullscreen()
+        onEnterFullscreen(currentSensor = ExifInterface.ORIENTATION_NORMAL)
       }
     }, 400)
   }
@@ -96,28 +98,14 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
     mediaPlayerRelease()
-    context.currentActivity?.apply {
+    currentActivity?.apply {
       requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
     }
-    exitFullscreen()
-  }
-
-  @SuppressLint("SwitchIntDef")
-  override fun onConfigurationChanged(newConfig: Configuration?) {
-    super.onConfigurationChanged(newConfig)
-//    when(newConfig?.orientation) {
-//      Configuration.ORIENTATION_LANDSCAPE -> {
-//       onChangeFullscreenState(true)
-//      }
-//      Configuration.ORIENTATION_PORTRAIT -> {
-//        onChangeFullscreenState(false)
-//      }
-//    }
+    removeView()
   }
 
   private fun setupReactConfigs() {
-    viewTreeObserver.addOnGlobalLayoutListener(object :
-      ViewTreeObserver.OnGlobalLayoutListener {
+    viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
       override fun onGlobalLayout() {
         var gestureSeekValue = 10
         var gestureSeekSuffix = "seconds"
@@ -144,9 +132,13 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     }
     scheduleTimeoutControls()
     if (isFullscreen) {
-      exitFullscreen()
+      onExitFullscreen {
+        mediaControls.requestLayout()
+        mediaControls.invalidate()
+        mediaControls.showInteractionControls()
+      }
     } else {
-      enterFullscreen()
+      onEnterFullscreen(currentSensor = ExifInterface.ORIENTATION_NORMAL)
     }
   }
 
@@ -188,7 +180,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   }
 
   private inner class SourceListener : MediaPlayerSourceListener {
-    override fun onPlaybackInstance(player: ExoPlayer) {
+    override fun onPlaybackInitialized(player: ExoPlayer) {
       currentItem = player.currentMediaItem
       mediaControls.setVideoTitle(player.mediaMetadata.title.toString())
     }
@@ -218,9 +210,13 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     }
 
     override fun onPlaybackStart(started: Boolean, duration: Long) {
-      mediaControls.setSeekBarDuration(duration)
-      eventDispatcher.onMediaReady(timeFormatter.toSecondsDouble(duration))
-      mediaControls.removeLoading()
+      mediaControls.run {
+        setSeekBarDuration(duration)
+        removeLoading()
+      }
+      eventDispatcher.run {
+        onMediaReady(timeFormatter.toSecondsDouble(duration))
+      }
     }
 
     override fun onPlaybackChangeBuffering(currentProgress: Long, bufferedProgress: Long) {
@@ -239,9 +235,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
     override fun onPLayBackError(error: PlaybackException, currentItem: MediaItem?) {
       val uri = currentItem?.localConfiguration?.uri
       eventDispatcher.onMediaError(
-        uri.toString(),
-        error,
-        mapOf(
+        uri.toString(), error, mapOf(
           "NSLocalizedDescriptionKey" to error.message,
           "NSLocalizedFailureReasonErrorKey" to "Failed to play the video.",
           "NSLocalizedRecoverySuggestionErrorKey" to "Please check the video source or try again later."
@@ -266,9 +260,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
         ControlType.OPTIONS_MENU -> {
           val content by lazy {
             MediaPlayerMenuOptions(
-              context,
-              dialog,
-              mediaSource.closedCaptions
+              context, dialog, mediaSource.closedCaptions
             ).apply { setListener(MenuOptionsListener()) }
           }
           val reactConfigAdapter = RCTConfigs.getInstance()
@@ -292,17 +284,17 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   }
 
   private inner class ContentScreenListener : MediaPlayerScreenListener {
-    override fun onScreenStateChanged(currentState: EMediaPlayerFullscreen) {
+    override fun onScreenStateChanged(currentState: EMediaPlayerFullscreen, currentSensor: Int?) {
       when (currentState) {
         EMediaPlayerFullscreen.NOT_FULLSCREEN -> {
           eventDispatcher.onFullScreenStateChanged(false) // TODO: need implement enum
           isFullscreen = false
           mediaControls.updateFullscreenIcon(false)
           mediaControls.setOverlayPadding(14f)
+          currentActivity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
         }
 
         EMediaPlayerFullscreen.IN_TRANSITION -> {
-          Debug.log("in transition to fullscreen or not")
           isFullscreen = false
         }
 
@@ -311,6 +303,11 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
           eventDispatcher.onFullScreenStateChanged(true)
           mediaControls.updateFullscreenIcon(true)
           mediaControls.setOverlayPadding(24f)
+
+          currentActivity?.run {
+            requestedOrientation =
+              if (currentSensor == ExifInterface.ORIENTATION_NORMAL) ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
+          }
         }
       }
     }
@@ -319,7 +316,6 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
       when (state) {
         EView.REGISTERED -> {
           Debug.log("Registered view with id: $viewId")
-
         }
 
         EView.UNREGISTERED -> {
@@ -348,6 +344,35 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
       eventDispatcher.onMenuItemSelected(title, value)
     }
 
+  }
+
+  private inner class HardwareSensorListener : HardwareSensorOrientationListener {
+    override fun changedOrientation(currentOrientation: Int, lastOrientation: Int) {
+      if (mediaSource.isPlaying) {
+        mediaControls.hideOverlay(animated = false)
+      }
+      val isLandscape =
+        currentOrientation == ExifInterface.ORIENTATION_ROTATE_180 || currentOrientation == ExifInterface.ORIENTATION_NORMAL
+      val isPortrait = currentOrientation == ExifInterface.ORIENTATION_ROTATE_90
+      val isPortraitLastOrientation = lastOrientation == ExifInterface.ORIENTATION_ROTATE_90
+      val isLandscapeLastOrientation =
+        lastOrientation == ExifInterface.ORIENTATION_ROTATE_180 || lastOrientation == ExifInterface.ORIENTATION_NORMAL
+      taskManager.cancelTask()
+      if (isLandscape && isPortraitLastOrientation) {
+        onEnterFullscreen(currentSensor = currentOrientation)
+      } else if (isPortrait && isLandscapeLastOrientation) {
+        taskManager.createTask(700) {
+          onExitFullscreen()
+        }
+      }
+
+      if (!isFullscreen && isPortrait) {
+        taskManager.createTask {
+          currentActivity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+      }
+
+    }
   }
 }
 

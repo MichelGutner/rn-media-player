@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import androidx.core.view.setMargins
 import androidx.core.view.setPadding
 import com.rnvideoplayer.R
 
@@ -32,12 +33,11 @@ class FullscreenButton(context: Context) : FrameLayout(context) {
       )
       setBackgroundResource(typedValue.resourceId)
       setImageResource(R.drawable.animated_full_to_exit)
-      setPadding(8)
       layoutParams = LayoutParams(
         ViewGroup.LayoutParams.WRAP_CONTENT,
         ViewGroup.LayoutParams.WRAP_CONTENT
       ).apply {
-        gravity = Gravity.CENTER
+        gravity = Gravity.END
       }
     }
   }

@@ -27,6 +27,7 @@ export const HomeScreen = () => {
       subtitle: item.subtitle,
       artwork: item.thumb,
       duration: item.duration,
+      captions: `https://commondatastorage.googleapis.com/gtv-videos-bucket/CastVideos/tracks/${item?.tracks?.[0]?.contentId}`
     });
   };
 
@@ -90,6 +91,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
+    color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
   },

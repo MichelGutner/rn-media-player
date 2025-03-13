@@ -59,8 +59,8 @@ function App(): JSX.Element {
     <SafeAreaView style={{ flex: 1 }}>
       <Video
         source={{
-          url: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
-          // url: downloadedUrl,
+          // url: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
+          url: uri,
           metadata: { title, artist },
           startTime: 135,
         }}

@@ -1,25 +1,18 @@
 package com.rnvideoplayer
 
 import android.view.View
-import android.view.ViewTreeObserver
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.UnstableApi
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.ReadableType
 import com.facebook.react.common.MapBuilder
-import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.uimanager.SimpleViewManager
-import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
-import com.rnvideoplayer.mediaplayer.logger.Debug
 import com.rnvideoplayer.mediaplayer.models.RCTConfigs
 import com.rnvideoplayer.mediaplayer.models.RCTEvents
 import com.rnvideoplayer.mediaplayer.views.MediaPlayerView
-
-var currentWidth = -1
-var currentHeight = -1
 
 class RNVideoPlayer : SimpleViewManager<View>() {
   override fun getName() = "RNVideoPlayer"

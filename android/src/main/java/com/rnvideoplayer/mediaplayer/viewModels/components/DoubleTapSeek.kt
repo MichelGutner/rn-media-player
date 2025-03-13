@@ -43,7 +43,7 @@ class DoubleTapSeek(
   }
 
   fun hide() {
-    taskScheduler.createTask(850){
+    taskScheduler.createTask(850) {
       post {
         tappedQuantity = 0
         isVisible = false
@@ -76,15 +76,15 @@ class DoubleTapSeek(
 
   private fun setupLayout() {
     gravity = if (isForward) Gravity.START else Gravity.END
-      layoutParams = LayoutParams(
-        LayoutParams.MATCH_PARENT,
-        LayoutParams.MATCH_PARENT
-      ).apply {
-        isClickable = true
-        isFocusable = true
-        setBackgroundResource(R.drawable.rounded_background_double_tap)
-        visibility = INVISIBLE
-      }
+    layoutParams = LayoutParams(
+      LayoutParams.MATCH_PARENT,
+      LayoutParams.MATCH_PARENT
+    ).apply {
+      isClickable = true
+      isFocusable = true
+      setBackgroundResource(R.drawable.rounded_background_double_tap)
+      visibility = INVISIBLE
+    }
 
     contentView.addView(animationIcon())
     contentView.addView(text)
@@ -110,11 +110,6 @@ class DoubleTapSeek(
   private fun setupLayoutParamsContentView(): LayoutParams {
     return LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
       gravity = Gravity.CENTER
-      if (isForward) {
-        marginStart = (context.resources.displayMetrics.widthPixels * 0.1).toInt()
-      } else {
-        marginEnd = (context.resources.displayMetrics.widthPixels * 0.1).toInt()
-      }
     }
   }
 
@@ -158,9 +153,9 @@ class DoubleTapSeek(
       container.addView(icon)
     }
 
-    fun animateIcons (index: Int) {
+    fun animateIcons(index: Int) {
       if (index < 0 || index >= icons.size) {
-        postDelayed({ animateIcons(if (isForward)0 else icons.size - 1)}, 0)
+        postDelayed({ animateIcons(if (isForward) 0 else icons.size - 1) }, 0)
         return
       }
 
@@ -173,7 +168,7 @@ class DoubleTapSeek(
 
       icon.alpha = 1f
       postDelayed({
-        animateIcons( if (isForward) index + 1 else index - 1)
+        animateIcons(if (isForward) index + 1 else index - 1)
       }, 300)
     }
 

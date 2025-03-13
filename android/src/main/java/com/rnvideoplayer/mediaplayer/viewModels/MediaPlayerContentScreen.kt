@@ -2,6 +2,7 @@ package com.rnvideoplayer.mediaplayer.viewModels
 
 import android.annotation.SuppressLint
 import android.app.Dialog
+import android.content.pm.ActivityInfo
 import android.os.Build
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.widget.FrameLayout
 import com.facebook.react.uimanager.ThemedReactContext
+import com.rnvideoplayer.mediaplayer.logger.Debug
 
 enum class EMediaPlayerFullscreen {
   NOT_FULLSCREEN, IN_TRANSITION, FULLSCREEN,
@@ -21,20 +23,18 @@ enum class EView {
 }
 
 interface MediaPlayerScreenListener {
-  fun onScreenStateChanged(currentState: EMediaPlayerFullscreen)
+  fun onScreenStateChanged(currentState: EMediaPlayerFullscreen, currentSensor: Int? = null)
   fun onView(state: EView, viewId: Int)
 }
 
-abstract class MediaPlayerContentScreen(context: ThemedReactContext) : FrameLayout(context) {
+abstract class MediaPlayerContentScreen(private val context: ThemedReactContext) :
+  FrameLayout(context) {
+    private var oldLayoutParams: ViewGroup.LayoutParams? = null
   private var subView: View? = null
   private val viewId = generateViewId()
   private var listener: MediaPlayerScreenListener? = null
   private val dialog: Dialog = Dialog(context, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
   private val window: Window? = dialog.window
-
-  init {
-    buildFullscreenDialog()
-  }
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
@@ -50,47 +50,53 @@ abstract class MediaPlayerContentScreen(context: ThemedReactContext) : FrameLayo
     this.listener = listener
   }
 
-  fun enterFullscreen() {
+  fun onEnterFullscreen(onCompletion: (() -> Unit) = {}, currentSensor: Int? = null) {
     listener?.onScreenStateChanged(EMediaPlayerFullscreen.IN_TRANSITION)
     unregisterView()
-
-    setDialogContent()
+    registerToDialogView()
 
     if (dialog.isShowing) {
-      listener?.onScreenStateChanged(EMediaPlayerFullscreen.FULLSCREEN)
+      listener?.onScreenStateChanged(EMediaPlayerFullscreen.FULLSCREEN, currentSensor)
       hideSystemBars()
+      onCompletion.invoke()
     }
   }
 
-  fun exitFullscreen() {
+  fun onExitFullscreen(onCompletion: () -> Unit = {}) {
     listener?.onScreenStateChanged(EMediaPlayerFullscreen.IN_TRANSITION)
-    unregisterView()
-
-    setViewContent()
+    removeView()
+    registerToSimpleView()
 
     if (!dialog.isShowing) {
       listener?.onScreenStateChanged(EMediaPlayerFullscreen.NOT_FULLSCREEN)
       restoreSystemBars()
+      onCompletion.invoke()
     }
   }
 
-  private fun setDialogContent() {
+  fun removeView() {
+    unregisterView()
+    dialog.dismiss()
+  }
+
+  private fun registerToDialogView() {
     if (subView != null) {
       dialog.setContentView(subView!!)
     }
     dialog.show()
   }
 
-  private fun setViewContent() {
-    (subView?.parent as? ViewGroup)?.addView(subView, viewId)
-    dialog.dismiss()
-
+  private fun registerToSimpleView() {
     if (subView != null) {
       addView(subView)
+      context.currentActivity?.run {
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+      }
     }
   }
 
   private fun unregisterView() {
+    oldLayoutParams = subView?.layoutParams
     (subView?.parent as? ViewGroup)?.removeView(subView)
     listener?.onView(EView.UNREGISTERED, (subView?.id ?: 0))
   }
@@ -104,7 +110,7 @@ abstract class MediaPlayerContentScreen(context: ThemedReactContext) : FrameLayo
   @SuppressLint("ClickableViewAccessibility")
   private fun buildFullscreenDialog() {
     dialog.setOnDismissListener {
-      exitFullscreen()
+      onExitFullscreen()
     }
   }
 

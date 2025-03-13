@@ -37,7 +37,7 @@ enum class PlaybackState {
 }
 
 interface MediaPlayerSourceListener {
-  fun onPlaybackInstance(player: ExoPlayer)
+  fun onPlaybackInitialized(player: ExoPlayer)
   fun onPlaybackStateChange(playbackStateChanged: PlaybackState)
   fun onPlaybackStart(started: Boolean, duration: Long)
   fun onPlaybackChangeBuffering(currentProgress: Long, bufferedProgress: Long)
@@ -249,7 +249,7 @@ open class MediaPlayerSource(context: Context) : MediaPlayer(context) {
 
     exoPlayer.setMediaItem(mediaItemWithMetadata, startTime)
     exoPlayer.prepare()
-    listener?.onPlaybackInstance(exoPlayer)
+    listener?.onPlaybackInitialized(exoPlayer)
   }
 
   private fun setVideoSurface() {
@@ -275,7 +275,7 @@ open class MediaPlayerSource(context: Context) : MediaPlayer(context) {
 
   private val progressTask = object : Runnable {
     override fun run() {
-      if (exoPlayer.isPlaying) {
+
         val position = exoPlayer.contentPosition
         val totalBuffered = exoPlayer.contentBufferedPosition
         val isBufferingCompleted = totalBuffered == duration
@@ -284,8 +284,10 @@ open class MediaPlayerSource(context: Context) : MediaPlayer(context) {
         if (isBufferingCompleted) {
           listener?.onPlaybackBufferCompleted(true)
         }
+
+      if (exoPlayer.isPlaying) {
+        handler.postDelayed(this, progressInterval)
       }
-      handler.postDelayed(this, progressInterval)
     }
   }
 
