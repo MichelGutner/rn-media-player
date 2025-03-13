@@ -23,6 +23,7 @@
       android:layout_height="wrap_content"
       android:textAlignment="center"
       android:textStyle="bold"
+      android:textColor="?android:textColorPrimary"
       android:layout_weight="1"
       android:paddingStart="12dp"
       tools:ignore="RtlSymmetry" />

@@ -26,7 +26,6 @@ import com.rnvideoplayer.mediaplayer.viewModels.components.PlayPauseButton
 import com.rnvideoplayer.mediaplayer.viewModels.components.PlayerLayer
 import com.rnvideoplayer.mediaplayer.viewModels.components.SeekBar
 import com.rnvideoplayer.mediaplayer.viewModels.components.Thumbnail
-import com.rnvideoplayer.mediaplayer.viewModels.components.TimeCodes
 import com.rnvideoplayer.mediaplayer.viewModels.components.VideoTitle
 import com.rnvideoplayer.utils.Utils
 import java.util.concurrent.TimeUnit
@@ -70,8 +69,6 @@ class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout
 
   private val seekBar = SeekBar(context)
 
-  private val timeCodes = TimeCodes(context)
-
   private val leftSeekGestureView by lazy { DoubleTapSeek(context, false) }
 
   private val rightSeekGestureView by lazy { DoubleTapSeek(context, true) }
@@ -87,7 +84,7 @@ class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout
 
   private val bottomInteractionControlsContainer = createHorizontalLinearLayout().apply {
     gravity = Gravity.BOTTOM or Gravity.END
-    setPadding(0, 0, 12, 8)
+    setPadding(0, 0, 12, 20)
   }
   private val thumbnailAndControlsContainer = FrameLayout(context).apply {
     layoutParams = ViewGroup.LayoutParams(
@@ -96,6 +93,7 @@ class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout
     )
   }
   private val seekBarContainer = createLinearVerticalLayout()
+
   private val container = FrameLayout(context).apply {
     layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
   }
@@ -130,13 +128,9 @@ class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout
     })
 //    topContainer.addView(castButton)
     topContainer.addView(optionsMenuButton)
-
-//    bottomInteractionControlsContainer.addView(optionsMenuButton)
     bottomInteractionControlsContainer.addView(fullscreenButton)
 
-
     seekBarContainer.addView(seekBar)
-    seekBarContainer.addView(timeCodes)
 
     thumbnailContainer.addView(thumbnail)
     thumbnailAndControlsContainer.addView(bottomInteractionControlsContainer)
@@ -245,6 +239,7 @@ class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout
 
   private fun createOverlayView(): FrameLayout {
     val paddingInPx = dpToPx(14f)
+    val paddingTopInPx = dpToPx(8f)
 
     val gradientBackground = GradientDrawable(
       GradientDrawable.Orientation.TOP_BOTTOM,
@@ -257,7 +252,7 @@ class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout
         LayoutParams.MATCH_PARENT,
         LayoutParams.MATCH_PARENT
       )
-      setPadding(paddingInPx, paddingInPx, paddingInPx, paddingInPx)
+//      setPadding(paddingInPx, 0, paddingInPx, paddingInPx)
     }
   }
 
@@ -476,12 +471,10 @@ class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout
 
   fun setSeekBarDuration(duration: Long) {
     seekBar.setDuration(duration)
-    timeCodes.setDuration(duration)
   }
 
   fun setSeekBarProgress(position: Long, bufferProgress: Long) {
     seekBar.setPosition(position, bufferProgress)
-    timeCodes.setPosition(position)
   }
 
   fun setVideoTitle(title: String) {
@@ -490,7 +483,7 @@ class MediaPlayerControls(private val context: ThemedReactContext) : FrameLayout
 
   fun setOverlayPadding(padding: Float) {
     val paddingInPx = dpToPx(padding)
-    overlay.setPadding(paddingInPx, paddingInPx, paddingInPx, paddingInPx)
+    overlay.setPadding(paddingInPx, 12, paddingInPx, paddingInPx)
     overlay.invalidate()
     overlay.requestLayout()
   }

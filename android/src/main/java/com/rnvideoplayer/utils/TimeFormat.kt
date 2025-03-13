@@ -10,10 +10,10 @@ class TimeFormat {
     val minutes = TimeUnit.MILLISECONDS.toMinutes(time) - TimeUnit.HOURS.toMinutes(hours)
     val seconds = TimeUnit.MILLISECONDS.toSeconds(time) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(time))
 
-    return if (hours > 0) {
-      String.format("%02d:%02d:%02d", hours, minutes, seconds)
-    } else {
-      String.format("%02d:%02d", minutes, seconds)
-    }
+//    return if (hours > 0) {
+      return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+//    } else {
+//      String.format("%02d:%02d", minutes, seconds)
+//    }
   }
 }

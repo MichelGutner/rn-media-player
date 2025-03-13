@@ -21,6 +21,8 @@ private interface ICustomSeekBar {
 
 @UnstableApi
 class SeekBar(context: Context) : LinearLayout(context), ICustomSeekBar {
+  private var duration: Long = 0
+  private var timeCodes = TimeCodes(context)
   private var timeBarWidth: Int = 0
 
   private val seekBar = seekBarWrapper(context)
@@ -31,7 +33,9 @@ class SeekBar(context: Context) : LinearLayout(context), ICustomSeekBar {
       timeBarWidth = seekBar.width
     }
     addView(seekBar)
-    gravity = Gravity.BOTTOM
+    addView(timeCodes.duration)
+
+    gravity = Gravity.CENTER or Gravity.BOTTOM
 
     seekBar.addListener(object : OnScrubListener {
       override fun onScrubStart(timeBar: TimeBar, position: Long) {
@@ -41,16 +45,18 @@ class SeekBar(context: Context) : LinearLayout(context), ICustomSeekBar {
       override fun onScrubMove(timeBar: TimeBar, position: Long) {}
 
       override fun onScrubStop(timeBar: TimeBar, position: Long, canceled: Boolean) {
-        isSeeking =  false
+        isSeeking = false
       }
     })
   }
 
   override fun setDuration(duration: Long) {
+    this@SeekBar.duration = duration
     seekBar.setDuration(duration)
   }
 
   override fun setPosition(position: Long, bufferProgress: Long) {
+    timeCodes.setDuration(duration - position)
     seekBar.setPosition(position)
     seekBar.setBufferedPosition(bufferProgress)
     seekBar.requestLayout()
@@ -67,11 +73,10 @@ class SeekBar(context: Context) : LinearLayout(context), ICustomSeekBar {
   private fun seekBarWrapper(context: Context): DefaultTimeBar {
     return CustomDefaultTimeBar(context).apply {
       setScrubberColor(Color.TRANSPARENT)
-      setUnplayedColor(Color.argb(30,255,255,255))
-      setBufferedColor(Color.argb(80,255,255,255))
+      setUnplayedColor(Color.argb(30, 255, 255, 255))
+      setBufferedColor(Color.argb(80, 255, 255, 255))
       layoutParams = LayoutParams(
-        0,
-        40
+        LayoutParams.WRAP_CONTENT, 40
       ).apply {
         weight = 1f
         gravity = Gravity.BOTTOM

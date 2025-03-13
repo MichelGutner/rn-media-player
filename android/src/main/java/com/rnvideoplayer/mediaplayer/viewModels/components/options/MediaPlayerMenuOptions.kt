@@ -80,27 +80,29 @@ class MediaPlayerMenuOptions(
             )
           )
         } else {
-          map.pushMap(
-            Arguments.createMap().apply {
-              putString("name", disabledCaptionName)
-              putString("value", "")
-            }
-          )
-          closedCaptions.forEach { track ->
-            val mutableSet: WritableMap = Arguments.createMap()
-            mutableSet.putString("name", track.label)
-            mutableSet.putString("value", track.language)
-            map.pushMap(mutableSet)
-          }
-
-          optionItems.add(
-            MediaPlayerMenuOptionsDataClass(
-              title,
-              map,
-              option.lowercase(),
-              selectedOptionByType[option] ?: disabledCaptionName
+          if (closedCaptions.isNotEmpty()) {
+            map.pushMap(
+              Arguments.createMap().apply {
+                putString("name", disabledCaptionName)
+                putString("value", "")
+              }
             )
-          )
+            closedCaptions.forEach { track ->
+              val mutableSet: WritableMap = Arguments.createMap()
+              mutableSet.putString("name", track.label)
+              mutableSet.putString("value", track.language)
+              map.pushMap(mutableSet)
+            }
+
+            optionItems.add(
+              MediaPlayerMenuOptionsDataClass(
+                title,
+                map,
+                option.lowercase(),
+                selectedOptionByType[option] ?: disabledCaptionName
+              )
+            )
+          }
         }
       }
     }
@@ -169,15 +171,15 @@ class MediaPlayerMenuOptions(
 
     for (option in optionItems) {
       val optionView = LayoutInflater.from(context).inflate(R.layout.option_item, null)
-      val optionNameTextView: TextView = optionView.findViewById(R.id.optionItemText)
-      val menuItemImage: ImageView = optionView.findViewById(R.id.menuItemImage)
+      val optionName: TextView = optionView.findViewById(R.id.optionItemText)
+      val optionIcon: ImageView = optionView.findViewById(R.id.menuItemImage)
       val optionRightIcon: ImageView = optionView.findViewById(R.id.optionRightIcon)
 
       optionRightIcon.visibility = INVISIBLE
-      optionNameTextView.text = option.name
-      menuItemImage.setImageResource(R.drawable.baseline_check)
+      optionName.text = option.name
+      optionIcon.setImageResource(R.drawable.baseline_check)
 
-      menuItemImage.visibility =
+      optionIcon.visibility =
         if (option.name == subOptions.optionSelected) VISIBLE else INVISIBLE
 
       optionView.setOnClickListener {

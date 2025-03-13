@@ -12,6 +12,7 @@ class VideoTitle(context: Context) : FrameLayout(context) {
   init {
     val layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply {
       gravity = Gravity.TOP or Gravity.START
+      setMargins(0, 8, 0, 0)
     }
     addView(title, layoutParams)
   }
