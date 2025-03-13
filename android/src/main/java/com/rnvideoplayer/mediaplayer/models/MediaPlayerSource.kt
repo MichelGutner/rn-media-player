@@ -2,18 +2,30 @@ package com.rnvideoplayer.mediaplayer.models
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import androidx.annotation.OptIn
+import androidx.media3.common.C
+import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Tracks
+import androidx.media3.common.text.CueGroup
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.ui.CaptionStyleCompat
+import androidx.media3.ui.SubtitleView
 import com.rnvideoplayer.mediaplayer.logger.Debug
+import com.rnvideoplayer.utils.TaskScheduler
+import com.rnvideoplayer.utils.Utils
 import java.io.File
 
 enum class PlaybackState {
@@ -33,8 +45,91 @@ interface MediaPlayerSourceListener {
   fun onPLayBackError(error: PlaybackException, currentItem: MediaItem? = null)
 }
 
-open class MediaPlayerSource(context: Context) {
-  private val exoPlayer: ExoPlayer = ExoPlayer.Builder(context).build()
+@UnstableApi
+abstract class MediaPlayer(context: Context) {
+  val subtitleView = SubtitleView(context)
+  val closedCaptions: MutableList<Format> = mutableListOf()
+  val trackSelector = DefaultTrackSelector(context)
+  private val trackInitDisabled =
+    trackSelector.parameters.buildUpon().setRendererDisabled(C.TRACK_TYPE_TEXT, true)
+
+  val exoPlayer: ExoPlayer = ExoPlayer.Builder(context)
+    .setTrackSelector(trackSelector)
+    .build()
+
+  companion object {
+    private const val TAG = "MediaPlayer"
+  }
+
+  init {
+    trackSelector.parameters = trackInitDisabled.build()
+    modifyStyleSubtitle()
+    exoPlayer.addListener(object : Player.Listener {
+      override fun onTracksChanged(tracks: Tracks) {
+        if (closedCaptions.isEmpty()) {
+          extractEmbeddedClosedCaptions()
+        }
+      }
+
+      override fun onCues(cueGroup: CueGroup) {
+        super.onCues(cueGroup)
+        for (cue in cueGroup.cues) {
+          if (!trackSelector.parameters.getRendererDisabled(C.TRACK_TYPE_TEXT)) {
+            subtitleView.setCues(cueGroup.cues)
+            TaskScheduler().cancelTask()
+          } else {
+            subtitleView.setCues(null)
+          }
+
+          TaskScheduler().createTask(3000) {
+            subtitleView.setCues(null)
+            TaskScheduler().cancelTask()
+          }
+        }
+      }
+    })
+  }
+
+  private fun extractEmbeddedClosedCaptions() {
+    val mappedTrackInfo = trackSelector.currentMappedTrackInfo
+    if (mappedTrackInfo == null) {
+      Debug.log("$TAG: No track info available")
+      return
+    }
+
+    for (i in 0 until mappedTrackInfo.rendererCount) {
+      if (exoPlayer.getRendererType(i) == C.TRACK_TYPE_TEXT) {
+        val groups = mappedTrackInfo.getTrackGroups(i)
+
+        for (groupIndex in 0 until groups.length) {
+          val trackGroup = groups[groupIndex]
+
+          for (trackIndex in 0 until trackGroup.length) {
+            val format = trackGroup.getFormat(trackIndex)
+            closedCaptions.add(format)
+          }
+        }
+      }
+    }
+  }
+
+  private fun modifyStyleSubtitle() {
+    subtitleView.setPadding(12,12,12,12)
+    subtitleView.setStyle(
+      CaptionStyleCompat(
+        Color.WHITE,
+        Utils.COLOR_BLACK_ALPHA_03,
+        Color.TRANSPARENT,
+        CaptionStyleCompat.EDGE_TYPE_OUTLINE,
+        Color.TRANSPARENT,
+        null
+      )
+    )
+  }
+}
+
+@OptIn(UnstableApi::class)
+open class MediaPlayerSource(context: Context) : MediaPlayer(context) {
   private val progressInterval: Long = 1000L
   private val handler = Handler(Looper.getMainLooper())
   private var callback: Callback? = null
@@ -104,15 +199,19 @@ open class MediaPlayerSource(context: Context) {
       PlaybackState.PLAYING -> {
         PlaybackState.PLAYING
       }
+
       PlaybackState.PAUSED -> {
         PlaybackState.PAUSED
       }
+
       PlaybackState.WAITING -> {
         PlaybackState.WAITING
       }
+
       PlaybackState.ENDED -> {
         PlaybackState.ENDED
       }
+
       PlaybackState.NONE -> {
         PlaybackState.NONE
       }
@@ -180,7 +279,7 @@ open class MediaPlayerSource(context: Context) {
         val position = exoPlayer.contentPosition
         val totalBuffered = exoPlayer.contentBufferedPosition
         val isBufferingCompleted = totalBuffered == duration
-        listener?.onPlaybackChangeBuffering(position,totalBuffered)
+        listener?.onPlaybackChangeBuffering(position, totalBuffered)
 
         if (isBufferingCompleted) {
           listener?.onPlaybackBufferCompleted(true)
@@ -250,6 +349,32 @@ open class MediaPlayerSource(context: Context) {
     }
     onStateChange(currentState)
   }
+
+  fun onMediaSelectCaption(language: String?) {
+    val parametersBuilder = trackSelector.parameters.buildUpon()
+
+    Debug.log("$TAG: Language = ${language?.isEmpty()}")
+
+    if (language.isNullOrEmpty()) {
+      Debug.log("$TAG: Language is null")
+      parametersBuilder.setRendererDisabled(C.TRACK_TYPE_TEXT, true)
+    } else {
+      parametersBuilder.setRendererDisabled(C.TRACK_TYPE_TEXT, false)
+        .setPreferredTextLanguage(language) // Use setPreferredTextLanguage (sem "s")
+    }
+
+    trackSelector.parameters =
+      parametersBuilder.build() // ⚠️ ESSENCIAL: Aplicar os novos parâmetros
+
+    Debug.log(
+      "Selected language: $language parameters = ${
+        trackSelector.parameters.getRendererDisabled(
+          C.TRACK_TYPE_TEXT
+        )
+      }"
+    )
+  }
+
 
   fun onMediaRelease() {
     Debug.log("[$TAG] Media player instance has been released. All associated resources have been cleaned up.")

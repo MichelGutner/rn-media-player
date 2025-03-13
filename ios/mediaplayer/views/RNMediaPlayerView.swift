@@ -12,13 +12,13 @@ import MediaPlayer
 
 @available(iOS 14.0, *)
 class RNMediaPlayerView : RCTPropsView {
-  fileprivate var mediaSource = PlayerSource()
+  fileprivate var mediaSource = MediaSource()
   fileprivate var playerLayerVC: MediaPlayerLayerViewController?
   fileprivate var controlsVC: UIHostingController<MediaPlayerControlsView>?
   fileprivate var rootControlsView: MediaPlayerControlsView?
   fileprivate var videoThumbnailGenerator: VideoThumbnailGenerator?
   fileprivate var remoteControls: RemoteControlManager?
-  fileprivate var menuOptionsModal: MenuOptionsControlView? = MenuOptionsControlView()
+  fileprivate var menuControl: MenuOptionsControlView?
   
   @objc var controlsStyles: NSDictionary? = [:]
   
@@ -52,10 +52,10 @@ class RNMediaPlayerView : RCTPropsView {
     videoThumbnailGenerator?.cancel()
     ThumbnailManager.clearImages()
     remoteControls?.prepareToDeInit()
-    menuOptionsModal = nil
+    menuControl = nil
   }
   
-  private func setup() {
+  private func initializerDelegates() {
     Debug.isEnabled = true
     rootControlsView = MediaPlayerControlsView(mediaSource: mediaSource)
     rootControlsView?.delegate = self
@@ -64,7 +64,7 @@ class RNMediaPlayerView : RCTPropsView {
     
     mediaSource.delegate = self
     remoteControls?.delegate = self
-    menuOptionsModal?.delegate = self
+    menuControl?.delegate = self
     
     if let playerLayerVC {
       playerLayerVC.addContentOverlayController(with: controlsVC!)
@@ -72,7 +72,7 @@ class RNMediaPlayerView : RCTPropsView {
       addSubview(playerLayerVC.view)
     }
     
-    menuOptionsModal?.bounds = bounds
+    menuControl?.bounds = bounds
     
     remoteControls?.makeNowPlayingInfo()
   }
@@ -93,13 +93,16 @@ class RNMediaPlayerView : RCTPropsView {
 
 @available(iOS 14.0, *)
 extension RNMediaPlayerView : MenuOptionsControlViewDelegate {
-  func onMenuOptionSelected(option: EMenuOptionItem, value: Any) {
+  func onMenuOptionSelected(option: EMenuOptionItem, name: String, value: Any) {
     switch option {
     case .speeds:
       mediaSource.setRate(to: value as! Float)
       break
     case .captions:
-      Debug.log("captions not implemented")
+      if let elegibleGroup = menuControl?.selectionGroup {
+        Debug.log("value \(value)")
+        mediaSource.playerItem?.select(value as? AVMediaSelectionOption, in: elegibleGroup)
+      }
       break
     case .qualities:
       mediaSource.setPlayerWithNewURL(value as! String) { success, error in
@@ -119,10 +122,6 @@ extension RNMediaPlayerView : MenuOptionsControlViewDelegate {
 
 @available(iOS 14.0, *)
 extension RNMediaPlayerView : RCTPropsViewDelegate {
-  func onMenuOptions(_ menuOptions: NSDictionary) {
-    menuOptionsModal?.setMenuOptions(with: menuOptions)
-  }
-  
   func onRate(_ rate: Float) {
     mediaSource.setRate(to: rate)
   }
@@ -137,7 +136,8 @@ extension RNMediaPlayerView : RCTPropsViewDelegate {
     mediaSource.setup(with: source) { [self] player in
       playerLayerVC = MediaPlayerLayerViewController(player: player)
       remoteControls = RemoteControlManager(player: player)
-      setup()
+      menuControl = MenuOptionsControlView(player: player)
+      initializerDelegates()
     }
   }
 
@@ -189,8 +189,8 @@ extension RNMediaPlayerView: MediaPlayerLayerViewControllerDelegate {
 }
 
 @available(iOS 14.0, *)
-extension RNMediaPlayerView: PlayerSourceViewDelegate {
-  func mediaPlayer(_ control: PlayerSource, currentTime: Double, duration: Double, bufferingProgress: CGFloat) {
+extension RNMediaPlayerView: MediaSourceDelegate {
+  func mediaPlayer(_ control: MediaSource, currentTime: Double, duration: Double, bufferingProgress: CGFloat) {
     let timeInfo: [String: Any] = ["totalBuffered": bufferingProgress, "progress": currentTime]
     let bufferCompleted: [String: Any] = ["completed": bufferingProgress >= duration]
     sendEvent(.onMediaBuffering, timeInfo)
@@ -198,17 +198,19 @@ extension RNMediaPlayerView: PlayerSourceViewDelegate {
     remoteControls?.setPlaybackTimes(currentTime: currentTime, duration: duration)
   }
   
-  func mediaPlayer(_ player: PlayerSource, didChangeReadyToDisplay isReadyToDisplay: Bool) {
-    Debug.log("[PlayerSourceDelegate] isReadyToDisplay -> \(isReadyToDisplay)")
+  func mediaPlayer(_ player: MediaSource, didChangeReadyToDisplay isReadyToDisplay: Bool) {
+    menuControl?.createOptions(with: menuOptions)
+    
     PlaybackManager.setIsReadyForDisplay(to: isReadyToDisplay)
     sendEvent(.onMediaReady, ["loaded": isReadyToDisplay, "duration": player.playerItem?.duration.seconds ?? 0.0])
+    Debug.log("[PlayerSourceDelegate] isReadyToDisplay -> \(isReadyToDisplay)")
   }
   
-  func mediaPlayer(_ player: PlayerSource, loadFail error: (any Error)?) {
+  func mediaPlayer(_ player: MediaSource, loadFail error: (any Error)?) {
     sendEvent(.onMediaError, error as Any)
   }
   
-  func mediaPlayer(_ player: PlayerSource, didChangePlaybackState state: PlaybackState) {
+  func mediaPlayer(_ player: MediaSource, didChangePlaybackState state: PlaybackState) {
     let isFinished = state == .ended
     if isFinished {
       sendEvent(.onMediaCompleted, ["completed": true])
@@ -216,7 +218,7 @@ extension RNMediaPlayerView: PlayerSourceViewDelegate {
     PlaybackManager.updateIsPlaying(to: state == .playing)
   }
   
-  func mediaPlayer(_ player: PlayerSource, playerItemMetadata: [AVMetadataItem]?) {
+  func mediaPlayer(_ player: MediaSource, playerItemMetadata: [AVMetadataItem]?) {
     let title = playerItemMetadata?.first { $0.identifier == .commonIdentifierTitle }?.stringValue ?? ""
     let artist = playerItemMetadata?.first {$0.identifier == .commonIdentifierArtist }?.stringValue ?? ""
     SharedMetadataIdentifier.setMetadata(title: title, artist: artist)
@@ -256,7 +258,7 @@ extension RNMediaPlayerView : MediaPlayerControlsViewDelegate {
         playerLayerVC?.didDismissFullscreen()
       }
     case .optionsMenu:
-      menuOptionsModal?.present()
+      menuControl?.present()
       break
     case .seekGestureBackward:
       mediaSource.onBackwardTime(event as! Int)

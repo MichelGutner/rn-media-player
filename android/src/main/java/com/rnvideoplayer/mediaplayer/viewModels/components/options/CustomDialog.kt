@@ -22,6 +22,6 @@ class CustomDialog(
     window?.setLayout(maxWidth, ViewGroup.LayoutParams.WRAP_CONTENT)
 
     window?.setGravity(Gravity.BOTTOM)
-    window?.setWindowAnimations(com.google.android.material.R.style.Animation_Material3_BottomSheetDialog)
+    window?.setWindowAnimations(com.google.android.material.R.style.Animation_MaterialComponents_BottomSheetDialog)
   }
 }

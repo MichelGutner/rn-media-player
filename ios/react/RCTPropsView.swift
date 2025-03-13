@@ -24,7 +24,6 @@ public protocol RCTPropsViewDelegate: AnyObject {
   func onEntersFullScreenWhenPlaybackBegins(_ didEnterFullscreen: Bool)
   func onAutoPlay(_ didPlay: Bool)
   func onRate(_ rate: Float)
-  func onMenuOptions(_ menuOptions: NSDictionary)
 }
 
 class RCTPropsView : UIView {
@@ -43,6 +42,8 @@ class RCTPropsView : UIView {
   
   @objc private var entersFullScreenWhenPlaybackBegins: Bool = false
   @objc private var autoPlay: Bool = false
+  
+  @objc var menuOptions: NSDictionary = [:]
   
   @objc private var onMediaRouter: RCTDirectEventBlock?
   
@@ -118,12 +119,4 @@ class RCTPropsView : UIView {
       }
     }
   }
-  
-  @objc private var menuOptions: NSDictionary = [:] {
-    didSet {
-      self.rctPropsViewDelegate?.onMenuOptions(menuOptions)
-    }
-  }
-  
-
 }

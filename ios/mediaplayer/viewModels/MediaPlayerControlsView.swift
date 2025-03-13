@@ -38,7 +38,7 @@ public struct MediaPlayerControlsView : View {
   @ObservedObject private var metadataIdentifier = SharedMetadataIdentifier.instance
   @ObservedObject private var configs = RCTConfigManager.shared
   
-  var mediaSource: PlayerSource
+  var mediaSource: MediaSource
   @State private var isTappedRight: Bool = false
   @State private var isTappedLeft: Bool = false
   

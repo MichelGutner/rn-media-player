@@ -20,7 +20,7 @@ public protocol RemoteControlManagerDelegate: AnyObject {
 }
 
 open class RemoteControlManager {
-  fileprivate var player: AVPlayer?
+  fileprivate weak var player: AVPlayer?
   open weak var delegate: RemoteControlManagerDelegate?
   fileprivate var nowPlayingInfo: [String : Any]? = [:]
   
@@ -49,6 +49,7 @@ open class RemoteControlManager {
     self.nowPlayingInfo?[MPNowPlayingInfoPropertyPlaybackRate] = player?.rate ?? 0.0
     
     setupRemoteCommandCenter()
+    Debug.log("[RemoteControlManager] initialized with success")
   }
   
   fileprivate func setupRemoteCommandCenter() {
@@ -141,6 +142,7 @@ open class RemoteControlManager {
   open func prepareToDeInit() {
     MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     MPNowPlayingInfoCenter.default().playbackState = .stopped
+    Debug.log("[RemoteControlManager] MPNowPlayingInfoCenter disconnected with success")
   }
 
 }

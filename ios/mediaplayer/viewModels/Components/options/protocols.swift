@@ -13,6 +13,7 @@ public enum EMenuOptionItem {
 }
 
 public struct MenuItem {
+  let id: String?
   let title: String?
   let icon: String?
   var options: [MenuOption]?

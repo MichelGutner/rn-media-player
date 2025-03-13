@@ -41,7 +41,8 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
   private var rctConfigs = RCTConfigs.getInstance()
   private var timeFormatter = TimeUnitFormat()
   private val mediaSource = MediaPlayerSource(context).apply { setListener(SourceListener()) }
-  private val mediaControls = MediaPlayerControls(context).apply { setListener(ControlsViewListener()) }
+  private val mediaControls =
+    MediaPlayerControls(context).apply { setListener(ControlsViewListener()) }
   private val dialog by lazy { CustomDialog(context) }
 
   private var isFullscreen = false
@@ -54,7 +55,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
 
   init {
     registerView(mediaControls)
-
+    mediaControls.addView(mediaSource.subtitleView)
     setupReactConfigs()
     mediaControls.seekBarListener(
       mediaSource,
@@ -263,10 +264,17 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
 
         ControlType.FULLSCREEN -> toggleFullscreen()
         ControlType.OPTIONS_MENU -> {
-            val content by lazy { MediaPlayerMenuOptions(context, dialog).apply { setListener(MenuOptionsListener()) } }
-            val reactConfigAdapter = RCTConfigs.getInstance()
-            val menuItems = (reactConfigAdapter.get(RCTConfigs.Key.MENU_ITEMS) as? Set<*>)?.filterIsInstance<String>()
-            content.showOptionsDialog(menuItems!!)
+          val content by lazy {
+            MediaPlayerMenuOptions(
+              context,
+              dialog,
+              mediaSource.closedCaptions
+            ).apply { setListener(MenuOptionsListener()) }
+          }
+          val reactConfigAdapter = RCTConfigs.getInstance()
+          val menuItems =
+            (reactConfigAdapter.get(RCTConfigs.Key.MENU_ITEMS) as? Set<*>)?.filterIsInstance<String>()
+          content.showOptions(menuItems!!)
         }
 
         ControlType.SEEK_GESTURE_FORWARD -> {
@@ -333,7 +341,7 @@ class MediaPlayerView(private val context: ThemedReactContext) : MediaPlayerCont
         }
 
         OptionsDialogType.CAPTIONS -> {
-//          mediaSource.onMediaChangeCaption(value as String)
+          mediaSource.onMediaSelectCaption(value.toString())
         }
       }
 

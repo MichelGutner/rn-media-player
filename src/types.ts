@@ -118,7 +118,11 @@ export type VideoPlayer = Omit<ViewProps, 'style'> & {
   menuOptions: {
     qualities: TMenuOptions;
     speeds: TMenuOptions;
-    captions: TMenuOptions;
+    captions: {
+      title?: string;
+      disabledCaptionName?: string;
+      disabled?: boolean;
+    };
   };
   /**
    * iOS only
@@ -131,8 +135,6 @@ type TMenuOptions = {
   options: { name: string; value: unknown }[];
   initialOptionSelected: string;
   disabled?: boolean;
-  /**@param offOptionName only used to change name for captions options to on or off */
-  offOptionName?: string;
 };
 
 type TGenericEventHandler<T> = DirectEventHandler<Readonly<T>>;
