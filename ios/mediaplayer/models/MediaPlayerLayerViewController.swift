@@ -24,7 +24,7 @@ open class MediaPlayerLayerViewController : UIViewController {
   open weak var delegate: MediaPlayerLayerViewControllerDelegate?
   
   fileprivate var rootVC = UIApplication.shared.windows.first?.rootViewController
-  fileprivate var isFullscreen: Bool = false
+  var isFullscreen: Bool = false
   fileprivate var isFullscreenTransition: Bool = false
   fileprivate let currentZoomScale: CGFloat = 1.0
   
@@ -115,6 +115,7 @@ open class MediaPlayerLayerViewController : UIViewController {
           }
         }
         
+        updateLayoutOnFullscreenChange(presentFullscreen: true)
       })
     }
   }
@@ -130,6 +131,7 @@ open class MediaPlayerLayerViewController : UIViewController {
       self.isFullscreenTransition = false
       self.isFullscreen = false
       self.delegate?.playerLayerControlView(self, didRequestControl: .fullscreen, didChangeState: false)
+      updateLayoutOnFullscreenChange(presentFullscreen: false)
     }
   }
   
@@ -200,6 +202,27 @@ open class MediaPlayerLayerViewController : UIViewController {
           contentOverlayController.view.topAnchor.constraint(equalTo: controller.view.topAnchor),
           contentOverlayController.view.bottomAnchor.constraint(equalTo: controller.view.bottomAnchor)
         ])
+      }
+    }
+  }
+  
+  fileprivate func updateLayoutOnFullscreenChange(presentFullscreen: Bool) {
+    self.isFullscreen = presentFullscreen
+    
+    let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+    if presentFullscreen {
+      if #available(iOS 16.0, *) {
+        windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape))
+      } else {
+        let orientation = UIInterfaceOrientation.landscapeRight
+        UIDevice.current.setValue(orientation, forKey: "orientation")
+      }
+    } else {
+      if #available(iOS 16.0, *) {
+        windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
+      } else {
+        let orientation = UIInterfaceOrientation.portrait
+        UIDevice.current.setValue(orientation, forKey: "orientation")
       }
     }
   }

@@ -80,6 +80,27 @@ class RNMediaPlayerView : RCTPropsView {
   private func addNotificationsObservers() {
     NotificationCenter.default.addObserver(self, selector: #selector(didEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+    
+    NotificationCenter.default.addObserver(self, selector: #selector(onDeviceOrientationChanged(_ :)), name: UIDevice.orientationDidChangeNotification, object: nil)
+  }
+  
+  @objc fileprivate func onDeviceOrientationChanged(_ notification: Notification) {
+    guard let layer = self.playerLayerVC else { return }
+    let uiDevice = notification.object as! UIDevice
+    
+    if (uiDevice.orientation.isLandscape) {
+      DispatchQueue.main.async {
+        if (!layer.isFullscreen) {
+          self.playerLayerVC?.didPresentFullscreen()
+        }
+      }
+    } else {
+      DispatchQueue.main.async {
+        if (layer.isFullscreen) {
+          self.playerLayerVC?.didDismissFullscreen()
+        }
+      }
+    }
   }
   
   @objc fileprivate func didEnterForeground() {
@@ -100,7 +121,6 @@ extension RNMediaPlayerView : MenuOptionsControlViewDelegate {
       break
     case .captions:
       if let elegibleGroup = menuControl?.selectionGroup {
-        Debug.log("value \(value)")
         mediaSource.playerItem?.select(value as? AVMediaSelectionOption, in: elegibleGroup)
       }
       break

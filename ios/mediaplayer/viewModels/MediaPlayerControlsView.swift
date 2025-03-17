@@ -189,9 +189,9 @@ public struct MediaPlayerControlsView : View {
         scheduleHideControls()
       },
       color: UIColor.white.cgColor,
-      frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 30, height: 30))
+      frame: .init(origin: .init(x: 0, y: 0), size: .init(width: 25, height: 25))
     )
-    .frame(width: 60, height: 60)
+    .frame(width: 50, height: 50)
     .opacity(!isDraggingSlider ? 1 : 0)
   }
   
