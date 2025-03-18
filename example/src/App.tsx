@@ -71,9 +71,9 @@ function App(): JSX.Element {
           backgroundColor: 'black',
         }}
         menuOptions={menuOptions}
-        // autoPlay
+        autoPlay
         // rate={rate}
-        // entersFullScreenWhenPlaybackBegins
+        entersFullScreenWhenPlaybackBegins
         // doubleTapToSeek={{
         //   value: 15,
         //   suffixLabel: 'segundos',

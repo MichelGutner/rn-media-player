@@ -5,30 +5,6 @@
 //  Created by Michel Gutner on 02/01/25.
 //
 import AVFoundation
-import Foundation
-import AVKit
-
-open class MediaPlayerConfigManager {
-  public static let shared = MediaPlayerConfigManager()
-  
-  open var shouldAutoPlay: Bool = false {
-    didSet {
-      if shouldAutoPlay {
-        Debug.log("Auto play enabled")
-      } else {
-        Debug.log("Auto play disabled")
-      }
-    }
-  }
-
-  open var thumbnails: NSDictionary? = nil {
-    didSet {
-      if thumbnails != oldValue {
-        Debug.log("Thumbnails has been set")
-      }
-    }
-  }
-}
 
 public class PlayerManager {
   public static let shared = PlayerManager()

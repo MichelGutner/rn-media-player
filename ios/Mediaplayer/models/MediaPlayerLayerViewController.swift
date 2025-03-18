@@ -14,7 +14,11 @@ public enum PlayerLayerViewControllerActionType {
 }
 
 public protocol MediaPlayerLayerViewControllerDelegate: AnyObject {
-  func playerLayerControlView(_ playerLayer: MediaPlayerLayerViewController, didRequestControl action: PlayerLayerViewControllerActionType, didChangeState state: Any?)
+  func playerLayerControlView(
+    _ playerLayer: MediaPlayerLayerViewController,
+    didRequestControl action: PlayerLayerViewControllerActionType,
+    didChangeState state: Any?
+  )
 }
 
 open class MediaPlayerLayerViewController : UIViewController {

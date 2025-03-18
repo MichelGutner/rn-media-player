@@ -78,7 +78,7 @@ class RNMediaPlayerView : RCTPropsView {
   }
   
   private func addNotificationsObservers() {
-    NotificationCenter.default.addObserver(self, selector: #selector(didEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+//    NotificationCenter.default.addObserver(self, selector: #selector(didEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
     
     NotificationCenter.default.addObserver(self, selector: #selector(onDeviceOrientationChanged(_ :)), name: UIDevice.orientationDidChangeNotification, object: nil)
