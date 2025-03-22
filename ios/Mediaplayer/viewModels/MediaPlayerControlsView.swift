@@ -15,6 +15,7 @@ public enum MediaPlayerControlButtonType {
   case optionsMenu
   case seekGestureForward
   case seekGestureBackward
+  case playList
 }
 
 
@@ -200,6 +201,12 @@ public struct MediaPlayerControlsView : View {
     VStack {
       HStack {
         Spacer()
+        
+        ButtonTemplate(imageName: .constant("play.square.stack")) {
+          delegate?.controlDidTap(self, controlType: .playList, didChangeControlEvent: nil)
+        }
+        .opacity(screenState.isFullScreen ? 1 : 0)
+        
         ButtonTemplate(imageName: .constant(screenState.isFullScreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")) {
           delegate?.controlDidTap(self, controlType: .fullscreen, didChangeControlEvent: !screenState.isFullScreen)
           scheduleHideControls()

@@ -19,15 +19,23 @@ export const HomeScreen = () => {
   );
   const videos = data?.categories[0]?.videos || [];
 
+  const playlist = videos.map((video) => ({
+    title: video.title,
+    thumbUrl: `https://commondatastorage.googleapis.com/gtv-videos-bucket/CastVideos/images/${video['image-480x270']}`,
+    url: `https://commondatastorage.googleapis.com/gtv-videos-bucket/CastVideos/mp4/${video.sources.find((s) => s.type === 'mp4')?.url}`,
+    startTime: 0,
+  }));
+
   const handleWatchVideo = (item: Root['categories'][0]['videos'][0]) => {
     const url = item?.sources?.find((s) => s.type === 'mp4')?.url;
     navigation.navigate('Videos', {
       uri: `https://commondatastorage.googleapis.com/gtv-videos-bucket/CastVideos/mp4/${url}`,
       title: item.title,
-      subtitle: item.subtitle,
+      studio: item.studio,
       artwork: item.thumb,
       duration: item.duration,
-      captions: `https://commondatastorage.googleapis.com/gtv-videos-bucket/CastVideos/tracks/${item?.tracks?.[0]?.contentId}`
+      captions: `https://commondatastorage.googleapis.com/gtv-videos-bucket/CastVideos/tracks/${item?.tracks?.[0]?.contentId}`,
+      playList: playlist,
     });
   };
 

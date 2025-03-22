@@ -24,6 +24,7 @@ public protocol RCTPropsViewDelegate: AnyObject {
   func onEntersFullScreenWhenPlaybackBegins(_ didEnterFullscreen: Bool)
   func onAutoPlay(_ didPlay: Bool)
   func onRate(_ rate: Float)
+  func onPlayList(_ playList: NSArray?)
 }
 
 class RCTPropsView : UIView {
@@ -117,6 +118,12 @@ class RCTPropsView : UIView {
       if !rate.isNaN || oldValue != rate {
         self.rctPropsViewDelegate?.onRate(rate)
       }
+    }
+  }
+  
+  @objc private var playList: NSArray? = .none {
+    didSet {
+      self.rctPropsViewDelegate?.onPlayList(playList)
     }
   }
 }

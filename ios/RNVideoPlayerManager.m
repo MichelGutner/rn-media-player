@@ -9,6 +9,8 @@
 @interface RCT_EXTERN_MODULE(RNVideoPlayer, RCTViewManager)
 
 RCT_EXPORT_VIEW_PROPERTY(source, NSDictionary);
+RCT_EXPORT_VIEW_PROPERTY(playList, NSArray);
+
 RCT_EXPORT_VIEW_PROPERTY(controlsStyles, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(doubleTapToSeek, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(thumbnails, NSDictionary)

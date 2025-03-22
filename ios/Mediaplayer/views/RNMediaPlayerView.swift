@@ -19,6 +19,7 @@ class RNMediaPlayerView : RCTPropsView {
   fileprivate var videoThumbnailGenerator: VideoThumbnailGenerator?
   fileprivate var remoteControls: RemoteControlManager?
   fileprivate var menuControl: MenuOptionsControlView?
+  fileprivate var playListControl = PlayListView()
   
   @objc var controlsStyles: NSDictionary? = [:]
   
@@ -65,6 +66,7 @@ class RNMediaPlayerView : RCTPropsView {
     mediaSource.delegate = self
     remoteControls?.delegate = self
     menuControl?.delegate = self
+    playListControl.delegate = self
     
     if let playerLayerVC {
       playerLayerVC.addContentOverlayController(with: controlsVC!)
@@ -142,6 +144,10 @@ extension RNMediaPlayerView : MenuOptionsControlViewDelegate {
 
 @available(iOS 14.0, *)
 extension RNMediaPlayerView : RCTPropsViewDelegate {
+  func onPlayList(_ playList: NSArray?) {
+    playListControl.populatePlayList(with: playList)
+  }
+  
   func onRate(_ rate: Float) {
     mediaSource.setRate(to: rate)
   }
@@ -203,6 +209,7 @@ extension RNMediaPlayerView: MediaPlayerLayerViewControllerDelegate {
       sendEvent(.onFullScreenStateChanged, ["isFullscreen": state])
       DispatchQueue.main.async {
         SharedScreenState.setFullscreenState(to: state as? Bool ?? false)
+        self.playListControl.hide()
       }
     }
   }
@@ -286,6 +293,10 @@ extension RNMediaPlayerView : MediaPlayerControlsViewDelegate {
     case .seekGestureForward:
       mediaSource.onForwardTime(event as! Int)
       break
+    case .playList:
+      playListControl.show()
+      mediaSource.setPlaybackState(to: .paused)
+      break
     }
   }
   
@@ -295,5 +306,18 @@ extension RNMediaPlayerView : MediaPlayerControlsViewDelegate {
     
     let sliderProgressInfo = ["start": ["percent": fromValue, "seconds": lastProgressInSeconds], "ended": ["percent": toValue, "seconds": progressInSeconds]]
     self.sendEvent(.onMediaSeekBar, sliderProgressInfo)
+  }
+}
+
+@available(iOS 14.0, *)
+extension RNMediaPlayerView : PlayerListViewDelegate {
+  func onSelectVideo(video: PlayListItem) {
+    mediaSource.setPlayerWithNewURL(video.url) { success, error in
+      if success {
+        Debug.log("[PlayerSource] Player updated successfully.")
+      } else if let error = error {
+        self.sendEvent(.onMediaError, error)
+      }
+    }
   }
 }

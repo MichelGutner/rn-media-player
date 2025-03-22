@@ -40,20 +40,18 @@ const menuOptions = {
     title: 'Legendas',
     disabledCaptionName: 'Sem legendas',
     disabled: false,
-  }
-}
+  },
+};
 
 function App(): JSX.Element {
   const route = useRoute<any>();
   const uri = route.params?.uri;
   const title = route.params?.title;
-  const artist = route.params?.subtitle;
+  const artist = route.params?.studio;
+  const playList = route.params?.playList;
 
-  const [rate, setRate] = useState(1);
-  const [playbackQuality, setPlaybackQuality] = useState('');
-
-  let downloadedUrl = `file://${directories.documents}/file.mp4`
-      // : uri;
+  let downloadedUrl = `file://${directories.documents}/file.mp4`;
+  // : uri;
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -62,16 +60,17 @@ function App(): JSX.Element {
           // url: "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
           url: uri,
           metadata: { title, artist },
-          startTime: 135,
+          startTime: 0,
         }}
-        thumbnails={{ isEnabled: true, sourceUrl: downloadedUrl }}
+        thumbnails={{ isEnabled: true, sourceUrl: uri }}
         style={{
           width: '100%',
           height: 300,
           backgroundColor: 'black',
         }}
         menuOptions={menuOptions}
-        autoPlay
+        playList={playList}
+        // autoPlay
         // rate={rate}
         entersFullScreenWhenPlaybackBegins
         // doubleTapToSeek={{
@@ -156,12 +155,6 @@ function App(): JSX.Element {
           }
         }
       />
-      <TouchableOpacity
-        style={{ height: 50, backgroundColor: 'red' }}
-        onPress={() => downloadFile(uri)}
-      >
-        <Text style={{}}>Baixar Arquivo</Text>
-      </TouchableOpacity>
     </SafeAreaView>
   );
 }

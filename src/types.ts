@@ -128,6 +128,7 @@ export type VideoPlayer = Omit<ViewProps, 'style'> & {
    * iOS only
    */
   onMediaRouter?: TOnMediaRouter;
+  playList?: TPlayList[];
 };
 
 type TMenuOptions = {
@@ -138,3 +139,10 @@ type TMenuOptions = {
 };
 
 type TGenericEventHandler<T> = DirectEventHandler<Readonly<T>>;
+
+type TPlayList = {
+  title: string;
+  thumbUrl: string;
+  url: string;
+  startTime: number;
+};
